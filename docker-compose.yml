@@ -1,0 +1,149 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Base de datos
+  mongodb:
+    image: mongo:6.0
+    container_name: respicare-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-respicare}
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init:/docker-entrypoint-initdb.d
+    networks:
+      - respicare-network
+
+  # Redis para caché y sesiones
+  redis:
+    image: redis:7-alpine
+    container_name: respicare-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - respicare-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: respicare-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/respicare?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-key}
+      AI_SERVICE_URL: http://ai-services:8000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+      - ai-services
+    networks:
+      - respicare-network
+    command: npm run dev
+
+  # Servicios de IA
+  ai-services:
+    build:
+      context: ./ai-services
+      dockerfile: Dockerfile
+    container_name: respicare-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: mongodb://admin:password@mongodb:27017/respicare?authSource=admin
+      REDIS_URL: redis://redis:6379
+      MODEL_PATH: /app/models
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./ai-services:/app
+      - ai_models:/app/models
+      - ai_cache:/app/cache
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - respicare-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend Web
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.dev
+    container_name: respicare-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001/api
+      REACT_APP_WS_URL: ws://localhost:3001
+      CHOKIDAR_USEPOLLING: true
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - respicare-network
+    stdin_open: true
+    tty: true
+
+  # Proxy reverso (Nginx)
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: respicare-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - web
+      - backend
+    networks:
+      - respicare-network
+
+  # Herramientas de desarrollo
+  adminer:
+    image: adminer
+    container_name: respicare-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mongodb
+    networks:
+      - respicare-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  ai_models:
+  ai_cache:
+
+networks:
+  respicare-network:
+    driver: bridge
