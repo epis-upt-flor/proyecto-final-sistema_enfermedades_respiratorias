@@ -37,7 +37,11 @@
       "@/services/*": ["services/*"],
       "@/utils/*": ["utils/*"],
       "@/ai-integration/*": ["ai-integration/*"],
-      "@/types/*": ["types/*"]
+      "@/types/*": ["types/*"],
+      "@/domain/*": ["domain/*"],
+      "@/application/*": ["application/*"],
+      "@/infrastructure/*": ["infrastructure/*"],
+      "@/interface-adapters/*": ["interface-adapters/*"]
     }
   },
   "include": [
