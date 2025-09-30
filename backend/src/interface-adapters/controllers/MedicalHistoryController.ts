@@ -1,5 +1,6 @@
 // Controlador de Historial Médico - Capa de Interfaz
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../../types';
 import { MedicalHistoryService } from '../../application/services/MedicalHistoryService';
 import { ApiResponse } from '../dtos/ApiResponse';
 import { CreateMedicalHistoryRequestDto } from '../dtos/CreateMedicalHistoryRequestDto';
@@ -8,10 +9,10 @@ import { MedicalHistoryResponseDto } from '../dtos/MedicalHistoryResponseDto';
 export class MedicalHistoryController {
   constructor(private medicalHistoryService: MedicalHistoryService) {}
 
-  async createMedicalHistory(req: Request, res: Response): Promise<void> {
+  async createMedicalHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const createRequest: CreateMedicalHistoryRequestDto = req.body;
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
       
       if (!userId || !userRole) {
@@ -42,10 +43,10 @@ export class MedicalHistoryController {
     }
   }
 
-  async getMedicalHistory(req: Request, res: Response): Promise<void> {
+  async getMedicalHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
       
       if (!userId || !userRole) {
@@ -57,9 +58,9 @@ export class MedicalHistoryController {
       }
 
       const result = await this.medicalHistoryService.getMedicalHistory({
-        medicalHistoryId: id,
-        userId,
-        userRole
+        medicalHistoryId: id!,
+        userId: userId!,
+        userRole: userRole!
       });
       
       const response: ApiResponse<MedicalHistoryResponseDto> = {
@@ -78,13 +79,13 @@ export class MedicalHistoryController {
     }
   }
 
-  async getMedicalHistoriesByPatient(req: Request, res: Response): Promise<void> {
+  async getMedicalHistoriesByPatient(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { patientId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const page = parseInt(req.query['page'] as string) || 1;
+      const limit = parseInt(req.query['limit'] as string) || 10;
       
       if (!userId || !userRole) {
         res.status(401).json({
@@ -95,7 +96,7 @@ export class MedicalHistoryController {
       }
 
       const result = await this.medicalHistoryService.getMedicalHistoriesByPatient(
-        patientId,
+        patientId!,
         userId,
         userRole,
         page,
@@ -123,13 +124,13 @@ export class MedicalHistoryController {
     }
   }
 
-  async getMedicalHistoriesByDoctor(req: Request, res: Response): Promise<void> {
+  async getMedicalHistoriesByDoctor(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { doctorId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const page = parseInt(req.query['page'] as string) || 1;
+      const limit = parseInt(req.query['limit'] as string) || 10;
       
       if (!userId || !userRole) {
         res.status(401).json({
@@ -140,9 +141,9 @@ export class MedicalHistoryController {
       }
 
       const result = await this.medicalHistoryService.getMedicalHistoriesByDoctor(
-        doctorId,
-        userId,
-        userRole,
+        doctorId!,
+        userId!,
+        userRole!,
         page,
         limit
       );
@@ -168,12 +169,12 @@ export class MedicalHistoryController {
     }
   }
 
-  async getAllMedicalHistories(req: Request, res: Response): Promise<void> {
+  async getAllMedicalHistories(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const page = parseInt(req.query['page'] as string) || 1;
+      const limit = parseInt(req.query['limit'] as string) || 10;
       
       if (!userId || !userRole) {
         res.status(401).json({
@@ -184,16 +185,15 @@ export class MedicalHistoryController {
       }
 
       const filters = {
-        patientId: req.query.patientId as string,
-        doctorId: req.query.doctorId as string,
-        syncStatus: req.query.syncStatus as string,
-        isOffline: req.query.isOffline ? req.query.isOffline === 'true' : undefined,
-        startDate: req.query.startDate as string,
-        endDate: req.query.endDate as string
+        patientId: req.query['patientId'] as string,
+        doctorId: req.query['doctorId'] as string,
+        syncStatus: req.query['syncStatus'] as string,
+        isOffline: req.query['isOffline'] ? req.query['isOffline'] === 'true' : undefined,
+        startDate: req.query['startDate'] as string,
+        endDate: req.query['endDate'] as string
       };
 
       const result = await this.medicalHistoryService.getAllMedicalHistories(
-        userId,
         userRole,
         page,
         limit,
@@ -221,13 +221,13 @@ export class MedicalHistoryController {
     }
   }
 
-  async searchMedicalHistories(req: Request, res: Response): Promise<void> {
+  async searchMedicalHistories(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { query } = req.query;
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const page = parseInt(req.query['page'] as string) || 1;
+      const limit = parseInt(req.query['limit'] as string) || 10;
       
       if (!userId || !userRole) {
         res.status(401).json({
@@ -274,9 +274,9 @@ export class MedicalHistoryController {
     }
   }
 
-  async getUrgentCases(req: Request, res: Response): Promise<void> {
+  async getUrgentCases(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
       
       if (!userId || !userRole) {
@@ -304,9 +304,9 @@ export class MedicalHistoryController {
     }
   }
 
-  async getPendingSyncRecords(req: Request, res: Response): Promise<void> {
+  async getPendingSyncRecords(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
       
       if (!userId || !userRole) {
@@ -317,7 +317,7 @@ export class MedicalHistoryController {
         return;
       }
 
-      const pendingRecords = await this.medicalHistoryService.getPendingSyncRecords(userId, userRole);
+      const pendingRecords = await this.medicalHistoryService.getPendingSyncRecords(userRole);
       
       const response: ApiResponse = {
         success: true,
@@ -334,10 +334,10 @@ export class MedicalHistoryController {
     }
   }
 
-  async syncMedicalHistory(req: Request, res: Response): Promise<void> {
+  async syncMedicalHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
       
       if (!userId || !userRole) {
@@ -348,7 +348,7 @@ export class MedicalHistoryController {
         return;
       }
 
-      const syncedMedicalHistory = await this.medicalHistoryService.syncMedicalHistory(id);
+      const syncedMedicalHistory = await this.medicalHistoryService.syncMedicalHistory(id!);
       
       const response: ApiResponse<MedicalHistoryResponseDto> = {
         success: true,
@@ -365,9 +365,9 @@ export class MedicalHistoryController {
     }
   }
 
-  async getStatistics(req: Request, res: Response): Promise<void> {
+  async getStatistics(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const userRole = req.user?.role;
       
       if (!userId || !userRole) {
@@ -378,7 +378,7 @@ export class MedicalHistoryController {
         return;
       }
 
-      const statistics = await this.medicalHistoryService.getStatistics(userId, userRole);
+      const statistics = await this.medicalHistoryService.getStatistics(userRole);
       
       const response: ApiResponse = {
         success: true,

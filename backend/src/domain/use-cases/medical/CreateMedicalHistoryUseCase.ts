@@ -2,7 +2,7 @@
 import { MedicalHistoryEntity, SyncStatus } from '../../entities/MedicalHistory';
 import { MedicalHistoryRepository } from '../../repositories/MedicalHistoryRepository';
 import { UserRepository } from '../../repositories/UserRepository';
-import { SymptomValueObject, SymptomSeverity } from '../../value-objects/Symptom';
+import { SymptomValueObject, SymptomSeverity, Symptom } from '../../value-objects/Symptom';
 import { LocationValueObject } from '../../value-objects/Location';
 
 export interface CreateMedicalHistoryRequest {
@@ -54,14 +54,20 @@ export class CreateMedicalHistoryUseCase {
     }
 
     // Crear value objects para síntomas
-    const symptoms = request.symptoms.map(symptom => 
-      new SymptomValueObject(
+    const symptoms = request.symptoms.map(symptom => {
+      const symptomVO = new SymptomValueObject(
         symptom.name,
         symptom.severity,
         symptom.duration,
         symptom.description
-      )
-    );
+      );
+      return {
+        name: symptomVO.name,
+        severity: symptomVO.severity,
+        duration: symptomVO.duration,
+        description: symptomVO.description
+      };
+    });
 
     // Crear value object para ubicación si se proporciona
     let location: LocationValueObject | undefined;
@@ -81,7 +87,7 @@ export class CreateMedicalHistoryUseCase {
       request.patientName,
       request.age,
       request.diagnosis,
-      symptoms,
+      symptoms as Symptom[],
       request.description,
       new Date(),
       location,

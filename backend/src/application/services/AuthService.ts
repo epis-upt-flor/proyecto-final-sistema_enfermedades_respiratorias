@@ -1,8 +1,6 @@
 // Servicio de Autenticación - Capa de Aplicación
 import { UserEntity, UserRole } from '../../domain/entities/User';
 import { UserRepository } from '../../domain/repositories/UserRepository';
-import { AuthenticateUserUseCase } from '../../domain/use-cases/auth/AuthenticateUserUseCase';
-import { RegisterUserUseCase } from '../../domain/use-cases/auth/RegisterUserUseCase';
 import { HashService } from './HashService';
 import { TokenService } from './TokenService';
 

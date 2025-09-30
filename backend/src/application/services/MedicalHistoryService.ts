@@ -1,11 +1,10 @@
 // Servicio de Historial Médico - Capa de Aplicación
-import { MedicalHistoryEntity, SyncStatus } from '../../domain/entities/MedicalHistory';
+import { MedicalHistoryEntity } from '../../domain/entities/MedicalHistory';
 import { MedicalHistoryRepository } from '../../domain/repositories/MedicalHistoryRepository';
 import { UserRepository } from '../../domain/repositories/UserRepository';
 import { CreateMedicalHistoryUseCase } from '../../domain/use-cases/medical/CreateMedicalHistoryUseCase';
 import { GetMedicalHistoryUseCase } from '../../domain/use-cases/medical/GetMedicalHistoryUseCase';
-import { SymptomValueObject, SymptomSeverity } from '../../domain/value-objects/Symptom';
-import { LocationValueObject } from '../../domain/value-objects/Location';
+import { SymptomSeverity } from '../../domain/value-objects/Symptom';
 
 export interface CreateMedicalHistoryRequest {
   patientId: string;
@@ -121,7 +120,6 @@ export class MedicalHistoryService {
   }
 
   async getAllMedicalHistories(
-    userId: string,
     userRole: string,
     page: number = 1,
     limit: number = 10,
@@ -197,7 +195,7 @@ export class MedicalHistoryService {
     return medicalHistories;
   }
 
-  async getPendingSyncRecords(userId: string, userRole: string): Promise<MedicalHistoryEntity[]> {
+  async getPendingSyncRecords(userRole: string): Promise<MedicalHistoryEntity[]> {
     // Solo administradores pueden ver registros pendientes de sincronización
     if (userRole !== 'admin') {
       throw new Error('No tienes permisos para ver registros pendientes de sincronización');
@@ -216,7 +214,7 @@ export class MedicalHistoryService {
     return await this.medicalHistoryRepository.update(syncedMedicalHistory);
   }
 
-  async getStatistics(userId: string, userRole: string): Promise<any> {
+  async getStatistics(userRole: string): Promise<any> {
     // Solo administradores pueden ver estadísticas globales
     if (userRole !== 'admin') {
       throw new Error('No tienes permisos para ver estadísticas');

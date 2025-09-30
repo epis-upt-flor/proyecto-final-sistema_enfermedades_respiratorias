@@ -37,10 +37,10 @@ export class DependencyContainer {
     // Servicios de infraestructura
     this.services.set('HashService', new BcryptHashService(12));
     this.services.set('TokenService', new JWTTokenService(
-      process.env.JWT_SECRET || 'default-secret',
-      process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
-      process.env.JWT_EXPIRE || '7d',
-      process.env.JWT_REFRESH_EXPIRE || '30d'
+      process.env['JWT_SECRET'] || 'default-secret',
+      process.env['JWT_REFRESH_SECRET'] || 'default-refresh-secret',
+      process.env['JWT_EXPIRE'] || '7d',
+      process.env['JWT_REFRESH_EXPIRE'] || '30d'
     ));
 
     // Servicios de aplicación

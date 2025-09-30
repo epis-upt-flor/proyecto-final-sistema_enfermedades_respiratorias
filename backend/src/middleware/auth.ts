@@ -1,11 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { AppError } from '../utils/AppError';
 import { AuthenticatedRequest } from '../types';
 
 // Middleware para verificar autenticación
-export const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
   try {
     let token: string | undefined;
 
@@ -19,7 +19,7 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
     }
 
     // Verificar token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as { userId: string };
     
     // Buscar usuario
     const user = await User.findById(decoded.userId);
@@ -33,7 +33,10 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
     }
 
     // Agregar usuario al request
-    req.user = user;
+    req.user = {
+      ...user.toObject(),
+      _id: (user._id as any).toString()
+    };
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -48,7 +51,7 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
 
 // Middleware para verificar roles
 export const authorize = (...roles: string[]) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError('No autenticado', 401));
     }
@@ -62,7 +65,7 @@ export const authorize = (...roles: string[]) => {
 };
 
 // Middleware para verificar si es el propietario del recurso o admin
-export const authorizeOwnerOrAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authorizeOwnerOrAdmin = (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
   if (!req.user) {
     return next(new AppError('No autenticado', 401));
   }
@@ -73,7 +76,7 @@ export const authorizeOwnerOrAdmin = (req: AuthenticatedRequest, res: Response, 
   }
 
   // Si es el propietario del recurso, permitir acceso
-  const resourceUserId = req.params.userId || req.body.userId;
+  const resourceUserId = req.params['userId'] || req.body['userId'];
   if (resourceUserId && resourceUserId === req.user._id) {
     return next();
   }
@@ -82,7 +85,7 @@ export const authorizeOwnerOrAdmin = (req: AuthenticatedRequest, res: Response, 
 };
 
 // Middleware opcional para autenticación (no falla si no hay token)
-export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
   try {
     let token: string | undefined;
 
@@ -91,10 +94,13 @@ export const optionalAuth = async (req: AuthenticatedRequest, res: Response, nex
     }
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+      const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as { userId: string };
       const user = await User.findById(decoded.userId);
       if (user && user.isActive) {
-        req.user = user;
+        req.user = {
+          ...user.toObject(),
+          _id: (user._id as any).toString()
+        };
       }
     }
 

@@ -1,5 +1,6 @@
 // Controlador de Autenticación - Capa de Interfaz
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../../types';
 import { AuthService } from '../../application/services/AuthService';
 import { ApiResponse } from '../dtos/ApiResponse';
 import { LoginRequestDto } from '../dtos/LoginRequestDto';
@@ -111,9 +112,9 @@ export class AuthController {
     }
   }
 
-  async logout(req: Request, res: Response): Promise<void> {
+  async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       
       if (userId) {
         await this.authService.logout(userId);
@@ -133,9 +134,9 @@ export class AuthController {
     }
   }
 
-  async getProfile(req: Request, res: Response): Promise<void> {
+  async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       
       if (!userId) {
         res.status(401).json({
@@ -162,9 +163,9 @@ export class AuthController {
     }
   }
 
-  async updateProfile(req: Request, res: Response): Promise<void> {
+  async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const { name, avatar } = req.body;
       
       if (!userId) {
@@ -200,9 +201,9 @@ export class AuthController {
     }
   }
 
-  async changePassword(req: Request, res: Response): Promise<void> {
+  async changePassword(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const { currentPassword, newPassword } = req.body;
       
       if (!userId) {
@@ -237,9 +238,9 @@ export class AuthController {
     }
   }
 
-  async deactivateAccount(req: Request, res: Response): Promise<void> {
+  async deactivateAccount(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       
       if (!userId) {
         res.status(401).json({

@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { DependencyContainer } from '../../infrastructure/container/DependencyContainer';
 import { asyncHandler } from '../../utils/asyncHandler';
-import { authMiddleware } from '../../middleware/auth';
+import { authenticate } from '../../middleware/auth';
 
 const router = Router();
 const container = DependencyContainer.getInstance();
@@ -14,7 +14,7 @@ router.post('/register', asyncHandler(authController.register.bind(authControlle
 router.post('/refresh-token', asyncHandler(authController.refreshToken.bind(authController)));
 
 // Rutas protegidas
-router.use(authMiddleware); // Middleware de autenticación para todas las rutas siguientes
+router.use(authenticate); // Middleware de autenticación para todas las rutas siguientes
 
 router.post('/logout', asyncHandler(authController.logout.bind(authController)));
 router.get('/profile', asyncHandler(authController.getProfile.bind(authController)));

@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { User as IUser } from '../types';
 
-export interface UserDocument extends IUser, Document {
+export interface UserDocument extends Omit<IUser, '_id'>, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
   toJSON(): any;
 }
@@ -70,7 +70,7 @@ UserSchema.pre('save', async function(next) {
 
   try {
     // Encriptar contraseña con bcrypt
-    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const saltRounds = parseInt(process.env['BCRYPT_ROUNDS'] || '12');
     this.password = await bcrypt.hash(this.password, saltRounds);
     next();
   } catch (error) {
@@ -80,24 +80,25 @@ UserSchema.pre('save', async function(next) {
 
 // Middleware para actualizar lastLogin
 UserSchema.pre('findOneAndUpdate', function(next) {
-  if (this.getUpdate()?.$set?.lastLogin) {
+  const update = this.getUpdate() as any;
+  if (update?.$set?.lastLogin) {
     this.set({ lastLogin: new Date() });
   }
   next();
 });
 
 // Método para comparar contraseñas
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+UserSchema.methods['comparePassword'] = async function(candidatePassword: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(candidatePassword, this.password);
+    return await bcrypt.compare(candidatePassword, this['password']);
   } catch (error) {
     throw new Error('Error al comparar contraseñas');
   }
 };
 
 // Método para convertir a JSON sin campos sensibles
-UserSchema.methods.toJSON = function() {
-  const userObject = this.toObject();
+UserSchema.methods['toJSON'] = function() {
+  const userObject = this['toObject']();
   delete userObject.password;
   delete userObject.__v;
   return userObject;
@@ -117,22 +118,22 @@ UserSchema.virtual('stats', {
 });
 
 // Método estático para buscar usuarios por email
-UserSchema.statics.findByEmail = function(email: string) {
+UserSchema.statics['findByEmail'] = function(email: string) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
 // Método estático para buscar usuarios activos
-UserSchema.statics.findActive = function() {
+UserSchema.statics['findActive'] = function() {
   return this.find({ isActive: true });
 };
 
 // Método estático para buscar por rol
-UserSchema.statics.findByRole = function(role: string) {
+UserSchema.statics['findByRole'] = function(role: string) {
   return this.find({ role, isActive: true });
 };
 
 // Método estático para obtener estadísticas de usuarios
-UserSchema.statics.getUserStats = async function() {
+UserSchema.statics['getUserStats'] = async function() {
   const stats = await this.aggregate([
     {
       $group: {

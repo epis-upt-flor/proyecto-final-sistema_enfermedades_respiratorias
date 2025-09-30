@@ -32,33 +32,54 @@ export interface MedicalHistoryResponseDto {
 
 export class MedicalHistoryResponseDto {
   static fromEntity(medicalHistory: MedicalHistoryEntity): MedicalHistoryResponseDto {
-    return {
+    const dto: MedicalHistoryResponseDto = {
       id: medicalHistory.id,
       patientId: medicalHistory.patientId,
       doctorId: medicalHistory.doctorId,
       patientName: medicalHistory.patientName,
       age: medicalHistory.age,
       diagnosis: medicalHistory.diagnosis,
-      symptoms: medicalHistory.symptoms.map(symptom => ({
-        name: symptom.name,
-        severity: symptom.severity,
-        duration: symptom.duration,
-        description: symptom.description
-      })),
-      description: medicalHistory.description,
+      symptoms: medicalHistory.symptoms.map(symptom => {
+        const symptomDto: { name: string; severity: SymptomSeverity; duration: string; description?: string } = {
+          name: symptom.name,
+          severity: symptom.severity,
+          duration: symptom.duration
+        };
+        
+        if (symptom.description !== undefined) {
+          symptomDto.description = symptom.description;
+        }
+        
+        return symptomDto;
+      }),
       date: medicalHistory.date,
-      location: medicalHistory.location ? {
-        latitude: medicalHistory.location.latitude,
-        longitude: medicalHistory.location.longitude,
-        address: medicalHistory.location.address
-      } : undefined,
-      images: medicalHistory.images,
-      audioNotes: medicalHistory.audioNotes,
       isOffline: medicalHistory.isOffline,
       syncStatus: medicalHistory.syncStatus,
       createdAt: medicalHistory.createdAt,
       updatedAt: medicalHistory.updatedAt
     };
+
+    if (medicalHistory.description !== undefined) {
+      dto.description = medicalHistory.description;
+    }
+
+    if (medicalHistory.location !== undefined) {
+      dto.location = {
+        latitude: medicalHistory.location.latitude,
+        longitude: medicalHistory.location.longitude,
+        address: medicalHistory.location.address
+      };
+    }
+
+    if (medicalHistory.images !== undefined) {
+      dto.images = medicalHistory.images;
+    }
+
+    if (medicalHistory.audioNotes !== undefined) {
+      dto.audioNotes = medicalHistory.audioNotes;
+    }
+
+    return dto;
   }
 
   static fromEntities(medicalHistories: MedicalHistoryEntity[]): MedicalHistoryResponseDto[] {

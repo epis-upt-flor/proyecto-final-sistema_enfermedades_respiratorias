@@ -23,16 +23,11 @@ import { logger } from './utils/logger';
 import { config } from './config/config';
 import { swaggerSpec } from './config/swagger';
 
-// Importar contenedor de dependencias
-import { DependencyContainer } from './infrastructure/container/DependencyContainer';
-
 class App {
   public app: express.Application;
-  private container: DependencyContainer;
 
   constructor() {
     this.app = express();
-    this.container = DependencyContainer.getInstance();
     this.initializeMiddlewares();
     this.initializeRoutes();
     this.initializeErrorHandling();

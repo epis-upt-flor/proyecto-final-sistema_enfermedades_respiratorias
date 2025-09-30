@@ -500,9 +500,20 @@ export class MongoMedicalHistoryRepository implements MedicalHistoryRepository {
   }
 
   private toEntity(medicalHistoryDoc: MedicalHistoryDocument): MedicalHistoryEntity {
-    const symptoms = medicalHistoryDoc.symptoms.map(s => 
-      new SymptomValueObject(s.name, s.severity as SymptomSeverity, s.duration, s.description)
-    );
+    const symptoms = medicalHistoryDoc.symptoms.map(s => {
+      const symptomVO = new SymptomValueObject(s.name, s.severity as SymptomSeverity, s.duration, s.description);
+      const symptom: { name: string; severity: SymptomSeverity; duration: string; description?: string } = {
+        name: symptomVO.name,
+        severity: symptomVO.severity,
+        duration: symptomVO.duration
+      };
+      
+      if (symptomVO.description !== undefined) {
+        symptom.description = symptomVO.description;
+      }
+      
+      return symptom;
+    });
 
     const location = medicalHistoryDoc.location ? 
       new LocationValueObject(
@@ -512,7 +523,7 @@ export class MongoMedicalHistoryRepository implements MedicalHistoryRepository {
       ) : undefined;
 
     return new MedicalHistoryEntity(
-      medicalHistoryDoc._id.toString(),
+      (medicalHistoryDoc._id as any).toString(),
       medicalHistoryDoc.patientId,
       medicalHistoryDoc.doctorId,
       medicalHistoryDoc.patientName,

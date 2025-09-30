@@ -15,17 +15,25 @@ export interface UserResponseDto {
 
 export class UserResponseDto {
   static fromEntity(user: UserEntity): UserResponseDto {
-    return {
+    const dto: UserResponseDto = {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      avatar: user.avatar,
       isActive: user.isActive,
-      lastLogin: user.lastLogin,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
+
+    if (user.avatar !== undefined) {
+      dto.avatar = user.avatar;
+    }
+
+    if (user.lastLogin !== undefined) {
+      dto.lastLogin = user.lastLogin;
+    }
+
+    return dto;
   }
 
   static fromEntities(users: UserEntity[]): UserResponseDto[] {

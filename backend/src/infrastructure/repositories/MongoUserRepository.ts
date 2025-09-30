@@ -207,7 +207,7 @@ export class MongoUserRepository implements UserRepository {
 
   private toEntity(userDoc: UserDocument): UserEntity {
     return new UserEntity(
-      userDoc._id.toString(),
+      (userDoc._id as any).toString(),
       userDoc.name,
       userDoc.email,
       userDoc.password,
