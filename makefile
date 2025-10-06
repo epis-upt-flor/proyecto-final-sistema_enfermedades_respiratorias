@@ -49,8 +49,36 @@ install: ## Instalar dependencias en todos los servicios
 	$(DOCKER_COMPOSE) exec web npm install
 	$(DOCKER_COMPOSE) exec ai-services pip install -r requirements.txt
 
-test: ## Ejecutar tests
-	@echo "🧪 Ejecutando tests..."
+test: ## Ejecutar todos los tests
+	@echo "🧪 Ejecutando tests completos..."
+	@./scripts/test-all.sh
+
+test-ai: ## Tests de AI Services
+	@echo "🤖 Ejecutando tests de AI Services..."
+	@./scripts/test-all.sh --ai-services
+
+test-backend: ## Tests de Backend API
+	@echo "🖥️ Ejecutando tests de Backend API..."
+	@./scripts/test-all.sh --backend
+
+test-web: ## Tests de Web Frontend
+	@echo "🌐 Ejecutando tests de Web Frontend..."
+	@./scripts/test-all.sh --web
+
+test-mobile: ## Tests de Mobile App
+	@echo "📱 Ejecutando tests de Mobile App..."
+	@./scripts/test-all.sh --mobile
+
+test-integration: ## Tests de integración
+	@echo "🔗 Ejecutando tests de integración..."
+	@./scripts/test-all.sh --integration
+
+test-coverage: ## Generar reportes de cobertura
+	@echo "📊 Generando reportes de cobertura..."
+	@./scripts/test-all.sh --coverage
+
+test-legacy: ## Ejecutar tests legacy (Docker)
+	@echo "🧪 Ejecutando tests legacy..."
 	$(DOCKER_COMPOSE) exec backend npm test
 	$(DOCKER_COMPOSE) exec web npm test
 	$(DOCKER_COMPOSE) exec ai-services python -m pytest
@@ -85,3 +113,29 @@ health: ## Check de salud de servicios
 	@curl -f http://localhost:3000 || echo "❌ Web no disponible"
 	@curl -f http://localhost:8000/health || echo "❌ AI Services no disponible"
 	@echo "✅ Health check completado"
+
+lint: ## Ejecutar linting en todos los módulos
+	@echo "🔍 Ejecutando linting..."
+	@cd backend && npm run lint
+	@cd web && npm run lint
+	@cd mobile/RespiCare-Mobile && npm run lint
+	@cd ai-services && flake8 . --max-line-length=127
+
+format: ## Formatear código
+	@echo "✨ Formateando código..."
+	@cd backend && npm run format
+	@cd web && npm run format
+	@cd mobile/RespiCare-Mobile && npm run format
+	@cd ai-services && black . --line-length=127
+
+clean-all: ## Limpiar archivos temporales y coverage
+	@echo "🧹 Limpiando archivos temporales..."
+	@rm -rf coverage-reports
+	@rm -rf ai-services/htmlcov
+	@rm -rf ai-services/coverage.xml
+	@rm -rf backend/coverage
+	@rm -rf web/coverage
+	@rm -rf mobile/RespiCare-Mobile/coverage
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@echo "✅ Limpieza completada"
