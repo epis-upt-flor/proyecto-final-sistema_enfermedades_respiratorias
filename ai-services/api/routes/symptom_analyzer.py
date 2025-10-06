@@ -11,6 +11,8 @@ import structlog
 from core.database import get_database
 from core.cache import get_cache, set_cache, get_cache as get_cache_value
 from models.model_manager import model_manager
+from services.ai_service_manager import ai_service_manager
+from services.symptom_analysis_service import SymptomAnalysisService
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -56,45 +58,25 @@ async def analyze_symptoms(
     cache=Depends(get_cache)
 ) -> SymptomAnalysisOutput:
     """
-    Analyze symptoms and provide medical recommendations
+    Analyze symptoms and provide medical recommendations using AI Service Manager
     """
     start_time = datetime.utcnow()
     
     try:
-        # Check cache first
-        cache_key = f"symptom_analysis:{input_data.patient_id}:{hash(str(input_data.symptoms))}"
-        cached_result = await get_cache_value(cache_key)
+        # Initialize AI Service Manager if needed
+        if not ai_service_manager._initialized:
+            await ai_service_manager.initialize()
         
-        if cached_result:
-            logger.info("Returning cached symptom analysis result")
-            return SymptomAnalysisOutput(**cached_result)
+        # Create symptom analysis service
+        symptom_service = SymptomAnalysisService(ai_service_manager)
         
-        # Analyze symptoms with AI models
-        logger.info("Analyzing symptoms", patient_id=input_data.patient_id)
-        
-        classification_result = await model_manager.classify_symptoms(input_data.symptoms)
-        
-        if "error" in classification_result:
-            raise HTTPException(status_code=500, detail=classification_result["error"])
-        
-        # Generate detailed recommendations
-        recommendations = await _generate_symptom_recommendations(
-            input_data.symptoms,
-            classification_result,
-            input_data.context
-        )
-        
-        # Identify warning signs
-        warning_signs = await _identify_warning_signs(
-            input_data.symptoms,
-            classification_result
-        )
-        
-        # Determine if follow-up is required
-        follow_up_required = await _determine_follow_up(
-            classification_result,
-            warning_signs,
-            input_data.duration
+        # Perform comprehensive symptom analysis
+        analysis_result = await symptom_service.analyze_symptoms_comprehensive(
+            symptoms=input_data.symptoms,
+            patient_id=input_data.patient_id,
+            context=input_data.context,
+            include_trends=True,
+            include_recommendations=True
         )
         
         # Calculate processing time
@@ -104,18 +86,15 @@ async def analyze_symptoms(
         result = SymptomAnalysisOutput(
             patient_id=input_data.patient_id,
             analyzed_at=datetime.utcnow(),
-            urgency_level=classification_result.get("urgency", "low"),
-            severity_score=classification_result.get("severity_score", 0.5),
-            classification=classification_result,
-            recommendations=recommendations,
-            warning_signs=warning_signs,
-            follow_up_required=follow_up_required,
-            confidence_score=classification_result.get("confidence", 0.8),
+            urgency_level=analysis_result.get("urgency_level", "low"),
+            severity_score=analysis_result.get("severity_score", 0.5),
+            classification=analysis_result,
+            recommendations=analysis_result.get("detailed_recommendations", {}).get("immediate_actions", []),
+            warning_signs=analysis_result.get("warning_signs", []),
+            follow_up_required=analysis_result.get("follow_up_required", False),
+            confidence_score=analysis_result.get("confidence_score", 0.8),
             processing_time_ms=int(processing_time)
         )
-        
-        # Cache result
-        await set_cache(cache_key, result.dict(), ttl=1800)  # 30 minutes
         
         # Store in database
         await _store_analysis_result(db, result, input_data.metadata)
