@@ -98,6 +98,25 @@ export interface AIAnalysisDocument extends Omit<IAIAnalysis, '_id'>, Document {
 
 Esto resuelve el conflicto entre el `_id` del tipo de dominio (string) y el `_id` de Mongoose Document (ObjectId).
 
+### 3. Versiones Deprecadas de GitHub Actions
+
+**Problema:** El workflow usaba versiones deprecadas de acciones de GitHub:
+- `actions/checkout@v3` → Deprecado
+- `actions/setup-node@v3` → Deprecado  
+- `actions/upload-artifact@v3` → **Deprecado desde 16 de Abril 2024**
+
+**Error en CI:**
+```
+Error: This request has been automatically failed because it uses a 
+deprecated version of `actions/upload-artifact: v3`. 
+Learn more: https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/
+```
+
+**Solución:** Actualizar todas las acciones a v4:
+- ✅ `actions/checkout@v4`
+- ✅ `actions/setup-node@v4`
+- ✅ `actions/upload-artifact@v4`
+
 ### Archivos Modificados
 
 1. ✅ `docs/diagrams/clean-architecture-mdsd.puml` - Corregida sintaxis PlantUML
@@ -105,6 +124,7 @@ Esto resuelve el conflicto entre el `_id` del tipo de dominio (string) y el `_id
 3. ✅ `backend/package.json` - Script de validación actualizado
 4. ✅ `backend/src/models/AIAnalysis.ts` - Interface corregida
 5. ✅ `backend/src/models/MedicalHistory.ts` - Interface corregida
+6. ✅ `.github/workflows/mdsd-validation.yml` - Actualizadas versiones de acciones a v4
 
 ### Resultados
 
@@ -189,5 +209,41 @@ npm run validate:models
 
 **Elaborado por:** AI Assistant  
 **Fecha:** 21 de Octubre de 2025  
+**Última actualización:** 21 de Octubre de 2025 - Actualizadas versiones de GitHub Actions  
 **Estado:** Correcciones Completas - Listo para Commit
+
+---
+
+## 🔄 Actualización: GitHub Actions Deprecadas
+
+### Segundo Error Encontrado (21 Oct 2025)
+
+Después del primer push, se encontró un nuevo error relacionado con versiones deprecadas:
+
+**Errores:**
+- ❌ Generate and Validate Code - Falló en 3s
+- ❌ Generate UML Diagrams - Falló en 2s
+
+**Causa:** 
+```
+actions/upload-artifact@v3 deprecado desde 16 de Abril 2024
+```
+
+**Correcciones aplicadas:**
+
+| Acción | Antes | Después | Status |
+|--------|-------|---------|--------|
+| checkout | v3 | v4 | ✅ |
+| setup-node | v3 | v4 | ✅ |
+| upload-artifact | v3 | v4 | ✅ |
+
+**Total de actualizaciones:** 12 referencias actualizadas
+
+### Comando para nuevo push:
+
+```bash
+git add .
+git commit -m "fix: actualizar GitHub Actions deprecadas v3 → v4"
+git push
+```
 
