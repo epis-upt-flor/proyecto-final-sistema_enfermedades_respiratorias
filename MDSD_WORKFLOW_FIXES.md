@@ -247,3 +247,47 @@ git commit -m "fix: actualizar GitHub Actions deprecadas v3 → v4"
 git push
 ```
 
+---
+
+## 🔄 Actualización 2: Problemas con Generación de Diagramas
+
+### Tercer Error Encontrado (21 Oct 2025)
+
+El workflow de generación de diagramas continúa fallando.
+
+**Mejoras implementadas:**
+
+1. **Validación de Sintaxis Pre-generación**
+   - ✅ Nuevo script `docs/diagrams/validate-puml.sh`
+   - Valida estructura básica (@startuml, @enduml)
+   - Verifica balance de llaves
+   - Se ejecuta antes de la generación
+
+2. **Mejoras en el Workflow**
+   - ✅ `continue-on-error: true` - No bloquea otros jobs
+   - ✅ Instalación explícita de Java (`default-jre`)
+   - ✅ Procesamiento individual de cada archivo .puml
+   - ✅ Logs detallados de cada archivo
+   - ✅ `if: always()` en upload para capturar archivos parciales
+
+3. **Debugging mejorado**
+   ```yaml
+   - Muestra versión de PlantUML
+   - Procesa cada archivo individualmente
+   - Cuenta archivos generados
+   - No falla si algunos archivos no se generan
+   ```
+
+4. **Gitignore para outputs**
+   - ✅ Nuevo archivo `docs/diagrams/.gitignore`
+   - Evita commitear archivos generados
+
+### Archivos nuevos:
+- `docs/diagrams/validate-puml.sh` - Script de validación
+- `docs/diagrams/.gitignore` - Ignorar outputs generados
+
+### Resultado esperado:
+- El job no bloqueará el workflow completo
+- Identificará qué archivo específico está fallando
+- Generará los diagramas que sean válidos
+

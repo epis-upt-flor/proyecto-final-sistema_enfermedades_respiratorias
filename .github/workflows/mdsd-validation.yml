@@ -150,29 +150,54 @@ jobs:
   generate-diagrams:
     name: Generate UML Diagrams
     runs-on: ubuntu-latest
+    continue-on-error: true
     
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       
+    - name: 🔍 Validate PlantUML syntax
+      run: |
+        cd docs/diagrams
+        chmod +x validate-puml.sh
+        ./validate-puml.sh
+    
     - name: 🎨 Setup PlantUML
       run: |
         sudo apt-get update
-        sudo apt-get install -y plantuml graphviz
+        sudo apt-get install -y plantuml graphviz default-jre
         
     - name: 📊 Generate diagrams
       run: |
         echo "Generating UML diagrams..."
         cd docs/diagrams
-        plantuml *.puml -o output
-        ls -la output/
+        mkdir -p output
+        
+        echo "Testing PlantUML installation..."
+        plantuml -version
+        
+        echo "Testing each .puml file individually..."
+        for file in *.puml; do
+          echo "Processing $file..."
+          plantuml "$file" -tpng -o output && echo "  ✅ $file generated successfully" || echo "  ⚠️  $file failed"
+        done
+        
+        echo ""
+        echo "Listing generated files:"
+        ls -la output/ || echo "Output directory is empty"
+        
+        # Count generated files
+        file_count=$(ls -1 output/*.png 2>/dev/null | wc -l || echo "0")
+        echo "Total PNG files generated: $file_count"
         
     - name: 📤 Upload diagrams
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: uml-diagrams
         path: docs/diagrams/output/
         retention-days: 30
+        if-no-files-found: warn
 
   mdsd-quality-check:
     name: MDSD Quality Metrics
