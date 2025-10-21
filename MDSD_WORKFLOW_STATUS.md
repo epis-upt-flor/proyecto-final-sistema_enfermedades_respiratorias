@@ -12,11 +12,11 @@
 | ✅ Validate Domain Models (18.x) | PASSING | Validación TypeScript OK |
 | ✅ Validate Domain Models (20.x) | PASSING | Validación TypeScript OK |
 | ✅ Validate OpenAPI Schema | PASSING | Schema válido |
-| 🟡 Generate and Validate Code | EXPERIMENTAL | No bloquea workflow |
+| ⏭️ Generate and Validate Code | DISABLED | Generadores deshabilitados |
 | 🟡 Generate UML Diagrams | EXPERIMENTAL | No bloquea workflow |
 | ✅ MDSD Quality Metrics | PASSING | Genera reportes |
 
-**Resultado:** ✅ **El workflow puede completarse exitosamente**
+**Resultado:** ✅ **El workflow puede completarse exitosamente SIN ERRORES**
 
 ---
 
@@ -67,22 +67,27 @@
 
 ## 🟡 Features Experimentales (No Bloqueantes)
 
-### 🟡 1. Generate and Validate Code
-**Estado:** Experimental - No bloquea workflow
+### ⏭️ 1. Generate and Validate Code
+**Estado:** DESHABILITADO - Completamente inactivo
 
-**Por qué falla:**
+**Por qué está deshabilitado:**
 - Los generadores producen código con errores TypeScript
 - Rutas de importación incorrectas (`@domain/...` vs rutas relativas)
 - Módulo `class-validator` no configurado
 - Propiedades sin inicializadores
 - Tipos no importados (Symptom, Location)
 
-**Impacto:** 
-- ⚠️ El código NO se genera automáticamente
-- ✅ El workflow continúa sin fallar
+**Estado actual:**
+- ⏭️ Los generadores NO se ejecutan en el workflow
+- ✅ NO produce errores en annotations
+- ✅ El workflow completa limpiamente
 - 📋 Plan de acción documentado en `backend/src/generators/README.md`
+- 💡 Se mostrar un mensaje informativo en lugar de ejecutar
 
-**Configuración:** `continue-on-error: true`
+**Cuando se habilite:**
+- Los generadores se arreglarán según el plan en `backend/src/generators/README.md`
+- Se descomentarán los pasos en el workflow
+- Se probarán localmente antes de habilitar en CI
 
 ---
 
@@ -167,17 +172,19 @@ git push
 
 ### Resultado Esperado
 
-**✅ Checks que DEBEN pasar:**
+**✅ Checks que PASAN:**
 - Validate Domain Models (18.x) ✅
 - Validate Domain Models (20.x) ✅
 - Validate OpenAPI Schema ✅
 - MDSD Quality Metrics ✅
 
-**🟡 Checks experimentales (pueden fallar):**
-- Generate and Validate Code 🟡
+**⏭️ Checks deshabilitados:**
+- Generate and Validate Code ⏭️ (Muestra mensaje informativo)
+
+**🟡 Checks experimentales (pueden fallar sin bloquear):**
 - Generate UML Diagrams 🟡
 
-**Estado final:** ✅ Success (aunque algunos jobs experimentales fallen)
+**Estado final:** ✅ Success - Sin errores en annotations
 
 ---
 

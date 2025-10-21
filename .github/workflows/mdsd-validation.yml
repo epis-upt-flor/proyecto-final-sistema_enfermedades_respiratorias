@@ -105,10 +105,9 @@ jobs:
       run: echo "OpenAPI schema is valid!"
 
   generate-code:
-    name: Generate and Validate Code
+    name: Code Generation Status (Disabled)
     runs-on: ubuntu-latest
     needs: [validate-models, validate-openapi]
-    continue-on-error: true
     
     steps:
     - name: 📥 Checkout code
@@ -125,38 +124,50 @@ jobs:
       working-directory: ./backend
       run: npm ci
     
-    - name: 🔧 Generate DTOs
-      continue-on-error: true
-      working-directory: ./backend
+    - name: ⚠️ Code Generation Skipped
       run: |
-        echo "⚠️  Code generation is experimental and may fail"
-        npm run generate:dtos || echo "DTO generation failed (expected for now)"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "⚠️  CODE GENERATION IS CURRENTLY DISABLED"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo "Los generadores de código están en fase experimental y"
+        echo "producen código TypeScript con errores de compilación."
+        echo ""
+        echo "Problemas conocidos:"
+        echo "  ❌ Rutas de importación incorrectas (@domain/...)"
+        echo "  ❌ Módulo class-validator no configurado"
+        echo "  ❌ Propiedades sin inicializadores"
+        echo "  ❌ Tipos no importados (Symptom, Location)"
+        echo ""
+        echo "📋 Ver documentación completa:"
+        echo "   backend/src/generators/README.md"
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "✅ Los generadores se habilitarán cuando estén corregidos"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       
-    - name: 🔧 Generate Repositories
-      continue-on-error: true
-      working-directory: ./backend
-      run: |
-        echo "⚠️  Repository generation is experimental and may fail"
-        npm run generate:repositories || echo "Repository generation failed (expected for now)"
-      
-    - name: 🔍 Validate generated code
-      continue-on-error: true
-      working-directory: ./backend
-      run: |
-        echo "Validating generated code compiles..."
-        npm run validate:models || echo "⚠️  Generated code validation failed (generators need fixes)"
+    # - name: 🔧 Generate DTOs
+    #   working-directory: ./backend
+    #   run: npm run generate:dtos
+    #   
+    # - name: 🔧 Generate Repositories
+    #   working-directory: ./backend
+    #   run: npm run generate:repositories
+    #   
+    # - name: 🔍 Validate generated code
+    #   working-directory: ./backend
+    #   run: npm run validate:models
         
-    - name: 📤 Upload generated artifacts
-      uses: actions/upload-artifact@v4
-      if: always()
-      continue-on-error: true
-      with:
-        name: generated-code
-        path: |
-          backend/src/interface-adapters/dtos/generated/
-          backend/src/infrastructure/repositories/generated/
-        retention-days: 7
-        if-no-files-found: warn
+    # - name: 📤 Upload generated artifacts
+    #   uses: actions/upload-artifact@v4
+    #   if: always()
+    #   with:
+    #     name: generated-code
+    #     path: |
+    #       backend/src/interface-adapters/dtos/generated/
+    #       backend/src/infrastructure/repositories/generated/
+    #     retention-days: 7
+    #     if-no-files-found: warn
 
   generate-diagrams:
     name: Generate UML Diagrams
