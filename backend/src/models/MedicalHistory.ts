@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { MedicalHistory as IMedicalHistory, Symptom } from '../types';
 
-export interface MedicalHistoryDocument extends IMedicalHistory, Document {
+export interface MedicalHistoryDocument extends Omit<IMedicalHistory, '_id'>, Document {
   toJSON(): any;
 }
 

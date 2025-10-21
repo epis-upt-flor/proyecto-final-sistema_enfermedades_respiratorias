@@ -5,8 +5,8 @@ skinparam linetype ortho
 
 title Clean Architecture mapped to MDSD - RespiCare
 
-' Center circle - Domain (PIM)
-circle "Enterprise\nBusiness Rules\n(PIM)" as Domain #lightblue {
+' Center - Domain (PIM)
+package "Enterprise\nBusiness Rules\n(PIM)" as Domain #lightblue {
   rectangle "**Entities**" as Entities {
     + UserEntity
     + MedicalHistoryEntity
@@ -17,8 +17,8 @@ circle "Enterprise\nBusiness Rules\n(PIM)" as Domain #lightblue {
   }
 }
 
-' Second circle - Use Cases
-circle "Application\nBusiness Rules" as UseCases #lightgreen {
+' Second layer - Use Cases
+package "Application\nBusiness Rules" as UseCases #lightgreen {
   rectangle "**Use Cases**" as UC {
     + RegisterUserUseCase
     + CreateMedicalHistoryUseCase
@@ -31,8 +31,8 @@ circle "Application\nBusiness Rules" as UseCases #lightgreen {
   }
 }
 
-' Third circle - Interface Adapters (PSM)
-circle "Interface\nAdapters\n(PSM)" as Adapters #lightyellow {
+' Third layer - Interface Adapters (PSM)
+package "Interface\nAdapters\n(PSM)" as Adapters #lightyellow {
   rectangle "**Controllers**" as Controllers {
     HTTP Request/Response
     REST API endpoints
@@ -47,8 +47,8 @@ circle "Interface\nAdapters\n(PSM)" as Adapters #lightyellow {
   }
 }
 
-' Outer circle - Frameworks & Drivers (PSM)
-circle "Frameworks\n& Drivers\n(PSM)" as Frameworks #lightcoral {
+' Outer layer - Frameworks & Drivers (PSM)
+package "Frameworks\n& Drivers\n(PSM)" as Frameworks #lightcoral {
   rectangle "**MongoDB**" as DB {
     UserDocument schema
     MedicalHistoryDocument schema

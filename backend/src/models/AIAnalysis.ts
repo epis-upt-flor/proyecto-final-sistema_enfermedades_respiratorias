@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { AIAnalysis as IAIAnalysis, Symptom } from '../types';
 
-export interface AIAnalysisDocument extends IAIAnalysis, Document {
+export interface AIAnalysisDocument extends Omit<IAIAnalysis, '_id'>, Document {
   toJSON(): any;
 }
 

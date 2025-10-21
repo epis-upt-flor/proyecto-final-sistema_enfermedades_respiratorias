@@ -19,7 +19,7 @@
     "generate:dtos": "ts-node src/generators/dto-generator.ts",
     "generate:repositories": "ts-node src/generators/repository-generator.ts",
     "generate:all": "npm run generate:dtos && npm run generate:repositories",
-    "validate:models": "tsc --noEmit",
+    "validate:models": "tsc --project tsconfig.validation.json --noEmit",
     "validate:openapi": "openapi-generator-cli validate -i openapi/respicare-api.yaml",
     "docs:generate": "typedoc --out docs/api src",
     "diagrams:generate": "plantuml docs/diagrams/*.puml -o output"
