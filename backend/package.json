@@ -22,7 +22,7 @@
     "validate:models": "tsc --project tsconfig.validation.json --noEmit",
     "validate:openapi": "openapi-generator-cli validate -i openapi/respicare-api.yaml",
     "docs:generate": "typedoc --out docs/api src",
-    "diagrams:generate": "plantuml docs/diagrams/*.puml -o output"
+    "diagrams:generate": "java -jar tools/plantuml.jar ../docs/diagrams/*.puml -o ../docs/diagrams/output"
   },
   "keywords": [
     "medical",

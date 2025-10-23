@@ -8,60 +8,60 @@ title Clean Architecture mapped to MDSD - RespiCare
 ' Center - Domain (PIM)
 package "Enterprise\nBusiness Rules\n(PIM)" as Domain #lightblue {
   rectangle "**Entities**" as Entities {
-    + UserEntity
-    + MedicalHistoryEntity
+    [UserEntity]
+    [MedicalHistoryEntity]
   }
   rectangle "**Value Objects**" as VOs {
-    + SymptomVO
-    + LocationVO
+    [SymptomVO]
+    [LocationVO]
   }
 }
 
 ' Second layer - Use Cases
 package "Application\nBusiness Rules" as UseCases #lightgreen {
   rectangle "**Use Cases**" as UC {
-    + RegisterUserUseCase
-    + CreateMedicalHistoryUseCase
-    + AuthenticateUserUseCase
+    [RegisterUserUseCase]
+    [CreateMedicalHistoryUseCase]
+    [AuthenticateUserUseCase]
   }
   rectangle "**Orchestration**" as Orch {
-    Coordinates entities
-    Applies business rules
-    Platform independent
+    [Coordinates entities]
+    [Applies business rules]
+    [Platform independent]
   }
 }
 
 ' Third layer - Interface Adapters (PSM)
 package "Interface\nAdapters\n(PSM)" as Adapters #lightyellow {
   rectangle "**Controllers**" as Controllers {
-    HTTP Request/Response
-    REST API endpoints
+    [HTTP Request/Response]
+    [REST API endpoints]
   }
   rectangle "**DTOs**" as DTOs {
-    + UserResponseDto
-    + CreateMedicalHistoryRequestDto
+    [UserResponseDto]
+    [CreateMedicalHistoryRequestDto]
   }
   rectangle "**Presenters**" as Presenters {
-    Format data for UI
-    Transform entities to DTOs
+    [Format data for UI]
+    [Transform entities to DTOs]
   }
 }
 
 ' Outer layer - Frameworks & Drivers (PSM)
 package "Frameworks\n& Drivers\n(PSM)" as Frameworks #lightcoral {
   rectangle "**MongoDB**" as DB {
-    UserDocument schema
-    MedicalHistoryDocument schema
+    [UserDocument schema]
+    [MedicalHistoryDocument schema]
   }
   rectangle "**Express**" as Express {
-    HTTP Server
-    Middleware
-    Routes
+    [HTTP Server]
+    [Middleware]
+    [Routes]
   }
   rectangle "**External Services**" as External {
-    OpenAI API
-    AWS S3
-    Email Service
+    [OpenAI API]
+    [AWS S3]
+    [Email Service]
   }
 }
 

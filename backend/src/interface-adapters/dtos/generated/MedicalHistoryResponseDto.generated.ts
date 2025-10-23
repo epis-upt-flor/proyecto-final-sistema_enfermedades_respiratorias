@@ -1,6 +1,9 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated from MedicalHistoryEntity
-// Generation date: 2025-10-21T02:20:11.410Z
+// Generation date: 2025-10-22T17:57:39.610Z
+
+import { Symptom } from '../../../domain/value-objects/Symptom';
+import { Location } from '../../../domain/value-objects/Location';
 
 /**
  * MedicalHistory Response DTO

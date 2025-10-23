@@ -1,6 +1,6 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated MongoDB Repository for MedicalHistoryEntity
-// Generation date: 2025-10-21T02:20:25.120Z
+// Generation date: 2025-10-22T17:57:50.211Z
 
 import { Injectable } from '@nestjs/common';
 import { Model, Document } from 'mongoose';

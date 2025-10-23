@@ -1,23 +1,34 @@
 # docker-compose.yml
-version: '3.8'
+# Configuración por defecto - usar docker-compose.dev.yml o docker-compose.prod.yml
 
 services:
-  # Base de datos
+  # Base de datos MongoDB
   mongodb:
     image: mongo:6.0
     container_name: respicare-mongodb
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password123}
       MONGO_INITDB_DATABASE: ${MONGO_DB:-respicare}
     volumes:
       - mongodb_data:/data/db
-      - ./mongodb/init:/docker-entrypoint-initdb.d
+      - ./mongodb/init:/docker-entrypoint-initdb.d:ro
     networks:
       - respicare-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Redis para caché y sesiones
   redis:
@@ -25,89 +36,109 @@ services:
     container_name: respicare-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     networks:
       - respicare-network
-
-  # Backend API
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    container_name: respicare-backend
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    environment:
-      NODE_ENV: development
-      PORT: 3001
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/respicare?authSource=admin
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-key}
-      AI_SERVICE_URL: http://ai-services:8000
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    depends_on:
-      - mongodb
-      - redis
-      - ai-services
-    networks:
-      - respicare-network
-    command: npm run dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Servicios de IA
   ai-services:
     build:
       context: ./ai-services
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: respicare-ai
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       PYTHONPATH: /app
-      DATABASE_URL: mongodb://admin:password@mongodb:27017/respicare?authSource=admin
+      PYTHONUNBUFFERED: 1
+      DATABASE_URL: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/${MONGO_DB:-respicare}?authSource=admin
       REDIS_URL: redis://redis:6379
       MODEL_PATH: /app/models
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     volumes:
       - ./ai-services:/app
       - ai_models:/app/models
       - ai_cache:/app/cache
+      - ai_logs:/app/logs
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - respicare-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Frontend Web
-  web:
+  # Backend API
+  backend:
     build:
-      context: ./web
-      dockerfile: Dockerfile.dev
-    container_name: respicare-web
+      context: ./backend
+      dockerfile: dockerfile.dev
+    container_name: respicare-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
-      REACT_APP_API_URL: http://localhost:3001/api
-      REACT_APP_WS_URL: ws://localhost:3001
-      CHOKIDAR_USEPOLLING: true
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      MONGODB_URI: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/${MONGO_DB:-respicare}?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      AI_SERVICE_URL: http://ai-services:8000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
-      - ./web:/app
+      - ./backend:/app
       - /app/node_modules
+      - backend_logs:/app/logs
     depends_on:
-      - backend
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-services:
+        condition: service_started
     networks:
       - respicare-network
-    stdin_open: true
-    tty: true
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    command: npm run dev
 
-  # Proxy reverso (Nginx)
+  # Nginx Proxy Reverso
   nginx:
     build:
       context: ./nginx
@@ -118,32 +149,41 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
-      - web
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - respicare-network
-
-  # Herramientas de desarrollo
-  adminer:
-    image: adminer
-    container_name: respicare-adminer
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      ADMINER_DEFAULT_SERVER: mongodb
-    networks:
-      - respicare-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   mongodb_data:
+    driver: local
   redis_data:
+    driver: local
   ai_models:
+    driver: local
   ai_cache:
+    driver: local
+  ai_logs:
+    driver: local
+  backend_logs:
+    driver: local
 
 networks:
   respicare-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

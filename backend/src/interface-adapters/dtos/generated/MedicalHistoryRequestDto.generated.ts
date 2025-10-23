@@ -1,8 +1,10 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated from MedicalHistoryEntity
-// Generation date: 2025-10-21T02:20:11.411Z
+// Generation date: 2025-10-22T17:57:39.610Z
 
 import { IsString, IsNotEmpty, IsEmail, IsOptional, IsBoolean, IsNumber, MinLength, MaxLength, Min, Max } from 'class-validator';
+import { Symptom } from '../../../domain/value-objects/Symptom';
+import { Location } from '../../../domain/value-objects/Location';
 
 /**
  * Create MedicalHistory Request DTO
@@ -12,26 +14,26 @@ export class CreateMedicalHistoryRequestDto {
   /** Patient identifier */
   @IsNotEmpty()
   @IsString()
-  patientId: string;
+  patientId!: string;
   /** Doctor identifier */
   @IsNotEmpty()
   @IsString()
-  doctorId: string;
+  doctorId!: string;
   /** Patient name */
   @IsNotEmpty()
   @IsString()
-  patientName: string;
+  patientName!: string;
   /** Patient age */
   @IsNumber()
   @Min(0)
   @Max(150)
-  age: number;
+  age!: number;
   /** Medical diagnosis */
   @IsNotEmpty()
   @IsString()
-  diagnosis: string;
+  diagnosis!: string;
   /** List of symptoms */
-  symptoms: Symptom[];
+  symptoms!: Symptom[];
   /** Additional description */
   @IsString()
   @IsOptional()

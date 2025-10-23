@@ -1,8 +1,8 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated Repository Interface for UserEntity
-// Generation date: 2025-10-21T02:20:25.117Z
+// Generation date: 2025-10-22T17:57:50.210Z
 
-import { UserEntity } from '@domain/entities/User';
+import { UserEntity } from '../../entities/User';
 
 /**
  * Repository interface for User

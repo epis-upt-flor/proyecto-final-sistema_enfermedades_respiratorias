@@ -1,6 +1,6 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated from UserEntity
-// Generation date: 2025-10-21T02:20:11.409Z
+// Generation date: 2025-10-22T17:57:39.609Z
 
 import { IsString, IsNotEmpty, IsEmail, IsOptional, IsBoolean, IsNumber, MinLength, MaxLength, Min, Max } from 'class-validator';
 
@@ -12,21 +12,21 @@ export class CreateUserRequestDto {
   /** User full name */
   @IsNotEmpty()
   @IsString()
-  name: string;
+  name!: string;
   /** User email address */
   @IsNotEmpty()
   @IsString()
   @IsEmail()
-  email: string;
+  email!: string;
   /** User password (hashed) */
   @IsNotEmpty()
   @IsString()
   @MinLength(8)
-  password: string;
+  password!: string;
   /** User role: patient, doctor, admin */
   @IsNotEmpty()
   @IsString()
-  role: string;
+  role!: string;
   /** Avatar URL */
   @IsString()
   @IsOptional()

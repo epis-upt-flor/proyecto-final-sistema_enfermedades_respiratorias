@@ -1,6 +1,6 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated MongoDB Repository for UserEntity
-// Generation date: 2025-10-21T02:20:25.116Z
+// Generation date: 2025-10-22T17:57:50.209Z
 
 import { Injectable } from '@nestjs/common';
 import { Model, Document } from 'mongoose';

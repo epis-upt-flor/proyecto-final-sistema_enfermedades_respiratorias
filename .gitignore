@@ -1,106 +1,152 @@
 # Environment variables
 .env
-.env.*
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.example
-*/.env.example
-**/.env.example
-env.example
-*/env.example
-**/env.example
-
-# Dependencies
-node_modules/
-*/node_modules/
-
-# Production builds
-build/
-dist/
+.env.*.local
+*.env
+!env.example
+!.env.production.example
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # Runtime data
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
-coverage/
-
-# nyc test coverage
-.nyc_output
-
 # Dependency directories
+node_modules/
 jspm_packages/
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Optional npm cache directory
-.npm
+# Build outputs
+dist/
+build/
+*.egg-info/
+.eggs/
 
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
+# Docker
+docker-compose.override.yml
+.dockerignore.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
+*~
 .DS_Store
-Thumbs.db
 
-# Docker
-.dockerignore
+# Testing
+coverage/
+.coverage
+.pytest_cache/
+.jest/
+*.test.js.snap
 
-# Database
-*.db
-*.sqlite
+# Backups
+backups/
+*.backup
+*.bak
+
+# SSL/Certificates
+*.pem
+*.key
+*.crt
+*.csr
+ssl/
+certbot/
 
 # Temporary files
 tmp/
 temp/
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# MongoDB data
+data/db/
+
+# Redis data
+dump.rdb
+
+# AI Models (large files)
+models/
+*.model
+*.pkl
+*.h5
+*.pt
+*.pth
+
+# Cache
+cache/
+.cache/
+*.cache
+
+# Uploads
+uploads/
+
+# Documentation builds
+docs/_build/
+docs/api/
+
+# Package managers
+package-lock.json
+yarn.lock
+Pipfile.lock
+poetry.lock
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint
+.eslintcache
+
+# Webpack
+.webpack/
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+dist/
+
+# Gatsby
+.cache/
+public/
+
+# React Native
+.expo/
+.expo-shared/
+
+# Mobile
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig.*
+metro.config.js.bak
+
+# Misc
+.turbo
+*.local

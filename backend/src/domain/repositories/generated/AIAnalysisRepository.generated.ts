@@ -1,8 +1,8 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated Repository Interface for AIAnalysisEntity
-// Generation date: 2025-10-21T02:20:25.121Z
+// Generation date: 2025-10-22T17:57:50.212Z
 
-import { AIAnalysisEntity } from '@domain/entities/AIAnalysis';
+import { AIAnalysisEntity } from '../../entities/AIAnalysis';
 
 /**
  * Repository interface for AIAnalysis

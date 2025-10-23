@@ -1,8 +1,8 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated Repository Interface for MedicalHistoryEntity
-// Generation date: 2025-10-21T02:20:25.120Z
+// Generation date: 2025-10-22T17:57:50.211Z
 
-import { MedicalHistoryEntity } from '@domain/entities/MedicalHistory';
+import { MedicalHistoryEntity } from '../../entities/MedicalHistory';
 
 /**
  * Repository interface for MedicalHistory

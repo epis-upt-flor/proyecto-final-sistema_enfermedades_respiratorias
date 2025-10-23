@@ -19,8 +19,8 @@ RUN mkdir -p /app/models
 RUN mkdir -p /app/cache
 RUN mkdir -p /app/data/samples
 
-# Descargar modelo médico de spaCy
-RUN python -m spacy download en_core_web_sm
+# Descargar modelo médico de spaCy (versión compatible)
+RUN python -m spacy download en_core_web_sm || echo "Warning: spaCy model download failed, will download on first use"
 
 # Copiar código fuente
 COPY . .

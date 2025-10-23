@@ -1,6 +1,6 @@
 // AUTO-GENERATED - DO NOT EDIT MANUALLY
 // Generated from UserEntity
-// Generation date: 2025-10-21T02:20:11.409Z
+// Generation date: 2025-10-22T17:57:39.608Z
 
 /**
  * User Response DTO
