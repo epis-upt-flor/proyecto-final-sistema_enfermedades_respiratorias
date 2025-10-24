@@ -1,0 +1,479 @@
+/* Importar estilos de Leaflet */
+@import 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css';
+
+.interactive-heatmap-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  position: relative;
+}
+
+.heatmap-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.header-content h1 {
+  margin: 0 0 8px 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.header-content p {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.header-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  min-width: 80px;
+}
+
+.stat-card.high-risk {
+  background: rgba(239, 83, 80, 0.3);
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.refresh-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.refresh-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.heatmap-controls {
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.severity-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.severity-filters label {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.9rem;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: #4a5568;
+}
+
+.filter-btn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.filter-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.filter-btn.high.active {
+  background: #ef5350;
+  border-color: #ef5350;
+}
+
+.filter-btn.medium.active {
+  background: #ffca28;
+  color: #2d3748;
+  border-color: #ffca28;
+}
+
+.filter-btn.low.active {
+  background: #66bb6a;
+  border-color: #66bb6a;
+}
+
+.map-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-legend label {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.9rem;
+}
+
+.legend-items {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.legend-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-circle.high {
+  background: #ef5350;
+}
+
+.legend-circle.medium {
+  background: #ffca28;
+}
+
+.legend-circle.low {
+  background: #66bb6a;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+  min-height: 400px;
+}
+
+.heatmap-sidebar {
+  position: absolute;
+  top: 120px;
+  right: 20px;
+  width: 300px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  z-index: 1000;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.heatmap-sidebar h3 {
+  margin: 0 0 16px 0;
+  color: #2d3748;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.zones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zone-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #f7fafc;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.zone-item:hover {
+  background: #e2e8f0;
+  transform: translateX(4px);
+}
+
+.zone-item.high {
+  border-left: 4px solid #ef5350;
+}
+
+.zone-item.medium {
+  border-left: 4px solid #ffca28;
+}
+
+.zone-item.low {
+  border-left: 4px solid #66bb6a;
+}
+
+.zone-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.zone-item.high .zone-indicator {
+  background: #ef5350;
+}
+
+.zone-item.medium .zone-indicator {
+  background: #ffca28;
+}
+
+.zone-item.low .zone-indicator {
+  background: #66bb6a;
+}
+
+.zone-info {
+  flex: 1;
+}
+
+.zone-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.zone-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.zone-count {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.zone-risk {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.zone-risk.high {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.zone-risk.medium {
+  background: #fef5e7;
+  color: #d69e2e;
+}
+
+.zone-risk.low {
+  background: #c6f6d5;
+  color: #2f855a;
+}
+
+/* Popup personalizado */
+.popup-content {
+  min-width: 200px;
+}
+
+.popup-content h4 {
+  margin: 0 0 8px 0;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.popup-content p {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+/* Estados de carga y error */
+.loading-overlay,
+.error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(248, 250, 252, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.retry-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 16px;
+}
+
+.retry-button:hover {
+  background: #5a67d8;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .heatmap-sidebar {
+    width: 250px;
+  }
+  
+  .header-stats {
+    gap: 12px;
+  }
+  
+  .stat-card {
+    min-width: 70px;
+    padding: 10px 12px;
+  }
+  
+  .stat-number {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .heatmap-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .header-stats {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .heatmap-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .severity-filters {
+    justify-content: center;
+  }
+  
+  .map-legend {
+    justify-content: center;
+  }
+  
+  .heatmap-sidebar {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    margin-top: 16px;
+    max-height: 300px;
+  }
+  
+  .filter-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .legend-items {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .heatmap-header {
+    padding: 16px;
+  }
+  
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .heatmap-controls {
+    padding: 12px 16px;
+  }
+  
+  .stat-card {
+    min-width: 60px;
+    padding: 8px 10px;
+  }
+  
+  .stat-number {
+    font-size: 1.1rem;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+  }
+}
