@@ -402,8 +402,53 @@ Para soporte técnico o preguntas:
 - Integración con MongoDB y Redis
 - Dockerización completa
 
+## 🤖 Sistema de Machine Learning
+
+RespiCare AI incluye un sistema avanzado de ML para clasificación de enfermedades con 4 fases:
+
+### **Fase 1: Random Forest** ✅ IMPLEMENTADO
+- 100-500 árboles para clasificación robusta
+- Sistema de reglas de emergencia para casos críticos
+- Análisis de importancia de características
+- Soporte para 124 enfermedades respiratorias
+
+**Archivos**:
+- `ml_models/synthetic_dataset_generator.py` - Generador de datos sintéticos
+- `ml_models/random_forest_model.py` - Clasificador Random Forest
+
+### **Fase 2: XGBoost** ✅ LISTO PARA IMPLEMENTAR
+- Optimización de hiperparámetros
+- Feature engineering avanzado
+- Explicabilidad SHAP
+- Mejora esperada: +10-15% accuracy
+
+**Archivo**: `ml_models/xgboost_model.py`
+
+### **Fase 3: Neural Networks Multi-Tarea** ✅ LISTO
+- Clasificación paralela: enfermedad, urgencia, gravedad, categoría
+- Hidden layers compartidas
+- Branches específicas por tarea
+
+**Archivo**: `ml_models/neural_network_model.py`
+
+### **Fase 4: Sistema Híbrido** ✅ LISTO
+- Combina reglas médicas + ML
+- Sistema de emergencia priorizado
+- Ensemble de todos los modelos
+- Validación médica
+
+**Archivo**: `ml_models/hybrid_system.py`
+
+**Entrenamiento**: 
+```bash
+python ml_models/train_models.py --generate-dataset --model all --output models/
+```
+
+**Ver**: [ML_ROADMAP.md](../ML_ROADMAP.md) para roadmap completo
+
 ## 📖 Documentación Adicional
 
 - **[README_PATTERNS.md](README_PATTERNS.md)**: Documentación detallada de patrones implementados
 - **[API Documentation](http://localhost:8000/docs)**: Documentación interactiva de la API
 - **[Health Checks](http://localhost:8000/api/v1/health/detailed)**: Estado detallado del sistema
+- **[ML Roadmap](../ML_ROADMAP.md)**: Sistema de ML progresivo

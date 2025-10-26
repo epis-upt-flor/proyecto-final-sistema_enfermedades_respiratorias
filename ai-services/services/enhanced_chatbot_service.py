@@ -115,40 +115,14 @@ class EnhancedChatbotService:
     
     def extract_symptom_keywords(self, user_message: str, tokens: List[str]) -> List[Dict[str, Any]]:
         """
-        Extract medical keywords that are symptoms from tokens
+        Extract medical keywords that are symptoms from tokens - WITHOUT DUPLICATES
         """
         symptoms_found = []
+        seen_symptoms = set()  # Track unique symptoms
         
-        # Enhanced symptom detection - direct matching
-        symptom_patterns = [
-            'fiebre', 'tos', 'toser', 'dolor', 'garganta', 'dificultad', 'respiratoria',
-            'respirar', 'muscular', 'dolores', 'musculares', 'fatiga', 'cansancio',
-            'gastrointestinal', 'nausea', 'vomito', 'diarrea', 'congestion', 'nasal',
-            'secrecion', 'flema', 'esputo', 'escalofrios', 'escalofríos', 'sudoracion',
-            'estornudos', 'picazon', 'nasal', 'rinitis', 'sibilancias', 'disnea',
-            'taquipnea', 'cianosis', 'hemoptisis', 'ronquera', 'ronquidos', 'apnea',
-            'somnolencia', 'mareo', 'vertigo', 'cefalea', 'confusion', 'confusión'
-        ]
-        
-        # Check for symptoms in tokens and user message
         message_lower = user_message.lower()
         
-        for token in tokens:
-            # Check if token matches a symptom pattern
-            for pattern in symptom_patterns:
-                if pattern in token or token in pattern:
-                    if len(token) >= 3:  # Ignore very short tokens
-                        # Find full symptom phrase in original message
-                        symptom_phrase = self._find_symptom_phrase(token, message_lower)
-                        
-                        symptoms_found.append({
-                            'symptom': symptom_phrase,
-                            'matched_token': token,
-                            'confidence': 0.8,
-                            'possible_diseases': self._get_disease_ids_for_symptom(symptom_phrase)
-                        })
-        
-        # Also check for common symptom phrases
+        # Common symptom phrases (check these FIRST for priority)
         symptom_phrases = [
             'dolor de garganta', 'dolor de cabeza', 'dolor de pecho', 'dolor de oido',
             'dificultad para respirar', 'falta de aire', 'ahogo', 'opresion en el pecho',
@@ -156,18 +130,59 @@ class EnhancedChatbotService:
             'síntomas gastrointestinales', 'malestar estomacal',
             'fiebre alta', 'fiebre moderada', 'fiebre leve',
             'tos seca', 'tos productiva', 'tos con flema',
-            'congestion nasal', 'secrecion nasal', 'rinorrea',
-            'fatiga extrema', 'cansancio extremo', 'agotamiento'
+            'congestion nasal', 'secrecion nasal', 'rinorrea', 'secrecion acuosa',
+            'fatiga extrema', 'cansancio extremo', 'agotamiento',
+            'picazon nasal', 'picazon en ojos', 'lagrimeo'
         ]
         
+        # Check for multi-word symptom phrases first
         for phrase in symptom_phrases:
-            if phrase in message_lower:
+            if phrase in message_lower and phrase not in seen_symptoms:
                 symptoms_found.append({
                     'symptom': phrase,
                     'matched_token': phrase.split()[0],
                     'confidence': 0.9,
                     'possible_diseases': self._get_disease_ids_for_symptom(phrase)
                 })
+                seen_symptoms.add(phrase)
+        
+        # Enhanced symptom detection - single words (avoid duplicates)
+        symptom_patterns = {
+            'estornudos': 'estornudos',
+            'congestion': 'congestion nasal',
+            'nasal': 'congestion nasal',
+            'secrecion': 'secrecion nasal',
+            'picazon': 'picazon nasal',
+            'lagrimeo': 'lagrimeo',
+            'fiebre': 'fiebre',
+            'tos': 'tos',
+            'dolor': 'dolor de garganta',
+            'garganta': 'dolor de garganta',
+            'fatiga': 'fatiga',
+            'cansancio': 'fatiga',
+            'dolores': 'dolores musculares',
+            'musculares': 'dolores musculares',
+            'gastrointestinales': 'sintomas gastrointestinales',
+            'nauseas': 'nauseas',
+            'vomito': 'vomito',
+            'escalofrios': 'escalofrios'
+        }
+        
+        # Check for single word symptoms (avoid already seen phrases)
+        for token in tokens:
+            if len(token) >= 3:  # Ignore very short tokens
+                # Check if token matches a symptom pattern
+                if token in symptom_patterns:
+                    symptom_name = symptom_patterns[token]
+                    # Only add if we haven't seen it yet
+                    if symptom_name not in seen_symptoms:
+                        symptoms_found.append({
+                            'symptom': symptom_name,
+                            'matched_token': token,
+                            'confidence': 0.8,
+                            'possible_diseases': self._get_disease_ids_for_symptom(symptom_name)
+                        })
+                        seen_symptoms.add(symptom_name)
         
         return symptoms_found
     
@@ -206,40 +221,47 @@ class EnhancedChatbotService:
         
         # Pattern-based disease identification
         disease_patterns = {
+            'rinitis_alergica': {
+                'name': 'Rinitis alérgica',
+                'symptoms': ['estornudos', 'frecuentes', 'picazon', 'nasal', 'congestion', 'nasal', 'secrecion', 'acuosa', 'lagrimeo', 'picazon', 'ojos'],
+                'urgency': 'baja',
+                'severity': 'leve',
+                'weight': 1
+            },
+            'resfriado_comun': {
+                'name': 'Resfriado común',
+                'symptoms': ['congestion', 'nasal', 'estornudos', 'secrecion', 'nasal', 'malestar', 'general', 'dolor', 'garganta', 'leve', 'fiebre', 'leve'],
+                'urgency': 'baja',
+                'severity': 'leve',
+                'weight': 1
+            },
             'influenza_b': {
                 'name': 'Influenza B',
-                'symptoms': ['fiebre', 'dolores', 'musculares', 'tos', 'garganta', 'fatiga', 'gastrointestinales'],
+                'symptoms': ['fiebre', 'dolores', 'musculares', 'tos', 'garganta', 'fatiga', 'gastrointestinales', 'cansancio', 'dolores', 'corporales'],
                 'urgency': 'media',
                 'severity': 'moderada',
                 'weight': 3
             },
             'influenza_h1n1': {
                 'name': 'Influenza A (H1N1)',
-                'symptoms': ['fiebre', 'alto', 'dolores', 'musculares', 'intensos', 'tos', 'seca'],
+                'symptoms': ['fiebre', 'alto', 'dolores', 'musculares', 'intensos', 'tos', 'seca', 'escalofrios', 'fatiga', 'extrema'],
                 'urgency': 'media',
                 'severity': 'alta',
                 'weight': 3
             },
             'neumonia': {
                 'name': 'Neumonía',
-                'symptoms': ['fiebre', 'alto', 'dificultad', 'respirar', 'tos', 'torácico', 'pecho'],
+                'symptoms': ['fiebre', 'alto', 'dificultad', 'respirar', 'respiratoria', 'tos', 'torácico', 'pecho', 'escalofrios', 'confusion'],
                 'urgency': 'alta',
                 'severity': 'alta',
                 'weight': 4
             },
             'bronquitis': {
                 'name': 'Bronquitis aguda',
-                'symptoms': ['tos', 'persistente', 'productiva', 'torácico', 'fiebre', 'leve'],
+                'symptoms': ['tos', 'persistente', 'productiva', 'torácico', 'pecho', 'fiebre', 'leve', 'sibilancias'],
                 'urgency': 'baja',
                 'severity': 'moderada',
                 'weight': 2
-            },
-            'resfriado': {
-                'name': 'Resfriado común',
-                'symptoms': ['congestion', 'nasal', 'estornudos', 'tos', 'leve', 'garganta', 'leve'],
-                'urgency': 'baja',
-                'severity': 'leve',
-                'weight': 1
             }
         }
         
@@ -264,10 +286,27 @@ class EnhancedChatbotService:
                     'severity': disease_info['severity']
                 }
         
-        # Get top match
+        # Get top match - prioritize by score and number of matched symptoms
         if scores:
-            top_key = max(scores.keys(), key=lambda k: scores[k]['score'])
+            # Sort by score and then by number of matched symptoms
+            top_key = max(scores.keys(), key=lambda k: (scores[k]['score'], len(scores[k]['matched'])))
             top = scores[top_key]
+            
+            # Only return diagnosis if confidence is reasonable (at least 3 matches)
+            if len(top['matched']) < 3:
+                # Return generic diagnosis if confidence is too low
+                return {
+                    'disease_id': None,
+                    'disease_name': 'Infección respiratoria aguda (no especificada)',
+                    'category': 'general',
+                    'symptoms': detected_symptoms,
+                    'matched_symptoms': top['matched'][:3] if top['matched'] else [],
+                    'detected_symptoms': detected_symptoms,
+                    'urgency': 'baja',
+                    'severity': 'leve',
+                    'confidence': 0.4,
+                    'reasoning': f"Síntomas detectados pero clasificación con baja confianza. Coincidencias: {len(top['matched'])} síntomas"
+                }
             
             return {
                 'disease_id': hash(top['name']) % 1000,
