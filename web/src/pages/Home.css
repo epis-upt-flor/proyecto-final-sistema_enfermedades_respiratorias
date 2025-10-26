@@ -1,6 +1,6 @@
 .home-page {
   min-height: calc(100vh - 70px);
-  background: var(--background-light);
+  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
   padding: 30px 20px;
 }
 
@@ -15,14 +15,16 @@
   padding: 30px;
   margin-bottom: 30px;
   text-align: center;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 40px rgba(33, 150, 243, 0.2);
+  border: 2px solid #e3f2fd;
 }
 
 .welcome-banner h1 {
   margin: 0 0 10px 0;
-  color: var(--text-primary);
+  color: #000000;
   font-size: 2.5rem;
-  background: var(--gradient-primary);
+  font-weight: 700;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -30,61 +32,17 @@
 
 .welcome-banner p {
   margin: 0;
-  color: var(--text-secondary);
+  color: #1976d2;
   font-size: 1.1rem;
+  font-weight: 500;
 }
 
 .chatbot-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0;
 }
 
-
-
-/* Floating Action Button */
-.fab-report-button {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 15px 25px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(244, 67, 54, 0.4);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s;
-  z-index: 1000;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 8px 24px rgba(244, 67, 54, 0.4);
-  }
-  50% {
-    box-shadow: 0 8px 32px rgba(244, 67, 54, 0.6);
-  }
-}
-
-.fab-report-button:hover {
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: 0 12px 32px rgba(244, 67, 54, 0.5);
-}
-
-.fab-icon {
-  font-size: 1.5rem;
-}
-
-.fab-text {
-  font-weight: 700;
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -106,22 +64,7 @@
   }
 
   .chatbot-container {
-    padding: 10px;
-  }
-
-  .fab-report-button {
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    font-size: 0.9rem;
-  }
-
-  .fab-text {
-    display: none;
-  }
-
-  .fab-icon {
-    font-size: 2rem;
+    padding: 0;
   }
 }
 

@@ -10,13 +10,13 @@
 }
 
 .heatmap-header {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
   color: white;
   padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 20px var(--shadow-light);
+  box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
   z-index: 1000;
   backdrop-filter: blur(10px);
 }
@@ -25,12 +25,17 @@
   margin: 0 0 8px 0;
   font-size: 1.8rem;
   font-weight: bold;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-content p {
   margin: 0;
   font-size: 1rem;
-  opacity: 0.9;
+  opacity: 1;
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .header-stats {
@@ -40,12 +45,14 @@
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffffff;
   padding: 12px 16px;
   border-radius: 8px;
   text-align: center;
   backdrop-filter: blur(10px);
   min-width: 80px;
+  border: 2px solid #e3f2fd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card.emergency {
@@ -73,11 +80,14 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 4px;
+  color: #1976d2;
 }
 
 .stat-label {
   font-size: 0.8rem;
-  opacity: 0.9;
+  font-weight: 600;
+  color: #000000;
+  opacity: 1;
 }
 
 .refresh-button {

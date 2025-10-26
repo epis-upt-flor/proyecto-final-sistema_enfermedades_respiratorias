@@ -153,7 +153,7 @@ function Dashboard() {
         </div>
 
         <footer className="dashboard-footer">
-          <p>RespiCare © 2024 - Sistema de Enfermedades Respiratorias</p>
+          <p>RespiCare © 2025 - Sistema de Enfermedades Respiratorias</p>
           <p className="tech-stack">
             React • Node.js • Python • MongoDB • Redis • Docker
           </p>

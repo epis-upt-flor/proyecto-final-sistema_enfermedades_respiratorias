@@ -1,34 +1,38 @@
 .analytics-page {
   min-height: 100vh;
-  background: #f8fafc;
+  background: #f8f9ff;
 }
 
 .analytics-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
   color: white;
   padding: 40px 24px;
   text-align: center;
+  box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
 }
 
 .analytics-header h1 {
   margin: 0 0 12px 0;
   font-size: 2.5rem;
   font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .analytics-header p {
   margin: 0;
   font-size: 1.1rem;
-  opacity: 0.9;
+  opacity: 0.95;
+  font-weight: 500;
 }
 
 .analytics-tabs {
   display: flex;
   justify-content: center;
   background: white;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid #e3f2fd;
   padding: 0 24px;
   gap: 0;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
 }
 
 .tab-button {
@@ -36,7 +40,7 @@
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  color: #718096;
+  color: #666666;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -45,14 +49,14 @@
 }
 
 .tab-button:hover {
-  color: #4a5568;
-  background: #f7fafc;
+  color: #000000;
+  background: #f8f9ff;
 }
 
 .tab-button.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-  background: #f7fafc;
+  color: #1976d2;
+  border-bottom-color: #2196f3;
+  background: #f8f9ff;
 }
 
 .tab-button.active::after {
@@ -65,7 +69,7 @@
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 6px solid #667eea;
+  border-top: 6px solid #2196f3;
 }
 
 .analytics-content {
@@ -94,7 +98,7 @@
   }
   
   .tab-button {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e3f2fd;
     border-radius: 0;
     text-align: left;
   }

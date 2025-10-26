@@ -1,6 +1,6 @@
 .dashboard-page {
   min-height: calc(100vh - 70px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
   padding: 30px 20px;
 }
 
@@ -9,26 +9,32 @@
   margin: 0 auto;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(33, 150, 243, 0.3);
   overflow: hidden;
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
   color: white;
   padding: 40px;
   text-align: center;
+  box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
 }
 
 .dashboard-header h1 {
   margin: 0 0 10px 0;
   font-size: 2.5rem;
+  color: #000000;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
 }
 
 .dashboard-subtitle {
   margin: 0;
   font-size: 1.1rem;
-  opacity: 0.9;
+  opacity: 0.95;
+  font-weight: 500;
+  color: #000000;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
 }
 
 .dashboard-content {
@@ -40,9 +46,10 @@
 }
 
 .services-section h3 {
-  color: #333;
+  color: #000000;
   margin-bottom: 20px;
   font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .loading {
@@ -53,8 +60,8 @@
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #667eea;
+  border: 5px solid #e3f2fd;
+  border-top: 5px solid #2196f3;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;
@@ -77,17 +84,19 @@
 .retry-button {
   margin-top: 15px;
   padding: 10px 20px;
-  background: #667eea;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 1rem;
-  transition: background 0.3s;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
 }
 
 .retry-button:hover {
-  background: #5568d3;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
 }
 
 .services-grid {
@@ -98,16 +107,18 @@
 }
 
 .service-card {
-  background: #f8f9fa;
+  background: #ffffff;
   border-radius: 15px;
   padding: 25px;
   transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
+  border: 2px solid #e3f2fd;
 }
 
 .service-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(33, 150, 243, 0.2);
+  border-color: #2196f3;
 }
 
 .status-indicator {
@@ -130,15 +141,17 @@
 }
 
 .service-card h4 {
-  color: #333;
+  color: #000000;
   margin-bottom: 10px;
   font-size: 1.3rem;
+  font-weight: 700;
 }
 
 .service-status {
   font-size: 1rem;
   margin-bottom: 15px;
   font-weight: 600;
+  color: #1976d2;
 }
 
 .service-details {
@@ -150,13 +163,19 @@
 
 .service-details p {
   margin: 5px 0;
-  color: #666;
+  color: #000000;
   font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.service-details p strong {
+  color: #1976d2;
+  font-weight: 700;
 }
 
 .service-link {
   display: inline-block;
-  color: #667eea;
+  color: #2196f3;
   text-decoration: none;
   font-weight: 600;
   margin-top: 10px;
@@ -164,38 +183,42 @@
 }
 
 .service-link:hover {
-  color: #5568d3;
+  color: #1976d2;
 }
 
 .refresh-button {
   display: block;
   margin: 20px auto;
   padding: 12px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: #000000 !important;
   border: none;
   border-radius: 25px;
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;
-  transition: transform 0.3s;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
 }
 
 .refresh-button:hover {
   transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
 }
 
 .info-section {
-  background: #f8f9fa;
+  background: #f8f9ff;
   border-radius: 15px;
   padding: 25px;
   margin-bottom: 40px;
+  border: 1px solid #e3f2fd;
 }
 
 .info-section h3 {
-  color: #333;
+  color: #000000;
   margin-bottom: 20px;
   font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .endpoints-list {
@@ -230,13 +253,14 @@
 }
 
 .endpoint a {
-  color: #667eea;
+  color: #2196f3;
   text-decoration: none;
   transition: color 0.3s;
+  font-weight: 600;
 }
 
 .endpoint a:hover {
-  color: #5568d3;
+  color: #1976d2;
   text-decoration: underline;
 }
 
@@ -245,9 +269,10 @@
 }
 
 .admin-tools h3 {
-  color: #333;
+  color: #000000;
   margin-bottom: 20px;
   font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .tools-grid {
@@ -257,17 +282,19 @@
 }
 
 .tool-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
   color: white;
   border-radius: 15px;
   padding: 25px;
   text-align: center;
   text-decoration: none;
-  transition: transform 0.3s;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
 }
 
 .tool-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
 }
 
 .tool-icon {
