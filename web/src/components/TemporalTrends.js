@@ -34,7 +34,7 @@ function TemporalTrends() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/analytics/mock-trends', {
+      const response = await axios.get('http://localhost:3001/api/analytics/temporal-trends', {
         params: {
           period: selectedPeriod,
           district: selectedDistrict !== 'all' ? selectedDistrict : undefined,

@@ -4,15 +4,10 @@ import './ChatBot.css';
 
 function ChatBot() {
   const [sessionId, setSessionId] = useState(null);
-  const [messages, setMessages] = useState([
-    {
-      type: 'bot',
-      text: '¡Hola! Soy el asistente virtual de RespiCare. ¿En qué puedo ayudarte con tus consultas sobre enfermedades respiratorias?',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   const messagesEndRef = useRef(null);
 
   // Initialize conversation session
@@ -177,97 +172,175 @@ function ChatBot() {
     }
   };
 
-  const quickQuestions = [
-    '¿Qué es el asma?',
-    '¿Cuáles son los síntomas de neumonía?',
-    '¿Cómo prevenir enfermedades respiratorias?',
-    '¿Qué hacer si tengo dificultad para respirar?'
+  const quickActions = [
+    {
+      id: 'flu-symptoms',
+      title: 'Síntomas de gripe',
+      icon: '🤒',
+      description: 'Información sobre síntomas de gripe e influenza'
+    },
+    {
+      id: 'respiratory-health',
+      title: 'Salud respiratoria',
+      icon: '🫁',
+      description: 'Consejos para mantener una buena salud respiratoria'
+    },
+    {
+      id: 'urgent-consultation',
+      title: 'Consulta urgente',
+      icon: '🚨',
+      description: 'Síntomas que requieren atención médica inmediata'
+    }
   ];
 
-  const handleQuickQuestion = (question) => {
+  const handleQuickAction = (action) => {
+    setShowWelcome(false);
+    let question = '';
+    
+    switch(action.id) {
+      case 'flu-symptoms':
+        question = '¿Cuáles son los síntomas de la gripe y cómo puedo diferenciarla de un resfriado común?';
+        break;
+      case 'respiratory-health':
+        question = '¿Qué puedo hacer para mantener una buena salud respiratoria y prevenir enfermedades?';
+        break;
+      case 'urgent-consultation':
+        question = '¿Cuáles son los síntomas respiratorios que requieren atención médica urgente?';
+        break;
+      default:
+        question = action.title;
+    }
+    
     setInputText(question);
+    setTimeout(() => {
+      handleSend();
+    }, 100);
+  };
+
+  const startConversation = () => {
+    setShowWelcome(false);
+    const welcomeMessage = {
+      type: 'bot',
+      text: '¡Hola! Soy tu asistente médico de Respicare. Estoy aquí para ayudarte con información sobre salud respiratoria, síntomas y orientación médica. ¿En qué puedo ayudarte hoy?',
+      timestamp: new Date()
+    };
+    setMessages([welcomeMessage]);
   };
 
   return (
     <div className="chatbot-container">
-      <div className="chatbot-header">
-        <div className="header-content">
-          <span className="header-icon">🤖</span>
-          <div>
-            <h3>Asistente Virtual RespiCare</h3>
-            <p className="header-subtitle">Consultas sobre Enfermedades Respiratorias</p>
+      {showWelcome ? (
+        <div className="welcome-screen">
+          <div className="welcome-header">
+            <h1 className="welcome-title">Bienvenido a Respicare</h1>
+            <p className="welcome-subtitle">Tu asistente médico inteligente está aquí para ayudarte</p>
           </div>
-        </div>
-        <div className="status-indicator online">
-          <span className="status-dot"></span>
-          En línea
-        </div>
-      </div>
+          
+          <div className="assistant-card">
+            <div className="assistant-avatar">
+              <div className="avatar-icon">🤖</div>
+            </div>
+            <div className="assistant-info">
+              <h3 className="assistant-name">Asistente Respicare</h3>
+              <p className="assistant-status">En línea - Listo para ayudarte</p>
+            </div>
+          </div>
 
-      <div className="chatbot-messages">
-        {messages.map((message, index) => (
-          <div key={index} className={`message ${message.type}`}>
-            <div className="message-avatar">
-              {message.type === 'bot' ? '🤖' : '👤'}
-            </div>
-            <div className="message-content">
-              <div className="message-text">{message.text}</div>
-              <div className="message-time">
-                {message.timestamp.toLocaleTimeString('es-PE', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </div>
+          <div className="welcome-message">
+            <div className="message-bubble">
+              ¡Hola! Soy tu asistente médico de Respicare. Estoy aquí para ayudarte con información sobre salud respiratoria, síntomas y orientación médica. ¿En qué puedo ayudarte hoy?
             </div>
           </div>
-        ))}
-        {isLoading && (
-          <div className="message bot">
-            <div className="message-avatar">🤖</div>
-            <div className="message-content">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      <div className="quick-questions">
-        <p className="quick-questions-title">Preguntas rápidas:</p>
-        <div className="quick-questions-list">
-          {quickQuestions.map((question, index) => (
-            <button
-              key={index}
-              className="quick-question-btn"
-              onClick={() => handleQuickQuestion(question)}
+          <div className="quick-actions">
+            {quickActions.map((action) => (
+              <button
+                key={action.id}
+                className="quick-action-btn"
+                onClick={() => handleQuickAction(action)}
+              >
+                <span className="action-icon">{action.icon}</span>
+                <span className="action-title">{action.title}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="start-conversation">
+            <button 
+              className="start-btn"
+              onClick={startConversation}
             >
-              {question}
+              Comenzar conversación
             </button>
-          ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="chatbot-header">
+            <div className="header-content">
+              <span className="header-icon">🤖</span>
+              <div>
+                <h3>Asistente Respicare</h3>
+                <p className="header-subtitle">Tu asistente médico inteligente</p>
+              </div>
+            </div>
+            <div className="status-indicator online">
+              <span className="status-dot"></span>
+              En línea
+            </div>
+          </div>
 
-      <div className="chatbot-input">
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Escribe tu consulta sobre enfermedades respiratorias..."
-          rows="2"
-          disabled={isLoading}
-        />
-        <button 
-          onClick={handleSend} 
-          disabled={isLoading || !inputText.trim()}
-          className="send-button"
-        >
-          {isLoading ? '⏳' : '📤'}
-        </button>
-      </div>
+          <div className="chatbot-messages">
+            {messages.map((message, index) => (
+              <div key={index} className={`message ${message.type}`}>
+                <div className="message-avatar">
+                  {message.type === 'bot' ? '🤖' : '👤'}
+                </div>
+                <div className="message-content">
+                  <div className="message-text">{message.text}</div>
+                  <div className="message-time">
+                    {message.timestamp.toLocaleTimeString('es-PE', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="message bot">
+                <div className="message-avatar">🤖</div>
+                <div className="message-content">
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="chatbot-input">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Escribe tu consulta aquí..."
+              rows="2"
+              disabled={isLoading}
+            />
+            <button 
+              onClick={handleSend} 
+              disabled={isLoading || !inputText.trim()}
+              className="send-button"
+            >
+              {isLoading ? '⏳' : 'Enviar'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -8,10 +8,50 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Swagger configuration
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'RespiCare API',
+      version: '1.0.0',
+      description: 'Sistema Integral de Enfermedades Respiratorias - API Documentation',
+      contact: {
+        name: 'RespiCare Team',
+        email: 'support@respicare.com'
+      }
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+        description: 'Development server'
+      }
+    ],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    }
+  },
+  apis: [
+    path.join(__dirname, 'routes/*.js'),
+    path.join(__dirname, 'index-dev.js')
+  ]
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Middleware
 app.use(helmet());
@@ -21,7 +61,38 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Root endpoint
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'RespiCare API Documentation'
+}));
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root endpoint
+ *     description: Returns basic API information
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 version:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 environment:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ */
 app.get('/', (req, res) => {
   res.json({
     message: 'RespiCare Backend API',
@@ -32,7 +103,34 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check endpoint
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check
+ *     description: Returns system health status
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: System health status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 service:
+ *                   type: string
+ *                 version:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ *                 uptime:
+ *                   type: number
+ *                 memory:
+ *                   type: object
+ */
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -44,7 +142,32 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API info endpoint
+/**
+ * @swagger
+ * /api:
+ *   get:
+ *     summary: API information
+ *     description: Returns detailed API information and available endpoints
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: API information and endpoints
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 version:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 endpoints:
+ *                   type: object
+ *                 database:
+ *                   type: object
+ */
 app.get('/api', (req, res) => {
   res.json({
     message: 'RespiCare API',
@@ -54,6 +177,7 @@ app.get('/api', (req, res) => {
       root: '/',
       health: '/api/health',
       info: '/api',
+      docs: '/api-docs',
       auth: '/api/auth/* (coming soon)',
       patients: '/api/patients/* (coming soon)',
       medicalHistory: '/api/medical-history/* (coming soon)',
@@ -121,7 +245,7 @@ const chatConversationsRoutes = require('./routes/chatConversationsRoutes');
 app.use('/api/chat-conversations', chatConversationsRoutes);
 
 // Analytics Routes
-const analyticsRoutes = require('./routes/analyticsRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutesNew');
 app.use('/api/analytics', analyticsRoutes);
 
 // Simple Analytics Routes (for better performance)
@@ -166,6 +290,7 @@ app.listen(PORT, () => {
   console.log(`🔗 API URL: http://localhost:${PORT}`);
   console.log(`❤️  Health: http://localhost:${PORT}/api/health`);
   console.log(`📚 Info: http://localhost:${PORT}/api`);
+  console.log(`📖 API Docs: http://localhost:${PORT}/api-docs`);
   console.log('='.repeat(50) + '\n');
 });
 

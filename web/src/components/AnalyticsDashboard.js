@@ -19,7 +19,7 @@ function AnalyticsDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/analytics/mock-dashboard');
+      const response = await axios.get('http://localhost:3001/api/analytics/dashboard');
       
       if (response.data.success) {
         setDashboardData(response.data.data);

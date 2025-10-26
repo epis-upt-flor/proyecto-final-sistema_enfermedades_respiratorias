@@ -231,7 +231,7 @@
 
 .trend-count {
   font-weight: bold;
-  color: #667eea;
+  color: var(--primary-color);
   text-align: right;
 }
 
@@ -251,7 +251,7 @@
 }
 
 .week-count {
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: bold;
 }
 
@@ -281,9 +281,9 @@
 }
 
 .symptom-count {
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: bold;
-  background: #e2e8f0;
+  background: var(--secondary-color);
   padding: 4px 12px;
   border-radius: 12px;
 }

@@ -40,7 +40,7 @@ function DiseaseReports() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/analytics/mock-diseases', {
+      const response = await axios.get('http://localhost:3001/api/analytics/disease-reports', {
         params: {
           district: selectedDistrict !== 'all' ? selectedDistrict : undefined,
           period: selectedPeriod

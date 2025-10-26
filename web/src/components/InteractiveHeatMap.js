@@ -23,17 +23,19 @@ function MapCenter({ center, zoom }) {
 
 // Componente para actualizar círculos de calor
 function HeatCircles({ data, selectedSeverity }) {
-  const getCircleColor = (severity) => {
-    switch (severity) {
-      case 'high': return '#ef5350';
-      case 'medium': return '#ffca28';
-      case 'low': return '#66bb6a';
-      default: return '#bdbdbd';
+  const getEpidemiologicalColor = (alertLevel) => {
+    switch (alertLevel) {
+      case 'emergency': return '#ef4444'; // Rojo - Alarma/Emergencia
+      case 'alert': return '#f59e0b'; // Amarillo - Alerta
+      case 'normal': return '#10b981'; // Verde - Situación Normal
+      default: return '#6b7280'; // Gris - Sin datos
     }
   };
 
   const getCircleRadius = (count) => {
-    if (count >= 35) return 800;
+    // Radio basado en el número de casos
+    if (count >= 50) return 1000;
+    if (count >= 30) return 800;
     if (count >= 20) return 600;
     if (count >= 10) return 400;
     return 200;
@@ -41,7 +43,7 @@ function HeatCircles({ data, selectedSeverity }) {
 
   const filteredData = selectedSeverity === 'all' 
     ? data 
-    : data.filter(item => item.severity === selectedSeverity);
+    : data.filter(item => item.epidemiologicalAlert === selectedSeverity);
 
   return (
     <>
@@ -51,17 +53,31 @@ function HeatCircles({ data, selectedSeverity }) {
           center={[location.lat, location.lng]}
           radius={getCircleRadius(location.count)}
           pathOptions={{
-            color: getCircleColor(location.severity),
-            fillColor: getCircleColor(location.severity),
-            fillOpacity: 0.3,
-            weight: 2
+            color: getEpidemiologicalColor(location.epidemiologicalAlert),
+            fillColor: getEpidemiologicalColor(location.epidemiologicalAlert),
+            fillOpacity: 0.4,
+            weight: 3
           }}
         >
           <Popup>
             <div className="popup-content">
               <h4>{location.district}</h4>
-              <p><strong>Casos:</strong> {location.count}</p>
-              <p><strong>Severidad:</strong> {location.severity}</p>
+              <p><strong>Casos Actuales:</strong> {location.count}</p>
+              <p><strong>Nivel de Alerta:</strong> 
+                <span className={`alert-level ${location.epidemiologicalAlert}`}>
+                  {location.epidemiologicalAlert === 'emergency' ? '🔴 Emergencia' :
+                   location.epidemiologicalAlert === 'alert' ? '🟡 Alerta' : '🟢 Normal'}
+                </span>
+              </p>
+              {location.historicalData && (
+                <div className="historical-info">
+                  <p><strong>Datos Históricos:</strong></p>
+                  <p>• Percentil 75: {location.historicalData.p75} casos</p>
+                  <p>• Percentil 95: {location.historicalData.p95} casos</p>
+                  <p>• Promedio 4 semanas: {location.historicalData.avg4weeks} casos</p>
+                  <p>• Mismo período año anterior: {location.historicalData.lastYear} casos</p>
+                </div>
+              )}
               <p><strong>Síntomas:</strong> {location.symptoms.join(', ')}</p>
               <p><strong>Último reporte:</strong> {new Date(location.lastReport).toLocaleDateString()}</p>
             </div>
@@ -92,9 +108,61 @@ function InteractiveHeatMap() {
     'Boca del Río': [-18.1000, -70.3000]
   };
 
+  // Datos históricos simulados para cálculo de percentiles (últimos 5 años)
+  const historicalData = {
+    'Centro de Tacna': { p75: 25, p95: 45, avg4weeks: 15, lastYear: 20 },
+    'Alto de la Alianza': { p75: 20, p95: 35, avg4weeks: 12, lastYear: 18 },
+    'Gregorio Albarracín': { p75: 18, p95: 30, avg4weeks: 10, lastYear: 15 },
+    'Ciudad Nueva': { p75: 15, p95: 25, avg4weeks: 8, lastYear: 12 },
+    'Pocollay': { p75: 12, p95: 20, avg4weeks: 6, lastYear: 10 },
+    'Calana': { p75: 10, p95: 18, avg4weeks: 5, lastYear: 8 },
+    'Pachia': { p75: 8, p95: 15, avg4weeks: 4, lastYear: 6 },
+    'Boca del Río': { p75: 6, p95: 12, avg4weeks: 3, lastYear: 5 }
+  };
+
   useEffect(() => {
     fetchHeatmapData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Función para calcular el nivel de alerta epidemiológica
+  const calculateEpidemiologicalAlert = (district, currentCases) => {
+    const historical = historicalData[district];
+    if (!historical) return 'normal';
+
+    const { p75, p95, avg4weeks, lastYear } = historical;
+    
+    // Criterio 1: Percentiles del corredor endémico
+    if (currentCases >= p95) {
+      return 'emergency'; // Rojo - Por encima del percentil 95
+    }
+    
+    if (currentCases >= p75) {
+      return 'alert'; // Amarillo - Entre percentil 75 y 95
+    }
+    
+    // Criterio 2: Incremento respecto al promedio de las últimas 4 semanas
+    const increaseFromAvg = ((currentCases - avg4weeks) / avg4weeks) * 100;
+    if (increaseFromAvg >= 100) {
+      return 'emergency'; // Rojo - Incremento mayor al 100%
+    }
+    
+    if (increaseFromAvg >= 50) {
+      return 'alert'; // Amarillo - Incremento del 50-100%
+    }
+    
+    // Criterio 3: Comparación con el mismo período del año anterior
+    const increaseFromLastYear = ((currentCases - lastYear) / lastYear) * 100;
+    if (increaseFromLastYear >= 100) {
+      return 'emergency'; // Rojo - Duplicación o más
+    }
+    
+    if (increaseFromLastYear >= 50) {
+      return 'alert'; // Amarillo - Incremento del 50-100%
+    }
+    
+    // Si no cumple ningún criterio de alerta
+    return 'normal'; // Verde - Situación normal
+  };
 
   const fetchHeatmapData = async () => {
     setLoading(true);
@@ -103,16 +171,21 @@ function InteractiveHeatMap() {
       const response = await axios.get('http://localhost:3001/api/symptom-reports/heatmap');
       
       if (response.data.success) {
-        // Transformar datos para el mapa
-        const transformedData = response.data.data.map(item => ({
-          district: item.district,
-          count: item.count,
-          severity: item.riskLevel,
-          lat: districtCoordinates[item.district]?.[0] || -18.0066,
-          lng: districtCoordinates[item.district]?.[1] || -70.2463,
-          symptoms: item.symptoms || ['Síntomas respiratorios'],
-          lastReport: item.lastReport || new Date().toISOString()
-        }));
+        // Transformar datos para el mapa con alertas epidemiológicas
+        const transformedData = response.data.data.map(item => {
+          const epidemiologicalAlert = calculateEpidemiologicalAlert(item.district, item.count);
+          return {
+            district: item.district,
+            count: item.count,
+            severity: item.riskLevel,
+            epidemiologicalAlert: epidemiologicalAlert,
+            lat: districtCoordinates[item.district]?.[0] || -18.0066,
+            lng: districtCoordinates[item.district]?.[1] || -70.2463,
+            symptoms: item.symptoms || ['Síntomas respiratorios'],
+            lastReport: item.lastReport || new Date().toISOString(),
+            historicalData: historicalData[item.district] || null
+          };
+        });
         
         setHeatmapData(transformedData);
       } else {
@@ -126,12 +199,22 @@ function InteractiveHeatMap() {
     }
   };
 
+  const getEpidemiologicalColor = (alertLevel) => {
+    switch (alertLevel) {
+      case 'emergency': return '#ef4444'; // Rojo - Alarma/Emergencia
+      case 'alert': return '#f59e0b'; // Amarillo - Alerta
+      case 'normal': return '#10b981'; // Verde - Situación Normal
+      default: return '#6b7280'; // Gris - Sin datos
+    }
+  };
+
   const getSeverityStats = () => {
     const stats = {
       total: heatmapData.length,
-      high: heatmapData.filter(item => item.severity === 'high').length,
-      medium: heatmapData.filter(item => item.severity === 'medium').length,
-      low: heatmapData.filter(item => item.severity === 'low').length
+      normal: heatmapData.filter(item => item.epidemiologicalAlert === 'normal').length,
+      alert: heatmapData.filter(item => item.epidemiologicalAlert === 'alert').length,
+      emergency: heatmapData.filter(item => item.epidemiologicalAlert === 'emergency').length,
+      totalCases: heatmapData.reduce((sum, item) => sum + item.count, 0)
     };
     return stats;
   };
@@ -175,12 +258,20 @@ function InteractiveHeatMap() {
             <div className="stat-number">{stats.total}</div>
             <div className="stat-label">Zonas Activas</div>
           </div>
-          <div className="stat-card high-risk">
-            <div className="stat-number">{stats.high}</div>
-            <div className="stat-label">Alto Riesgo</div>
+          <div className="stat-card emergency">
+            <div className="stat-number">{stats.emergency}</div>
+            <div className="stat-label">🔴 Emergencia</div>
+          </div>
+          <div className="stat-card alert">
+            <div className="stat-number">{stats.alert}</div>
+            <div className="stat-label">🟡 Alerta</div>
+          </div>
+          <div className="stat-card normal">
+            <div className="stat-number">{stats.normal}</div>
+            <div className="stat-label">🟢 Normal</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">{heatmapData.reduce((sum, item) => sum + item.count, 0)}</div>
+            <div className="stat-number">{stats.totalCases}</div>
             <div className="stat-label">Casos Totales</div>
           </div>
           <button className="refresh-button" onClick={fetchHeatmapData}>
@@ -191,7 +282,7 @@ function InteractiveHeatMap() {
 
       <div className="heatmap-controls">
         <div className="severity-filters">
-          <label>Filtrar por severidad:</label>
+          <label>Filtrar por nivel de alerta epidemiológica:</label>
           <div className="filter-buttons">
             <button 
               className={`filter-btn ${selectedSeverity === 'all' ? 'active' : ''}`}
@@ -200,82 +291,100 @@ function InteractiveHeatMap() {
               Todos ({stats.total})
             </button>
             <button 
-              className={`filter-btn high ${selectedSeverity === 'high' ? 'active' : ''}`}
-              onClick={() => setSelectedSeverity('high')}
+              className={`filter-btn emergency ${selectedSeverity === 'emergency' ? 'active' : ''}`}
+              onClick={() => setSelectedSeverity('emergency')}
             >
-              Alto ({stats.high})
+              🔴 Emergencia ({stats.emergency})
             </button>
             <button 
-              className={`filter-btn medium ${selectedSeverity === 'medium' ? 'active' : ''}`}
-              onClick={() => setSelectedSeverity('medium')}
+              className={`filter-btn alert ${selectedSeverity === 'alert' ? 'active' : ''}`}
+              onClick={() => setSelectedSeverity('alert')}
             >
-              Medio ({stats.medium})
+              🟡 Alerta ({stats.alert})
             </button>
             <button 
-              className={`filter-btn low ${selectedSeverity === 'low' ? 'active' : ''}`}
-              onClick={() => setSelectedSeverity('low')}
+              className={`filter-btn normal ${selectedSeverity === 'normal' ? 'active' : ''}`}
+              onClick={() => setSelectedSeverity('normal')}
             >
-              Bajo ({stats.low})
+              🟢 Normal ({stats.normal})
             </button>
           </div>
         </div>
 
         <div className="map-legend">
-          <label>Leyenda:</label>
+          <label>Leyenda Epidemiológica:</label>
           <div className="legend-items">
             <div className="legend-item">
-              <div className="legend-circle high"></div>
-              <span>Alto (&gt;35 casos)</span>
+              <div className="legend-circle emergency"></div>
+              <span>🔴 Emergencia (≥P95 o +100%)</span>
             </div>
             <div className="legend-item">
-              <div className="legend-circle medium"></div>
-              <span>Medio (20-35 casos)</span>
+              <div className="legend-circle alert"></div>
+              <span>🟡 Alerta (P75-P95 o +50-100%)</span>
             </div>
             <div className="legend-item">
-              <div className="legend-circle low"></div>
-              <span>Bajo (&lt;20 casos)</span>
+              <div className="legend-circle normal"></div>
+              <span>🟢 Normal (&lt;P75 y +&lt;50%)</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="map-container">
-        <MapContainer
-          center={mapCenter}
-          zoom={mapZoom}
-          style={{ height: '100%', width: '100%' }}
-          zoomControl={true}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          <MapCenter center={mapCenter} zoom={mapZoom} />
-          <HeatCircles data={heatmapData} selectedSeverity={selectedSeverity} />
-        </MapContainer>
-      </div>
+      <div className="main-content">
+        <div className="map-section">
+          <div className="map-container">
+            <MapContainer
+              center={mapCenter}
+              zoom={mapZoom}
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={true}
+              scrollWheelZoom={true}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              
+              <MapCenter center={mapCenter} zoom={mapZoom} />
+              <HeatCircles data={heatmapData} selectedSeverity={selectedSeverity} />
+            </MapContainer>
+          </div>
+        </div>
 
-      <div className="heatmap-sidebar">
-        <h3>📍 Zonas Reportadas</h3>
-        <div className="zones-list">
-          {heatmapData
-            .sort((a, b) => b.count - a.count)
-            .map((zone, index) => (
-              <div key={index} className={`zone-item ${zone.severity}`}>
-                <div className="zone-indicator"></div>
-                <div className="zone-info">
-                  <div className="zone-name">{zone.district}</div>
-                  <div className="zone-details">
-                    <span className="zone-count">{zone.count} casos</span>
-                    <span className={`zone-risk ${zone.severity}`}>
-                      Riesgo: {zone.severity}
-                    </span>
-                  </div>
-                </div>
+        <div className="leaderboard-section">
+          <div className="leaderboard-container">
+            <div className="leaderboard-header">
+              <h3>📍 Zonas Reportadas</h3>
+              <div className="leaderboard-stats">
+                <span className="total-zones">Total: {stats.total} zonas</span>
+                <span className="total-cases">Casos: {stats.totalCases}</span>
               </div>
-            ))}
+            </div>
+            <div className="zones-list">
+              {heatmapData
+                .sort((a, b) => b.count - a.count)
+                .map((zone, index) => (
+                  <div key={index} className={`zone-item ${zone.epidemiologicalAlert}`}>
+                    <div className="zone-indicator" style={{ backgroundColor: getEpidemiologicalColor(zone.epidemiologicalAlert) }}></div>
+                    <div className="zone-info">
+                      <div className="zone-name">{zone.district}</div>
+                      <div className="zone-details">
+                        <span className="zone-count">{zone.count} casos</span>
+                        <span className={`zone-risk ${zone.epidemiologicalAlert}`}>
+                          {zone.epidemiologicalAlert === 'emergency' ? '🔴 Emergencia' :
+                           zone.epidemiologicalAlert === 'alert' ? '🟡 Alerta' : '🟢 Normal'}
+                        </span>
+                      </div>
+                      {zone.historicalData && (
+                        <div className="historical-context">
+                          <small>P75: {zone.historicalData.p75} | P95: {zone.historicalData.p95}</small>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

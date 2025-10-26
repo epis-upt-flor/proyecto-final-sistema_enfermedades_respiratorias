@@ -349,9 +349,9 @@ td {
 }
 
 .disease-count {
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: bold;
-  background: #e2e8f0;
+  background: var(--secondary-color);
   padding: 4px 12px;
   border-radius: 12px;
 }
@@ -386,9 +386,9 @@ td {
 .symptom-count,
 .symptom-severity,
 .symptom-districts {
-  color: #667eea;
+  color: var(--primary-color);
   font-size: 0.9rem;
-  background: #e2e8f0;
+  background: var(--secondary-color);
   padding: 4px 8px;
   border-radius: 8px;
 }
@@ -415,7 +415,7 @@ td {
 }
 
 .district-count {
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: bold;
   margin-right: 12px;
 }
@@ -455,9 +455,9 @@ td {
 .confidence-value,
 .urgency-value,
 .consultation-count {
-  color: #667eea;
+  color: var(--primary-color);
   font-size: 0.9rem;
-  background: #e2e8f0;
+  background: var(--secondary-color);
   padding: 4px 8px;
   border-radius: 8px;
 }
