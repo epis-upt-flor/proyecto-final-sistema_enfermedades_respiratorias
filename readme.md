@@ -12,6 +12,7 @@
 [![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.81%25-success)](ML_ROADMAP.md)
 [![SHAP Enabled](https://img.shields.io/badge/SHAP-Explicability%20%2B-blue)](SHAP_EXPLAINABILITY_IMPLEMENTED.md)
 [![Clean Architecture](https://img.shields.io/badge/Architecture-Clean-success)](backend/CLEAN_ARCHITECTURE.md)
+[![Agile Method](https://img.shields.io/badge/Methodology-Scrum%20Adapted-orange)](METODOLOGIA_AGIL_PROYECTO.md)
 [![API Documentation](https://img.shields.io/badge/API-Docs%20Ready-green)](http://localhost:3001/api-docs)
 [![Chatbot ML](https://img.shields.io/badge/Chatbot-ML%20Enabled-purple)](CHATBOT_ML_INTEGRATION_COMPLETE.md)
 
@@ -33,6 +34,7 @@
 - **🔄 Patrones de Software**: Strategy, Factory, Circuit Breaker, Repository y más
 - **🎯 Model-Driven Development**: Generación automática de código desde modelos (MDSD 4.4/5.0 - TOP 10% 🏆)
 - **🐳 Docker Completo**: Despliegue containerizado con Docker Compose para desarrollo y producción
+- **📋 Metodología Ágil**: Scrum adaptado con Kanban y XP, 9 sprints completados, velocidad 22.9 SP/sprint
 
 ## 🚀 Estado Actual del Proyecto
 
@@ -43,11 +45,13 @@
 - **🧠 Feature Engineering**: 15 features avanzadas (severidad, emergencia, categorías, duración)
 - **📊 Analytics Avanzados**: Dashboard completo con mapas interactivos, tendencias temporales
 - **💬 Chatbot Mejorado**: Interfaz moderna con análisis inteligente de síntomas
+- **📋 Metodología Ágil**: Scrum adaptado con 9 sprints completados, 206 story points, 99.81% ML accuracy
 - **🐳 Docker Setup**: Configuración completa para desarrollo y producción
 - **🔧 Backend API**: Endpoints completos para síntomas, chat y analytics
-- **🧪 Testing**: Estrategia implementada con Jest y Supertest
+- **🧪 Testing**: Estrategia implementada con Jest y Supertest (85% coverage)
 - **📖 Documentación API**: Swagger UI en `/api-docs`
 - **🗺️ Mapa Interactivo**: Visualización geográfica de síntomas
+- **🎯 Definition of Done**: Criterios completos para calidad y deployment
 
 ### 🔄 **EN DESARROLLO**
 - **📱 App Móvil**: Desarrollo de funcionalidades avanzadas
@@ -578,19 +582,30 @@ Para soporte técnico o preguntas:
 
 ## 📊 Métricas del Proyecto
 
+### **Desarrollo**
 - **Líneas de código**: ~60,000+
 - **Cobertura de tests**: 85%+
 - **Servicios**: 4 microservicios principales
 - **Patrones implementados**: 12+ patrones de diseño
 - **Tecnologías**: 15+ tecnologías integradas
+
+### **Documentación**
 - **Documentación**: 95%+ documentada
 - **APIs documentadas**: 100% con Swagger UI
-- **🤖 Sistema ML**: 99.81% accuracy con XGBoost + SHAP
-- **🧠 Explicabilidad**: Factores de decisión y predicciones alternativas
-- **💬 Chatbot ML**: Predicciones con explicaciones detalladas
-- **🗺️ Mapas interactivos**: Visualización geográfica completa
-- **📊 Analytics avanzados**: Dashboard con múltiples gráficos
-- **🎯 124 Enfermedades**: Base de datos completa con síntomas
+- **Metodología ágil**: 9 sprints completados, 206 story points
+
+### **Machine Learning**
+- **Sistema ML**: 99.81% accuracy con XGBoost + SHAP
+- **Explicabilidad**: Factores de decisión y predicciones alternativas
+- **Feature Engineering**: 15 features avanzadas
+- **124 Enfermedades**: Base de datos completa con síntomas
+
+### **Calidad y Entregas**
+- **Chatbot ML**: Predicciones con explicaciones detalladas
+- **Mapas interactivos**: Visualización geográfica completa
+- **Analytics avanzados**: Dashboard con múltiples gráficos
+- **Velocity del equipo**: 22.9 SP/sprint
+- **Predictibilidad**: 85% de historias completadas
 
 ---
 
@@ -599,7 +614,7 @@ Para soporte técnico o preguntas:
 
 ## 🔄 Changelog
 
-### v1.0.11 - Sistema ML con Explicabilidad (Actual) 🎯
+### v1.0.11 - Sistema ML con Explicabilidad y Metodología Ágil (Actual) 🎯
 - ✅ **Sistema ML XGBoost**: 99.81% accuracy para clasificación de enfermedades
 - ✅ **Explicabilidad SHAP**: Factores de decisión y predicciones alternativas
 - ✅ **Integración Chatbot + ML**: Respuestas con análisis detallado
@@ -607,6 +622,9 @@ Para soporte técnico o preguntas:
 - ✅ **Dataset Sintético**: 64,522 casos con 26 enfermedades
 - ✅ **Base de Datos de Enfermedades**: 124 enfermedades respiratorias con síntomas
 - ✅ **Random Forest Baseline**: 99.19% accuracy como referencia
+- ✅ **Metodología Ágil**: Scrum adaptado documentado, 9 sprints completados
+- ✅ **206 Story Points**: Total entregado, velocidad 22.9 SP/sprint
+- ✅ **Definition of Done**: Criterios completos para calidad y deployment
 
 ### v1.0.9 - Arquitectura con Patrones
 - ✅ Implementación completa de patrones de software
