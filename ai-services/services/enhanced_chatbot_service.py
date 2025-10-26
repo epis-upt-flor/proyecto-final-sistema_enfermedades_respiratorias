@@ -26,6 +26,12 @@ class EnhancedChatbotService:
         self._openai_api_key = None
         self._openai_model = "gpt-3.5-turbo"
         
+        # Try to load ML models
+        self._ml_model = None
+        self._shap_explainer = None
+        self._use_ml = False
+        self._load_ml_models()
+        
         # Spanish medical stop words to filter
         self.stop_words = {
             'el', 'la', 'de', 'que', 'y', 'a', 'en', 'un', 'ser', 'se',
@@ -47,6 +53,45 @@ class EnhancedChatbotService:
         
         # Load diseases database
         self._load_disease_database()
+    
+    def _load_ml_models(self):
+        """Try to load ML models for predictions"""
+        try:
+            from shap_explainer import SHAPDiseaseExplainer
+            import os
+            
+            # Try to load XGBoost first (better performance)
+            model_paths = [
+                'models/xgboost_model.pkl',
+                'ai-services/models/xgboost_model.pkl'
+            ]
+            
+            for path in model_paths:
+                if os.path.exists(path):
+                    self._shap_explainer = SHAPDiseaseExplainer(path)
+                    self._use_ml = True
+                    logger.info("ML models loaded", model="XGBoost", path=path)
+                    return
+            
+            # Try Random Forest as fallback
+            rf_paths = [
+                'models/base_random_forest.pkl',
+                'ai-services/models/base_random_forest.pkl'
+            ]
+            
+            for path in rf_paths:
+                if os.path.exists(path):
+                    self._shap_explainer = SHAPDiseaseExplainer(path)
+                    self._use_ml = True
+                    logger.info("ML models loaded", model="Random Forest", path=path)
+                    return
+            
+            logger.warning("ML models not found, using pattern matching")
+            self._use_ml = False
+            
+        except Exception as e:
+            logger.warning("Could not load ML models", error=str(e))
+            self._use_ml = False
     
     def _load_disease_database(self):
         """Load the 124 diseases database"""
@@ -533,10 +578,39 @@ class EnhancedChatbotService:
             else:
                 response_parts.append("\n")
         
-        # Disease identification
-        response_parts.append(
-            f"📋 **Posible condición**: {disease_name}\n"
-        )
+        # Disease identification (with ML explanation if available)
+        ml_explanation = classified_disease.get('ml_explanation')
+        ml_top3 = classified_disease.get('top_3_predictions', [])
+        has_ml = ml_explanation is not None
+        
+        if has_ml:
+            confidence_pct = classified_disease.get('confidence', 0) * 100
+            response_parts.append(
+                f"📋 **Posible condición**: {disease_name} (Confianza: {confidence_pct:.0f}%)\n\n"
+            )
+            
+            # Show decision factors
+            decision_factors = ml_explanation.get('decision_factors', [])[:3]
+            if decision_factors:
+                response_parts.append("🎯 **Factores clave en mi análisis:**\n")
+                for factor in decision_factors[:3]:
+                    feature_name = factor.get('feature', 'Síntoma').replace('_', ' ').title()
+                    contribution = factor.get('contribution', 0)
+                    response_parts.append(f"   • {feature_name}: contribuyó significativamente al diagnóstico")
+                response_parts.append("\n")
+            
+            # Show top 3 alternatives
+            if ml_top3 and len(ml_top3) > 1:
+                response_parts.append("🔍 **Otras posibilidades a considerar:**\n")
+                for i, alt in enumerate(ml_top3[1:4], 1):
+                    alt_name = alt.get('disease', 'Desconocido')
+                    alt_conf = alt.get('confidence', 0) * 100
+                    response_parts.append(f"   {i}. {alt_name} ({alt_conf:.0f}%)")
+                response_parts.append("\n")
+        else:
+            response_parts.append(
+                f"📋 **Posible condición**: {disease_name}\n"
+            )
         
         # Show matched symptoms (symptoms from disease that match)
         if matched_symptoms_list:
@@ -664,11 +738,38 @@ class EnhancedChatbotService:
                     }
                 }
             
-            # Step 3: Classify disease
-            classified_disease = self.classify_disease(user_message, symptoms, tokens)
-            logger.info("Disease classified",
-                       disease=classified_disease.get('disease_name'),
-                       confidence=classified_disease.get('confidence'))
+            # Step 3: Classify disease (use ML if available)
+            classified_disease = None
+            ml_prediction = None
+            
+            if self._use_ml and symptoms:
+                # Try ML prediction with SHAP
+                try:
+                    ml_prediction = self._predict_with_ml(user_message, symptoms)
+                    if ml_prediction:
+                        classified_disease = {
+                            'disease_name': ml_prediction.get('disease', 'Infección respiratoria'),
+                            'disease_id': hash(ml_prediction.get('disease', 'unknown')),
+                            'confidence': ml_prediction.get('confidence', 0.7),
+                            'urgency_level': ml_prediction.get('urgency_level', 'medium'),
+                            'symptoms': symptoms,
+                            'matched_symptoms': ml_prediction.get('top_contributing_features', [])[:5],
+                            'detected_symptoms': [s.get('symptom', '') for s in symptoms],
+                            'ml_explanation': ml_prediction.get('explanation'),
+                            'top_3_predictions': ml_prediction.get('top_3_predictions', [])
+                        }
+                        logger.info("ML prediction successful", 
+                                   disease=classified_disease.get('disease_name'),
+                                   confidence=classified_disease.get('confidence'))
+                except Exception as e:
+                    logger.warning("ML prediction failed, using pattern matching", error=str(e))
+            
+            # Fallback to pattern matching if ML not used or failed
+            if not classified_disease:
+                classified_disease = self.classify_disease(user_message, symptoms, tokens)
+                logger.info("Disease classified (pattern matching)",
+                           disease=classified_disease.get('disease_name'),
+                           confidence=classified_disease.get('confidence'))
             
             # Handle case with no symptoms detected
             if classified_disease.get('disease_id') is None and not symptoms:
@@ -816,4 +917,40 @@ class EnhancedChatbotService:
             "• 'Me duele el pecho cuando respiro'\n\n"
             "O si prefieres, puedes hacer una pregunta general sobre salud respiratoria."
         )
+    
+    def _predict_with_ml(self, user_message: str, symptoms: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Use ML model with SHAP for prediction"""
+        try:
+            # Build symptoms string
+            symptom_names = [s.get('symptom', '') for s in symptoms]
+            symptoms_text = ', '.join(symptom_names)
+            
+            # Get patient age from context if available (default 35)
+            patient_age = 35
+            if symptoms and isinstance(symptoms[0], dict):
+                patient_age = symptoms[0].get('patient_age', 35)
+            
+            # Predict with SHAP
+            prediction = self._shap_explainer.explain_prediction(
+                symptoms_text, 
+                patient_age=patient_age
+            )
+            
+            # Enhance with urgency level
+            urgency_keywords = ['dificultad respiratoria', 'cianosis', 'confusion', 'shock', 'coma', 'severa', 'grave']
+            detected_text = user_message.lower()
+            has_urgency = any(kw in detected_text for kw in urgency_keywords)
+            
+            if has_urgency:
+                prediction['urgency_level'] = 'high'
+            elif prediction.get('confidence', 0) > 0.8:
+                prediction['urgency_level'] = 'medium'
+            else:
+                prediction['urgency_level'] = 'low'
+            
+            return prediction
+            
+        except Exception as e:
+            logger.error("ML prediction error", error=str(e))
+            return None
 

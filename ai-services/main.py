@@ -36,6 +36,14 @@ try:
 except ImportError as e:
     logger.warning("chat_analyzer_routes_not_available", error=str(e))
 
+# Import and register ML symptom analyzer routes
+try:
+    from api.routes.symptom_ml_analyzer import router as symptom_ml_router
+    app.include_router(symptom_ml_router, prefix="/api", tags=["ML Analysis"])
+    logger.info("symptom_ml_routes_registered")
+except ImportError as e:
+    logger.warning("symptom_ml_routes_not_available", error=str(e))
+
 # Configure CORS - Allow all origins for development
 app.add_middleware(
     CORSMiddleware,

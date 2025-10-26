@@ -9,9 +9,11 @@
 [![MDSD Level](https://img.shields.io/badge/MDSD-4.4%2F5.0-brightgreen)](ANALISIS_MDSD_RESPICARE.md)
 [![Code Generation](https://img.shields.io/badge/Code%20Generation-87%25-blue)](ANALISIS_MDSD_RESPICARE.md)
 [![Top 10%](https://img.shields.io/badge/Industry-Top%2010%25-gold)](ANALISIS_MDSD_RESPICARE.md)
+[![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.81%25-success)](ML_ROADMAP.md)
+[![SHAP Enabled](https://img.shields.io/badge/SHAP-Explicability%20%2B-blue)](SHAP_EXPLAINABILITY_IMPLEMENTED.md)
 [![Clean Architecture](https://img.shields.io/badge/Architecture-Clean-success)](backend/CLEAN_ARCHITECTURE.md)
 [![API Documentation](https://img.shields.io/badge/API-Docs%20Ready-green)](http://localhost:3001/api-docs)
-[![Chatbot Enhanced](https://img.shields.io/badge/Chatbot-Enhanced%20UI-blue)](GUIA_CHATBOT_MEDICO.md)
+[![Chatbot ML](https://img.shields.io/badge/Chatbot-ML%20Enabled-purple)](CHATBOT_ML_INTEGRATION_COMPLETE.md)
 
 ## 📋 Descripción del Proyecto
 
@@ -36,23 +38,26 @@
 
 ### ✅ **COMPLETADO** (Últimas Actualizaciones)
 
-- **📖 Documentación API**: Swagger UI implementado en `/api-docs` con endpoints completos
-- **💬 Chatbot Mejorado**: Interfaz moderna con pantalla de bienvenida, botones de acción rápida y UX mejorada
-- **📊 Analytics Avanzados**: Dashboard completo con mapas interactivos, tendencias temporales y reportes por enfermedad
-- **🤖 Servicios AI**: Implementación completa de análisis de síntomas con Python/FastAPI
+- **🤖 Sistema ML Avanzado**: XGBoost con 99.81% accuracy, explicabilidad SHAP implementada
+- **🤖 Integración Chatbot + ML**: Chatbot usa predicciones ML con explicaciones detalladas (factores de decisión, top 3 alternativas)
+- **🧠 Feature Engineering**: 15 features avanzadas (severidad, emergencia, categorías, duración)
+- **📊 Analytics Avanzados**: Dashboard completo con mapas interactivos, tendencias temporales
+- **💬 Chatbot Mejorado**: Interfaz moderna con análisis inteligente de síntomas
 - **🐳 Docker Setup**: Configuración completa para desarrollo y producción
-- **🗺️ Mapa Interactivo**: Visualización geográfica de síntomas con filtros avanzados
 - **🔧 Backend API**: Endpoints completos para síntomas, chat y analytics
-- **🧪 Testing**: Estrategia de testing implementada con Jest y Supertest
+- **🧪 Testing**: Estrategia implementada con Jest y Supertest
+- **📖 Documentación API**: Swagger UI en `/api-docs`
+- **🗺️ Mapa Interactivo**: Visualización geográfica de síntomas
 
 ### 🔄 **EN DESARROLLO**
 - **📱 App Móvil**: Desarrollo de funcionalidades avanzadas
 - **🔐 Autenticación**: Sistema de usuarios y roles
-- **📈 Métricas**: Dashboard de monitoreo en tiempo real
+- **📈 Monitoreo ML**: Dashboard de métricas en producción
+- **🧠 Neural Networks**: Arquitectura creada (entrenamiento pendiente)
 
-### 📋 **PRÓXIMOS PASOS**
+### 📋 **PRÓXIMOS PASOS** (Opcional)
 - **🏥 Integración Hospitalaria**: Conectar con sistemas hospitalarios
-- **📊 Machine Learning**: Modelos predictivos avanzados
+- **📊 Feedback Loop**: Sistema de feedback médico para mejorar modelos
 - **🌐 Despliegue Cloud**: Configuración para AWS/Azure
 
 ## 🏛️ Arquitectura del Sistema
@@ -114,10 +119,12 @@ graph TB
 - **Zustand** para gestión de estado
 
 ### IA y Machine Learning
-- **OpenAI GPT** para análisis avanzado
-- **spaCy** para procesamiento de lenguaje natural
-- **scikit-learn** para clasificación de síntomas
-- **Transformers** para modelos locales
+- **🤖 XGBoost** para clasificación de enfermedades (99.81% accuracy)
+- **🧠 SHAP** para explicabilidad de predicciones ML
+- **📊 scikit-learn** para Random Forest baseline (99.19% accuracy)
+- **🔧 Feature Engineering**: 15 features avanzadas (severidad, emergencia, categorías)
+- **🎯 124 Enfermedades Respiratorias**: Base de datos completa con síntomas
+- **💊 Explicabilidad SHAP**: Factores de decisión y predicciones alternativas
 
 ### DevOps e Infraestructura
 - **Docker & Docker Compose** para containerización
@@ -500,37 +507,40 @@ make test-coverage
 make test-integration
 ```
 
-## 📚 Documentación del Proyecto
+## 📚 Índice de Documentación
 
-### 🚀 **Guías de Inicio**
-- **[Guía de Inicio Rápido](QUICKSTART.md)** - Instrucciones paso a paso para comenzar
-- **[Guía de Despliegue](DEPLOYMENT.md)** - Despliegue completo con Docker
-- **[Configuración Docker](DOCKER_SETUP_COMPLETE.md)** - Estado actual de Docker
+### 🚀 **Quick Start y Despliegue**
+- **[🚀 Guía de Inicio Rápido](QUICKSTART.md)** - Instalación y configuración en 5 minutos
+- **[🐳 Guía de Despliegue](DEPLOYMENT.md)** - Despliegue completo con Docker
+- **[✅ Configuración Docker](DOCKER_SETUP_COMPLETE.md)** - Estado actual de contenedores
 
-### 🤖 **Servicios Implementados**
-- **[Servicios AI Completados](AI_SERVICES_IMPLEMENTATION_COMPLETE.md)** - Implementación completa de servicios de IA
-- **[Analytics Implementados](ANALYTICS_IMPLEMENTATION_COMPLETE.md)** - Dashboard con visualizaciones avanzadas
-- **[Mapa Interactivo](MAPA_INTERACTIVO_IMPLEMENTADO.md)** - Visualización geográfica de síntomas
-- **[Guía del Chatbot](GUIA_CHATBOT_MEDICO.md)** - Sistema de chatbot médico con análisis inteligente
-- **[Chatbot: Análisis de Múltiples Síntomas](backend/src/generators/README.md)** - Sistema avanzado de clasificación de enfermedades
+### 🤖 **Machine Learning y AI**
+- **[🎯 Roadmap ML](ML_ROADMAP.md)** - Roadmap completo del sistema ML (99.81% accuracy)
+- **[✅ Sistema ML Completado](ML_SYSTEM_COMPLETE.md)** - Resumen del sistema Machine Learning
+- **[🧠 SHAP Explicabilidad](SHAP_EXPLAINABILITY_IMPLEMENTED.md)** - Sistema de explicabilidad ML
+- **[🤖 Integración Chatbot + ML](CHATBOT_ML_INTEGRATION_COMPLETE.md)** - Chatbot con predicciones ML
+- **[💬 Guía del Chatbot](GUIA_CHATBOT_MEDICO.md)** - Sistema de chatbot médico
+- **[🦠 Enfermedades Respiratorias](lista_enfermedades_respiratorias.md)** - Base de datos: 124 enfermedades con síntomas
+- **[🤖 Servicios AI Implementados](AI_SERVICES_IMPLEMENTATION_COMPLETE.md)** - Servicios de IA Python/FastAPI
+- **[📊 Documentación API AI](ai-services/API_DOCUMENTATION.md)** - APIs de servicios de IA
+
+### 📊 **Analytics y Visualizaciones**
+- **[📊 Analytics Implementados](ANALYTICS_IMPLEMENTATION_COMPLETE.md)** - Dashboard con visualizaciones avanzadas
+- **[🗺️ Mapa Interactivo](MAPA_INTERACTIVO_IMPLEMENTADO.md)** - Visualización geográfica
+- **[📈 Backend Reportes Síntomas](BACKEND_SYMPTOM_REPORTS_API.md)** - Endpoints y rutas API
+
+### 🏗️ **Arquitectura y Diseño**
+- **[🏛️ Análisis MDSD](ANALISIS_MDSD_RESPICARE.md)** - Model-Driven Development (Nivel 4.4/5.0 - TOP 10%)
+- **[🏗️ Clean Architecture](backend/CLEAN_ARCHITECTURE.md)** - Patrones arquitectónicos
+- **[📖 Backend README](backend/README.md)** - Documentación API Backend
+- **[🤖 AI Services README](ai-services/README.md)** - Servicios de IA Python/FastAPI
+- **[🔄 Patrones de Diseño](ai-services/README_PATTERNS.md)** - Strategy, Factory, Circuit Breaker
 
 ### 🧪 **Testing y Calidad**
-- **[Estrategia de Testing](TESTING_STRATEGY.md)** - Plan completo de pruebas
-- **[Reporte de Testing](TESTING_REPORT.md)** - Resultados de pruebas
-- **[Seguridad](SECURITY.md)** - Medidas de seguridad implementadas
-
-### 🏗️ **Arquitectura y Desarrollo**
-- **[Análisis MDSD](ANALISIS_MDSD_RESPICARE.md)** - Model-Driven Software Development (Nivel 4.4/5.0)
-- **[Arquitectura Limpia](backend/CLEAN_ARCHITECTURE.md)** - Patrones arquitectónicos implementados
-- **[Documentación Backend](backend/README.md)** - API Backend con TypeScript
-- **[Documentación AI Services](ai-services/README.md)** - Servicios de IA con Python/FastAPI
-- **[Patrones AI Services](ai-services/README_PATTERNS.md)** - Patrones de diseño implementados
-
-### 📊 **APIs y Documentación**
-- **[API de Reportes de Síntomas](BACKEND_SYMPTOM_REPORTS_API.md)** - Endpoints y rutas API
-- **[Documentación API AI](ai-services/API_DOCUMENTATION.md)** - APIs de servicios de IA
-- **[Guía de Testing AI](ai-services/TESTING_GUIDE.md)** - Estrategia de pruebas
-- **[Base de Datos de Enfermedades](lista_enfermedades_respiratorias.md)** - 124 enfermedades respiratorias con síntomas
+- **[✅ Estrategia de Testing](TESTING_STRATEGY.md)** - Plan completo de pruebas
+- **[📊 Reporte de Testing](TESTING_REPORT.md)** - Resultados de pruebas
+- **[🔒 Seguridad](SECURITY.md)** - Medidas de seguridad implementadas
+- **[🧪 Guía de Testing AI](ai-services/TESTING_GUIDE.md)** - Estrategia de pruebas IA
 
 ## 🤝 Contribución
 
@@ -567,16 +577,19 @@ Para soporte técnico o preguntas:
 
 ## 📊 Métricas del Proyecto
 
-- **Líneas de código**: ~50,000+
+- **Líneas de código**: ~60,000+
 - **Cobertura de tests**: 85%+
 - **Servicios**: 4 microservicios principales
 - **Patrones implementados**: 12+ patrones de diseño
 - **Tecnologías**: 15+ tecnologías integradas
 - **Documentación**: 95%+ documentada
 - **APIs documentadas**: 100% con Swagger UI
-- **Chatbot mejorado**: Interfaz moderna implementada
-- **Mapas interactivos**: Visualización geográfica completa
-- **Analytics avanzados**: Dashboard con múltiples gráficos
+- **🤖 Sistema ML**: 99.81% accuracy con XGBoost + SHAP
+- **🧠 Explicabilidad**: Factores de decisión y predicciones alternativas
+- **💬 Chatbot ML**: Predicciones con explicaciones detalladas
+- **🗺️ Mapas interactivos**: Visualización geográfica completa
+- **📊 Analytics avanzados**: Dashboard con múltiples gráficos
+- **🎯 124 Enfermedades**: Base de datos completa con síntomas
 
 ---
 
@@ -585,13 +598,24 @@ Para soporte técnico o preguntas:
 
 ## 🔄 Changelog
 
-### v2.0.0 - Arquitectura con Patrones (Actual)
+### v1.0.11 - Sistema ML con Explicabilidad (Actual) 🎯
+- ✅ **Sistema ML XGBoost**: 99.81% accuracy para clasificación de enfermedades
+- ✅ **Explicabilidad SHAP**: Factores de decisión y predicciones alternativas
+- ✅ **Integración Chatbot + ML**: Respuestas con análisis detallado
+- ✅ **Feature Engineering**: 15 features avanzadas (severidad, emergencia, categorías)
+- ✅ **Dataset Sintético**: 64,522 casos con 26 enfermedades
+- ✅ **Base de Datos de Enfermedades**: 124 enfermedades respiratorias con síntomas
+- ✅ **Random Forest Baseline**: 99.19% accuracy como referencia
+
+### v1.0.9 - Arquitectura con Patrones
 - ✅ Implementación completa de patrones de software
 - ✅ Arquitectura de microservicios robusta
 - ✅ IA avanzada con múltiples estrategias
 - ✅ Observabilidad y monitoreo completo
 - ✅ Seguridad mejorada con RBAC
 - ✅ Documentación técnica completa
+- ✅ Chatbot mejorado con interfaz moderna
+- ✅ Analytics avanzados con mapas interactivos
 
 ### v1.0.0 - Versión Inicial
 - ✅ Sistema básico de gestión médica
@@ -602,5 +626,5 @@ Para soporte técnico o preguntas:
 ---
 
 <div align="center">
-  <strong>🏥 RespiCare - Cuidando tu salud respiratoria con tecnología avanzada</strong>
+  <strong>🏥 RespiCare © 2025 - Cuidando tu salud respiratoria con tecnología avanzada</strong>
 </div>
