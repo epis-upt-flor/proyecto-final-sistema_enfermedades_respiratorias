@@ -535,6 +535,7 @@ make test-integration
 - **[📖 Backend README](backend/README.md)** - Documentación API Backend
 - **[🤖 AI Services README](ai-services/README.md)** - Servicios de IA Python/FastAPI
 - **[🔄 Patrones de Diseño](ai-services/README_PATTERNS.md)** - Strategy, Factory, Circuit Breaker
+- **[📋 Metodología Ágil](METODOLOGIA_AGIL_PROYECTO.md)** - Scrum adaptado y gestión de proyecto
 
 ### 🧪 **Testing y Calidad**
 - **[✅ Estrategia de Testing](TESTING_STRATEGY.md)** - Plan completo de pruebas
