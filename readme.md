@@ -57,31 +57,45 @@
 
 ## 🏛️ Arquitectura del Sistema
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        RespiCare Ecosystem                     │
-├─────────────────────────────────────────────────────────────────┤
-│  📱 Mobile App (React Native)    │  🌐 Web App (React)         │
-│  └─────────────────────────────┘  └─────────────────────────────┘
-│                   │                           │
-│                   └───────────┬───────────────┘
-│                               │
-│  🔄 API Gateway (Nginx)       │
-│  └─────────────────────────────┘
-│                   │
-│  ┌─────────────────┼─────────────────┐
-│  │                 │                 │
-│  ▼                 ▼                 ▼
-│  🖥️  Backend API    │  🤖 AI Services  │  📊 Analytics
-│  (Node.js/TS)      │  (Python/FastAPI)│  (Dashboard)
-│  └─────────────────┘                 │
-│                   │                 │
-│  ┌─────────────────┼─────────────────┼─────────────────┐
-│  │                 │                 │                 │
-│  ▼                 ▼                 ▼                 ▼
-│  🗄️  MongoDB        │  ⚡ Redis Cache  │  📁 File Storage │  📧 Notifications
-│  (Primary DB)      │  (Session/Cache) │  (Medical Files) │  (Email/SMS)
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        MA[Mobile App<br/>React Native]
+        WA[Web App<br/>React]
+    end
+    
+    subgraph "API Gateway"
+        NG[Nginx<br/>Reverse Proxy]
+    end
+    
+    subgraph "Backend Services"
+        BA[Backend API<br/>Node.js/TypeScript]
+        AI[AI Services<br/>Python/FastAPI]
+        AN[Analytics<br/>Dashboard]
+    end
+    
+    subgraph "Data Layer"
+        DB[(MongoDB<br/>Primary Database)]
+        RD[(Redis<br/>Cache & Sessions)]
+        FS[File Storage<br/>Medical Files]
+        NT[Notifications<br/>Email/SMS]
+    end
+    
+    MA --> NG
+    WA --> NG
+    NG --> BA
+    NG --> AI
+    NG --> AN
+    
+    BA --> DB
+    BA --> RD
+    AI --> DB
+    AI --> RD
+    AN --> DB
+    
+    BA --> FS
+    BA --> NT
+    AI --> FS
 ```
 
 ## 🛠️ Stack Tecnológico
@@ -163,6 +177,31 @@ cd web && npm install && npm start
 - **[Guía de Despliegue](DEPLOYMENT.md)** - Despliegue completo con Docker
 - **[Configuración Docker](DOCKER_SETUP_COMPLETE.md)** - Estado actual de Docker
 
+## 🔄 Flujo de Datos del Sistema
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant W as Web App
+    participant B as Backend API
+    participant A as AI Services
+    participant D as MongoDB
+    participant R as Redis
+    
+    U->>W: Ingresa síntomas
+    W->>B: POST /api/symptom-reports
+    B->>D: Guarda reporte
+    B->>A: POST /api/v1/analyze
+    A->>A: Procesa con IA
+    A->>R: Cache resultado
+    A-->>B: Retorna análisis
+    B->>D: Guarda análisis
+    B-->>W: Respuesta completa
+    W-->>U: Muestra resultados
+    
+    Note over U,R: Flujo completo de análisis de síntomas
+```
+
 ## 🌐 Servicios y Puertos
 
 | Servicio | Puerto | Descripción | Tecnología |
@@ -242,11 +281,104 @@ make status       # Estado de todos los servicios
 - **📡 Event-Driven**: Comunicación asíncrona entre servicios
 - **🏗️ Microservicios Ligeros**: Servicios especializados y escalables
 
+### Diagrama de Patrones Implementados
+
+```mermaid
+graph LR
+    subgraph "Design Patterns"
+        F[Factory Pattern<br/>Service Creation]
+        S[Strategy Pattern<br/>AI Algorithms]
+        CB[Circuit Breaker<br/>Fault Tolerance]
+        R[Repository Pattern<br/>Data Access]
+        D[Decorator Pattern<br/>Cross-cutting]
+    end
+    
+    subgraph "Architecture Patterns"
+        CA[Clean Architecture<br/>Separation of Concerns]
+        CQRS[CQRS<br/>Command Query Separation]
+        ED[Event-Driven<br/>Async Communication]
+        MS[Microservices<br/>Specialized Services]
+    end
+    
+    subgraph "Implementation"
+        BE[Backend Services]
+        AI[AI Services]
+        WEB[Web Frontend]
+        MOB[Mobile App]
+    end
+    
+    F --> BE
+    S --> AI
+    CB --> BE
+    CB --> AI
+    R --> BE
+    D --> BE
+    D --> AI
+    
+    CA --> BE
+    CA --> AI
+    CQRS --> BE
+    ED --> BE
+    ED --> AI
+    MS --> BE
+    MS --> AI
+    MS --> WEB
+    MS --> MOB
+```
+
 ## 🎯 Model-Driven Software Development (MDSD)
 
 ### Nivel de Madurez: 4.4/5.0 - TOP 10% 🏆
 
 RespiCare implementa un enfoque avanzado de desarrollo dirigido por modelos que automatiza la generación de código desde modelos de dominio.
+
+### Diagrama del Proceso MDSD
+
+```mermaid
+graph TD
+    subgraph "PIM - Platform Independent Model"
+        DM[Domain Model<br/>TypeScript Interfaces]
+        UM[UML Diagrams<br/>PlantUML]
+    end
+    
+    subgraph "Transformations"
+        TG[Code Generators<br/>TypeScript]
+        DG[Diagram Generators<br/>PlantUML]
+        VG[Validation Generators<br/>TypeScript]
+    end
+    
+    subgraph "PSM - Platform Specific Model"
+        DTO[DTOs<br/>Request/Response]
+        REP[Repositories<br/>Data Access]
+        API[API Schemas<br/>OpenAPI]
+        VAL[Validators<br/>Joi/Schema]
+    end
+    
+    subgraph "Generated Artifacts"
+        CODE[Generated Code<br/>Backend Services]
+        DOCS[API Documentation<br/>Swagger UI]
+        DIAG[Architecture Diagrams<br/>Mermaid/PlantUML]
+    end
+    
+    DM --> TG
+    UM --> DG
+    DM --> VG
+    
+    TG --> DTO
+    TG --> REP
+    TG --> API
+    VG --> VAL
+    
+    DTO --> CODE
+    REP --> CODE
+    API --> DOCS
+    DG --> DIAG
+    
+    style DM fill:#e1f5fe
+    style CODE fill:#c8e6c9
+    style DOCS fill:#fff3e0
+    style DIAG fill:#f3e5f5
+```
 
 ### Características MDSD
 

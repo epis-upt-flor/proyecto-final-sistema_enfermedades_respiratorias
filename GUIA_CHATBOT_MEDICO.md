@@ -1,5 +1,32 @@
 # 🤖 Guía Rápida: Chatbot Médico RespiCare
 
+## 🔄 Flujo del Chatbot
+
+```mermaid
+flowchart TD
+    A[Usuario ingresa consulta] --> B[Chatbot procesa pregunta]
+    B --> C{Tipo de consulta}
+    
+    C -->|Enfermedades| D[Información médica]
+    C -->|Síntomas| E[Análisis de síntomas]
+    C -->|Tratamientos| F[Recomendaciones]
+    C -->|Prevención| G[Consejos preventivos]
+    
+    D --> H[Respuesta estructurada]
+    E --> H
+    F --> H
+    G --> H
+    
+    H --> I[Usuario recibe información]
+    I --> J[¿Más preguntas?]
+    J -->|Sí| A
+    J -->|No| K[Fin de consulta]
+    
+    style A fill:#e3f2fd
+    style H fill:#c8e6c9
+    style K fill:#ffcdd2
+```
+
 ## 🚀 Inicio Rápido
 
 ### 1. Abre la aplicación

@@ -37,27 +37,46 @@ git --version
 
 El sistema RespiCare se compone de los siguientes servicios:
 
-```
-┌─────────────────────────────────────────────────┐
-│                    Nginx                         │
-│              (Reverse Proxy)                     │
-└─────────────────────────────────────────────────┘
-                      │
-        ┌─────────────┴─────────────┐
-        │                           │
-┌───────▼────────┐         ┌────────▼────────┐
-│   Backend API  │         │   AI Services   │
-│   (Node.js)    │◄────────┤    (Python)     │
-└───────┬────────┘         └────────┬────────┘
-        │                           │
-        └─────────────┬─────────────┘
-                      │
-        ┌─────────────┴─────────────┐
-        │                           │
-┌───────▼────────┐         ┌────────▼────────┐
-│    MongoDB     │         │      Redis      │
-│   (Database)   │         │     (Cache)     │
-└────────────────┘         └─────────────────┘
+```mermaid
+graph TB
+    subgraph "Load Balancer"
+        NG[Nginx<br/>Reverse Proxy<br/>Port 80/443]
+    end
+    
+    subgraph "Application Layer"
+        BA[Backend API<br/>Node.js/TypeScript<br/>Port 3001]
+        AI[AI Services<br/>Python/FastAPI<br/>Port 8000]
+        WA[Web Frontend<br/>React<br/>Port 3000]
+    end
+    
+    subgraph "Data Layer"
+        DB[(MongoDB<br/>Primary Database<br/>Port 27017)]
+        RD[(Redis<br/>Cache & Sessions<br/>Port 6379)]
+    end
+    
+    subgraph "Monitoring"
+        ME[MongoDB Express<br/>Database Admin<br/>Port 8081]
+        AD[Adminer<br/>Database Tool<br/>Port 8080]
+    end
+    
+    NG --> BA
+    NG --> AI
+    NG --> WA
+    
+    BA --> DB
+    BA --> RD
+    AI --> DB
+    AI --> RD
+    
+    ME --> DB
+    AD --> DB
+    
+    style NG fill:#ffeb3b
+    style BA fill:#4caf50
+    style AI fill:#2196f3
+    style WA fill:#ff9800
+    style DB fill:#9c27b0
+    style RD fill:#f44336
 ```
 
 ### Servicios
@@ -129,6 +148,32 @@ chmod +x scripts/*.sh
 ```
 
 ## 🔨 Despliegue en Desarrollo
+
+### Flujo de Despliegue
+
+```mermaid
+flowchart TD
+    A[Clonar Repositorio] --> B[Configurar .env]
+    B --> C[Construir Imágenes]
+    C --> D[Iniciar Servicios]
+    D --> E[Verificar Health Checks]
+    E --> F[Acceder a Aplicación]
+    
+    subgraph "Comandos Docker"
+        G[docker-compose build]
+        H[docker-compose up -d]
+        I[docker-compose ps]
+        J[docker-compose logs]
+    end
+    
+    C --> G
+    D --> H
+    E --> I
+    E --> J
+    
+    style A fill:#e3f2fd
+    style F fill:#c8e6c9
+```
 
 ### Inicio Rápido
 

@@ -2,6 +2,31 @@
 
 Esta guía te ayudará a tener RespiCare funcionando en menos de 5 minutos.
 
+## 🚀 Flujo de Instalación
+
+```mermaid
+flowchart TD
+    A[Clonar Repositorio] --> B[Copiar .env]
+    B --> C[Iniciar Docker]
+    C --> D[Verificar Servicios]
+    D --> E[Acceder a Aplicación]
+    
+    subgraph "Servicios Disponibles"
+        F[Backend API<br/>:3001]
+        G[AI Services<br/>:8000]
+        H[Web Frontend<br/>:3000]
+        I[MongoDB Express<br/>:8081]
+    end
+    
+    E --> F
+    E --> G
+    E --> H
+    E --> I
+    
+    style A fill:#e3f2fd
+    style E fill:#c8e6c9
+```
+
 ## ⚡ Inicio Súper Rápido (Desarrollo)
 
 ```bash
