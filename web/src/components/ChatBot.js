@@ -7,7 +7,7 @@ function ChatBot() {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: '¡Hola! Soy tu asistente médico de Respicare. Estoy aquí para ayudarte con información sobre salud respiratoria, síntomas y orientación médica. ¿En qué puedo ayudarte hoy?',
+      text: '¡Hola! 👋\n\nSoy tu asistente médico de Respicare. Estoy aquí para ayudarte con información sobre salud respiratoria, síntomas y orientación médica.\n\n**¿Cuál es tu consulta o problema?** Puedes:\n\n• Describirme tus síntomas\n• Preguntar sobre enfermedades respiratorias\n• Pedir orientación médica general',
       timestamp: new Date()
     }
   ]);
@@ -88,52 +88,88 @@ function ChatBot() {
     setIsLoading(true);
 
     try {
-      // Llamada al servicio de AI
+      // Prepare conversation history for context
+      const conversationHistory = messages
+        .filter(msg => msg.type === 'user' || msg.type === 'bot')
+        .map(msg => ({
+          type: msg.type,
+          text: msg.text,
+          timestamp: msg.timestamp
+        }));
+      
+      // Call the new conversational AI service
       const response = await axios.post('http://localhost:8000/api/v1/analyze', {
-        query: inputText,
-        context: 'respiratory_diseases',
-        include_recommendations: true
+        message: inputText,
+        conversation_history: conversationHistory,
+        context: {
+          source: 'web_chat',
+          location: {
+            city: 'Tacna',
+            country: 'Perú'
+          }
+        },
+        session_id: sessionId
       });
 
       let botText = response.data.message || 'He procesado tu consulta.';
       
-      // Add urgency indicator if available
-      if (response.data.urgency_level) {
-        const urgencyEmoji = {
-          'critical': '🚨',
-          'high': '⚠️',
-          'medium': '⚡',
-          'low': '✅',
-          'very_low': '✅'
-        }[response.data.urgency_level];
-        
-        if (urgencyEmoji && response.data.urgency_level !== 'low' && response.data.urgency_level !== 'very_low') {
-          botText = `${urgencyEmoji} ${botText}`;
+      // Build a more comprehensive response with urgency indicators
+      if (response.data.success) {
+        // Add urgency indicator if available
+        if (response.data.urgency_level) {
+          const urgencyEmoji = {
+            'critical': '🚨',
+            'high': '⚠️',
+            'medium': '⚡',
+            'low': '💚',
+            'very_low': '💚'
+          }[response.data.urgency_level];
+          
+          // Only add emoji if not already in the message
+          if (urgencyEmoji && !botText.includes(urgencyEmoji)) {
+            if (response.data.urgency_level !== 'low' && response.data.urgency_level !== 'very_low') {
+              botText = `${urgencyEmoji} ${botText}`;
+            }
+          }
         }
+        
+        // Log analysis details for debugging and future improvements
+        console.log('AI Analysis:', {
+          symptomCount: response.data.symptom_count,
+          categories: response.data.symptom_categories,
+          urgencyLevel: response.data.urgency_level,
+          needsMedicalAttention: response.data.needs_medical_attention,
+          analysis: response.data.analysis
+        });
       }
 
       const botMessage = {
         type: 'bot',
         text: botText,
         timestamp: new Date(),
-        confidence: response.data.confidence,
-        urgency: response.data.urgency_level
+        urgency: response.data.urgency_level,
+        symptomCount: response.data.symptom_count,
+        categories: response.data.symptom_categories
       };
 
       setMessages(prev => [...prev, botMessage]);
       
-      // Save bot message to database with metadata
+      // Save bot message to database with enhanced metadata
       saveMessage('bot', botText, {
         urgencyLevel: response.data.urgency_level,
-        confidence: response.data.confidence,
-        detectedDiseases: response.data.analysis?.detected_diseases || [],
-        detectedSymptoms: response.data.analysis?.detected_symptoms || [],
-        questionType: response.data.analysis?.question_type
+        symptomCount: response.data.symptom_count,
+        symptomCategories: response.data.symptom_categories,
+        needsMedicalAttention: response.data.needs_medical_attention,
+        analysis: response.data.analysis,
+        conversationContext: {
+          totalMessages: messages.length,
+          hasHistory: conversationHistory.length > 0
+        }
       });
     } catch (error) {
       console.error('Error al comunicarse con AI services:', error);
       
-      // Respuestas de ejemplo basadas en palabras clave
+      // Fallback: Basic keyword-based responses if AI service fails
       let responseText = '';
       const lowerInput = inputText.toLowerCase();
       

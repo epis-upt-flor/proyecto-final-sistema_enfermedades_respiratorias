@@ -88,7 +88,7 @@ class MedicalHistoryService:
             )
         else:
             # Fallback to direct processing
-            from medical-history-processor.processor import processor
+            from medical_history_processor.processor import processor
             return await processor.process_history(text, patient_id)
     
     async def _extract_medical_entities(self, text: str) -> Dict[str, Any]:

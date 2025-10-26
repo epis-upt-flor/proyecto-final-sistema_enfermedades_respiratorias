@@ -84,7 +84,7 @@ class SymptomAnalysisService:
             )
         else:
             # Fallback to direct analysis
-            from symptom-analyzer.analyzer import analyzer
+            from symptom_analyzer.analyzer import analyzer
             return await analyzer.analyze_symptoms(symptoms, patient_id, context)
     
     async def _analyze_symptom_trends(self, patient_id: str) -> Dict[str, Any]:

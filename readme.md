@@ -508,10 +508,11 @@ make test-integration
 - **[Configuración Docker](DOCKER_SETUP_COMPLETE.md)** - Estado actual de Docker
 
 ### 🤖 **Servicios Implementados**
-- **[Servicios AI Completados](AI_SERVICES_IMPLEMENTATION_COMPLETE.md)** - Implementación de servicios de IA
-- **[Analytics Implementados](ANALYTICS_IMPLEMENTATION_COMPLETE.md)** - Dashboard y visualizaciones
-- **[Mapa Interactivo](MAPA_INTERACTIVO_IMPLEMENTADO.md)** - Visualización geográfica
-- **[Guía del Chatbot](GUIA_CHATBOT_MEDICO.md)** - Chatbot médico interactivo
+- **[Servicios AI Completados](AI_SERVICES_IMPLEMENTATION_COMPLETE.md)** - Implementación completa de servicios de IA
+- **[Analytics Implementados](ANALYTICS_IMPLEMENTATION_COMPLETE.md)** - Dashboard con visualizaciones avanzadas
+- **[Mapa Interactivo](MAPA_INTERACTIVO_IMPLEMENTADO.md)** - Visualización geográfica de síntomas
+- **[Guía del Chatbot](GUIA_CHATBOT_MEDICO.md)** - Sistema de chatbot médico con análisis inteligente
+- **[Chatbot: Análisis de Múltiples Síntomas](backend/src/generators/README.md)** - Sistema avanzado de clasificación de enfermedades
 
 ### 🧪 **Testing y Calidad**
 - **[Estrategia de Testing](TESTING_STRATEGY.md)** - Plan completo de pruebas
@@ -519,16 +520,17 @@ make test-integration
 - **[Seguridad](SECURITY.md)** - Medidas de seguridad implementadas
 
 ### 🏗️ **Arquitectura y Desarrollo**
-- **[Análisis MDSD](ANALISIS_MDSD_RESPICARE.md)** - Model-Driven Software Development
-- **[Arquitectura Limpia](backend/CLEAN_ARCHITECTURE.md)** - Patrones arquitectónicos
-- **[Documentación Backend](backend/README.md)** - Documentación del backend
-- **[Documentación AI Services](ai-services/README.md)** - Documentación de servicios IA
+- **[Análisis MDSD](ANALISIS_MDSD_RESPICARE.md)** - Model-Driven Software Development (Nivel 4.4/5.0)
+- **[Arquitectura Limpia](backend/CLEAN_ARCHITECTURE.md)** - Patrones arquitectónicos implementados
+- **[Documentación Backend](backend/README.md)** - API Backend con TypeScript
+- **[Documentación AI Services](ai-services/README.md)** - Servicios de IA con Python/FastAPI
+- **[Patrones AI Services](ai-services/README_PATTERNS.md)** - Patrones de diseño implementados
 
 ### 📊 **APIs y Documentación**
-- **[API de Reportes de Síntomas](BACKEND_SYMPTOM_REPORTS_API.md)** - Endpoints de síntomas
-- **[Documentación API AI](ai-services/API_DOCUMENTATION.md)** - Documentación de APIs de IA
-- **[Guía de Patrones](ai-services/README_PATTERNS.md)** - Patrones implementados en AI
-- **[Guía de Testing AI](ai-services/TESTING_GUIDE.md)** - Testing de servicios IA
+- **[API de Reportes de Síntomas](BACKEND_SYMPTOM_REPORTS_API.md)** - Endpoints y rutas API
+- **[Documentación API AI](ai-services/API_DOCUMENTATION.md)** - APIs de servicios de IA
+- **[Guía de Testing AI](ai-services/TESTING_GUIDE.md)** - Estrategia de pruebas
+- **[Base de Datos de Enfermedades](lista_enfermedades_respiratorias.md)** - 124 enfermedades respiratorias con síntomas
 
 ## 🤝 Contribución
 

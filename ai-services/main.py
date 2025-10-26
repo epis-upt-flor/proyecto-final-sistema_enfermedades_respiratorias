@@ -28,13 +28,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Import and register the new conversational chat analyzer routes
+try:
+    from api.routes.chat_analyzer import router as chat_analyzer_router
+    app.include_router(chat_analyzer_router, prefix="/api", tags=["Chat Analysis"])
+    logger.info("chat_analyzer_routes_registered")
+except ImportError as e:
+    logger.warning("chat_analyzer_routes_not_available", error=str(e))
+
+# Configure CORS - Allow all origins for development
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # En producción, especificar orígenes permitidos
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Pydantic models
@@ -406,65 +415,23 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
-@app.post("/api/v1/analyze", response_model=AnalysisResponse)
-async def analyze_symptoms(request: AnalysisRequest):
-    """
-    Analyze medical query and provide AI-powered response
-    
-    This endpoint processes natural language queries about respiratory diseases,
-    symptoms, treatments, and provides intelligent recommendations.
-    """
-    try:
-        logger.info("analyze_request_received", 
-                   query=request.query, 
-                   context=request.context)
-        
-        # Validate input
-        if not request.query or len(request.query.strip()) < 3:
-            raise HTTPException(
-                status_code=400, 
-                detail="Query must be at least 3 characters long"
-            )
-        
-        # Analyze query
-        query_analysis = analyze_query(request.query)
-        
-        # Generate response
-        ai_response = generate_response(query_analysis, request.query)
-        
-        # Prepare response
-        response = AnalysisResponse(
-            status="success",
-            message=ai_response["message"],
-            analysis={
-                "detected_diseases": query_analysis["detected_diseases"],
-                "detected_symptoms": [s["symptom"] for s in query_analysis["detected_symptoms"]],
-                "question_type": query_analysis["question_type"],
-                "detailed_info": ai_response["detailed_info"]
-            },
-            recommendations=ai_response["recommendations"] if request.include_recommendations else None,
-            urgency_level=ai_response["urgency_level"],
-            confidence=ai_response["confidence"],
-            timestamp=datetime.now().isoformat()
-        )
-        
-        logger.info("analyze_request_completed",
-                   query=request.query,
-                   urgency=response.urgency_level,
-                   confidence=response.confidence)
-        
-        return response
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("analyze_request_failed",
-                    query=request.query,
-                    error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed: {str(e)}"
-        )
+# DEPRECATED: This endpoint is replaced by the new enhanced_chatbot_service
+# Kept for backwards compatibility but should use the new /api/v1/analyze from chat_analyzer router
+# @app.post("/api/v1/analyze", response_model=AnalysisResponse)
+# async def analyze_symptoms(request: AnalysisRequest):
+#     """
+#     OLD ENDPOINT - Replaced by enhanced chatbot service
+#     """
+#     logger.warning("Using deprecated analyze endpoint")
+#     return AnalysisResponse(
+#         status="deprecated",
+#         message="Please use the new enhanced chatbot endpoint at /api/v1/analyze",
+#         analysis={},
+#         recommendations=["This is a deprecated endpoint"],
+#         urgency_level="low",
+#         confidence=0.0,
+#         timestamp=datetime.now().isoformat()
+#     )
 
 @app.get("/api/v1/diseases")
 async def get_diseases():

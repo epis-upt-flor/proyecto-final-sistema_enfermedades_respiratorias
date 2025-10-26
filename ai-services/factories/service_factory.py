@@ -39,11 +39,11 @@ class ServiceFactory:
             service = None
             
             if service_type == ServiceType.SYMPTOM_ANALYZER:
-                from symptom-analyzer.analyzer import SymptomAnalyzer
+                from symptom_analyzer.analyzer import SymptomAnalyzer
                 service = SymptomAnalyzer(**kwargs)
                 
             elif service_type == ServiceType.MEDICAL_HISTORY_PROCESSOR:
-                from medical-history-processor.processor import MedicalHistoryProcessor
+                from medical_history_processor.processor import MedicalHistoryProcessor
                 service = MedicalHistoryProcessor(**kwargs)
                 
             elif service_type == ServiceType.AI_MODEL_MANAGER:
