@@ -223,6 +223,29 @@ function ChatBot() {
     }, 100);
   };
 
+  // Function to format markdown-like text for better display
+  const formatMessage = (text) => {
+    if (!text) return '';
+    
+    // Replace markdown bold (**text**) with spans for styling
+    let formatted = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/#{3}\s?(.*?)$/gm, '<h4>$1</h4>')
+      .replace(/#{2}\s?(.*?)$/gm, '<h3>$1</h3>')
+      .replace(/#{1}\s?(.*?)$/gm, '<h2>$1</h2>')
+      .replace(/^\•\s/gm, '• ')
+      .replace(/^-\s/gm, '• ')
+      .replace(/\n/g, '<br />');
+    
+    return formatted;
+  };
+
+  const renderFormattedMessage = (text) => {
+    const formatted = formatMessage(text);
+    return <div dangerouslySetInnerHTML={{ __html: formatted }} />;
+  };
+
   const startConversation = () => {
     setShowWelcome(false);
     const welcomeMessage = {
@@ -256,7 +279,7 @@ function ChatBot() {
               {message.type === 'bot' ? '🤖' : '👤'}
             </div>
             <div className="message-content">
-              <div className="message-text">{message.text}</div>
+              <div className="message-text">{renderFormattedMessage(message.text)}</div>
               <div className="message-time">
                 {message.timestamp.toLocaleTimeString('es-PE', { 
                   hour: '2-digit', 
