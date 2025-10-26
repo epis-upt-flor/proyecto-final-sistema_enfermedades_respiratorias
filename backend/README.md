@@ -13,44 +13,56 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Control de roles y permisos
 - ✅ Cambio de contraseña seguro
 - ✅ Desactivación de cuentas
+- ✅ Gestión de usuarios (Admin)
 
 #### **2. Gestión de Historias Médicas**
 - ✅ CRUD completo de historias médicas
 - ✅ Sincronización offline
-- ✅ Búsqueda y filtros avanzados
+- ✅ Búsqueda y filtros avanzados (por fecha, ubicación, paciente)
 - ✅ Validación de datos con Joi
 - ✅ Exportación de datos (JSON, CSV, PDF)
 - ✅ Estadísticas y reportes
 
-#### **3. Análisis de Síntomas con IA**
-- ✅ Integración con servicios de IA
-- ✅ Análisis automático de síntomas
+#### **3. Análisis de Síntomas con IA** 🤖
+- ✅ Integración con servicios de IA (Python/FastAPI)
+- ✅ Análisis automático de síntomas con Machine Learning
 - ✅ Clasificación de severidad y urgencia
 - ✅ Recomendaciones médicas inteligentes
 - ✅ Tendencias de síntomas temporales
 - ✅ Identificación de signos de alarma
+- ✅ Historial de análisis de síntomas
+- ✅ Estadísticas de síntomas
 
-#### **4. Dashboard y Analytics**
+#### **4. Dashboard y Analytics** 📊
 - ✅ Dashboard personalizado por rol (Admin, Doctor, Paciente)
 - ✅ Estadísticas en tiempo real
 - ✅ Métricas de crecimiento
-- ✅ Análisis de tendencias
-- ✅ Reportes detallados
+- ✅ Análisis de tendencias temporales (7d, 30d, 90d, 1año)
+- ✅ Reportes de enfermedades por tipo
+- ✅ Reportes geográficos por distrito
+- ✅ Gráficos interactivos
 
-#### **5. Gestión de Archivos**
+#### **5. Analytics Avanzados** (Nuevo)
+- ✅ Tendencias temporales de síntomas
+- ✅ Reportes de enfermedades por tipo
+- ✅ Analytics geográficos por ubicación
+- ✅ Análisis de síntomas más frecuentes
+- ✅ Clasificación por severidad (bajo, medio, alto, severo)
+
+#### **6. Gestión de Archivos**
 - ✅ Subida de imágenes médicas
 - ✅ Grabación de notas de audio
 - ✅ Procesamiento automático de imágenes
 - ✅ Compresión y optimización
 - ✅ Gestión de almacenamiento
 
-#### **6. Exportación de Datos**
+#### **7. Exportación de Datos**
 - ✅ Exportación en múltiples formatos (JSON, CSV, PDF)
 - ✅ Filtros avanzados de exportación
 - ✅ Estadísticas de usuarios
 - ✅ Reportes personalizados
 
-#### **7. Seguridad Avanzada**
+#### **8. Seguridad Avanzada**
 - ✅ Encriptación de contraseñas con bcrypt
 - ✅ Rate limiting por IP
 - ✅ Sanitización de datos (XSS, NoSQL injection)
@@ -58,24 +70,33 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Headers de seguridad con Helmet
 - ✅ CORS configurado
 
-#### **8. Base de Datos**
+#### **9. Chat y Conversaciones**
+- ✅ Sistema de chat con servicio de IA
+- ✅ Conversaciones persistentes
+- ✅ Análisis de mensajes con ML
+- ✅ Clasificación automática de intención
+- ✅ Respuestas contextualizadas
+
+#### **10. Base de Datos**
 - ✅ Modelos MongoDB con Mongoose
 - ✅ Índices optimizados para consultas
 - ✅ Validaciones a nivel de esquema
 - ✅ Middleware de encriptación
 - ✅ Relaciones entre entidades
+- ✅ Modelos: User, MedicalHistory, SymptomReport, ChatConversation, AIAnalysis
 
-#### **9. Documentación API**
-- ✅ Swagger/OpenAPI completa
+#### **11. Documentación API**
+- ✅ Swagger/OpenAPI completa en `/api-docs`
 - ✅ Documentación interactiva
 - ✅ Esquemas de datos detallados
 - ✅ Ejemplos de uso
 
-#### **10. Utilidades de Desarrollo**
+#### **12. Utilidades de Desarrollo**
 - ✅ Scripts de seeding de datos
-- ✅ Logging estructurado
+- ✅ Logging estructurado con Winston
 - ✅ Manejo de errores centralizado
-- ✅ Validación de datos robusta
+- ✅ Validación de datos robusta con Joi
+- ✅ TypeScript con configuración optimizada para CI/CD
 
 ## 🏗️ Arquitectura Técnica
 
@@ -249,6 +270,14 @@ GET    /patient           # Dashboard de paciente
 GET    /health            # Estado del sistema
 ```
 
+### **Analytics (`/api/analytics`)** (Nuevo)
+```http
+GET    /temporal-trends   # Tendencias temporales de síntomas
+GET    /disease-reports    # Reportes por tipo de enfermedad
+GET    /geographic-data    # Datos geográficos de síntomas
+GET    /symptom-summary    # Resumen de síntomas más frecuentes
+```
+
 ### **Gestión de Archivos (`/api/v1/upload`)**
 ```http
 POST   /medical-files     # Subir archivos médicos
@@ -330,6 +359,70 @@ GET    /history           # Historial de exportaciones
 }
 ```
 
+### **SymptomReport** (Nuevo)
+```typescript
+{
+  _id: string;
+  userId: string;
+  symptoms: Array<{
+    name: string;
+    severity: 'low' | 'moderate' | 'high' | 'severe';
+    duration: number; // en días
+    description?: string;
+  }>;
+  location: {
+    district: string;
+    city: string;
+    country: string;
+  };
+  reportedAt: Date;
+  category: string;
+  severity: 'low' | 'moderate' | 'high' | 'severe';
+}
+```
+
+### **ChatConversation** (Nuevo)
+```typescript
+{
+  _id: string;
+  sessionId: string;
+  userId: string;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+    metadata?: object;
+  }>;
+  metadata: {
+    source: string;
+    language: string;
+  };
+  location: {
+    city: string;
+    country: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### **AIAnalysis** (Nuevo)
+```typescript
+{
+  _id: string;
+  medicalHistoryId: string;
+  analysisResult: {
+    disease: string;
+    confidence: number;
+    urgencyLevel: 'critical' | 'high' | 'medium' | 'low';
+    symptoms: string[];
+    recommendations: string[];
+  };
+  modelVersion: string;
+  analyzedAt: Date;
+}
+```
+
 ## 🧪 Testing
 
 ### **Ejecutar Tests:**
@@ -371,6 +464,39 @@ Respuesta:
   "environment": "development",
   "version": "1.0.0"
 }
+```
+
+## 🤖 Integración con IA
+
+### **Servicios AI Disponibles:**
+- **Python/FastAPI** en puerto 8000
+- **Análisis de síntomas** con Machine Learning (XGBoost + SHAP)
+- **Clasificación de enfermedades** (124 enfermedades respiratorias)
+- **Explicabilidad SHAP** - Factores de decisión y predicciones alternativas
+- **Confianza del modelo**: 99.81% accuracy
+
+### **Endpoints de IA:**
+```http
+# Análisis de síntomas
+POST http://localhost:8000/api/v1/analyze
+
+# Análisis con explicación SHAP
+POST http://localhost:8000/api/v1/ml-analyze
+
+# Estado del servicio
+GET http://localhost:8000/api/v1/health/detailed
+```
+
+### **Flujo de Integración:**
+```mermaid
+graph LR
+    A[Backend API] --> B[AI Service]
+    B --> C[XGBoost Model]
+    B --> D[SHAP Explainer]
+    C --> E[Predicción]
+    D --> F[Explicabilidad]
+    E --> A
+    F --> A
 ```
 
 ## 🚀 Deployment
