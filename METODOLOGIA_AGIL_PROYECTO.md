@@ -278,24 +278,24 @@ gantt
     title Roadmap del Proyecto
     dateFormat  YYYY-MM-DD
     section Arquitectura
-    Setup infraestructura    :a1, 2024-01-01, 14d
-    Docker configuration     :a2, 2024-01-15, 14d
+    Setup infraestructura    :a1, 2024-08-01, 14d
+    Docker configuration     :a2, 2024-08-15, 14d
     
     section MVP
-    Backend API             :b1, 2024-02-01, 14d
-    Frontend React          :b2, 2024-02-15, 14d
-    AI Services             :b3, 2024-03-01, 14d
-    Chatbot Integration     :b4, 2024-03-15, 14d
+    Backend API             :b1, 2024-09-01, 14d
+    Frontend React          :b2, 2024-09-15, 14d
+    AI Services             :b3, 2024-09-01, 14d
+    Chatbot Integration     :b4, 2024-09-15, 14d
     
     section ML
-    Dataset Generation      :c1, 2024-04-01, 14d
-    Random Forest           :c2, 2024-04-15, 14d
-    XGBoost                 :c3, 2024-05-01, 14d
-    SHAP Integration        :c4, 2024-05-15, 14d
+    Dataset Generation      :c1, 2024-10-01, 14d
+    Random Forest           :c2, 2024-10-15, 14d
+    XGBoost                 :c3, 2024-11-01, 14d
+    SHAP Integration        :c4, 2024-11-15, 14d
     
     section Refinamiento
-    Optimization            :d1, 2024-06-01, 14d
-    Documentation           :d2, 2024-06-15, 14d
+    Optimization            :d1, 2024-12-01, 14d
+    Documentation           :d2, 2024-12-15, 14d
 ```
 
 ### **Priorización** (MoSCoW)
