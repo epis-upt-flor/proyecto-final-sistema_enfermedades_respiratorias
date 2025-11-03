@@ -189,6 +189,33 @@ class EnsemblePredictor:
             'method': ensemble_method
         }
         
+        # Add top 3 predictions from best model
+        try:
+            if self.use_xgboost and self.xgboost_explainer:
+                xgb_pred = self.xgboost_explainer.explain_prediction(
+                    symptoms_text, patient_age, top_k=3
+                )
+                result['top_3_predictions'] = xgb_pred.get('top_3_predictions', [])
+            elif self.use_random_forest and self.random_forest_explainer:
+                rf_pred = self.random_forest_explainer.explain_prediction(
+                    symptoms_text, patient_age, top_k=3
+                )
+                result['top_3_predictions'] = rf_pred.get('top_3_predictions', [])
+        except:
+            # Fallback: create top 3 from ensemble predictions
+            disease_confidence = {}
+            for pred in predictions:
+                disease = pred.get('disease', '')
+                if disease not in disease_confidence:
+                    disease_confidence[disease] = 0.0
+                disease_confidence[disease] += pred.get('confidence', 0.0) * pred.get('weight', 0.33)
+            
+            top_diseases = sorted(disease_confidence.items(), key=lambda x: x[1], reverse=True)[:3]
+            result['top_3_predictions'] = [
+                {'disease': disease, 'confidence': conf}
+                for disease, conf in top_diseases
+            ]
+        
         # Apply personalization if requested
         if apply_personalization and get_personalization_system:
             try:
@@ -202,6 +229,46 @@ class EnsemblePredictor:
             except Exception as e:
                 print(f"Personalization error: {e}")
                 result['ensemble_info']['personalization_applied'] = False
+        
+        # Add patient-friendly explanation
+        try:
+            import sys
+            import os
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services'))
+            from patient_friendly_explainer import get_patient_explainer
+            
+            explainer = get_patient_explainer()
+            
+            # Get SHAP factors from best model prediction
+            shap_factors = None
+            if self.use_xgboost and self.xgboost_explainer:
+                try:
+                    shap_pred = self.xgboost_explainer.explain_prediction(
+                        symptoms_text, patient_age, top_k=5
+                    )
+                    shap_factors = shap_pred.get('explanation', {}).get('decision_factors', [])
+                except:
+                    pass
+            
+            # Generate friendly explanation
+            friendly_explanation = explainer.explain_prediction(
+                disease=result.get('disease', ''),
+                confidence=result.get('confidence', 0.0),
+                urgency_level=result.get('urgency_level', 'medium'),
+                symptoms=symptoms,
+                shap_factors=shap_factors,
+                top_predictions=result.get('top_3_predictions', [])
+            )
+            
+            result['friendly_explanation'] = friendly_explanation
+            result['explanation'] = friendly_explanation  # Main explanation for compatibility
+            
+        except Exception as e:
+            print(f"Error generating friendly explanation: {e}")
+            # Fallback explanation
+            result['friendly_explanation'] = {
+                'summary': f"Basado en sus síntomas, el diagnóstico más probable es {result.get('disease', 'enfermedad respiratoria')}."
+            }
         
         return result
     

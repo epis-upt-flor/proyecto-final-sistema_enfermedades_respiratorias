@@ -85,6 +85,9 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput, use_ensemble: bool = T
                         urgent_diseases = ['neumonia grave', 'estado asmatico', 'tuberculosis']
                         is_urgent = any(urgent in ensemble_pred['disease'].lower() for urgent in urgent_diseases)
                         
+                        # Get friendly explanation from ensemble
+                        friendly_explanation = ensemble_pred.get('friendly_explanation') or ensemble_pred.get('explanation', {})
+                        
                         response = SymptomMLOutput(
                             disease=ensemble_pred['disease'],
                             confidence=ensemble_pred['confidence'],
@@ -92,9 +95,17 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput, use_ensemble: bool = T
                             explanation={
                                 'method': 'ensemble',
                                 'models_used': ensemble_pred.get('ensemble_info', {}).get('models_used', []),
-                                'description': ensemble_pred.get('explanation', 'Ensemble prediction')
+                                'friendly': friendly_explanation,
+                                'main_explanation': friendly_explanation.get('main_explanation', ''),
+                                'key_factors': friendly_explanation.get('key_factors', []),
+                                'reasoning': friendly_explanation.get('reasoning', ''),
+                                'summary': friendly_explanation.get('summary', ''),
+                                'decision_factors': friendly_explanation.get('key_factors', [])[:3]  # For compatibility
                             } if input_data.include_explanation else None,
                             top_3_predictions=[
+                                {'disease': p['disease'], 'confidence': f"{p.get('confidence', 0):.4f}"}
+                                for p in ensemble_pred.get('top_3_predictions', [])
+                            ] if ensemble_pred.get('top_3_predictions') else [
                                 {'disease': ensemble_pred['disease'], 'confidence': f"{ensemble_pred['confidence']:.4f}"}
                             ],
                             needs_medical_attention=is_urgent or ensemble_pred['confidence'] > 0.8,
@@ -170,12 +181,51 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput, use_ensemble: bool = T
         urgent_diseases = ['neumonia grave', 'estado asmatico', 'tuberculosis']
         is_urgent = any(urgent in prediction['disease'].lower() for urgent in urgent_diseases)
         
+        # Generate patient-friendly explanation
+        friendly_explanation = None
+        if input_data.include_explanation:
+            try:
+                import sys
+                import os
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services'))
+                from patient_friendly_explainer import get_patient_explainer
+                
+                explainer_service = get_patient_explainer()
+                shap_factors = prediction.get('explanation', {}).get('decision_factors', [])
+                
+                friendly_explanation = explainer_service.explain_prediction(
+                    disease=prediction['disease'],
+                    confidence=prediction['confidence'],
+                    urgency_level='high' if is_urgent else 'medium',
+                    symptoms=input_data.symptoms,
+                    shap_factors=shap_factors,
+                    top_predictions=prediction.get('top_3_predictions', [])
+                )
+            except Exception as e:
+                logger.warning("Failed to generate friendly explanation", error=str(e))
+                friendly_explanation = None
+        
         # Build response
+        explanation_data = None
+        if input_data.include_explanation:
+            if friendly_explanation:
+                explanation_data = {
+                    'method': 'shap',
+                    'friendly': friendly_explanation,
+                    'main_explanation': friendly_explanation.get('main_explanation', ''),
+                    'key_factors': friendly_explanation.get('key_factors', []),
+                    'reasoning': friendly_explanation.get('reasoning', ''),
+                    'summary': friendly_explanation.get('summary', ''),
+                    'decision_factors': friendly_explanation.get('key_factors', [])[:3]  # For compatibility
+                }
+            else:
+                explanation_data = prediction.get('explanation')
+        
         response = SymptomMLOutput(
             disease=prediction['disease'],
             confidence=prediction['confidence'],
             urgency_level='high' if is_urgent else 'medium',
-            explanation=prediction.get('explanation') if input_data.include_explanation else None,
+            explanation=explanation_data,
             top_3_predictions=[
                 {'disease': p['disease'], 'confidence': f"{p['confidence']:.4f}"}
                 for p in prediction.get('top_3_predictions', [])

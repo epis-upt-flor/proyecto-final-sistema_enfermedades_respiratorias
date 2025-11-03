@@ -206,36 +206,87 @@ export default function SymptomAnalyzerScreen() {
                   Urgencia: {analysis.urgency_level?.toUpperCase() || 'MEDIA'}
                 </Chip>
                 
-                {analysis.top_3_predictions && analysis.top_3_predictions.length > 0 && (
+                {/* Main Explanation (Friendly) */}
+                {analysis.explanation?.friendly?.main_explanation && (
+                  <Paragraph style={[styles.analysisText, { marginTop: 8, fontSize: 15, lineHeight: 22 }]}>
+                    {analysis.explanation.friendly.main_explanation}
+                  </Paragraph>
+                )}
+                
+                {/* Key Factors (Friendly) */}
+                {analysis.explanation?.friendly?.key_factors && analysis.explanation.friendly.key_factors.length > 0 && (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>Otras Posibilidades:</Title>
-                    {analysis.top_3_predictions.slice(0, 3).map((pred: any, idx: number) => (
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>🔍 ¿Por qué este diagnóstico?</Title>
+                    {analysis.explanation.friendly.key_factors.slice(0, 3).map((factor: string, idx: number) => (
                       <Paragraph key={idx} style={styles.analysisText}>
-                        {idx + 1}. {pred.disease} ({parseFloat(pred.confidence) * 100}%)
+                        • {factor}
                       </Paragraph>
                     ))}
                   </>
                 )}
                 
-                {analysis.explanation && analysis.explanation.decision_factors && (
+                {/* Reasoning (Friendly) */}
+                {analysis.explanation?.friendly?.reasoning && (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>💭 Explicación:</Title>
+                    <Paragraph style={styles.analysisText}>
+                      {analysis.explanation.friendly.reasoning}
+                    </Paragraph>
+                  </>
+                )}
+                
+                {/* Alternatives (Friendly) */}
+                {analysis.explanation?.friendly?.alternatives ? (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>💡 Otras Posibilidades:</Title>
+                    <Paragraph style={styles.analysisText}>
+                      {analysis.explanation.friendly.alternatives}
+                    </Paragraph>
+                  </>
+                ) : analysis.top_3_predictions && analysis.top_3_predictions.length > 1 && (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>💡 Otras Posibilidades:</Title>
+                    {analysis.top_3_predictions.slice(1, 3).map((pred: any, idx: number) => (
+                      <Paragraph key={idx} style={styles.analysisText}>
+                        • {pred.disease} ({parseFloat(pred.confidence) * 100}% de probabilidad)
+                      </Paragraph>
+                    ))}
+                  </>
+                )}
+                
+                {/* Recommendations (Friendly or Personalized) */}
+                {analysis.explanation?.friendly?.recommendations && analysis.explanation.friendly.recommendations.length > 0 ? (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>✅ Recomendaciones:</Title>
+                    {analysis.explanation.friendly.recommendations.slice(0, 4).map((rec: string, idx: number) => (
+                      <Paragraph key={idx} style={styles.analysisText}>
+                        {rec}
+                      </Paragraph>
+                    ))}
+                  </>
+                ) : analysis.personalized_recommendations && analysis.personalized_recommendations.length > 0 && (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>✅ Recomendaciones:</Title>
+                    {analysis.personalized_recommendations.slice(0, 4).map((rec: string, idx: number) => (
+                      <Paragraph key={idx} style={styles.analysisText}>
+                        {rec}
+                      </Paragraph>
+                    ))}
+                  </>
+                )}
+                
+                {/* Fallback: Technical factors if friendly not available */}
+                {!analysis.explanation?.friendly && analysis.explanation?.decision_factors && (
                   <>
                     <Title style={{ marginTop: 16, fontSize: 16 }}>🔍 Factores Clave:</Title>
-                    {analysis.explanation.decision_factors.slice(0, 3).map((factor: any, idx: number) => (
-                      <Paragraph key={idx} style={styles.analysisText}>
-                        {factor.shap_value > 0 ? '➕' : '➖'} Factor {idx + 1}: {Math.abs(factor.shap_value * 100).toFixed(1)}% importancia
-                      </Paragraph>
-                    ))}
-                  </>
-                )}
-                
-                {analysis.personalized_recommendations && analysis.personalized_recommendations.length > 0 && (
-                  <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>💡 Recomendaciones:</Title>
-                    {analysis.personalized_recommendations.slice(0, 3).map((rec: string, idx: number) => (
-                      <Paragraph key={idx} style={styles.analysisText}>
-                        • {rec}
-                      </Paragraph>
-                    ))}
+                    {analysis.explanation.decision_factors.slice(0, 3).map((factor: any, idx: number) => {
+                      const factorText = typeof factor === 'string' ? factor : factor.feature_name || `Factor ${idx + 1}`;
+                      return (
+                        <Paragraph key={idx} style={styles.analysisText}>
+                          • {factorText}
+                        </Paragraph>
+                      );
+                    })}
                   </>
                 )}
                 

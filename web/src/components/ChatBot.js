@@ -198,35 +198,75 @@ function ChatBot() {
           'low': '💚'
         }[mlAnalysisResult.urgency_level] || '💚';
         
-        // Add ML prediction info to response
-        let mlInfo = `\n\n**📊 Análisis ML (${confidencePercent}% confianza)**\n`;
-        mlInfo += `${urgencyEmoji} **Predicción:** ${mlAnalysisResult.disease}\n`;
-        mlInfo += `**Nivel de urgencia:** ${mlAnalysisResult.urgency_level.toUpperCase()}\n`;
+        // Use friendly explanation if available
+        const explanation = mlAnalysisResult.explanation;
+        const friendly = explanation?.friendly || explanation;
         
-        if (mlAnalysisResult.top_3_predictions && mlAnalysisResult.top_3_predictions.length > 0) {
-          mlInfo += `\n**Otras posibilidades:**\n`;
-          mlAnalysisResult.top_3_predictions.slice(0, 2).forEach((pred, idx) => {
-            mlInfo += `${idx + 2}. ${pred.disease} (${(parseFloat(pred.confidence) * 100).toFixed(1)}%)\n`;
-          });
+        // Add ML prediction info with friendly explanation
+        let mlInfo = `\n\n**📊 Resultado del Análisis**\n\n`;
+        
+        // Main explanation (friendly)
+        if (friendly?.main_explanation) {
+          mlInfo += `${friendly.main_explanation}\n\n`;
+        } else {
+          // Fallback to basic info
+          mlInfo += `${urgencyEmoji} **Diagnóstico:** ${mlAnalysisResult.disease}\n`;
+          mlInfo += `**Nivel de confianza:** ${confidencePercent}%\n`;
+          mlInfo += `**Urgencia:** ${mlAnalysisResult.urgency_level.toUpperCase()}\n\n`;
         }
         
-        if (mlAnalysisResult.explanation && mlAnalysisResult.explanation.decision_factors) {
-          mlInfo += `\n**🔍 Factores clave identificados:**\n`;
-          mlAnalysisResult.explanation.decision_factors.slice(0, 3).forEach((factor, idx) => {
-            const impact = factor.shap_value > 0 ? '➕' : '➖';
-            mlInfo += `${impact} Factor ${idx + 1} (${(Math.abs(factor.shap_value) * 100).toFixed(1)}% importancia)\n`;
+        // Key factors (friendly)
+        if (friendly?.key_factors && friendly.key_factors.length > 0) {
+          mlInfo += `**🔍 ¿Por qué este diagnóstico?**\n`;
+          friendly.key_factors.slice(0, 3).forEach((factor, idx) => {
+            mlInfo += `• ${factor}\n`;
           });
+          mlInfo += `\n`;
+        } else if (explanation?.decision_factors && explanation.decision_factors.length > 0) {
+          // Fallback to technical factors
+          mlInfo += `**🔍 Factores clave:**\n`;
+          explanation.decision_factors.slice(0, 3).forEach((factor) => {
+            const factorText = typeof factor === 'string' ? factor : factor.feature_name || 'Factor relevante';
+            mlInfo += `• ${factorText}\n`;
+          });
+          mlInfo += `\n`;
         }
         
-        if (mlAnalysisResult.personalized_recommendations && mlAnalysisResult.personalized_recommendations.length > 0) {
-          mlInfo += `\n**💡 Recomendaciones personalizadas:**\n`;
-          mlAnalysisResult.personalized_recommendations.slice(0, 3).forEach(rec => {
-            mlInfo += `• ${rec}\n`;
-          });
+        // Reasoning (friendly)
+        if (friendly?.reasoning) {
+          mlInfo += `**💭 Explicación:**\n${friendly.reasoning}\n\n`;
         }
         
+        // Alternatives (friendly)
+        if (friendly?.alternatives) {
+          mlInfo += `**💡 ${friendly.alternatives}\n\n`;
+        } else if (mlAnalysisResult.top_3_predictions && mlAnalysisResult.top_3_predictions.length > 1) {
+          mlInfo += `**💡 Otras posibilidades:**\n`;
+          mlAnalysisResult.top_3_predictions.slice(1, 3).forEach((pred, idx) => {
+            const conf = (parseFloat(pred.confidence) * 100).toFixed(1);
+            mlInfo += `• ${pred.disease} (${conf}% de probabilidad)\n`;
+          });
+          mlInfo += `\n`;
+        }
+        
+        // Recommendations (friendly or personalized)
+        if (friendly?.recommendations && friendly.recommendations.length > 0) {
+          mlInfo += `**✅ Recomendaciones:**\n`;
+          friendly.recommendations.slice(0, 4).forEach(rec => {
+            mlInfo += `${rec}\n`;
+          });
+          mlInfo += `\n`;
+        } else if (mlAnalysisResult.personalized_recommendations && mlAnalysisResult.personalized_recommendations.length > 0) {
+          mlInfo += `**✅ Recomendaciones:**\n`;
+          mlAnalysisResult.personalized_recommendations.slice(0, 4).forEach(rec => {
+            mlInfo += `${rec}\n`;
+          });
+          mlInfo += `\n`;
+        }
+        
+        // Medical attention warning
         if (mlAnalysisResult.needs_medical_attention) {
-          mlInfo += `\n⚠️ **Se recomienda atención médica**\n`;
+          mlInfo += `\n⚠️ **IMPORTANTE:** Se recomienda consultar con un médico profesional para una evaluación completa.\n`;
         }
         
         botText = botText + mlInfo;
