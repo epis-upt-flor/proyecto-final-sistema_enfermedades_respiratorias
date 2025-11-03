@@ -8,10 +8,12 @@ import { RootStackParamList, MainTabParamList } from '../types';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
+import HomeScreen from '../screens/HomeScreen';
 import DataCaptureScreen from '../components/DataCapture/DataCaptureScreen';
 import NotificationScreen from '../components/Notifications/NotificationScreen';
 import OfflineDataScreen from '../components/Offline/OfflineDataScreen';
 import AIAnalysisScreen from '../components/AI/AIAnalysisScreen';
+import MedicalChatbot from '../components/ChatBot/MedicalChatbot';
 import MedicalHistoryScreen from '../screens/MedicalHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
@@ -40,6 +42,9 @@ const MainTabNavigator = () => {
               break;
             case 'AI':
               iconName = focused ? 'robot' : 'robot-outline';
+              break;
+            case 'ChatBot':
+              iconName = focused ? 'chat' : 'chat-outline';
               break;
             case 'Profile':
               iconName = focused ? 'account' : 'account-outline';
@@ -72,7 +77,7 @@ const MainTabNavigator = () => {
     >
       <Tab.Screen
         name="Home"
-        component={DataCaptureScreen}
+        component={HomeScreen}
         options={{
           title: 'Inicio',
           headerTitle: 'RespiCare Mobile',
@@ -100,6 +105,14 @@ const MainTabNavigator = () => {
         options={{
           title: 'IA',
           headerTitle: 'Análisis con IA',
+        }}
+      />
+      <Tab.Screen
+        name="ChatBot"
+        component={MedicalChatbot}
+        options={{
+          title: 'Chat',
+          headerTitle: 'Asistente Médico',
         }}
       />
       <Tab.Screen

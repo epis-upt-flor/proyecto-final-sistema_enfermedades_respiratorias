@@ -2,37 +2,84 @@
 
 export interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: 'patient' | 'doctor' | 'admin';
+  isEmailVerified: boolean;
   avatar?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MedicalHistory {
   id: string;
   patientId: string;
+  doctorId: string;
   patientName: string;
   age: number;
+  gender: 'M' | 'F';
   diagnosis: string;
-  symptoms: string[];
-  date: string;
+  symptoms: Array<{
+    symptom: string;
+    severity: 'mild' | 'moderate' | 'severe';
+    duration: string;
+  }>;
+  treatment: string;
+  notes: string;
   location?: {
     latitude: number;
     longitude: number;
     address: string;
   };
-  images?: string[];
-  audioNotes?: string;
+  attachments?: string[];
+  date: string;
+  createdAt: string;
+  updatedAt: string;
   isOffline?: boolean;
   syncStatus: 'pending' | 'synced' | 'error';
 }
 
 export interface Symptom {
   id: string;
-  name: string;
+  symptom: string;
   severity: 'mild' | 'moderate' | 'severe';
   duration: string;
   description?: string;
+}
+
+export interface SymptomAnalysis {
+  id: string;
+  patientId: string;
+  symptoms: Array<{
+    symptom: string;
+    severity: 'mild' | 'moderate' | 'severe';
+    duration: string;
+  }>;
+  urgencyLevel: 'low' | 'medium' | 'high';
+  severityScore: number;
+  classification: {
+    categories: string[];
+    confidence: number;
+    urgency: string;
+    possibleConditions: Array<{
+      condition: string;
+      probability: number;
+      description: string;
+    }>;
+  };
+  recommendations: {
+    immediate: string[];
+    shortTerm: string[];
+    longTerm: string[];
+    emergency: string[];
+  };
+  warningSigns: string[];
+  followUpRequired: boolean;
+  confidenceScore: number;
+  analyzedAt: string;
+  processingTimeMs: number;
+  analysisMethod: 'ai_service' | 'local_rules' | 'hybrid';
 }
 
 export interface AIAnalysis {
@@ -57,9 +104,17 @@ export interface NotificationData {
   isRead: boolean;
 }
 
+export interface SyncStatus {
+  isOnline: boolean;
+  isSyncing: boolean;
+  pendingItems: number;
+  lastSyncTime: string | null;
+  syncErrors: string[];
+}
+
 export interface OfflineData {
   medicalHistories: MedicalHistory[];
-  symptoms: Symptom[];
+  symptomAnalyses: SymptomAnalysis[];
   lastSync: string;
   pendingSync: number;
 }
@@ -70,6 +125,7 @@ export interface AppState {
   offlineData: OfflineData;
   notifications: NotificationData[];
   isLoading: boolean;
+  syncStatus: SyncStatus;
 }
 
 // Tipos para navegación
@@ -79,6 +135,7 @@ export type RootStackParamList = {
   DataCapture: undefined;
   MedicalHistory: { historyId?: string };
   AIAnalysis: { symptoms: Symptom[] };
+  ChatBot: undefined;
   Settings: undefined;
   OfflineData: undefined;
 };
@@ -88,5 +145,6 @@ export type MainTabParamList = {
   Capture: undefined;
   History: undefined;
   AI: undefined;
+  ChatBot: undefined;
   Profile: undefined;
 };
