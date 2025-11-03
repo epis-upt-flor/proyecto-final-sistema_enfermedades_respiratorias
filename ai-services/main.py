@@ -44,6 +44,22 @@ try:
 except ImportError as e:
     logger.warning("symptom_ml_routes_not_available", error=str(e))
 
+# Import and register ML monitoring routes
+try:
+    from api.routes.ml_monitoring import router as ml_monitoring_router
+    app.include_router(ml_monitoring_router, prefix="/api", tags=["ML Monitoring"])
+    logger.info("ml_monitoring_routes_registered")
+except ImportError as e:
+    logger.warning("ml_monitoring_routes_not_available", error=str(e))
+
+# Import and register ML retraining routes
+try:
+    from api.routes.model_retraining import router as retraining_router
+    app.include_router(retraining_router, prefix="/api", tags=["ML Retraining"])
+    logger.info("ml_retraining_routes_registered")
+except ImportError as e:
+    logger.warning("ml_retraining_routes_not_available", error=str(e))
+
 # Configure CORS - Allow all origins for development
 app.add_middleware(
     CORSMiddleware,

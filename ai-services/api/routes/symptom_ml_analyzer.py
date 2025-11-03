@@ -20,7 +20,9 @@ class SymptomMLInput(BaseModel):
     """Input for ML symptom analysis"""
     symptoms: List[str] = Field(..., description="List of symptoms")
     patient_age: Optional[int] = Field(35, description="Patient age")
+    risk_factors: Optional[List[str]] = Field([], description="List of risk factors (smoking, diabetes, hypertension, etc.)")
     include_explanation: Optional[bool] = Field(True, description="Include SHAP explanation")
+    apply_personalization: Optional[bool] = Field(True, description="Apply age/risk personalization")
 
 
 class SymptomMLOutput(BaseModel):
@@ -31,16 +33,20 @@ class SymptomMLOutput(BaseModel):
     explanation: Optional[Dict[str, Any]] = Field(None, description="SHAP explanation")
     top_3_predictions: List[Dict[str, str]] = Field([], description="Top 3 predictions")
     needs_medical_attention: bool = Field(False, description="Whether medical attention is needed")
+    age_group: Optional[str] = Field(None, description="Patient age group")
+    risk_level: Optional[str] = Field(None, description="Overall risk level")
+    personalized_recommendations: Optional[List[str]] = Field([], description="Personalized recommendations based on age/risk")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 @router.post("/v1/ml-analyze", response_model=SymptomMLOutput)
-async def analyze_symptoms_ml(input_data: SymptomMLInput) -> SymptomMLOutput:
+async def analyze_symptoms_ml(input_data: SymptomMLInput, use_ensemble: bool = True) -> SymptomMLOutput:
     """
     Analyze symptoms using ML models with SHAP explanations
     
     Args:
         input_data: Symptoms and patient info
+        use_ensemble: Use ensemble of models (XGBoost + Random Forest + Neural Network)
     
     Returns:
         Prediction with SHAP-based explainability
@@ -48,11 +54,85 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput) -> SymptomMLOutput:
     try:
         logger.info("Processing ML symptom analysis",
                    num_symptoms=len(input_data.symptoms),
-                   include_explanation=input_data.include_explanation)
+                   include_explanation=input_data.include_explanation,
+                   use_ensemble=use_ensemble)
         
         # Convert symptoms to string format
         symptoms_str = ", ".join(input_data.symptoms)
         
+        # Try ensemble first if requested
+        if use_ensemble:
+            try:
+                import sys
+                import os
+                ml_models_path = os.path.join(os.path.dirname(__file__), '..', 'ml_models')
+                sys.path.insert(0, ml_models_path)
+                from ensemble_predictor import get_ensemble_predictor
+                
+                ensemble = get_ensemble_predictor()
+                if ensemble:
+                    ensemble_pred = ensemble.predict(
+                        input_data.symptoms,
+                        symptoms_text=symptoms_str,
+                        patient_age=input_data.patient_age,
+                        risk_factors=input_data.risk_factors or [],
+                        ensemble_method='weighted_vote',
+                        apply_personalization=input_data.apply_personalization
+                    )
+                    
+                    if 'error' not in ensemble_pred:
+                        # Format ensemble prediction to match expected output
+                        urgent_diseases = ['neumonia grave', 'estado asmatico', 'tuberculosis']
+                        is_urgent = any(urgent in ensemble_pred['disease'].lower() for urgent in urgent_diseases)
+                        
+                        response = SymptomMLOutput(
+                            disease=ensemble_pred['disease'],
+                            confidence=ensemble_pred['confidence'],
+                            urgency_level=ensemble_pred.get('urgency_level', 'medium'),
+                            explanation={
+                                'method': 'ensemble',
+                                'models_used': ensemble_pred.get('ensemble_info', {}).get('models_used', []),
+                                'description': ensemble_pred.get('explanation', 'Ensemble prediction')
+                            } if input_data.include_explanation else None,
+                            top_3_predictions=[
+                                {'disease': ensemble_pred['disease'], 'confidence': f"{ensemble_pred['confidence']:.4f}"}
+                            ],
+                            needs_medical_attention=is_urgent or ensemble_pred['confidence'] > 0.8,
+                            age_group=ensemble_pred.get('age_group'),
+                            risk_level=ensemble_pred.get('risk_level'),
+                            personalized_recommendations=ensemble_pred.get('personalized_recommendations', [])
+                        )
+                        
+                        # Log for monitoring
+                        try:
+                            import sys
+                            import os
+                            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../ml_models'))
+                            from prediction_monitor import get_monitor
+                            monitor = get_monitor()
+                            monitor.log_prediction(
+                                symptoms=input_data.symptoms,
+                                prediction={
+                                    'disease': response.disease,
+                                    'confidence': response.confidence,
+                                    'urgency_level': response.urgency_level,
+                                    'top_3_predictions': response.top_3_predictions,
+                                    'explanation': response.explanation
+                                },
+                                model_name='ensemble'
+                            )
+                        except Exception as e:
+                            logger.warning("Failed to log prediction for monitoring", error=str(e))
+                        
+                        logger.info("Ensemble prediction completed",
+                                   disease=response.disease,
+                                   confidence=response.confidence)
+                        
+                        return response
+            except Exception as e:
+                logger.warning("Ensemble prediction failed, falling back to single model", error=str(e))
+        
+        # Fallback to single model (XGBoost with SHAP)
         # Load ML model and SHAP explainer
         from shap_explainer import SHAPDiseaseExplainer
         
@@ -106,6 +186,27 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput) -> SymptomMLOutput:
         logger.info("ML prediction completed",
                    disease=response.disease,
                    confidence=response.confidence)
+        
+        # Log prediction for monitoring
+        try:
+            import sys
+            import os
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../ml_models'))
+            from prediction_monitor import get_monitor
+            monitor = get_monitor()
+            monitor.log_prediction(
+                symptoms=input_data.symptoms,
+                prediction={
+                    'disease': response.disease,
+                    'confidence': response.confidence,
+                    'urgency_level': response.urgency_level,
+                    'top_3_predictions': response.top_3_predictions,
+                    'explanation': response.explanation
+                },
+                model_name='xgboost'  # or detect which model was used
+            )
+        except Exception as e:
+            logger.warning("Failed to log prediction for monitoring", error=str(e))
         
         return response
         

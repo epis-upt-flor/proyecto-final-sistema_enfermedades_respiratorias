@@ -918,19 +918,60 @@ class EnhancedChatbotService:
             "O si prefieres, puedes hacer una pregunta general sobre salud respiratoria."
         )
     
-    def _predict_with_ml(self, user_message: str, symptoms: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-        """Use ML model with SHAP for prediction"""
+    def _predict_with_ml(self, user_message: str, symptoms: List[Dict[str, Any]], use_ensemble: bool = True, risk_factors: List[str] = None) -> Optional[Dict[str, Any]]:
+        """Use ML model with SHAP for prediction (or ensemble if available)"""
         try:
             # Build symptoms string
             symptom_names = [s.get('symptom', '') for s in symptoms]
             symptoms_text = ', '.join(symptom_names)
+            symptoms_list = symptom_names  # For neural network
             
             # Get patient age from context if available (default 35)
             patient_age = 35
             if symptoms and isinstance(symptoms[0], dict):
                 patient_age = symptoms[0].get('patient_age', 35)
             
-            # Predict with SHAP
+            # Try ensemble first if requested
+            if use_ensemble:
+                try:
+                    import sys
+                    import os
+                    ml_models_path = os.path.join(os.path.dirname(__file__), '..', 'ml_models')
+                    sys.path.insert(0, ml_models_path)
+                    from ensemble_predictor import get_ensemble_predictor
+                    
+                    ensemble = get_ensemble_predictor()
+                    if ensemble:
+                        prediction = ensemble.predict(
+                            symptoms_list, 
+                            symptoms_text=symptoms_text,
+                            patient_age=patient_age,
+                            risk_factors=risk_factors or [],
+                            ensemble_method='weighted_vote',
+                            apply_personalization=True
+                        )
+                        
+                        # Add explanation from ensemble
+                        if 'error' not in prediction:
+                            prediction['explanation'] = (
+                                f"Predicción mediante ensemble de modelos ML. "
+                                f"Modelos usados: {', '.join(prediction.get('ensemble_info', {}).get('models_used', []))}. "
+                                f"Enfermedad: {prediction.get('disease')} "
+                                f"(confianza: {prediction.get('confidence', 0):.2%})."
+                            )
+                            
+                            # Use urgency from ensemble or enhance
+                            if 'urgency_level' not in prediction:
+                                urgency_keywords = ['dificultad respiratoria', 'cianosis', 'confusion', 'shock', 'coma', 'severa', 'grave']
+                                detected_text = user_message.lower()
+                                has_urgency = any(kw in detected_text for kw in urgency_keywords)
+                                prediction['urgency_level'] = 'high' if has_urgency else 'medium'
+                            
+                            return prediction
+                except Exception as e:
+                    logger.warning("Ensemble prediction failed, falling back to single model", error=str(e))
+            
+            # Fallback to single model (XGBoost with SHAP)
             prediction = self._shap_explainer.explain_prediction(
                 symptoms_text, 
                 patient_age=patient_age
