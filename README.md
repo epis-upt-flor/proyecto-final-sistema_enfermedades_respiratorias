@@ -2,6 +2,26 @@
 
 Sistema completo de gestión y análisis de enfermedades respiratorias con inteligencia artificial, diseñado para el sistema de salud de Tacna, Perú.
 
+## 📊 Estado del Proyecto
+
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)
+![React](https://img.shields.io/badge/react-18+-blue.svg)
+![Docker](https://img.shields.io/badge/docker-supported-blue.svg)
+
+![MDSD](https://img.shields.io/badge/MDSD-4.4%2F5.0-brightgreen.svg)
+![Code Generation](https://img.shields.io/badge/Code%20Generation-87%25-blue.svg)
+![Industry](https://img.shields.io/badge/Industry-Top%2010%25-yellow.svg)
+![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.64%25-brightgreen.svg)
+![SHAP](https://img.shields.io/badge/SHAP-Explicability+-blue.svg)
+![Architecture](https://img.shields.io/badge/Architecture-Clean-brightgreen.svg)
+
+![Methodology](https://img.shields.io/badge/Methodology-Scrum%20Adapted-orange.svg)
+![API](https://img.shields.io/badge/API-Docs%20Ready-brightgreen.svg)
+![Chatbot](https://img.shields.io/badge/Chatbot-ML%20Enabled-purple.svg)
+
+
 ## 📋 Descripción
 
 RespiCare Tacna es una plataforma integral que combina:
@@ -148,13 +168,97 @@ Ver [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) para el plan de desarrollo y próxi
 
 ## 📄 Licencia
 
-[Especificar licencia]
+### Licencia del Proyecto
+
+Este proyecto está bajo la licencia **MIT License**.
+
+```
+MIT License
+
+Copyright (c) 2024 RespiCare Tacna
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### Tecnologías y Licencias de Dependencias
+
+Este proyecto utiliza múltiples tecnologías de código abierto. A continuación se listan las tecnologías principales y sus licencias:
+
+#### Backend (Node.js/TypeScript)
+- **Express.js** - MIT License
+- **MongoDB** - Server Side Public License (SSPL)
+- **Mongoose** - MIT License
+- **TypeScript** - Apache License 2.0
+- **JWT (jsonwebtoken)** - MIT License
+- **Winston** - MIT License
+
+#### AI Services (Python)
+- **FastAPI** - MIT License
+- **scikit-learn** - BSD License
+- **XGBoost** - Apache License 2.0
+- **SHAP** - MIT License
+- **NumPy** - BSD License
+- **Pandas** - BSD License
+- **spaCy** - MIT License
+
+#### Frontend Web (React)
+- **React** - MIT License
+- **Chart.js** - MIT License
+- **Leaflet** - BSD 2-Clause License
+- **React Router** - MIT License
+
+#### Mobile (React Native)
+- **React Native** - MIT License
+- **Expo** - MIT License
+- **React Navigation** - MIT License
+
+#### Base de Datos y Caching
+- **MongoDB** - Server Side Public License (SSPL)
+- **Redis** - BSD 3-Clause License
+
+### Nota sobre Licencias de Dependencias
+
+Las dependencias del proyecto tienen sus propias licencias. Para ver las licencias completas de todas las dependencias:
+
+```bash
+# Backend
+cd backend
+npm list --depth=0
+
+# AI Services
+cd ai-services
+pip-licenses
+
+# Frontend Web
+cd web
+npm list --depth=0
+```
+
+**Importante**: Este proyecto utiliza tecnologías con diferentes tipos de licencias (MIT, BSD, Apache 2.0, SSPL). Asegúrate de cumplir con todos los requisitos de licencia si planeas distribuir o comercializar el software.
+
+Para más detalles sobre licencias específicas, consulta los archivos `LICENSE` o `package.json` en cada componente del proyecto.
 
 ## 👥 Equipo
 
-[Información del equipo]
+- Cesar Fabian Chávez Linares
 
 ---
 
-**Última actualización:** Noviembre 2024
+**Última actualización:** Noviembre 2025
 
