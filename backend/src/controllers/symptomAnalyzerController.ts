@@ -73,6 +73,57 @@ export const analyzeSymptoms = asyncHandler(async (req: Request, res: Response) 
   }
 });
 
+// Analyze symptoms with ML models (Ensemble + SHAP) - NEW
+export const analyzeSymptomsML = asyncHandler(async (req: Request, res: Response) => {
+  const { symptoms, patient_age, risk_factors, include_explanation, apply_personalization } = req.body;
+  const patientId = req.user?._id;
+
+  if (!symptoms || !Array.isArray(symptoms) || symptoms.length === 0) {
+    throw new AppError('Se requiere al menos un síntoma para el análisis', 400);
+  }
+
+  // Validate symptoms are strings
+  for (const symptom of symptoms) {
+    if (typeof symptom !== 'string' || symptom.trim().length === 0) {
+      throw new AppError('Cada síntoma debe ser una cadena de texto válida', 400);
+    }
+  }
+
+  try {
+    const mlResult = await aiIntegrationService.analyzeSymptomsML({
+      symptoms: symptoms.map(s => s.trim()),
+      patient_age: patient_age || 35,
+      risk_factors: risk_factors || [],
+      include_explanation: include_explanation !== false, // default true
+      apply_personalization: apply_personalization !== false, // default true
+      patient_id: patientId
+    });
+
+    // Log the ML prediction for monitoring
+    logger.info('ML symptom analysis completed', {
+      patientId,
+      disease: mlResult.disease,
+      confidence: mlResult.confidence,
+      urgencyLevel: mlResult.urgency_level,
+      hasExplanation: !!mlResult.explanation
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Análisis ML de síntomas completado exitosamente',
+      data: mlResult
+    };
+
+    res.status(200).json(response);
+  } catch (error: any) {
+    logger.error('ML symptom analysis failed', {
+      patientId,
+      error: error.message
+    });
+    throw error;
+  }
+});
+
 // Get symptom trends for a patient
 export const getSymptomTrends = asyncHandler(async (req: Request, res: Response) => {
   const { patientId } = req.params;

@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import {
   analyzeSymptoms,
+  analyzeSymptomsML,
   getSymptomTrends,
   getGeneralRecommendations,
   getAIServiceStatus,
@@ -78,10 +79,51 @@ const paginationValidation = [
 
 /**
  * @route   POST /api/v1/symptom-analyzer/analyze
- * @desc    Analyze symptoms with AI
+ * @desc    Analyze symptoms with AI (Legacy endpoint)
  * @access  Private (Patient, Doctor, Admin)
  */
 router.post('/analyze', symptomAnalysisValidation, validate, analyzeSymptoms);
+
+// ML Analysis validation (simpler format - just array of strings)
+const mlAnalysisValidation = [
+  body('symptoms')
+    .isArray({ min: 1 })
+    .withMessage('Se requiere al menos un síntoma'),
+  body('symptoms.*')
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Cada síntoma debe ser una cadena de texto válida')
+    .isLength({ max: 200 })
+    .withMessage('Cada síntoma no puede exceder 200 caracteres'),
+  body('patient_age')
+    .optional()
+    .isInt({ min: 0, max: 150 })
+    .withMessage('La edad debe ser un número entre 0 y 150'),
+  body('risk_factors')
+    .optional()
+    .isArray()
+    .withMessage('Los factores de riesgo deben ser un array'),
+  body('risk_factors.*')
+    .optional()
+    .isString()
+    .withMessage('Cada factor de riesgo debe ser una cadena de texto'),
+  body('include_explanation')
+    .optional()
+    .isBoolean()
+    .withMessage('include_explanation debe ser un booleano'),
+  body('apply_personalization')
+    .optional()
+    .isBoolean()
+    .withMessage('apply_personalization debe ser un booleano')
+];
+
+/**
+ * @route   POST /api/v1/symptom-analyzer/ml-analyze
+ * @desc    Analyze symptoms with ML models (Ensemble + SHAP + Personalization)
+ * @access  Private (Patient, Doctor, Admin)
+ */
+router.post('/ml-analyze', mlAnalysisValidation, validate, analyzeSymptomsML);
 
 /**
  * @route   GET /api/v1/symptom-analyzer/trends/:patientId

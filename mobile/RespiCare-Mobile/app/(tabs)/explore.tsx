@@ -16,6 +16,7 @@ import {
 import { useTheme } from 'react-native-paper';
 import { useQuery } from '@tanstack/react-query';
 import { useMedicalHistoryStore } from '@/stores/medicalHistoryStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SymptomAnalyzerScreen() {
   const theme = useTheme();
@@ -28,30 +29,36 @@ export default function SymptomAnalyzerScreen() {
   const [showModal, setShowModal] = useState(false);
 
   const { data: analysis, isLoading, refetch } = useQuery({
-    queryKey: ['symptom-analysis', symptoms],
+    queryKey: ['symptom-analysis-ml', symptoms],
     queryFn: async () => {
       if (symptoms.length === 0) return null;
 
-      // Simular análisis de síntomas con IA
-      const response = await fetch('http://localhost:8000/api/v1/symptom-analyzer/analyze', {
+      // Use the new ML endpoint with ensemble + SHAP
+      const token = await AsyncStorage.getItem('token');
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('http://localhost:3001/api/v1/symptom-analyzer/ml-analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
-          symptoms: symptoms.map(symptom => ({
-            name: symptom,
-            severity: severity,
-            duration: duration,
-            description: description
-          }))
+          symptoms: symptoms, // Array of symptom strings
+          patient_age: 35, // TODO: Get from user profile
+          risk_factors: [],
+          include_explanation: true,
+          apply_personalization: true
         }),
       });
 
       if (response.ok) {
-        return await response.json();
+        const result = await response.json();
+        return result.data; // Return the ML prediction data
       }
-      throw new Error('Error en el análisis');
+      throw new Error('Error en el análisis ML');
     },
     enabled: symptoms.length > 0,
   });
@@ -82,14 +89,14 @@ export default function SymptomAnalyzerScreen() {
         doctorId: 'system',
         patientName: 'Usuario Actual',
         age: 30,
-        diagnosis: analysis?.data?.diagnosis || 'Análisis pendiente',
+        diagnosis: analysis?.disease || 'Análisis pendiente',
         symptoms: symptoms.map(symptom => ({
           name: symptom,
           severity: severity,
           duration: duration,
           description: description
         })),
-        description: `Análisis de síntomas: ${analysis?.data?.recommendations || 'Sin recomendaciones'}`,
+        description: `Análisis ML: ${analysis?.disease || 'Sin diagnóstico'} (${analysis?.confidence ? (analysis.confidence * 100).toFixed(1) : 0}% confianza). ${analysis?.personalized_recommendations?.join(', ') || 'Sin recomendaciones'}`,
         date: new Date().toISOString(),
         isOffline: false,
         syncStatus: 'synced'
@@ -171,20 +178,72 @@ export default function SymptomAnalyzerScreen() {
             </Card>
           )}
 
-          {/* Resultados del Análisis */}
+          {/* Resultados del Análisis ML */}
           {analysis && (
             <Card style={styles.card}>
               <Card.Content>
-                <Title>Resultado del Análisis</Title>
+                <Title>📊 Análisis ML</Title>
+                
                 <Paragraph style={styles.analysisText}>
-                  <ThemedText style={styles.bold}>Diagnóstico:</ThemedText> {analysis.data?.diagnosis || 'No disponible'}
+                  <ThemedText style={styles.bold}>Enfermedad Predicha:</ThemedText> {analysis.disease || 'No disponible'}
                 </Paragraph>
+                
                 <Paragraph style={styles.analysisText}>
-                  <ThemedText style={styles.bold}>Recomendaciones:</ThemedText> {analysis.data?.recommendations || 'No disponible'}
+                  <ThemedText style={styles.bold}>Confianza:</ThemedText> {analysis.confidence ? `${(analysis.confidence * 100).toFixed(1)}%` : 'No disponible'}
                 </Paragraph>
-                <Paragraph style={styles.analysisText}>
-                  <ThemedText style={styles.bold}>Urgencia:</ThemedText> {analysis.data?.urgency || 'No disponible'}
-                </Paragraph>
+                
+                <Chip 
+                  mode="outlined" 
+                  style={[
+                    styles.chip, 
+                    { 
+                      borderColor: analysis.urgency_level === 'critical' ? '#d32f2f' : 
+                                   analysis.urgency_level === 'high' ? '#f57c00' : 
+                                   analysis.urgency_level === 'medium' ? '#fbc02d' : '#388e3c'
+                    }
+                  ]}
+                >
+                  Urgencia: {analysis.urgency_level?.toUpperCase() || 'MEDIA'}
+                </Chip>
+                
+                {analysis.top_3_predictions && analysis.top_3_predictions.length > 0 && (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>Otras Posibilidades:</Title>
+                    {analysis.top_3_predictions.slice(0, 3).map((pred: any, idx: number) => (
+                      <Paragraph key={idx} style={styles.analysisText}>
+                        {idx + 1}. {pred.disease} ({parseFloat(pred.confidence) * 100}%)
+                      </Paragraph>
+                    ))}
+                  </>
+                )}
+                
+                {analysis.explanation && analysis.explanation.decision_factors && (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>🔍 Factores Clave:</Title>
+                    {analysis.explanation.decision_factors.slice(0, 3).map((factor: any, idx: number) => (
+                      <Paragraph key={idx} style={styles.analysisText}>
+                        {factor.shap_value > 0 ? '➕' : '➖'} Factor {idx + 1}: {Math.abs(factor.shap_value * 100).toFixed(1)}% importancia
+                      </Paragraph>
+                    ))}
+                  </>
+                )}
+                
+                {analysis.personalized_recommendations && analysis.personalized_recommendations.length > 0 && (
+                  <>
+                    <Title style={{ marginTop: 16, fontSize: 16 }}>💡 Recomendaciones:</Title>
+                    {analysis.personalized_recommendations.slice(0, 3).map((rec: string, idx: number) => (
+                      <Paragraph key={idx} style={styles.analysisText}>
+                        • {rec}
+                      </Paragraph>
+                    ))}
+                  </>
+                )}
+                
+                {analysis.needs_medical_attention && (
+                  <Chip mode="flat" style={[styles.chip, { backgroundColor: '#ffebee' }]}>
+                    ⚠️ Se recomienda atención médica
+                  </Chip>
+                )}
                 
                 <Button mode="contained" onPress={saveAnalysis} style={styles.button}>
                   Guardar en Historial

@@ -70,6 +70,43 @@ function ChatBot() {
     scrollToBottom();
   }, [messages]);
 
+  // Extract symptoms from user message
+  const extractSymptoms = (text) => {
+    const symptomKeywords = [
+      'tos', 'toser', 'fiebre', 'dolor', 'garganta', 'pecho', 'dificultad', 'respirar',
+      'respiratoria', 'sibilancias', 'falta', 'aire', 'congestión', 'nasal', 'secreción',
+      'nasal', 'estornudos', 'fatiga', 'cansancio', 'debilidad', 'náuseas', 'vómitos',
+      'dolor de cabeza', 'dolor muscular', 'escalofríos', 'sudoración', 'opresión',
+      'pecho', 'picazón', 'lagrimeo', 'goteo nasal', 'malestar general'
+    ];
+    
+    const words = text.toLowerCase().split(/\s+/);
+    const foundSymptoms = [];
+    const seenSymptoms = new Set();
+    
+    // Check for symptom patterns
+    for (const keyword of symptomKeywords) {
+      if (text.toLowerCase().includes(keyword) && !seenSymptoms.has(keyword)) {
+        foundSymptoms.push(keyword);
+        seenSymptoms.add(keyword);
+      }
+    }
+    
+    // Also check for common symptom phrases
+    const phrases = text.toLowerCase().match(/(tos|fiebre|dolor|dificultad)[^\.,;]*/gi);
+    if (phrases) {
+      phrases.forEach(phrase => {
+        const cleaned = phrase.trim();
+        if (cleaned.length > 3 && !seenSymptoms.has(cleaned)) {
+          foundSymptoms.push(cleaned);
+          seenSymptoms.add(cleaned);
+        }
+      });
+    }
+    
+    return foundSymptoms.length > 0 ? foundSymptoms : null;
+  };
+
   const handleSend = async () => {
     if (!inputText.trim()) return;
 
@@ -84,10 +121,44 @@ function ChatBot() {
     // Save user message to database
     saveMessage('user', inputText);
     
+    const currentInput = inputText;
     setInputText('');
     setIsLoading(true);
 
     try {
+      // Try to extract symptoms for ML analysis
+      const extractedSymptoms = extractSymptoms(currentInput);
+      let mlAnalysisResult = null;
+      
+      // If symptoms detected, use ML endpoint first
+      if (extractedSymptoms && extractedSymptoms.length > 0) {
+        try {
+          // Get auth token from localStorage or use guest token
+          const token = localStorage.getItem('token');
+          const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+          
+          const mlResponse = await axios.post(
+            'http://localhost:3001/api/v1/symptom-analyzer/ml-analyze',
+            {
+              symptoms: extractedSymptoms,
+              patient_age: 35, // Could be extracted from user profile
+              risk_factors: [],
+              include_explanation: true,
+              apply_personalization: true
+            },
+            { headers }
+          );
+          
+          if (mlResponse.data.success) {
+            mlAnalysisResult = mlResponse.data.data;
+            console.log('ML Analysis Result:', mlAnalysisResult);
+          }
+        } catch (mlError) {
+          console.warn('ML analysis failed, falling back to conversational AI:', mlError);
+          // Continue with conversational AI if ML fails
+        }
+      }
+      
       // Prepare conversation history for context
       const conversationHistory = messages
         .filter(msg => msg.type === 'user' || msg.type === 'bot')
@@ -97,37 +168,86 @@ function ChatBot() {
           timestamp: msg.timestamp
         }));
       
-      // Call the new conversational AI service
+      // Call the conversational AI service
       const response = await axios.post('http://localhost:8000/api/v1/analyze', {
-        message: inputText,
+        message: currentInput,
         conversation_history: conversationHistory,
         context: {
           source: 'web_chat',
           location: {
             city: 'Tacna',
             country: 'Perú'
-          }
+          },
+          ml_prediction: mlAnalysisResult ? {
+            disease: mlAnalysisResult.disease,
+            confidence: mlAnalysisResult.confidence
+          } : null
         },
         session_id: sessionId
       });
 
       let botText = response.data.message || 'He procesado tu consulta.';
       
+      // Enhance response with ML prediction if available
+      if (mlAnalysisResult) {
+        const confidencePercent = (mlAnalysisResult.confidence * 100).toFixed(1);
+        const urgencyEmoji = {
+          'critical': '🚨',
+          'high': '⚠️',
+          'medium': '⚡',
+          'low': '💚'
+        }[mlAnalysisResult.urgency_level] || '💚';
+        
+        // Add ML prediction info to response
+        let mlInfo = `\n\n**📊 Análisis ML (${confidencePercent}% confianza)**\n`;
+        mlInfo += `${urgencyEmoji} **Predicción:** ${mlAnalysisResult.disease}\n`;
+        mlInfo += `**Nivel de urgencia:** ${mlAnalysisResult.urgency_level.toUpperCase()}\n`;
+        
+        if (mlAnalysisResult.top_3_predictions && mlAnalysisResult.top_3_predictions.length > 0) {
+          mlInfo += `\n**Otras posibilidades:**\n`;
+          mlAnalysisResult.top_3_predictions.slice(0, 2).forEach((pred, idx) => {
+            mlInfo += `${idx + 2}. ${pred.disease} (${(parseFloat(pred.confidence) * 100).toFixed(1)}%)\n`;
+          });
+        }
+        
+        if (mlAnalysisResult.explanation && mlAnalysisResult.explanation.decision_factors) {
+          mlInfo += `\n**🔍 Factores clave identificados:**\n`;
+          mlAnalysisResult.explanation.decision_factors.slice(0, 3).forEach((factor, idx) => {
+            const impact = factor.shap_value > 0 ? '➕' : '➖';
+            mlInfo += `${impact} Factor ${idx + 1} (${(Math.abs(factor.shap_value) * 100).toFixed(1)}% importancia)\n`;
+          });
+        }
+        
+        if (mlAnalysisResult.personalized_recommendations && mlAnalysisResult.personalized_recommendations.length > 0) {
+          mlInfo += `\n**💡 Recomendaciones personalizadas:**\n`;
+          mlAnalysisResult.personalized_recommendations.slice(0, 3).forEach(rec => {
+            mlInfo += `• ${rec}\n`;
+          });
+        }
+        
+        if (mlAnalysisResult.needs_medical_attention) {
+          mlInfo += `\n⚠️ **Se recomienda atención médica**\n`;
+        }
+        
+        botText = botText + mlInfo;
+      }
+      
       // Build a more comprehensive response with urgency indicators
       if (response.data.success) {
         // Add urgency indicator if available
-        if (response.data.urgency_level) {
+        const urgencyLevel = mlAnalysisResult?.urgency_level || response.data.urgency_level;
+        if (urgencyLevel) {
           const urgencyEmoji = {
             'critical': '🚨',
             'high': '⚠️',
             'medium': '⚡',
             'low': '💚',
             'very_low': '💚'
-          }[response.data.urgency_level];
+          }[urgencyLevel];
           
           // Only add emoji if not already in the message
           if (urgencyEmoji && !botText.includes(urgencyEmoji)) {
-            if (response.data.urgency_level !== 'low' && response.data.urgency_level !== 'very_low') {
+            if (urgencyLevel !== 'low' && urgencyLevel !== 'very_low') {
               botText = `${urgencyEmoji} ${botText}`;
             }
           }
@@ -137,9 +257,10 @@ function ChatBot() {
         console.log('AI Analysis:', {
           symptomCount: response.data.symptom_count,
           categories: response.data.symptom_categories,
-          urgencyLevel: response.data.urgency_level,
-          needsMedicalAttention: response.data.needs_medical_attention,
-          analysis: response.data.analysis
+          urgencyLevel: urgencyLevel,
+          needsMedicalAttention: mlAnalysisResult?.needs_medical_attention || response.data.needs_medical_attention,
+          analysis: response.data.analysis,
+          mlPrediction: mlAnalysisResult
         });
       }
 
@@ -147,20 +268,27 @@ function ChatBot() {
         type: 'bot',
         text: botText,
         timestamp: new Date(),
-        urgency: response.data.urgency_level,
+        urgency: mlAnalysisResult?.urgency_level || response.data.urgency_level,
         symptomCount: response.data.symptom_count,
-        categories: response.data.symptom_categories
+        categories: response.data.symptom_categories,
+        mlPrediction: mlAnalysisResult
       };
 
       setMessages(prev => [...prev, botMessage]);
       
       // Save bot message to database with enhanced metadata
       saveMessage('bot', botText, {
-        urgencyLevel: response.data.urgency_level,
+        urgencyLevel: mlAnalysisResult?.urgency_level || response.data.urgency_level,
         symptomCount: response.data.symptom_count,
         symptomCategories: response.data.symptom_categories,
-        needsMedicalAttention: response.data.needs_medical_attention,
+        needsMedicalAttention: mlAnalysisResult?.needs_medical_attention || response.data.needs_medical_attention,
         analysis: response.data.analysis,
+        mlPrediction: mlAnalysisResult ? {
+          disease: mlAnalysisResult.disease,
+          confidence: mlAnalysisResult.confidence,
+          urgencyLevel: mlAnalysisResult.urgency_level,
+          explanation: mlAnalysisResult.explanation
+        } : null,
         conversationContext: {
           totalMessages: messages.length,
           hasHistory: conversationHistory.length > 0

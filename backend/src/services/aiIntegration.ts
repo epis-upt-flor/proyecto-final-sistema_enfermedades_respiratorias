@@ -68,6 +68,42 @@ export interface SymptomAnalysisResponse {
   processing_time_ms: number;
 }
 
+export interface MLPredictionResponse {
+  disease: string;
+  confidence: number;
+  urgency_level: string;
+  explanation?: {
+    method: string;
+    models_used?: string[];
+    description?: string;
+    positive_factors?: Array<{
+      feature_index: number;
+      shap_value: number;
+      feature_importance: number;
+    }>;
+    negative_factors?: Array<{
+      feature_index: number;
+      shap_value: number;
+      feature_importance: number;
+    }>;
+    decision_factors?: Array<{
+      feature_index: number;
+      shap_value: number;
+      feature_importance: number;
+    }>;
+    explainability_score: number;
+  };
+  top_3_predictions: Array<{
+    disease: string;
+    confidence: string;
+  }>;
+  needs_medical_attention: boolean;
+  age_group?: string;
+  risk_level?: string;
+  personalized_recommendations?: string[];
+  timestamp: string;
+}
+
 class AIIntegrationService {
   private aiClient: AxiosInstance;
   private isConnected: boolean = false;
@@ -179,7 +215,7 @@ class AIIntegrationService {
   }
 
   /**
-   * Analyze symptoms with AI
+   * Analyze symptoms with AI (Legacy endpoint)
    */
   async analyzeSymptoms(request: SymptomAnalysisRequest): Promise<SymptomAnalysisResponse> {
     try {
@@ -212,6 +248,67 @@ class AIIntegrationService {
         throw new AppError('Servicio de IA temporalmente no disponible', 503);
       } else if (error.response?.status === 400) {
         throw new AppError('Datos de síntomas inválidos para análisis de IA', 400);
+      } else {
+        throw new AppError('Error interno del servicio de IA', 500);
+      }
+    }
+  }
+
+  /**
+   * Analyze symptoms with ML models (Ensemble + SHAP) - NEW
+   * Uses the complete ML system with ensemble, SHAP explanations, and personalization
+   */
+  async analyzeSymptomsML(request: {
+    symptoms: string[];
+    patient_age?: number;
+    risk_factors?: string[];
+    include_explanation?: boolean;
+    apply_personalization?: boolean;
+    patient_id?: string;
+  }): Promise<MLPredictionResponse> {
+    try {
+      if (!this.isConnected) {
+        await this.checkHealth();
+        if (!this.isConnected) {
+          throw new AppError('AI Service no disponible', 503);
+        }
+      }
+
+      const response = await this.aiClient.post<MLPredictionResponse>(
+        '/api/v1/ml-analyze',
+        {
+          symptoms: request.symptoms,
+          patient_age: request.patient_age || 35,
+          risk_factors: request.risk_factors || [],
+          include_explanation: request.include_explanation !== false, // default true
+          apply_personalization: request.apply_personalization !== false, // default true
+        },
+        {
+          params: {
+            use_ensemble: 'true' // Use ensemble by default
+          }
+        }
+      );
+
+      logger.info('Symptoms analyzed by ML (Ensemble + SHAP)', {
+        patientId: request.patient_id,
+        disease: response.data.disease,
+        confidence: response.data.confidence,
+        urgencyLevel: response.data.urgency_level,
+        hasExplanation: !!response.data.explanation
+      });
+
+      return response.data;
+    } catch (error: any) {
+      logger.error('ML Symptom Analysis Failed', {
+        patientId: request.patient_id,
+        error: error.message
+      });
+
+      if (error.response?.status === 503) {
+        throw new AppError('Servicio de IA temporalmente no disponible', 503);
+      } else if (error.response?.status === 400) {
+        throw new AppError('Datos de síntomas inválidos para análisis ML', 400);
       } else {
         throw new AppError('Error interno del servicio de IA', 500);
       }
