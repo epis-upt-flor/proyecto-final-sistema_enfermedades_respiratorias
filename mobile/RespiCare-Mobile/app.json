@@ -9,14 +9,29 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.respicare.mobile",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "RespiCare necesita acceder a tus datos de salud para monitorear tu ritmo cardíaco, oxigenación y actividad física relacionada con enfermedades respiratorias.",
+        "NSHealthUpdateUsageDescription": "RespiCare necesita escribir datos de salud para mantener un registro de tus métricas de salud respiratoria.",
+        "NSMotionUsageDescription": "RespiCare necesita acceder a datos de movimiento para monitorear tu actividad física.",
+        "NSLocationWhenInUseUsageDescription": "RespiCare necesita tu ubicación para proporcionar recomendaciones médicas basadas en tu ubicación."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.respicare.mobile",
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -33,7 +48,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
     ],
     "experiments": {
       "typedRoutes": true

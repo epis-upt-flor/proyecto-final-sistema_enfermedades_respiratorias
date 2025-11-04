@@ -4,11 +4,15 @@ Sistema completo de gestión y análisis de enfermedades respiratorias con intel
 
 ## 📊 Estado del Proyecto
 
+### 🔧 Tecnologías y Herramientas
+
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)
 ![React](https://img.shields.io/badge/react-18+-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-supported-blue.svg)
+
+### 📈 Métricas y Calidad
 
 ![MDSD](https://img.shields.io/badge/MDSD-4.4%2F5.0-brightgreen.svg)
 ![Code Generation](https://img.shields.io/badge/Code%20Generation-87%25-blue.svg)
@@ -16,6 +20,8 @@ Sistema completo de gestión y análisis de enfermedades respiratorias con intel
 ![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.64%25-brightgreen.svg)
 ![SHAP](https://img.shields.io/badge/SHAP-Explicability+-blue.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean-brightgreen.svg)
+
+### 🚀 Funcionalidades
 
 ![Methodology](https://img.shields.io/badge/Methodology-Scrum%20Adapted-orange.svg)
 ![API](https://img.shields.io/badge/API-Docs%20Ready-brightgreen.svg)

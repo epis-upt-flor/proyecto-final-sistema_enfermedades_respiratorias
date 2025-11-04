@@ -38,6 +38,7 @@
 - ✅ Sincronización offline
 - ✅ Notificaciones push
 - ✅ Integración completa con backend
+- ✅ Integración con wearables (HealthKit/Google Fit)
 
 ---
 

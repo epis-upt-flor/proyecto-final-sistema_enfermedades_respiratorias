@@ -18,6 +18,7 @@ import symptomAnalyzerRoutes from './routes/symptomAnalyzerRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import fileUploadRoutes from './routes/fileUploadRoutes';
 import exportRoutes from './routes/exportRoutes';
+import wearableRoutes from './routes/wearableRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -104,6 +105,7 @@ class App {
     this.app.use('/api/v1/dashboard', dashboardRoutes);
     this.app.use('/api/v1/upload', fileUploadRoutes);
     this.app.use('/api/v1/export', exportRoutes);
+    this.app.use('/api/v1/wearables', wearableRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {
@@ -119,7 +121,8 @@ class App {
           symptomAnalyzer: '/api/v1/symptom-analyzer',
           dashboard: '/api/v1/dashboard',
           fileUpload: '/api/v1/upload',
-          export: '/api/v1/export'
+          export: '/api/v1/export',
+          wearables: '/api/v1/wearables'
         }
       });
     });
