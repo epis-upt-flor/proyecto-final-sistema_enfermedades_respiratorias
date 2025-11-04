@@ -41,8 +41,8 @@ module.exports = {
     }
   },
   
-  // Setup files
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  // Setup files (solo para tests que lo necesiten)
+  setupFilesAfterEnv: [],
   
   // Test timeout
   testTimeout: 10000,
@@ -58,7 +58,7 @@ module.exports = {
   errorOnDeprecated: true,
   
   // Module name mapping
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@tests/(.*)$': '<rootDir>/tests/$1'
   },
@@ -81,9 +81,9 @@ module.exports = {
     '/coverage/'
   ],
   
-  // Watch plugins
-  watchPlugins: [
-    'jest-watch-typeahead/filename',
-    'jest-watch-typeahead/testname'
-  ]
+  // Watch plugins (comentado si no está instalado)
+  // watchPlugins: [
+  //   'jest-watch-typeahead/filename',
+  //   'jest-watch-typeahead/testname'
+  // ]
 };
