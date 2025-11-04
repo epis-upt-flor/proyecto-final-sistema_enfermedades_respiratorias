@@ -14,10 +14,13 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Download spaCy model (using pip instead of spacy download)
-# For spacy 3.6.1, use compatible model version
-RUN pip install --no-cache-dir --user en-core-web-sm==3.6.1 || \
-    pip install --no-cache-dir --user en-core-web-sm
+# Download spaCy model using spacy download command
+# After installing spacy, we can download the model
+RUN python -m spacy download en_core_web_sm || \
+    (curl -L https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.1/en_core_web_sm-3.6.1-py3-none-any.whl -o /tmp/en_core_web_sm.whl && \
+     pip install --no-cache-dir --user /tmp/en_core_web_sm.whl && \
+     rm /tmp/en_core_web_sm.whl) || \
+    echo "Warning: spaCy model download failed, will need to download at runtime"
 
 # Production stage
 FROM python:3.11-slim

@@ -1,5 +1,6 @@
 import { Response, Request } from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User, { UserDocument } from '../models/User';
 import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse, AuthenticatedRequest, User as IUser } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -44,17 +45,17 @@ export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthRes
     email,
     password,
     role
-  });
+  }) as UserDocument;
 
   // Generar tokens
-  const token = generateToken(user._id.toString());
-  const refreshToken = generateRefreshToken(user._id.toString());
+  const token = generateToken((user._id as mongoose.Types.ObjectId).toString());
+  const refreshToken = generateRefreshToken((user._id as mongoose.Types.ObjectId).toString());
 
   // Actualizar lastLogin
   user.lastLogin = new Date();
   await user.save();
 
-  logger.info(`Usuario registrado: ${email}`, { userId: user._id, role });
+  logger.info(`Usuario registrado: ${email}`, { userId: (user._id as mongoose.Types.ObjectId).toString(), role });
 
   const response: ApiResponse<AuthResponse> = {
     success: true,
@@ -62,7 +63,7 @@ export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthRes
     data: {
       user: {
         ...user.toJSON(),
-        _id: user._id.toString()
+        _id: (user._id as mongoose.Types.ObjectId).toString()
       } as Omit<IUser, 'password'>,
       token,
       refreshToken
@@ -94,14 +95,14 @@ export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthRespon
   }
 
   // Generar tokens
-  const token = generateToken(user._id.toString());
-  const refreshToken = generateRefreshToken(user._id.toString());
+  const token = generateToken((user._id as mongoose.Types.ObjectId).toString());
+  const refreshToken = generateRefreshToken((user._id as mongoose.Types.ObjectId).toString());
 
   // Actualizar lastLogin
   user.lastLogin = new Date();
   await user.save();
 
-  logger.info(`Usuario logueado: ${email}`, { userId: user._id, role: user.role });
+  logger.info(`Usuario logueado: ${email}`, { userId: (user._id as mongoose.Types.ObjectId).toString(), role: user.role });
 
   const response: ApiResponse<AuthResponse> = {
     success: true,
@@ -109,7 +110,7 @@ export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthRespon
     data: {
       user: {
         ...user.toJSON(),
-        _id: user._id.toString()
+        _id: (user._id as mongoose.Types.ObjectId).toString()
       } as Omit<IUser, 'password'>,
       token,
       refreshToken
@@ -132,16 +133,16 @@ export const refreshToken = asyncHandler(async (req: AuthenticatedRequest, res: 
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { userId: string };
     
     // Buscar usuario
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId) as UserDocument | null;
     if (!user || !user.isActive) {
       throw new AppError('Usuario no encontrado o inactivo', 401);
     }
 
     // Generar nuevos tokens
-    const newToken = generateToken(user._id.toString());
-    const newRefreshToken = generateRefreshToken(user._id.toString());
+    const newToken = generateToken((user._id as mongoose.Types.ObjectId).toString());
+    const newRefreshToken = generateRefreshToken((user._id as mongoose.Types.ObjectId).toString());
 
-    logger.info(`Token refrescado para usuario: ${user.email}`, { userId: user._id });
+    logger.info(`Token refrescado para usuario: ${user.email}`, { userId: (user._id as mongoose.Types.ObjectId).toString() });
 
     const response: ApiResponse<AuthResponse> = {
       success: true,
@@ -149,7 +150,7 @@ export const refreshToken = asyncHandler(async (req: AuthenticatedRequest, res: 
       data: {
         user: {
         ...user.toJSON(),
-        _id: user._id.toString()
+        _id: (user._id as mongoose.Types.ObjectId).toString()
       } as Omit<IUser, 'password'>,
         token: newToken,
         refreshToken: newRefreshToken

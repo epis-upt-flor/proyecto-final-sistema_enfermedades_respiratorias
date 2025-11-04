@@ -64,7 +64,11 @@ export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest
   }
 
   if (isOffline !== undefined) {
-    filters.isOffline = isOffline === 'true' || isOffline === true;
+    // isOffline puede ser string 'true'/'false' o boolean
+    const isOfflineValue = typeof isOffline === 'string' 
+      ? isOffline === 'true' 
+      : Boolean(isOffline);
+    filters.isOffline = isOfflineValue;
   }
 
   if (startDate && endDate) {
