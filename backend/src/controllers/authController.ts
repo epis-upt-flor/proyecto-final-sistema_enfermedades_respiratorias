@@ -1,27 +1,35 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { UserDocument } from '../models/User';
-import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse } from '../types';
+import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 
 // Generar JWT token
 const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET!, {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET no está configurado');
+  }
+  return jwt.sign({ userId }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 
 // Generar refresh token
 const generateRefreshToken = (userId: string): string => {
-  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, {
+  const secret = process.env.JWT_REFRESH_SECRET;
+  if (!secret) {
+    throw new Error('JWT_REFRESH_SECRET no está configurado');
+  }
+  return jwt.sign({ userId }, secret, {
     expiresIn: process.env.JWT_REFRESH_EXPIRE || '30d'
   });
 };
 
 // Registrar nuevo usuario
-export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthResponse>, RegisterRequest>, res: Response) => {
+export const register = asyncHandler(async (req: AuthenticatedRequest<{}, ApiResponse<AuthResponse>, RegisterRequest>, res: Response) => {
   const { name, email, password, role } = req.body;
 
   // Verificar si el usuario ya existe
@@ -39,8 +47,8 @@ export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthRes
   });
 
   // Generar tokens
-  const token = generateToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+  const token = generateToken(user._id.toString());
+  const refreshToken = generateRefreshToken(user._id.toString());
 
   // Actualizar lastLogin
   user.lastLogin = new Date();
@@ -52,7 +60,10 @@ export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthRes
     success: true,
     message: 'Usuario registrado exitosamente',
     data: {
-      user: user.toJSON(),
+      user: {
+        ...user.toJSON(),
+        _id: user._id.toString()
+      } as Omit<User, 'password'>,
       token,
       refreshToken
     }
@@ -62,7 +73,7 @@ export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthRes
 });
 
 // Iniciar sesión
-export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthResponse>, LoginRequest>, res: Response) => {
+export const login = asyncHandler(async (req: AuthenticatedRequest<{}, ApiResponse<AuthResponse>, LoginRequest>, res: Response) => {
   const { email, password } = req.body;
 
   // Buscar usuario y incluir contraseña
@@ -83,8 +94,8 @@ export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthRespon
   }
 
   // Generar tokens
-  const token = generateToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+  const token = generateToken(user._id.toString());
+  const refreshToken = generateRefreshToken(user._id.toString());
 
   // Actualizar lastLogin
   user.lastLogin = new Date();
@@ -96,7 +107,10 @@ export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthRespon
     success: true,
     message: 'Inicio de sesión exitoso',
     data: {
-      user: user.toJSON(),
+      user: {
+        ...user.toJSON(),
+        _id: user._id.toString()
+      } as Omit<User, 'password'>,
       token,
       refreshToken
     }
@@ -106,7 +120,7 @@ export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthRespon
 });
 
 // Refrescar token
-export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
+export const refreshToken = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
@@ -124,8 +138,8 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     }
 
     // Generar nuevos tokens
-    const newToken = generateToken(user._id);
-    const newRefreshToken = generateRefreshToken(user._id);
+    const newToken = generateToken(user._id.toString());
+    const newRefreshToken = generateRefreshToken(user._id.toString());
 
     logger.info(`Token refrescado para usuario: ${user.email}`, { userId: user._id });
 
@@ -133,7 +147,10 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
       success: true,
       message: 'Token refrescado exitosamente',
       data: {
-        user: user.toJSON(),
+        user: {
+        ...user.toJSON(),
+        _id: user._id.toString()
+      } as Omit<User, 'password'>,
         token: newToken,
         refreshToken: newRefreshToken
       }
@@ -146,7 +163,7 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 });
 
 // Cerrar sesión
-export const logout = asyncHandler(async (req: Request, res: Response) => {
+export const logout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // En una implementación real, podrías invalidar el token en una blacklist
   // Por ahora, simplemente devolvemos éxito
   
@@ -161,7 +178,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Obtener perfil del usuario actual
-export const getProfile = asyncHandler(async (req: Request, res: Response) => {
+export const getProfile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const user = await User.findById(req.user?._id);
   if (!user) {
     throw new AppError('Usuario no encontrado', 404);
@@ -177,7 +194,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Actualizar perfil
-export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
+export const updateProfile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { name, avatar } = req.body;
   const userId = req.user?._id;
 
@@ -204,7 +221,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
 });
 
 // Cambiar contraseña
-export const changePassword = asyncHandler(async (req: Request, res: Response) => {
+export const changePassword = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;
   const userId = req.user?._id;
 
@@ -234,7 +251,7 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
 });
 
 // Desactivar cuenta
-export const deactivateAccount = asyncHandler(async (req: Request, res: Response) => {
+export const deactivateAccount = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?._id;
 
   const user = await User.findById(userId);
@@ -256,7 +273,7 @@ export const deactivateAccount = asyncHandler(async (req: Request, res: Response
 });
 
 // Obtener estadísticas de usuarios (solo admin)
-export const getUserStats = asyncHandler(async (req: Request, res: Response) => {
+export const getUserStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Verificar que el usuario sea admin
   if (req.user?.role !== 'admin') {
     throw new AppError('Acceso denegado. Se requieren permisos de administrador', 403);
@@ -274,7 +291,7 @@ export const getUserStats = asyncHandler(async (req: Request, res: Response) => 
 });
 
 // Obtener lista de usuarios (solo admin)
-export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+export const getUsers = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Verificar que el usuario sea admin
   if (req.user?.role !== 'admin') {
     throw new AppError('Acceso denegado. Se requieren permisos de administrador', 403);

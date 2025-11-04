@@ -3,8 +3,8 @@
  * Handles dashboard analytics and statistics
  */
 
-import { Request, Response } from 'express';
-import { ApiResponse } from '../types';
+import { Response } from 'express';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
@@ -13,7 +13,7 @@ import MedicalHistory from '../models/MedicalHistory';
 import aiIntegrationService from '../services/aiIntegration';
 
 // Get dashboard overview for admin
-export const getAdminDashboard = asyncHandler(async (req: Request, res: Response) => {
+export const getAdminDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Verify admin access
   if (req.user?.role !== 'admin') {
     throw new AppError('Acceso denegado. Se requieren permisos de administrador', 403);
@@ -91,7 +91,7 @@ export const getAdminDashboard = asyncHandler(async (req: Request, res: Response
 });
 
 // Get dashboard overview for doctor
-export const getDoctorDashboard = asyncHandler(async (req: Request, res: Response) => {
+export const getDoctorDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const doctorId = req.user?._id;
 
   try {
@@ -199,7 +199,7 @@ export const getDoctorDashboard = asyncHandler(async (req: Request, res: Respons
 });
 
 // Get dashboard overview for patient
-export const getPatientDashboard = asyncHandler(async (req: Request, res: Response) => {
+export const getPatientDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const patientId = req.user?._id;
 
   try {
@@ -307,7 +307,7 @@ export const getPatientDashboard = asyncHandler(async (req: Request, res: Respon
 });
 
 // Get system health status
-export const getSystemHealth = asyncHandler(async (req: Request, res: Response) => {
+export const getSystemHealth = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     // Check database connection
     const dbStatus = await checkDatabaseHealth();

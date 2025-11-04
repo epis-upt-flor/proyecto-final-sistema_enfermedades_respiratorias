@@ -51,7 +51,8 @@
     "node_modules",
     "dist",
     "**/*.test.ts",
-    "**/*.spec.ts"
-
+    "**/*.spec.ts",
+    "**/interface-adapters/**/*.generated.ts",
+    "**/infrastructure/repositories/generated/**"
   ]
 }

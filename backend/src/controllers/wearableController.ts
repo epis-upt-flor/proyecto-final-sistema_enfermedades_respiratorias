@@ -3,16 +3,9 @@
  * Controlador para manejar datos de wearables
  */
 
-import { Request, Response } from 'express';
-import WearableData, { IWearableData } from '../models/WearableData';
-import { ApiResponse } from '../utils/ApiResponse';
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    role: string;
-  };
-}
+import { Response } from 'express';
+import WearableData from '../models/WearableData';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 
 /**
  * Sincronizar datos de wearables
@@ -20,18 +13,24 @@ interface AuthenticatedRequest extends Request {
 export const syncWearableData = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { data } = req.body;
-    const patientId = req.user?.userId;
+    const patientId = req.user?._id;
 
     if (!patientId) {
-      res.status(401).json(
-        new ApiResponse(false, 'Usuario no autenticado', null, 401)
-      );
+      res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado',
+        error: 'Token de acceso requerido'
+      } as ApiResponse);
       return;
     }
 
     if (!Array.isArray(data) || data.length === 0) {
       res.status(400).json(
-        new ApiResponse(false, 'Se requiere un array de datos de wearables', null, 400)
+        {
+          success: false,
+          message: 'Se requiere un array de datos de wearables',
+          error: 'Datos de entrada inválidos'
+        } as ApiResponse
       );
       return;
     }
@@ -55,18 +54,19 @@ export const syncWearableData = async (req: AuthenticatedRequest, res: Response)
       savedData.push(saved);
     }
 
-    res.status(201).json(
-      new ApiResponse(
-        true,
-        `${savedData.length} registros sincronizados exitosamente`,
-        { count: savedData.length, data: savedData },
-        201
-      )
-    );
+    res.status(201).json({
+      success: true,
+      message: `${savedData.length} registros sincronizados exitosamente`,
+      data: { count: savedData.length, data: savedData }
+    } as ApiResponse);
   } catch (error: any) {
     console.error('Error syncing wearable data:', error);
     res.status(500).json(
-      new ApiResponse(false, 'Error al sincronizar datos de wearables', null, 500, error.message)
+      {
+        success: false,
+        message: 'Error al sincronizar datos de wearables',
+        error: error.message
+      } as ApiResponse
     );
   }
 };
@@ -76,20 +76,28 @@ export const syncWearableData = async (req: AuthenticatedRequest, res: Response)
  */
 export const getWearableData = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const patientId = req.params.patientId || req.user?.userId;
+    const patientId = req.params.patientId || req.user?._id;
     const { startDate, endDate, limit = 100 } = req.query;
 
     if (!patientId) {
       res.status(400).json(
-        new ApiResponse(false, 'ID de paciente requerido', null, 400)
+        {
+          success: false,
+          message: 'ID de paciente requerido',
+          error: 'Datos de entrada inválidos'
+        } as ApiResponse
       );
       return;
     }
 
     // Verificar permisos (solo puede ver sus propios datos a menos que sea doctor/admin)
-    if (req.user?.userId !== patientId && req.user?.role !== 'doctor' && req.user?.role !== 'admin') {
+    if (req.user?._id !== patientId && req.user?.role !== 'doctor' && req.user?.role !== 'admin') {
       res.status(403).json(
-        new ApiResponse(false, 'No tienes permisos para ver estos datos', null, 403)
+        {
+          success: false,
+          message: 'No tienes permisos para ver estos datos',
+          error: 'Acceso denegado'
+        } as ApiResponse
       );
       return;
     }
@@ -113,12 +121,20 @@ export const getWearableData = async (req: AuthenticatedRequest, res: Response):
       .lean();
 
     res.status(200).json(
-      new ApiResponse(true, 'Datos de wearables obtenidos exitosamente', { data }, 200)
+      {
+        success: true,
+        message: 'Datos de wearables obtenidos exitosamente',
+        data: { data }
+      } as ApiResponse
     );
   } catch (error: any) {
     console.error('Error getting wearable data:', error);
     res.status(500).json(
-      new ApiResponse(false, 'Error al obtener datos de wearables', null, 500, error.message)
+      {
+        success: false,
+        message: 'Error al obtener datos de wearables',
+        error: error.message
+      } as ApiResponse
     );
   }
 };
@@ -128,20 +144,28 @@ export const getWearableData = async (req: AuthenticatedRequest, res: Response):
  */
 export const getWearableMetrics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const patientId = req.params.patientId || req.user?.userId;
+    const patientId = req.params.patientId || req.user?._id;
     const { hours = 24 } = req.query;
 
     if (!patientId) {
       res.status(400).json(
-        new ApiResponse(false, 'ID de paciente requerido', null, 400)
+        {
+          success: false,
+          message: 'ID de paciente requerido',
+          error: 'Datos de entrada inválidos'
+        } as ApiResponse
       );
       return;
     }
 
     // Verificar permisos
-    if (req.user?.userId !== patientId && req.user?.role !== 'doctor' && req.user?.role !== 'admin') {
+    if (req.user?._id !== patientId && req.user?.role !== 'doctor' && req.user?.role !== 'admin') {
       res.status(403).json(
-        new ApiResponse(false, 'No tienes permisos para ver estos datos', null, 403)
+        {
+          success: false,
+          message: 'No tienes permisos para ver estos datos',
+          error: 'Acceso denegado'
+        } as ApiResponse
       );
       return;
     }
@@ -166,7 +190,7 @@ export const getWearableMetrics = async (req: AuthenticatedRequest, res: Respons
       heartRate: {
         current: heartRates[0] || 0,
         average: heartRates.length > 0 
-          ? heartRates.reduce((a, b) => a + b, 0) / heartRates.length 
+          ? heartRates.reduce((a: number, b: number) => a + b, 0) / heartRates.length 
           : 0,
         min: heartRates.length > 0 ? Math.min(...heartRates) : 0,
         max: heartRates.length > 0 ? Math.max(...heartRates) : 0,
@@ -174,7 +198,7 @@ export const getWearableMetrics = async (req: AuthenticatedRequest, res: Respons
       oxygenSaturation: {
         current: oxygenLevels[0] || 0,
         average: oxygenLevels.length > 0 
-          ? oxygenLevels.reduce((a, b) => a + b, 0) / oxygenLevels.length 
+          ? oxygenLevels.reduce((a: number, b: number) => a + b, 0) / oxygenLevels.length 
           : 0,
         min: oxygenLevels.length > 0 ? Math.min(...oxygenLevels) : 0,
       },
@@ -185,7 +209,7 @@ export const getWearableMetrics = async (req: AuthenticatedRequest, res: Respons
       respiratoryRate: {
         current: respiratoryRates[0] || 0,
         average: respiratoryRates.length > 0 
-          ? respiratoryRates.reduce((a, b) => a + b, 0) / respiratoryRates.length 
+          ? respiratoryRates.reduce((a: number, b: number) => a + b, 0) / respiratoryRates.length 
           : 0,
       },
       period: {
@@ -197,12 +221,20 @@ export const getWearableMetrics = async (req: AuthenticatedRequest, res: Respons
     };
 
     res.status(200).json(
-      new ApiResponse(true, 'Métricas obtenidas exitosamente', { metrics }, 200)
+      {
+        success: true,
+        message: 'Métricas obtenidas exitosamente',
+        data: { metrics }
+      } as ApiResponse
     );
   } catch (error: any) {
     console.error('Error getting wearable metrics:', error);
     res.status(500).json(
-      new ApiResponse(false, 'Error al obtener métricas de wearables', null, 500, error.message)
+      {
+        success: false,
+        message: 'Error al obtener métricas de wearables',
+        error: error.message
+      } as ApiResponse
     );
   }
 };

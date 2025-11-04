@@ -155,4 +155,4 @@ UserSchema.statics['getUserStats'] = async function() {
   }, {});
 };
 
-export default mongoose.model<UserDocument>('User', UserSchema);
+export default mongoose.model<UserDocument, UserModel>('User', UserSchema);

@@ -3,8 +3,8 @@
  * Handles symptom analysis and AI integration
  */
 
-import { Request, Response } from 'express';
-import { ApiResponse } from '../types';
+import { Response } from 'express';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
@@ -12,7 +12,7 @@ import aiIntegrationService, { SymptomAnalysisRequest } from '../services/aiInte
 import MedicalHistory from '../models/MedicalHistory';
 
 // Analyze symptoms with AI
-export const analyzeSymptoms = asyncHandler(async (req: Request, res: Response) => {
+export const analyzeSymptoms = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { symptoms, context, metadata } = req.body;
   const patientId = req.user?._id;
 
@@ -74,7 +74,7 @@ export const analyzeSymptoms = asyncHandler(async (req: Request, res: Response) 
 });
 
 // Analyze symptoms with ML models (Ensemble + SHAP) - NEW
-export const analyzeSymptomsML = asyncHandler(async (req: Request, res: Response) => {
+export const analyzeSymptomsML = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { symptoms, patient_age, risk_factors, include_explanation, apply_personalization } = req.body;
   const patientId = req.user?._id;
 
@@ -125,7 +125,7 @@ export const analyzeSymptomsML = asyncHandler(async (req: Request, res: Response
 });
 
 // Get symptom trends for a patient
-export const getSymptomTrends = asyncHandler(async (req: Request, res: Response) => {
+export const getSymptomTrends = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { patientId } = req.params;
   const { period = '30d' } = req.query;
 
@@ -154,7 +154,7 @@ export const getSymptomTrends = asyncHandler(async (req: Request, res: Response)
 });
 
 // Get general symptom recommendations
-export const getGeneralRecommendations = asyncHandler(async (req: Request, res: Response) => {
+export const getGeneralRecommendations = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const recommendations = await aiIntegrationService.getGeneralRecommendations();
 
@@ -172,7 +172,7 @@ export const getGeneralRecommendations = asyncHandler(async (req: Request, res: 
 });
 
 // Get AI service status
-export const getAIServiceStatus = asyncHandler(async (req: Request, res: Response) => {
+export const getAIServiceStatus = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const status = await aiIntegrationService.getServiceStatus();
 
@@ -190,7 +190,7 @@ export const getAIServiceStatus = asyncHandler(async (req: Request, res: Respons
 });
 
 // Get symptom analysis history for a patient
-export const getSymptomAnalysisHistory = asyncHandler(async (req: Request, res: Response) => {
+export const getSymptomAnalysisHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { patientId } = req.params;
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
@@ -243,7 +243,7 @@ export const getSymptomAnalysisHistory = asyncHandler(async (req: Request, res: 
 });
 
 // Get symptom statistics
-export const getSymptomStatistics = asyncHandler(async (req: Request, res: Response) => {
+export const getSymptomStatistics = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { patientId } = req.params;
   const { period = '30d' } = req.query;
 

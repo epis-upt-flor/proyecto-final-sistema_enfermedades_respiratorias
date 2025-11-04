@@ -110,3 +110,7 @@ export const optionalAuth = async (req: AuthenticatedRequest, _res: Response, ne
     next();
   }
 };
+
+// Exportar alias para compatibilidad con rutas
+export const auth = authenticate;
+export const authMiddleware = authenticate;

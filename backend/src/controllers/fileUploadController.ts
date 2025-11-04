@@ -3,15 +3,15 @@
  * Handles file uploads for medical images and audio notes
  */
 
-import { Request, Response } from 'express';
-import { ApiResponse } from '../types';
+import { Response } from 'express';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { FileUploadService } from '../services/fileUploadService';
 
 // Upload medical files (images and audio)
-export const uploadMedicalFiles = asyncHandler(async (req: Request, res: Response) => {
+export const uploadMedicalFiles = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
   if (!files) {
@@ -72,7 +72,7 @@ export const uploadMedicalFiles = asyncHandler(async (req: Request, res: Respons
 });
 
 // Get file information
-export const getFileInfo = asyncHandler(async (req: Request, res: Response) => {
+export const getFileInfo = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { filePath } = req.params;
 
   if (!filePath) {
@@ -117,7 +117,7 @@ export const getFileInfo = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Delete file
-export const deleteFile = asyncHandler(async (req: Request, res: Response) => {
+export const deleteFile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { filePath } = req.params;
 
   if (!filePath) {
@@ -153,7 +153,7 @@ export const deleteFile = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Get upload statistics
-export const getUploadStats = asyncHandler(async (req: Request, res: Response) => {
+export const getUploadStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Only admin can access upload statistics
   if (req.user?.role !== 'admin') {
     throw new AppError('Acceso denegado. Se requieren permisos de administrador', 403);
@@ -239,7 +239,7 @@ export const getUploadStats = asyncHandler(async (req: Request, res: Response) =
 });
 
 // Clean up old files
-export const cleanupOldFiles = asyncHandler(async (req: Request, res: Response) => {
+export const cleanupOldFiles = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Only admin can trigger cleanup
   if (req.user?.role !== 'admin') {
     throw new AppError('Acceso denegado. Se requieren permisos de administrador', 403);

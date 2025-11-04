@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import MedicalHistory from '../models/MedicalHistory';
 import AIAnalysis from '../models/AIAnalysis';
-import { ApiResponse, SearchQuery } from '../types';
+import { ApiResponse, SearchQuery, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 
 // Crear nueva historia médica
-export const createMedicalHistory = asyncHandler(async (req: Request, res: Response) => {
+export const createMedicalHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const medicalHistoryData = {
     ...req.body,
     doctorId: req.user?._id
@@ -30,7 +30,7 @@ export const createMedicalHistory = asyncHandler(async (req: Request, res: Respo
 });
 
 // Obtener historias médicas con filtros y paginación
-export const getMedicalHistories = asyncHandler(async (req: Request, res: Response) => {
+export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { 
     page = 1, 
     limit = 10, 
@@ -107,7 +107,7 @@ export const getMedicalHistories = asyncHandler(async (req: Request, res: Respon
 });
 
 // Obtener historia médica por ID
-export const getMedicalHistoryById = asyncHandler(async (req: Request, res: Response) => {
+export const getMedicalHistoryById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
   const medicalHistory = await MedicalHistory.findById(id);
@@ -130,7 +130,7 @@ export const getMedicalHistoryById = asyncHandler(async (req: Request, res: Resp
 });
 
 // Actualizar historia médica
-export const updateMedicalHistory = asyncHandler(async (req: Request, res: Response) => {
+export const updateMedicalHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
   const medicalHistory = await MedicalHistory.findById(id);
@@ -164,7 +164,7 @@ export const updateMedicalHistory = asyncHandler(async (req: Request, res: Respo
 });
 
 // Eliminar historia médica
-export const deleteMedicalHistory = asyncHandler(async (req: Request, res: Response) => {
+export const deleteMedicalHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
   const medicalHistory = await MedicalHistory.findById(id);
@@ -196,7 +196,7 @@ export const deleteMedicalHistory = asyncHandler(async (req: Request, res: Respo
 });
 
 // Sincronizar historias médicas offline
-export const syncOfflineHistories = asyncHandler(async (req: Request, res: Response) => {
+export const syncOfflineHistories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { histories } = req.body;
 
   if (!Array.isArray(histories)) {
@@ -242,7 +242,7 @@ export const syncOfflineHistories = asyncHandler(async (req: Request, res: Respo
 });
 
 // Obtener estadísticas de historias médicas
-export const getMedicalHistoryStats = asyncHandler(async (req: Request, res: Response) => {
+export const getMedicalHistoryStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const stats = await MedicalHistory.getStats();
 
   const response: ApiResponse = {
@@ -255,7 +255,7 @@ export const getMedicalHistoryStats = asyncHandler(async (req: Request, res: Res
 });
 
 // Obtener diagnósticos más comunes
-export const getTopDiagnoses = asyncHandler(async (req: Request, res: Response) => {
+export const getTopDiagnoses = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const limit = parseInt(req.query.limit as string) || 10;
   const diagnoses = await MedicalHistory.getTopDiagnoses(limit);
 
@@ -269,7 +269,7 @@ export const getTopDiagnoses = asyncHandler(async (req: Request, res: Response) 
 });
 
 // Obtener estadísticas por edad
-export const getAgeStats = asyncHandler(async (req: Request, res: Response) => {
+export const getAgeStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const ageStats = await MedicalHistory.getAgeStats();
 
   const response: ApiResponse = {
@@ -282,7 +282,7 @@ export const getAgeStats = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Buscar historias médicas por ubicación
-export const getMedicalHistoriesByLocation = asyncHandler(async (req: Request, res: Response) => {
+export const getMedicalHistoriesByLocation = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { latitude, longitude, radius = 10 } = req.query;
 
   if (!latitude || !longitude) {
@@ -305,7 +305,7 @@ export const getMedicalHistoriesByLocation = asyncHandler(async (req: Request, r
 });
 
 // Obtener historias médicas por rango de fechas
-export const getMedicalHistoriesByDateRange = asyncHandler(async (req: Request, res: Response) => {
+export const getMedicalHistoriesByDateRange = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { startDate, endDate } = req.query;
 
   if (!startDate || !endDate) {
@@ -327,7 +327,7 @@ export const getMedicalHistoriesByDateRange = asyncHandler(async (req: Request, 
 });
 
 // Exportar historias médicas
-export const exportMedicalHistories = asyncHandler(async (req: Request, res: Response) => {
+export const exportMedicalHistories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { format = 'json', startDate, endDate } = req.query;
 
   let histories;

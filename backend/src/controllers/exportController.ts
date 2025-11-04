@@ -3,15 +3,15 @@
  * Handles data export functionality
  */
 
-import { Request, Response } from 'express';
-import { ApiResponse } from '../types';
+import { Response } from 'express';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { ExportService, ExportOptions } from '../services/exportService';
 
 // Export medical histories
-export const exportMedicalHistories = asyncHandler(async (req: Request, res: Response) => {
+export const exportMedicalHistories = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { format, dateFrom, dateTo, patientId, doctorId, includeImages, includeAudio } = req.body;
 
   // Validate export options
@@ -56,7 +56,7 @@ export const exportMedicalHistories = asyncHandler(async (req: Request, res: Res
 });
 
 // Export user statistics
-export const exportUserStats = asyncHandler(async (req: Request, res: Response) => {
+export const exportUserStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Only admin can export user statistics
   if (req.user?.role !== 'admin') {
     throw new AppError('Acceso denegado. Se requieren permisos de administrador', 403);
@@ -74,7 +74,7 @@ export const exportUserStats = asyncHandler(async (req: Request, res: Response) 
 });
 
 // Get available export formats
-export const getExportFormats = asyncHandler(async (req: Request, res: Response) => {
+export const getExportFormats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const formats = ExportService.getAvailableFormats();
 
   const response: ApiResponse = {
@@ -94,7 +94,7 @@ export const getExportFormats = asyncHandler(async (req: Request, res: Response)
 });
 
 // Get export history (placeholder for future implementation)
-export const getExportHistory = asyncHandler(async (req: Request, res: Response) => {
+export const getExportHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // This would typically query a database table that stores export history
   // For now, return a placeholder response
   

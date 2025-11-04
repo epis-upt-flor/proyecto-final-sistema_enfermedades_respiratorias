@@ -1,8 +1,24 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 import { MedicalHistory as IMedicalHistory, Symptom } from '../types';
 
 export interface MedicalHistoryDocument extends Omit<IMedicalHistory, '_id'>, Document {
   toJSON(): any;
+}
+
+export interface MedicalHistoryModel extends Model<MedicalHistoryDocument> {
+  findByPatient(patientId: string): Promise<MedicalHistoryDocument[]>;
+  findByDoctor(doctorId: string): Promise<MedicalHistoryDocument[]>;
+  findByDateRange(startDate: Date, endDate: Date): Promise<MedicalHistoryDocument[]>;
+  findByLocation(latitude: number, longitude: number, radius?: number): Promise<MedicalHistoryDocument[]>;
+  getStats(): Promise<{
+    total: number;
+    pendingSync: number;
+    synced: number;
+    errors: number;
+    offline: number;
+  }>;
+  getTopDiagnoses(limit?: number): Promise<Array<{ _id: string; count: number }>>;
+  getAgeStats(): Promise<Array<{ _id: string; count: number; avgAge: number }>>;
 }
 
 const SymptomSchema = new Schema<Symptom>({
@@ -281,4 +297,4 @@ MedicalHistorySchema.statics.getAgeStats = async function() {
   return ageStats;
 };
 
-export default mongoose.model<MedicalHistoryDocument>('MedicalHistory', MedicalHistorySchema);
+export default mongoose.model<MedicalHistoryDocument, MedicalHistoryModel>('MedicalHistory', MedicalHistorySchema);

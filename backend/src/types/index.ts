@@ -171,6 +171,11 @@ export interface PaginationQuery {
 export interface SearchQuery extends PaginationQuery {
   search?: string;
   filters?: Record<string, any>;
+  patientId?: string;
+  syncStatus?: 'pending' | 'synced' | 'error';
+  isOffline?: boolean;
+  startDate?: string | Date;
+  endDate?: string | Date;
 }
 
 // Tipos para middleware
