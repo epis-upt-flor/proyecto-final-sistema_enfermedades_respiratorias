@@ -1,7 +1,7 @@
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { UserDocument } from '../models/User';
-import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse, AuthenticatedRequest } from '../types';
+import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse, AuthenticatedRequest, User as IUser } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
@@ -14,7 +14,7 @@ const generateToken = (userId: string): string => {
   }
   return jwt.sign({ userId }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '7d'
-  });
+  } as jwt.SignOptions);
 };
 
 // Generar refresh token
@@ -25,11 +25,11 @@ const generateRefreshToken = (userId: string): string => {
   }
   return jwt.sign({ userId }, secret, {
     expiresIn: process.env.JWT_REFRESH_EXPIRE || '30d'
-  });
+  } as jwt.SignOptions);
 };
 
 // Registrar nuevo usuario
-export const register = asyncHandler(async (req: AuthenticatedRequest<{}, ApiResponse<AuthResponse>, RegisterRequest>, res: Response) => {
+export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthResponse>, RegisterRequest>, res: Response) => {
   const { name, email, password, role } = req.body;
 
   // Verificar si el usuario ya existe
@@ -63,7 +63,7 @@ export const register = asyncHandler(async (req: AuthenticatedRequest<{}, ApiRes
       user: {
         ...user.toJSON(),
         _id: user._id.toString()
-      } as Omit<User, 'password'>,
+      } as Omit<IUser, 'password'>,
       token,
       refreshToken
     }
@@ -73,7 +73,7 @@ export const register = asyncHandler(async (req: AuthenticatedRequest<{}, ApiRes
 });
 
 // Iniciar sesión
-export const login = asyncHandler(async (req: AuthenticatedRequest<{}, ApiResponse<AuthResponse>, LoginRequest>, res: Response) => {
+export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthResponse>, LoginRequest>, res: Response) => {
   const { email, password } = req.body;
 
   // Buscar usuario y incluir contraseña
@@ -110,7 +110,7 @@ export const login = asyncHandler(async (req: AuthenticatedRequest<{}, ApiRespon
       user: {
         ...user.toJSON(),
         _id: user._id.toString()
-      } as Omit<User, 'password'>,
+      } as Omit<IUser, 'password'>,
       token,
       refreshToken
     }
@@ -150,7 +150,7 @@ export const refreshToken = asyncHandler(async (req: AuthenticatedRequest, res: 
         user: {
         ...user.toJSON(),
         _id: user._id.toString()
-      } as Omit<User, 'password'>,
+      } as Omit<IUser, 'password'>,
         token: newToken,
         refreshToken: newRefreshToken
       }

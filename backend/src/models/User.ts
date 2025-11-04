@@ -1,10 +1,17 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { User as IUser } from '../types';
 
 export interface UserDocument extends Omit<IUser, '_id'>, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
   toJSON(): any;
+}
+
+export interface UserModel extends Model<UserDocument> {
+  findByEmail(email: string): Promise<UserDocument | null>;
+  findActive(): Promise<UserDocument[]>;
+  findByRole(role: string): Promise<UserDocument[]>;
+  getUserStats(): Promise<Record<string, { total: number; active: number }>>;
 }
 
 const UserSchema = new Schema<UserDocument>({
@@ -146,13 +153,13 @@ UserSchema.statics['getUserStats'] = async function() {
     }
   ]);
 
-  return stats.reduce((acc, stat) => {
+  return stats.reduce((acc: Record<string, { total: number; active: number }>, stat: any) => {
     acc[stat._id] = {
       total: stat.count,
       active: stat.active
     };
     return acc;
-  }, {});
+  }, {} as Record<string, { total: number; active: number }>);
 };
 
 export default mongoose.model<UserDocument, UserModel>('User', UserSchema);

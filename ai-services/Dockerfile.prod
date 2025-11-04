@@ -14,8 +14,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Download spaCy model
-RUN python -m spacy download en_core_web_sm
+# Download spaCy model (using pip instead of spacy download)
+# For spacy 3.6.1, use compatible model version
+RUN pip install --no-cache-dir --user en-core-web-sm==3.6.1 || \
+    pip install --no-cache-dir --user en-core-web-sm
 
 # Production stage
 FROM python:3.11-slim

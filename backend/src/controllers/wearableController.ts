@@ -179,12 +179,12 @@ export const getWearableMetrics = async (req: AuthenticatedRequest, res: Respons
     }).sort({ timestamp: -1 }).lean();
 
     // Calcular métricas
-    const heartRates = data.filter(d => d.heartRate).map(d => d.heartRate!);
-    const oxygenLevels = data.filter(d => d.oxygenSaturation).map(d => d.oxygenSaturation!);
-    const respiratoryRates = data.filter(d => d.respiratoryRate).map(d => d.respiratoryRate!);
+    const heartRates = data.filter((d: any) => d.heartRate).map((d: any) => d.heartRate as number);
+    const oxygenLevels = data.filter((d: any) => d.oxygenSaturation).map((d: any) => d.oxygenSaturation as number);
+    const respiratoryRates = data.filter((d: any) => d.respiratoryRate).map((d: any) => d.respiratoryRate as number);
     
-    const totalSteps = data.reduce((sum, d) => sum + (d.steps || 0), 0);
-    const totalDistance = data.reduce((sum, d) => sum + (d.distance || 0), 0);
+    const totalSteps = data.reduce((sum: number, d: any) => sum + (d.steps || 0), 0);
+    const totalDistance = data.reduce((sum: number, d: any) => sum + (d.distance || 0), 0);
 
     const metrics = {
       heartRate: {

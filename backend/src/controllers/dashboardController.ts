@@ -53,8 +53,8 @@ export const getAdminDashboard = asyncHandler(async (req: AuthenticatedRequest, 
 
     const dashboard = {
       overview: {
-        totalUsers: Object.values(userStats).reduce((sum, stat) => sum + stat.total, 0),
-        activeUsers: Object.values(userStats).reduce((sum, stat) => sum + stat.active, 0),
+        totalUsers: Object.values(userStats).reduce((sum: number, stat: any) => sum + (stat?.total || 0), 0),
+        activeUsers: Object.values(userStats).reduce((sum: number, stat: any) => sum + (stat?.active || 0), 0),
         totalMedicalHistories: medicalStats.total,
         pendingSync: medicalStats.pendingSync,
         aiServiceStatus: aiStatus.connected ? 'online' : 'offline'

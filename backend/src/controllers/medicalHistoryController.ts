@@ -64,7 +64,7 @@ export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest
   }
 
   if (isOffline !== undefined) {
-    filters.isOffline = isOffline === 'true';
+    filters.isOffline = isOffline === 'true' || isOffline === true;
   }
 
   if (startDate && endDate) {
