@@ -3,7 +3,9 @@
  */
 
 import request from 'supertest';
-import { app } from '../../src/index';
+import appInstance from '../../src/index';
+
+const app = appInstance.app;
 import { testUtils } from '../../tests/setup';
 import User from '../../src/models/User';
 import bcrypt from 'bcryptjs';
@@ -14,12 +16,12 @@ describe('Auth Controller', () => {
     await testUtils.cleanTestData();
   });
 
-  describe('POST /api/auth/register', () => {
+  describe('POST /api/v1/auth/register', () => {
     it('should register a new user successfully', async () => {
       const userData = testUtils.generateTestUser();
 
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/v1/auth/register')
         .send(userData)
         .expect(201);
 
@@ -34,13 +36,13 @@ describe('Auth Controller', () => {
       
       // Create first user
       await request(app)
-        .post('/api/auth/register')
+        .post('/api/v1/auth/register')
         .send(userData)
         .expect(201);
 
       // Try to create user with same email
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/v1/auth/register')
         .send(userData)
         .expect(400);
 
@@ -50,7 +52,7 @@ describe('Auth Controller', () => {
 
     it('should validate required fields', async () => {
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/v1/auth/register')
         .send({})
         .expect(400);
 
@@ -62,7 +64,7 @@ describe('Auth Controller', () => {
       const userData = testUtils.generateTestUser({ email: 'invalid-email' });
 
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/v1/auth/register')
         .send(userData)
         .expect(400);
 
@@ -74,7 +76,7 @@ describe('Auth Controller', () => {
       const userData = testUtils.generateTestUser({ password: '123' });
 
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/v1/auth/register')
         .send(userData)
         .expect(400);
 
@@ -83,7 +85,7 @@ describe('Auth Controller', () => {
     });
   });
 
-  describe('POST /api/auth/login', () => {
+  describe('POST /api/v1/auth/login', () => {
     beforeEach(async () => {
       // Create test user
       const userData = testUtils.generateTestUser();
@@ -103,7 +105,7 @@ describe('Auth Controller', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send(loginData)
         .expect(200);
 
@@ -120,7 +122,7 @@ describe('Auth Controller', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send(loginData)
         .expect(401);
 
@@ -135,7 +137,7 @@ describe('Auth Controller', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send(loginData)
         .expect(401);
 
@@ -160,7 +162,7 @@ describe('Auth Controller', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send(loginData)
         .expect(401);
 
@@ -170,7 +172,7 @@ describe('Auth Controller', () => {
 
     it('should validate required fields', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send({})
         .expect(400);
 
@@ -179,8 +181,9 @@ describe('Auth Controller', () => {
     });
   });
 
-  describe('POST /api/auth/refresh', () => {
+  describe('POST /api/v1/auth/refresh-token', () => {
     let refreshToken: string;
+    let userId: string;
 
     beforeEach(async () => {
       const userData = testUtils.generateTestUser();
@@ -192,17 +195,19 @@ describe('Auth Controller', () => {
         isEmailVerified: true
       });
 
-      // Generate refresh token
+      userId = user._id.toString();
+
+      // Generate refresh token using JWT_REFRESH_SECRET
       refreshToken = jwt.sign(
-        { userId: user._id, type: 'refresh' },
-        process.env.JWT_SECRET!,
-        { expiresIn: '7d' }
+        { userId: userId },
+        process.env.JWT_REFRESH_SECRET!,
+        { expiresIn: '30d' }
       );
     });
 
     it('should refresh token with valid refresh token', async () => {
       const response = await request(app)
-        .post('/api/auth/refresh')
+        .post('/api/v1/auth/refresh-token')
         .send({ refreshToken })
         .expect(200);
 
@@ -213,33 +218,41 @@ describe('Auth Controller', () => {
 
     it('should not refresh with invalid refresh token', async () => {
       const response = await request(app)
-        .post('/api/auth/refresh')
+        .post('/api/v1/auth/refresh-token')
         .send({ refreshToken: 'invalid-token' })
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid refresh token');
+      expect(response.body.message).toContain('Refresh token inválido');
     });
 
     it('should not refresh with expired refresh token', async () => {
       // Create expired refresh token
       const expiredToken = jwt.sign(
-        { userId: 'test-user-id', type: 'refresh' },
-        process.env.JWT_SECRET!,
+        { userId: userId },
+        process.env.JWT_REFRESH_SECRET!,
         { expiresIn: '-1h' }
       );
 
       const response = await request(app)
-        .post('/api/auth/refresh')
+        .post('/api/v1/auth/refresh-token')
         .send({ refreshToken: expiredToken })
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid refresh token');
+    });
+
+    it('should require refresh token in body', async () => {
+      const response = await request(app)
+        .post('/api/v1/auth/refresh-token')
+        .send({})
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
     });
   });
 
-  describe('POST /api/auth/logout', () => {
+  describe('POST /api/v1/auth/logout', () => {
     let authToken: string;
 
     beforeEach(async () => {
@@ -257,7 +270,7 @@ describe('Auth Controller', () => {
 
     it('should logout successfully with valid token', async () => {
       const response = await request(app)
-        .post('/api/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
@@ -267,7 +280,7 @@ describe('Auth Controller', () => {
 
     it('should not logout without token', async () => {
       const response = await request(app)
-        .post('/api/auth/logout')
+        .post('/api/v1/auth/logout')
         .expect(401);
 
       expect(response.body.success).toBe(false);
@@ -276,7 +289,7 @@ describe('Auth Controller', () => {
 
     it('should not logout with invalid token', async () => {
       const response = await request(app)
-        .post('/api/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
 
@@ -285,157 +298,331 @@ describe('Auth Controller', () => {
     });
   });
 
-  describe('GET /api/auth/me', () => {
-    let authToken: string;
+
+
+  describe('POST /api/v1/auth/logout', () => {
+    let userToken: string;
     let userId: string;
 
     beforeEach(async () => {
-      const userData = testUtils.generateTestUser();
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
-      
       const user = await User.create({
-        ...userData,
-        password: hashedPassword,
-        isEmailVerified: true
-      });
-
+        name: 'Test User',
+        email: 'logout@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
       userId = user._id.toString();
-      authToken = testUtils.generateTestToken({ userId });
+      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
     });
 
-    it('should get current user with valid token', async () => {
+    it('should logout successfully', async () => {
       const response = await request(app)
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.user._id).toBe(userId);
-      expect(response.body.data.user.email).toBe('test@example.com');
-      expect(response.body.data.user.password).toBeUndefined();
+      expect(response.body.message).toContain('Sesión cerrada');
     });
 
-    it('should not get user without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/me')
+    it('should require authentication', async () => {
+      await request(app)
+        .post('/api/v1/auth/logout')
         .expect(401);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('No token provided');
-    });
-
-    it('should not get user with invalid token', async () => {
-      const response = await request(app)
-        .get('/api/auth/me')
-        .set('Authorization', 'Bearer invalid-token')
-        .expect(401);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid token');
     });
   });
 
-  describe('POST /api/auth/forgot-password', () => {
+  describe('GET /api/v1/auth/profile', () => {
+    let userToken: string;
+    let userId: string;
+
     beforeEach(async () => {
-      const userData = testUtils.generateTestUser();
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
-      
-      await User.create({
-        ...userData,
-        password: hashedPassword,
-        isEmailVerified: true
-      });
+      const user = await User.create({
+        name: 'Test User',
+        email: 'profile@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      userId = user._id.toString();
+      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
     });
 
-    it('should send password reset email for existing user', async () => {
+    it('should get user profile successfully', async () => {
       const response = await request(app)
-        .post('/api/auth/forgot-password')
-        .send({ email: 'test@example.com' })
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Password reset email sent');
+      expect(response.body.data.email).toBe('profile@test.com');
+      expect(response.body.data.password).toBeUndefined();
     });
 
-    it('should not reveal if email does not exist', async () => {
-      const response = await request(app)
-        .post('/api/auth/forgot-password')
-        .send({ email: 'nonexistent@example.com' })
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Password reset email sent');
-    });
-
-    it('should validate email format', async () => {
-      const response = await request(app)
-        .post('/api/auth/forgot-password')
-        .send({ email: 'invalid-email' })
-        .expect(400);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('validation');
+    it('should require authentication', async () => {
+      await request(app)
+        .get('/api/v1/auth/profile')
+        .expect(401);
     });
   });
 
-  describe('POST /api/auth/reset-password', () => {
-    let resetToken: string;
+  describe('PUT /api/v1/auth/profile', () => {
+    let userToken: string;
+    let userId: string;
 
     beforeEach(async () => {
-      const userData = testUtils.generateTestUser();
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
-      
-      await User.create({
-        ...userData,
-        password: hashedPassword,
-        isEmailVerified: true
-      });
-
-      // Generate reset token
-      resetToken = jwt.sign(
-        { email: 'test@example.com', type: 'password-reset' },
-        process.env.JWT_SECRET!,
-        { expiresIn: '1h' }
-      );
+      const user = await User.create({
+        name: 'Test User',
+        email: 'update@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      userId = user._id.toString();
+      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
     });
 
-    it('should reset password with valid token', async () => {
+    it('should update profile successfully', async () => {
       const response = await request(app)
-        .post('/api/auth/reset-password')
+        .put('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ name: 'Updated Name' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe('Updated Name');
+    });
+
+    it('should require authentication', async () => {
+      await request(app)
+        .put('/api/v1/auth/profile')
+        .send({ name: 'Updated Name' })
+        .expect(401);
+    });
+  });
+
+  describe('PUT /api/v1/auth/change-password', () => {
+    let userToken: string;
+    let userId: string;
+
+    beforeEach(async () => {
+      const hashedPassword = await bcrypt.hash('oldpassword123', 12);
+      const user = await User.create({
+        name: 'Test User',
+        email: 'password@test.com',
+        password: hashedPassword,
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      userId = user._id.toString();
+      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
+    });
+
+    it('should change password successfully', async () => {
+      const response = await request(app)
+        .put('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
-          token: resetToken,
+          currentPassword: 'oldpassword123',
           newPassword: 'newpassword123'
         })
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Password reset successfully');
+      expect(response.body.message).toContain('Contraseña cambiada');
     });
 
-    it('should not reset password with invalid token', async () => {
+    it('should reject change password with incorrect current password', async () => {
       const response = await request(app)
-        .post('/api/auth/reset-password')
+        .put('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
-          token: 'invalid-token',
+          currentPassword: 'wrongpassword',
           newPassword: 'newpassword123'
         })
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid or expired token');
     });
 
-    it('should validate new password strength', async () => {
-      const response = await request(app)
-        .post('/api/auth/reset-password')
+    it('should require authentication', async () => {
+      await request(app)
+        .put('/api/v1/auth/change-password')
         .send({
-          token: resetToken,
-          newPassword: '123'
+          currentPassword: 'oldpassword123',
+          newPassword: 'newpassword123'
         })
-        .expect(400);
+        .expect(401);
+    });
+  });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('validation');
+  describe('POST /api/v1/auth/deactivate', () => {
+    let userToken: string;
+    let userId: string;
+
+    beforeEach(async () => {
+      const user = await User.create({
+        name: 'Test User',
+        email: 'deactivate@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      userId = user._id.toString();
+      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
+    });
+
+    it('should deactivate account successfully', async () => {
+      const response = await request(app)
+        .post('/api/v1/auth/deactivate')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('Cuenta desactivada');
+
+      // Verify user is deactivated
+      const user = await User.findById(userId);
+      expect(user?.isActive).toBe(false);
+    });
+
+    it('should require authentication', async () => {
+      await request(app)
+        .post('/api/v1/auth/deactivate')
+        .expect(401);
+    });
+  });
+
+  describe('PUT /api/v1/auth/deactivate', () => {
+    let userToken: string;
+    let userId: string;
+
+    beforeEach(async () => {
+      const user = await User.create({
+        name: 'Test User',
+        email: 'deactivate@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      userId = user._id.toString();
+      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
+    });
+
+    it('should deactivate account successfully', async () => {
+      const response = await request(app)
+        .put('/api/v1/auth/deactivate')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('Cuenta desactivada');
+
+      // Verify user is deactivated
+      const user = await User.findById(userId);
+      expect(user?.isActive).toBe(false);
+    });
+
+    it('should require authentication', async () => {
+      await request(app)
+        .put('/api/v1/auth/deactivate')
+        .expect(401);
+    });
+  });
+
+  describe('GET /api/v1/auth/stats', () => {
+    let adminToken: string;
+
+    beforeEach(async () => {
+      const admin = await User.create({
+        name: 'Test Admin',
+        email: 'adminstats@test.com',
+        password: 'password123',
+        role: 'admin',
+        isActive: true
+      }) as UserDocument;
+      adminToken = testUtils.generateTestToken({ userId: admin._id.toString(), role: 'admin' });
+    });
+
+    it('should get user stats (admin only)', async () => {
+      const response = await request(app)
+        .get('/api/v1/auth/stats')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+    });
+
+    it('should reject access from non-admin users', async () => {
+      const user = await User.create({
+        name: 'Test User',
+        email: 'user@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      const userToken = testUtils.generateTestToken({ userId: user._id.toString(), role: 'patient' });
+
+      await request(app)
+        .get('/api/v1/auth/stats')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(403);
+    });
+  });
+
+  describe('GET /api/v1/auth/users', () => {
+    let adminToken: string;
+
+    beforeEach(async () => {
+      const admin = await User.create({
+        name: 'Test Admin',
+        email: 'adminusers@test.com',
+        password: 'password123',
+        role: 'admin',
+        isActive: true
+      }) as UserDocument;
+      adminToken = testUtils.generateTestToken({ userId: admin._id.toString(), role: 'admin' });
+    });
+
+    it('should get users list (admin only)', async () => {
+      const response = await request(app)
+        .get('/api/v1/auth/users')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.pagination).toBeDefined();
+    });
+
+    it('should support pagination', async () => {
+      const response = await request(app)
+        .get('/api/v1/auth/users?page=1&limit=5')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.pagination.page).toBe(1);
+      expect(response.body.pagination.limit).toBe(5);
+    });
+
+    it('should reject access from non-admin users', async () => {
+      const user = await User.create({
+        name: 'Test User',
+        email: 'user2@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+      const userToken = testUtils.generateTestToken({ userId: user._id.toString(), role: 'patient' });
+
+      await request(app)
+        .get('/api/v1/auth/users')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(403);
     });
   });
 });

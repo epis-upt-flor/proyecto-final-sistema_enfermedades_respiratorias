@@ -20,6 +20,7 @@ Sistema completo de gestión y análisis de enfermedades respiratorias con intel
 ![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.64%25-brightgreen.svg)
 ![SHAP](https://img.shields.io/badge/SHAP-Explicability+-blue.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean-brightgreen.svg)
+![Tests](https://img.shields.io/badge/Tests-94.0%25%20Passing-brightgreen.svg)
 
 ### 🚀 Funcionalidades
 
@@ -113,6 +114,8 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 ### 🧪 Testing
 
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Estrategia de testing
+- **[backend/tests/README.md](backend/tests/README.md)** - 📊 **Resultados de pruebas del backend** (79/84 tests pasando, 94.0%)
+- **[web/tests/README.md](web/tests/README.md)** - 📊 **Resultados de pruebas del frontend web** (40+ tests implementados)
 - **[ai-services/TESTING_GUIDE.md](ai-services/TESTING_GUIDE.md)** - Guía de testing de AI Services
 
 ### 📊 Reportes de Implementación
@@ -162,9 +165,10 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Chatbot médico integrado
 - Frontend web y móvil
 - Sistema de monitoreo y feedback
+- **Testing Backend**: 79/84 tests pasando (94.0%) - Ver [backend/tests/README.md](backend/tests/README.md)
 
 ### 🚧 En Progreso
-- Testing completo (ver [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md))
+- Mejora de cobertura de tests (objetivo: 80%)
 - Optimizaciones de performance
 - Nuevas funcionalidades (citas, prescripciones)
 

@@ -137,7 +137,22 @@ class App {
   }
 
   private async initializeDatabase(): Promise<void> {
+    // Skip database connection in test environment
+    if (process.env.NODE_ENV === 'test') {
+      // In test environment, connection is handled by test setup
+      if (mongoose.connection.readyState === 1) {
+        logger.info('✅ MongoDB ya conectado (test mode)');
+      }
+      return;
+    }
+
     try {
+      // Check if already connected
+      if (mongoose.connection.readyState === 1) {
+        logger.info('✅ Ya conectado a MongoDB');
+        return;
+      }
+
       await mongoose.connect(config.database.mongodb, {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
@@ -147,7 +162,9 @@ class App {
       logger.info('✅ Conectado a MongoDB');
     } catch (error) {
       logger.error('❌ Error conectando a MongoDB:', error);
-      process.exit(1);
+      if (process.env.NODE_ENV !== 'test') {
+        process.exit(1);
+      }
     }
   }
 
@@ -189,7 +206,9 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Iniciar servidor
-app.listen();
+// Iniciar servidor solo si no estamos en modo test
+if (process.env.NODE_ENV !== 'test') {
+  app.listen();
+}
 
 export default app;

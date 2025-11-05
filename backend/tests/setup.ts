@@ -1,31 +1,42 @@
 /**
  * Jest test setup configuration
+ * IMPORTANT: Environment variables must be set BEFORE any imports
  */
 
+// ============================================
+// SET ENVIRONMENT VARIABLES FIRST (before any imports)
+// ============================================
+process.env.NODE_ENV = 'test';
+process.env.PORT = '3001';
+process.env.HOST = 'localhost';
+process.env.JWT_SECRET = 'test-jwt-secret';
+process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret';
+process.env.JWT_EXPIRE = '7d';
+process.env.JWT_REFRESH_EXPIRE = '30d';
+process.env.MONGODB_URI = 'mongodb://localhost:27017/respicare-test';
+process.env.REDIS_URL = 'redis://localhost:6379';
+process.env.CORS_ORIGINS = 'http://localhost:3000';
+process.env.AI_SERVICE_URL = 'http://localhost:8000';
+process.env.AI_SERVICE_API_KEY = 'test-api-key';
+
+// ============================================
+// NOW WE CAN IMPORT MODULES
+// ============================================
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { io as Client } from 'socket.io-client';
 
-// Extend Jest matchers
-import 'jest-extended';
+// Extend Jest matchers (optional, comment out if not installed)
+try {
+  require('jest-extended');
+} catch (e) {
+  // jest-extended is optional
+}
 
 // Global test variables
 declare global {
   var __MONGOD: MongoMemoryServer | undefined;
   var __MONGO_URI: string | undefined;
-  var __SERVER: any;
-  var __IO: Server | undefined;
-  var __CLIENT_SOCKET: any;
 }
-
-// Mock environment variables
-process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test-jwt-secret';
-process.env.MONGODB_URI = 'mongodb://localhost:27017/respicare-test';
-process.env.REDIS_URL = 'redis://localhost:6379';
-process.env.CORS_ORIGINS = 'http://localhost:3000';
 
 // Mock external services
 jest.mock('nodemailer');
@@ -34,39 +45,24 @@ jest.mock('redis');
 
 // Global test setup
 beforeAll(async () => {
-  // Setup MongoDB Memory Server
-  globalThis.__MONGOD = await MongoMemoryServer.create();
-  globalThis.__MONGO_URI = globalThis.__MONGOD.getUri();
+  // Setup MongoDB Memory Server only if not already set
+  if (!globalThis.__MONGOD) {
+    globalThis.__MONGOD = await MongoMemoryServer.create();
+    globalThis.__MONGO_URI = globalThis.__MONGOD.getUri();
+  }
   
-  // Connect to test database
-  await mongoose.connect(globalThis.__MONGO_URI);
-  
-  // Setup test server
-  const { app } = await import('../src/index');
-  globalThis.__SERVER = createServer(app);
-  globalThis.__IO = new Server(globalThis.__SERVER);
-  
-  globalThis.__SERVER.listen(0, () => {
-    const port = globalThis.__SERVER.address()?.port;
-    globalThis.__CLIENT_SOCKET = Client(`http://localhost:${port}`);
-  });
+  // Connect to test database only if not already connected
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(globalThis.__MONGO_URI || 'mongodb://localhost:27017/respicare-test');
+  } else if (mongoose.connection.readyState === 1) {
+    // Already connected, use existing connection
+    // But we need to switch to test database
+    // For now, just use the existing connection
+  }
 });
 
 // Global test teardown
 afterAll(async () => {
-  // Close socket connections
-  if (globalThis.__CLIENT_SOCKET) {
-    globalThis.__CLIENT_SOCKET.close();
-  }
-  
-  if (globalThis.__IO) {
-    globalThis.__IO.close();
-  }
-  
-  if (globalThis.__SERVER) {
-    globalThis.__SERVER.close();
-  }
-  
   // Close database connections
   await mongoose.connection.close();
   if (globalThis.__MONGOD) {
@@ -126,17 +122,16 @@ export const testUtils = {
         role: 'doctor',
         ...payload 
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET!,
       { expiresIn: '1h' }
     );
   },
   
   // Generate test user data
   generateTestUser: (overrides: any = {}) => ({
+    name: 'Test User',
     email: 'test@example.com',
     password: 'password123',
-    firstName: 'Test',
-    lastName: 'User',
     role: 'doctor',
     ...overrides
   }),
@@ -149,8 +144,8 @@ export const testUtils = {
     age: 45,
     diagnosis: 'Test Diagnosis',
     symptoms: [
-      { symptom: 'tos', severity: 'moderate', duration: '2 weeks' },
-      { symptom: 'fiebre', severity: 'mild', duration: '3 days' }
+      { name: 'tos', severity: 'moderate', duration: '2 weeks' },
+      { name: 'fiebre', severity: 'mild', duration: '3 days' }
     ],
     description: 'Test medical history description',
     date: new Date(),

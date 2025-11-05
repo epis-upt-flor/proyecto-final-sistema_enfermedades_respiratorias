@@ -7,6 +7,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:unit": "react-scripts test --testPathPattern=__tests__ --coverage",
+    "test:watch": "react-scripts test --watch",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject"
   },
   "dependencies": {
@@ -21,6 +24,13 @@
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.1",
     "recharts": "^3.3.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
+    "jest-axe": "^8.0.0",
+    "cypress": "^13.6.0"
   },
   "eslintConfig": {
     "extends": [

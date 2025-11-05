@@ -1,0 +1,199 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+env:
+  NODE_VERSION: '18'
+  MONGODB_URI: 'mongodb://localhost:27017/respicare-test'
+  JWT_SECRET: 'test-jwt-secret-for-ci'
+  JWT_REFRESH_SECRET: 'test-jwt-refresh-secret-for-ci'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+      
+    - name: Run unit tests
+      working-directory: ./backend
+      run: npm run test:coverage -- tests/unit
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage/lcov.info
+        flags: unit
+        name: unit-tests
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+      
+    - name: Build application
+      working-directory: ./backend
+      run: npm run build
+      
+    - name: Run integration tests
+      working-directory: ./backend
+      run: npm test -- tests/integration
+      env:
+        NODE_ENV: test
+        MONGODB_URI: ${{ env.MONGODB_URI }}
+        JWT_SECRET: ${{ env.JWT_SECRET }}
+        JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    name: Performance Tests
+    if: github.event_name == 'pull_request'
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+      
+    - name: Build application
+      working-directory: ./backend
+      run: npm run build
+      
+    - name: Run performance tests
+      working-directory: ./backend
+      run: npm test -- tests/performance
+      env:
+        NODE_ENV: test
+        MONGODB_URI: ${{ env.MONGODB_URI }}
+
+  security-tests:
+    runs-on: ubuntu-latest
+    name: Security Tests
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+      
+    - name: Build application
+      working-directory: ./backend
+      run: npm run build
+      
+    - name: Run security tests
+      working-directory: ./backend
+      run: npm test -- tests/security
+      env:
+        NODE_ENV: test
+        MONGODB_URI: ${{ env.MONGODB_URI }}
+
+    - name: Run npm audit
+      working-directory: ./backend
+      run: npm audit --audit-level=moderate
+
+  coverage-report:
+    runs-on: ubuntu-latest
+    name: Coverage Report
+    needs: [unit-tests, integration-tests]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Comment PR with coverage
+      uses: py-cov-action/python-coverage-comment-action@v3
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MINIMUM_GREEN: 80
+        MINIMUM_ORANGE: 70
+
