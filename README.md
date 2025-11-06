@@ -110,12 +110,14 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 
 #### Mobile
 - **[mobile/README.md](mobile/README.md)** - Documentación de la app móvil
+- **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - Guía completa de tests móviles
 
 ### 🧪 Testing
 
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Estrategia de testing
 - **[backend/tests/README.md](backend/tests/README.md)** - 📊 **Resultados de pruebas del backend** (79/84 tests pasando, 94.0%)
 - **[web/tests/README.md](web/tests/README.md)** - 📊 **Resultados de pruebas del frontend web** (40+ tests implementados)
+- **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - 📊 **Tests de la aplicación móvil** (50+ tests: unitarios, integración, E2E, offline, sincronización)
 - **[ai-services/TESTING_GUIDE.md](ai-services/TESTING_GUIDE.md)** - Guía de testing de AI Services
 
 ### 📊 Reportes de Implementación
@@ -156,6 +158,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Modo offline
 - ✅ Sincronización automática
 - ✅ Notificaciones push
+- ✅ **Suite completa de tests** (50+ tests: unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
 
 ## 📈 Estado del Proyecto
 
@@ -166,6 +169,8 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Frontend web y móvil
 - Sistema de monitoreo y feedback
 - **Testing Backend**: 79/84 tests pasando (94.0%) - Ver [backend/tests/README.md](backend/tests/README.md)
+- **Testing Frontend Web**: 40+ tests implementados - Ver [web/tests/README.md](web/tests/README.md)
+- **Testing Mobile**: 50+ tests implementados (unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
 
 ### 🚧 En Progreso
 - Mejora de cobertura de tests (objetivo: 80%)

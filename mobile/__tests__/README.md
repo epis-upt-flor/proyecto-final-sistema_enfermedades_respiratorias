@@ -166,9 +166,38 @@ Verificar que el backend esté corriendo en `http://localhost:3001` o ajustar `A
 
 ## 📚 Documentación Adicional
 
+### Documentación del Proyecto
+- **[README Principal de Mobile](../README.md)** - Documentación completa de la app móvil
+- **[PROJECT_ROADMAP.md](../../PROJECT_ROADMAP.md)** - Roadmap completo del proyecto (Sección 5.4: Testing Mobile)
+- **[README Principal del Proyecto](../../README.md)** - Documentación general del proyecto
+
+### Documentación de Testing
+- **[TESTING_STRATEGY.md](../../TESTING_STRATEGY.md)** - Estrategia general de testing
+- **[backend/tests/README.md](../../backend/tests/README.md)** - Tests del backend
+- **[web/tests/README.md](../../web/tests/README.md)** - Tests del frontend web
+
+### Recursos Externos
 - [Guía de Testing React Native](https://reactnative.dev/docs/testing-overview)
 - [Testing Library para React Native](https://callstack.github.io/react-native-testing-library/)
 - [Documentación de Detox](https://wix.github.io/Detox/docs/introduction/getting-started)
+
+### Estructura de Archivos Relacionados
+
+```
+mobile/
+├── README.md                    # ← Documentación principal de mobile
+├── __tests__/
+│   ├── README.md                # ← Este archivo (guía de tests)
+│   ├── services/                # Tests de servicios
+│   ├── components/              # Tests de componentes
+│   ├── integration/             # Tests de integración
+│   ├── offline/                 # Tests de modo offline
+│   └── sync/                    # Tests de sincronización
+├── e2e/                         # Tests E2E
+├── jest.config.js               # Configuración de Jest
+├── jest.setup.js                # Setup global
+└── .detoxrc.js                  # Configuración de Detox
+```
 
 ---
 

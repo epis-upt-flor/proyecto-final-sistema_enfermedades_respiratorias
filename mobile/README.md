@@ -75,28 +75,39 @@ Aplicación móvil completa para el sistema de gestión de enfermedades respirat
 
 ### **Arquitectura de Servicios:**
 ```
-mobile/src/
-├── services/
-│   ├── api.ts                 # Cliente API centralizado
-│   ├── localStorage.ts        # Servicio de almacenamiento local
-│   └── aiService.ts          # Servicio de IA
-├── components/
-│   ├── ChatBot/              # Chatbot médico
-│   ├── DataCapture/          # Captura de datos
-│   ├── Notifications/        # Sistema de notificaciones
-│   └── Offline/              # Funcionalidad offline
-├── screens/
-│   ├── HomeScreen.tsx        # Dashboard principal
-│   ├── LoginScreen.tsx       # Autenticación
-│   └── ProfileScreen.tsx     # Perfil de usuario
-├── store/
-│   └── useAppStore.ts        # Estado global (Zustand)
-├── types/
-│   └── index.ts              # Tipos TypeScript
-├── config/
-│   └── environment.ts        # Configuración por ambiente
-└── navigation/
-    └── AppNavigator.tsx      # Navegación principal
+mobile/
+├── src/
+│   ├── services/
+│   │   ├── api.ts                 # Cliente API centralizado
+│   │   ├── localStorage.ts        # Servicio de almacenamiento local
+│   │   └── aiService.ts          # Servicio de IA
+│   ├── components/
+│   │   ├── ChatBot/              # Chatbot médico
+│   │   ├── DataCapture/          # Captura de datos
+│   │   ├── Notifications/        # Sistema de notificaciones
+│   │   └── Offline/              # Funcionalidad offline
+│   ├── screens/
+│   │   ├── HomeScreen.tsx        # Dashboard principal
+│   │   ├── LoginScreen.tsx       # Autenticación
+│   │   └── ProfileScreen.tsx     # Perfil de usuario
+│   ├── store/
+│   │   └── useAppStore.ts        # Estado global (Zustand)
+│   ├── types/
+│   │   └── index.ts              # Tipos TypeScript
+│   ├── config/
+│   │   └── environment.ts        # Configuración por ambiente
+│   └── navigation/
+│       └── AppNavigator.tsx      # Navegación principal
+├── __tests__/                    # Tests unitarios y de integración
+│   ├── services/                 # Tests de servicios
+│   ├── components/               # Tests de componentes
+│   ├── integration/              # Tests de integración
+│   ├── offline/                  # Tests de modo offline
+│   └── sync/                     # Tests de sincronización
+├── e2e/                          # Tests E2E con Detox
+├── jest.config.js                # Configuración de Jest
+├── jest.setup.js                 # Setup global de tests
+└── .detoxrc.js                   # Configuración de Detox
 ```
 
 ## 🔌 Integración con Backend
@@ -217,18 +228,92 @@ DEBUG_MODE=true
 
 ## 🧪 Testing
 
-### **Tipos de Tests:**
-- **Unit tests** - Componentes individuales
-- **Integration tests** - Flujos completos
-- **E2E tests** - Casos de uso reales
-- **Performance tests** - Rendimiento y memoria
+El proyecto incluye una suite completa de tests que cubre todos los aspectos de la aplicación móvil. Para información detallada, consulta [**__tests__/README.md**](__tests__/README.md).
+
+### **Tipos de Tests Implementados:**
+
+#### **1. Tests Unitarios** ✅
+- **Servicios**: `aiService`, `apiService`, `localStorageService`
+- **Componentes**: `AIAnalysisScreen`, componentes de UI
+- **Ubicación**: `__tests__/services/`, `__tests__/components/`
+
+#### **2. Tests de Integración** ✅
+- **Backend Integration**: Comunicación real con el backend
+- **Ubicación**: `__tests__/integration/backend-integration.test.ts`
+
+#### **3. Tests de Modo Offline** ✅
+- **Almacenamiento local**: Guardado y lectura de datos offline
+- **Análisis offline**: Funcionalidad sin conexión a internet
+- **Ubicación**: `__tests__/offline/offline-mode.test.ts`
+
+#### **4. Tests de Sincronización** ✅
+- **Sincronización bidireccional**: Datos locales ↔ Servidor
+- **Cola de sincronización**: Gestión de items pendientes
+- **Resolución de conflictos**: Manejo de datos concurrentes
+- **Ubicación**: `__tests__/sync/synchronization.test.ts`
+
+#### **5. Tests E2E (End-to-End)** ✅
+- **Detox**: Tests en dispositivos reales/emuladores
+- **Flujos completos**: Sincronización offline, análisis de síntomas
+- **Ubicación**: `e2e/offline-sync.e2e.ts`
 
 ### **Ejecutar Tests:**
+
 ```bash
-npm test                    # Tests unitarios
-npm run test:e2e           # Tests E2E
-npm run test:coverage      # Coverage report
+# Todos los tests
+npm test
+
+# Tests unitarios únicamente
+npm run test:unit
+
+# Tests de integración con backend
+npm run test:integration
+
+# Tests de modo offline
+npm run test:offline
+
+# Tests de sincronización
+npm run test:sync
+
+# Tests E2E (requiere Detox configurado)
+npm run test:e2e:build    # Build de la app
+npm run test:e2e          # Ejecutar tests E2E
+
+# Modo watch (desarrollo)
+npm run test:watch
+
+# Reporte de cobertura
+npm run test:coverage
 ```
+
+### **Configuración de Tests:**
+
+- **Jest**: Configurado en `jest.config.js`
+- **Setup Global**: Mocks en `jest.setup.js`
+- **Detox**: Configurado en `.detoxrc.js`
+- **E2E Jest**: Config en `e2e/jest.config.js`
+
+### **Cobertura de Tests:**
+
+- ✅ **Servicios**: 100% de servicios principales cubiertos
+- ✅ **Componentes**: Componentes críticos testeados
+- ✅ **Integración**: Tests de comunicación con backend
+- ✅ **Offline**: Funcionalidad offline completamente testada
+- ✅ **E2E**: Flujos críticos de usuario testeados
+
+### **Documentación de Tests:**
+
+📖 Para más detalles sobre estructura, ejecución y troubleshooting, consulta:
+- **[Guía Completa de Tests](__tests__/README.md)** - Documentación detallada de todos los tests
+
+### **Mocks y Configuración:**
+
+Los tests incluyen mocks para:
+- `@react-native-async-storage/async-storage` - Almacenamiento local
+- `@react-native-community/netinfo` - Estado de conexión
+- `react-native-paper` - Componentes UI
+- `@react-navigation/native` - Navegación
+- `axios` - Peticiones HTTP
 
 ## 📈 Roadmap
 
@@ -245,13 +330,31 @@ npm run test:coverage      # Coverage report
 ## 🔧 Configuración de Desarrollo
 
 ### **Scripts Disponibles:**
+
+#### **Desarrollo:**
 ```bash
 npm start          # Metro bundler
 npm run android    # Ejecutar en Android
 npm run ios        # Ejecutar en iOS
-npm test           # Ejecutar tests
 npm run lint       # Linter
-npm run build      # Build de producción
+```
+
+#### **Testing:**
+```bash
+npm test                    # Todos los tests
+npm run test:unit           # Tests unitarios
+npm run test:integration    # Tests de integración
+npm run test:offline        # Tests de modo offline
+npm run test:sync           # Tests de sincronización
+npm run test:e2e            # Tests E2E (Detox)
+npm run test:watch          # Modo watch
+npm run test:coverage       # Reporte de cobertura
+```
+
+#### **Build:**
+```bash
+npm run build              # Build de producción
+npm run test:e2e:build     # Build para tests E2E
 ```
 
 ### **Estructura de Configuración:**
@@ -271,8 +374,15 @@ npm run build      # Build de producción
 ### **Convenciones:**
 - **Commits** - Conventional Commits
 - **Código** - ESLint + Prettier
-- **Tests** - Jest + Testing Library
-- **Documentación** - JSDoc
+- **Tests** - Jest + Testing Library + Detox
+- **Documentación** - JSDoc + READMEs
+
+### **Estructura de Testing:**
+- **Tests Unitarios**: `__tests__/services/`, `__tests__/components/`
+- **Tests de Integración**: `__tests__/integration/`
+- **Tests Especializados**: `__tests__/offline/`, `__tests__/sync/`
+- **Tests E2E**: `e2e/`
+- **Documentación**: `__tests__/README.md`
 
 ## 📞 Soporte
 
