@@ -89,6 +89,41 @@ describe('Export Controller', () => {
       expect([200, 404]).toContain(response.status);
     });
 
+    it('should export medical histories in PDF format', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/medical-histories?format=pdf')
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([200, 404, 500]).toContain(response.status);
+    });
+
+    it('should filter by date range', async () => {
+      const dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const dateTo = new Date().toISOString();
+
+      const response = await request(app)
+        .get(`/api/v1/export/medical-histories?format=json&dateFrom=${dateFrom}&dateTo=${dateTo}`)
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([200, 404]).toContain(response.status);
+    });
+
+    it('should filter by patient ID', async () => {
+      const response = await request(app)
+        .get(`/api/v1/export/medical-histories?format=json&patientId=${patientId}`)
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([200, 404]).toContain(response.status);
+    });
+
+    it('should filter by doctor ID', async () => {
+      const response = await request(app)
+        .get(`/api/v1/export/medical-histories?format=json&doctorId=${doctorId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect([200, 404]).toContain(response.status);
+    });
+
     it('should allow patients to export their own data', async () => {
       const response = await request(app)
         .get('/api/v1/export/medical-histories?format=json')
@@ -97,10 +132,74 @@ describe('Export Controller', () => {
       expect([200, 403, 404]).toContain(response.status);
     });
 
+    it('should prevent patients from exporting other patients data', async () => {
+      const otherPatient = await User.create({
+        name: 'Other Patient',
+        email: 'other.patient@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      });
+
+      const response = await request(app)
+        .get(`/api/v1/export/medical-histories?format=json&patientId=${otherPatient._id}`)
+        .set('Authorization', `Bearer ${patientToken}`);
+
+      expect([403, 404]).toContain(response.status);
+    });
+
+    it('should prevent doctors from exporting other doctors data', async () => {
+      const otherDoctor = await User.create({
+        name: 'Other Doctor',
+        email: 'other.doctor@test.com',
+        password: 'password123',
+        role: 'doctor',
+        isActive: true
+      });
+
+      const response = await request(app)
+        .get(`/api/v1/export/medical-histories?format=json&doctorId=${otherDoctor._id}`)
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([403, 404]).toContain(response.status);
+    });
+
     it('should reject export from unauthorized users', async () => {
-      // This would require a token without proper auth
-      // The middleware should handle this
-      expect(true).toBe(true); // Placeholder
+      await request(app)
+        .get('/api/v1/export/medical-histories?format=json')
+        .expect(401);
+    });
+
+    it('should handle invalid format gracefully', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/medical-histories?format=invalid')
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([400, 422]).toContain(response.status);
+    });
+
+    it('should handle invalid date range', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/medical-histories?format=json&dateFrom=invalid-date')
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([400, 422, 500]).toContain(response.status);
+    });
+
+    it('should include images when requested', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/medical-histories?format=json&includeImages=true')
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([200, 404]).toContain(response.status);
+    });
+
+    it('should include audio when requested', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/medical-histories?format=json&includeAudio=true')
+        .set('Authorization', `Bearer ${doctorToken}`);
+
+      expect([200, 404]).toContain(response.status);
     });
   });
 

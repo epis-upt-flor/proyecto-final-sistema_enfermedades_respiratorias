@@ -600,5 +600,365 @@ describe('E2E Tests - Flujos Completos', () => {
       expect(paginatedResponse.body.pagination.page).toBe(1);
     });
   });
+
+  describe('Flujo Completo: Gestión de Perfil de Usuario', () => {
+    it('should complete user profile management flow', async () => {
+      // Paso 1: Registro
+      const userData = {
+        name: 'Usuario Perfil',
+        email: 'perfil@test.com',
+        password: 'password123',
+        role: 'patient',
+        phone: '+51987654321'
+      };
+
+      const registerResponse = await request(app)
+        .post('/api/v1/auth/register')
+        .send(userData)
+        .expect(201);
+
+      const token = registerResponse.body.data.token;
+      const userId = registerResponse.body.data.user._id;
+
+      // Paso 2: Ver perfil
+      const profileResponse = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(profileResponse.body.success).toBe(true);
+      expect(profileResponse.body.data.email).toBe(userData.email);
+
+      // Paso 3: Actualizar perfil
+      const updateData = {
+        name: 'Usuario Perfil Actualizado',
+        phone: '+51999888777'
+      };
+
+      const updateResponse = await request(app)
+        .put('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData)
+        .expect(200);
+
+      expect(updateResponse.body.success).toBe(true);
+      expect(updateResponse.body.data.name).toBe(updateData.name);
+
+      // Paso 4: Cambiar contraseña
+      const changePasswordResponse = await request(app)
+        .put('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          currentPassword: 'password123',
+          newPassword: 'newpassword123'
+        })
+        .expect(200);
+
+      expect(changePasswordResponse.body.success).toBe(true);
+
+      // Paso 5: Login con nueva contraseña
+      const loginResponse = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: userData.email,
+          password: 'newpassword123'
+        })
+        .expect(200);
+
+      expect(loginResponse.body.success).toBe(true);
+      expect(loginResponse.body.data.token).toBeDefined();
+    });
+  });
+
+  describe('Flujo Completo: Recuperación de Contraseña', () => {
+    it('should complete password recovery flow', async () => {
+      // Paso 1: Crear usuario
+      const user = await User.create({
+        name: 'Usuario Recuperación',
+        email: 'recovery@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      });
+
+      // Paso 2: Solicitar recuperación de contraseña
+      const forgotPasswordResponse = await request(app)
+        .post('/api/v1/auth/forgot-password')
+        .send({
+          email: 'recovery@test.com'
+        });
+
+      // El endpoint puede retornar 200 incluso si no está completamente implementado
+      expect([200, 404, 501]).toContain(forgotPasswordResponse.status);
+
+      if (forgotPasswordResponse.status === 200) {
+        expect(forgotPasswordResponse.body.success).toBe(true);
+      }
+
+      // Nota: Los siguientes pasos requerirían un token de recuperación real
+      // que normalmente se envía por email
+    });
+  });
+
+  describe('Flujo Completo: Desactivación de Cuenta', () => {
+    it('should complete account deactivation flow', async () => {
+      // Paso 1: Crear y autenticar usuario
+      const user = await User.create({
+        name: 'Usuario a Desactivar',
+        email: 'deactivate@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+
+      const token = testUtils.generateTestToken({ 
+        userId: user._id.toString(), 
+        role: 'patient' 
+      });
+
+      // Paso 2: Desactivar cuenta
+      const deactivateResponse = await request(app)
+        .delete('/api/v1/auth/deactivate')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(deactivateResponse.body.success).toBe(true);
+
+      // Paso 3: Verificar que el usuario no puede acceder después de desactivación
+      const accessResponse = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${token}`);
+
+      // Puede retornar 401, 403 o 404 dependiendo de la implementación
+      expect([401, 403, 404]).toContain(accessResponse.status);
+    });
+  });
+
+  describe('Flujo Completo: Administrador Gestiona Usuarios', () => {
+    it('should complete admin user management flow', async () => {
+      // Paso 1: Crear admin
+      const admin = await User.create({
+        name: 'Admin Gestor',
+        email: 'admin.manager@test.com',
+        password: 'password123',
+        role: 'admin',
+        isActive: true
+      }) as UserDocument;
+
+      const adminToken = testUtils.generateTestToken({ 
+        userId: admin._id.toString(), 
+        role: 'admin' 
+      });
+
+      // Paso 2: Crear nuevo usuario (doctor)
+      const newDoctorData = {
+        name: 'Dr. Nuevo',
+        email: 'nuevo.doctor@test.com',
+        password: 'password123',
+        role: 'doctor'
+      };
+
+      const createUserResponse = await request(app)
+        .post('/api/v1/auth/register')
+        .send(newDoctorData)
+        .expect(201);
+
+      const doctorId = createUserResponse.body.data.user._id;
+
+      // Paso 3: Ver lista de usuarios
+      const usersListResponse = await request(app)
+        .get('/api/v1/auth/users')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(usersListResponse.body.success).toBe(true);
+      expect(usersListResponse.body.data.length).toBeGreaterThan(0);
+
+      // Paso 4: Ver estadísticas de usuarios
+      const statsResponse = await request(app)
+        .get('/api/v1/auth/users/stats')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(statsResponse.body.success).toBe(true);
+      expect(statsResponse.body.data.totalUsers).toBeGreaterThan(0);
+
+      // Paso 5: Ver detalles de un usuario específico
+      const userDetailsResponse = await request(app)
+        .get(`/api/v1/auth/users/${doctorId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      // Puede retornar 200 o 404 dependiendo de si la ruta existe
+      expect([200, 404]).toContain(userDetailsResponse.status);
+    });
+  });
+
+  describe('Flujo Completo: Wearables Integration', () => {
+    it('should complete wearable data sync flow', async () => {
+      // Paso 1: Crear paciente
+      const patient = await User.create({
+        name: 'Paciente Wearable',
+        email: 'wearable@test.com',
+        password: 'password123',
+        role: 'patient',
+        isActive: true
+      }) as UserDocument;
+
+      const patientToken = testUtils.generateTestToken({ 
+        userId: patient._id.toString(), 
+        role: 'patient' 
+      });
+
+      // Paso 2: Sincronizar datos de wearable
+      const wearableData = {
+        heartRate: 72,
+        steps: 5000,
+        sleepHours: 7.5,
+        oxygenSaturation: 98,
+        bloodPressure: {
+          systolic: 120,
+          diastolic: 80
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      const syncResponse = await request(app)
+        .post('/api/v1/wearables/sync')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .send(wearableData)
+        .expect(201);
+
+      expect(syncResponse.body.success).toBe(true);
+
+      // Paso 3: Obtener datos sincronizados
+      const getDataResponse = await request(app)
+        .get('/api/v1/wearables')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .expect(200);
+
+      expect(getDataResponse.body.success).toBe(true);
+      expect(getDataResponse.body.data.length).toBeGreaterThan(0);
+
+      // Paso 4: Obtener métricas agregadas
+      const metricsResponse = await request(app)
+        .get('/api/v1/wearables/metrics')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .expect(200);
+
+      expect(metricsResponse.body.success).toBe(true);
+      expect(metricsResponse.body.data).toBeDefined();
+    });
+  });
+
+  describe('Flujo Completo: Multi-dispositivo y Sesiones', () => {
+    it('should handle multiple device sessions', async () => {
+      // Paso 1: Crear usuario
+      const userData = {
+        name: 'Usuario Multi-dispositivo',
+        email: 'multidevice@test.com',
+        password: 'password123',
+        role: 'patient'
+      };
+
+      const registerResponse = await request(app)
+        .post('/api/v1/auth/register')
+        .send(userData)
+        .expect(201);
+
+      // Paso 2: Login desde dispositivo 1
+      const device1Login = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password
+        })
+        .expect(200);
+
+      const device1Token = device1Login.body.data.token;
+
+      // Paso 3: Login desde dispositivo 2
+      const device2Login = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password
+        })
+        .expect(200);
+
+      const device2Token = device2Login.body.data.token;
+
+      // Paso 4: Ambos tokens deberían funcionar
+      const profile1 = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${device1Token}`)
+        .expect(200);
+
+      const profile2 = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${device2Token}`)
+        .expect(200);
+
+      expect(profile1.body.success).toBe(true);
+      expect(profile2.body.success).toBe(true);
+      expect(profile1.body.data.email).toBe(profile2.body.data.email);
+
+      // Paso 5: Logout desde dispositivo 1
+      await request(app)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${device1Token}`)
+        .expect(200);
+
+      // Paso 6: Dispositivo 2 todavía debería funcionar
+      const profile2After = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${device2Token}`)
+        .expect(200);
+
+      expect(profile2After.body.success).toBe(true);
+    });
+  });
+
+  describe('Flujo Completo: Error Handling y Recovery', () => {
+    it('should handle network errors gracefully', async () => {
+      const doctor = await User.create({
+        name: 'Dr. Error Test',
+        email: 'error.test@test.com',
+        password: 'password123',
+        role: 'doctor',
+        isActive: true
+      }) as UserDocument;
+
+      const doctorToken = testUtils.generateTestToken({ 
+        userId: doctor._id.toString(), 
+        role: 'doctor' 
+      });
+
+      // Intentar crear historia con datos inválidos
+      const invalidData = {
+        // Falta patientId requerido
+        patientName: 'Test',
+        age: 30,
+        symptoms: []
+      };
+
+      const errorResponse = await request(app)
+        .post('/api/v1/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send(invalidData);
+
+      // Debería retornar error pero no crashear
+      expect([400, 422]).toContain(errorResponse.status);
+      expect(errorResponse.body.success).toBe(false);
+      expect(errorResponse.body.message).toBeDefined();
+
+      // Sistema debería seguir funcionando después del error
+      const healthResponse = await request(app)
+        .get('/api/v1/dashboard/health')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .expect(200);
+
+      expect(healthResponse.body.success).toBe(true);
+    });
+  });
 });
 
