@@ -439,7 +439,7 @@ class AIService {
     urgencyLevel: 'low' | 'medium' | 'high',
     warningSigns: string[]
   ): boolean {
-    return urgencyLevel === 'high' || warningLevel === 'medium' || warningSigns.length > 0;
+    return urgencyLevel === 'high' || urgencyLevel === 'medium' || warningSigns.length > 0;
   }
 
   // Generate possible conditions
