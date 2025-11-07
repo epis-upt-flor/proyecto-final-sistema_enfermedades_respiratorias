@@ -27,7 +27,12 @@ export const config: AppConfig = {
   },
   database: {
     mongodb: process.env.MONGODB_URI!,
-    redis: process.env.REDIS_URL || 'redis://localhost:6379'
+    redis: process.env.REDIS_URL || 'redis://localhost:6379',
+    maxPoolSize: parseInt(process.env.MONGODB_MAX_POOL_SIZE || '20'),
+    minPoolSize: parseInt(process.env.MONGODB_MIN_POOL_SIZE || '5'),
+    maxIdleTimeMS: parseInt(process.env.MONGODB_MAX_IDLE_TIME_MS || '60000'),
+    serverSelectionTimeoutMS: parseInt(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || '5000'),
+    socketTimeoutMS: parseInt(process.env.MONGODB_SOCKET_TIMEOUT_MS || '45000')
   },
   jwt: {
     secret: process.env.JWT_SECRET!,

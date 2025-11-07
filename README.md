@@ -103,10 +103,15 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 #### Backend
 - **[backend/README.md](backend/README.md)** - Documentación del backend
 - **[backend/SETUP.md](backend/SETUP.md)** - Configuración del backend
+- **[backend/src/config/redisClient.ts](backend/src/config/redisClient.ts)** - Cliente Redis centralizado y manejo del cache
+- **Healthcheck backend**: `GET http://localhost:3001/health` (incluye estado de MongoDB y Redis)
 
 #### AI Services
 - **[ai-services/README.md](ai-services/README.md)** - Documentación de servicios de IA
 - **[ai-services/API_DOCUMENTATION.md](ai-services/API_DOCUMENTATION.md)** - API de servicios de IA
+- **[ai-services/core/cache.py](ai-services/core/cache.py)** - Utilidades Redis async y helpers de cache
+- **[ai-services/api/routes/health.py](ai-services/api/routes/health.py)** - Endpoints de health/detailed health con métricas de dependencias
+- **Healthcheck IA**: `GET http://localhost:8000/api/v1/health` (estado y latencia de Redis)
 
 #### Mobile
 - **[mobile/README.md](mobile/README.md)** - Documentación de la app móvil

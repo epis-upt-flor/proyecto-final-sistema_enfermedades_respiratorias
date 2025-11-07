@@ -327,6 +327,47 @@ Los tests incluyen mocks para:
 - [ ] Telemedicina integrada
 - [ ] Análisis predictivo
 
+#### **Integración con wearables** ⌚
+- **Objetivo**: Capturar y sincronizar datos fisiológicos provenientes de HealthKit (iOS) y Google Fit (Android) para enriquecer los perfiles de pacientes y habilitar alertas tempranas.
+- **Estado actual**: Servicio móvil implementado con datos simulados y endpoints backend operativos (`/api/v1/wearables/*`). Pendiente habilitar librerías nativas y validar en dispositivos físicos.
+- **Alcance inicial**:
+  - Lectura periódica de métricas clave (SpO₂, frecuencia respiratoria, frecuencia cardiaca, pasos, calidad de sueño).
+  - Almacenamiento seguro en el backend y visualización de métricas agregadas en la app móvil.
+  - Generación de alertas básicas cuando alguna métrica exceda umbrales configurables.
+- **Backlog inmediato**:
+  - [ ] Integrar `expo-health` en builds nativos y gestionar permisos dinámicos.
+  - [ ] Conectar `wearableService` con fuentes reales y sincronización bidireccional.
+  - [ ] Ajustar UI de `WearablesScreen` para mostrar estado de conexión, métricas recientes y alertas contextuales.
+  - [ ] Implementar pruebas en dispositivos físicos (iOS + Android) con datos reales.
+- **Dependencias**: `expo-health`, credenciales Google Fit, capacidades HealthKit, endpoints `wearableController`, infraestructura de sincronización (`wearableService.ts`).
+- **Métricas de éxito**:
+  - ≥90% de sincronizaciones exitosas por sesión activa.
+  - Latencia de sincronización <10s en promedio.
+  - Alertas generadas con precisión ≥95% respecto a reglas definidas.
+- **Riesgos**: Restricciones de permisos del usuario, disponibilidad de datos en simuladores, variabilidad de dispositivos, requisitos de publicación en App Store/Play Store.
+- **Documentación relacionada**: `RespiCare-Mobile/WEARABLES_SETUP.md`, `RespiCare-Mobile/WEARABLES_INTEGRATION.md`, `backend/tests/e2e/flows.test.ts` (flujo de wearables).
+- **Issues sugeridos**:
+  1. **`mobile`: Configurar `expo-health` en builds nativos**  
+     - _Descripción_: Preparar el entorno Expo para usar HealthKit y Google Fit en desarrollo y producción.  
+     - _Tareas_: Añadir dependencias nativas, ejecutar `expo prebuild`, documentar configuración de permisos.  
+     - _Criterios de aceptación_: Builds iOS/Android generan binarios funcionales con `expo-health` habilitado; permisos se solicitan correctamente.  
+     - _Dependencias_: `WEARABLES_SETUP.md`, credenciales de Apple/Google.  
+  2. **`mobile`: Conectar `wearableService` con fuentes reales**  
+     - _Descripción_: Reemplazar los datos simulados por lecturas reales de HealthKit/Google Fit y ajustar sincronización con backend.  
+     - _Tareas_: Activar importaciones nativas, mapear tipos de datos, validar envío al endpoint `/api/v1/wearables/sync`.  
+     - _Criterios de aceptación_: Las métricas se obtienen de dispositivos reales, se persisten en backend y se reflejan en la app.  
+     - _Dependencias_: Issue #1, endpoints `wearableController`.  
+  3. **`mobile`: Rediseñar `WearablesScreen` para estado en tiempo real**  
+     - _Descripción_: Actualizar la UI para mostrar conexión, métricas recientes, histórico y alertas contextualizadas.  
+     - _Tareas_: Añadir indicadores de estado, tarjetas de métricas, timeline de sincronización y mensajes de alerta.  
+     - _Criterios de aceptación_: La pantalla refleja estado de permisos, última sincronización y métricas clave; manejo de errores visible.  
+     - _Dependencias_: Issue #2 (datos reales).  
+  4. **`mobile`: Pruebas end-to-end con dispositivos físicos**  
+     - _Descripción_: Validar la integración completa con wearables en iOS y Android usando datos reales.  
+     - _Tareas_: Diseñar plan de pruebas, capturar métricas reales, documentar resultados, ajustar mocks y CI.  
+     - _Criterios de aceptación_: Reporte con capturas y logs de sincronizaciones exitosas, cobertura de casos de permisos denegados y pérdida de conexión.  
+     - _Dependencias_: Issues #1-3, dispositivos físicos con wearables compatibles.
+
 ## 🔧 Configuración de Desarrollo
 
 ### **Scripts Disponibles:**

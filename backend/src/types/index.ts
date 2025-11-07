@@ -307,6 +307,11 @@ export interface AppConfig {
   database: {
     mongodb: string;
     redis: string;
+    maxPoolSize: number;
+    minPoolSize: number;
+    maxIdleTimeMS: number;
+    serverSelectionTimeoutMS: number;
+    socketTimeoutMS: number;
   };
   jwt: {
     secret: string;

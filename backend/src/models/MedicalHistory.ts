@@ -160,6 +160,19 @@ MedicalHistorySchema.index({
   date: -1 
 });
 
+MedicalHistorySchema.index({
+  doctorId: 1,
+  syncStatus: 1,
+  isOffline: 1,
+  date: -1
+});
+
+MedicalHistorySchema.index({
+  doctorId: 1,
+  patientId: 1,
+  date: -1
+});
+
 // Virtual para obtener la edad en años
 MedicalHistorySchema.virtual('ageInYears').get(function() {
   return this.age;

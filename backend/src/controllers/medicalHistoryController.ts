@@ -5,6 +5,16 @@ import { ApiResponse, SearchQuery, AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
+import {
+  CACHE_NAMESPACES,
+  buildCacheKey,
+  deleteCachedValue,
+  getCachedValue,
+  invalidateCacheByPattern,
+  setCachedValue,
+  TEN_MINUTES,
+  FIVE_MINUTES
+} from '../services/cacheService';
 
 // Crear nueva historia médica
 export const createMedicalHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -19,6 +29,12 @@ export const createMedicalHistory = asyncHandler(async (req: AuthenticatedReques
     medicalHistoryId: medicalHistory._id,
     doctorId: req.user?._id 
   });
+
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:anonymous:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_STATS}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_DIAGNOSES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_AGE_STATS}:${req.user?._id ?? '*'}:*`);
 
   const response: ApiResponse = {
     success: true,
@@ -44,7 +60,9 @@ export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest
     endDate
   } = req.query as SearchQuery;
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const sanitizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const skip = (pageNumber - 1) * sanitizedLimit;
   const sortOrder = order === 'asc' ? 1 : -1;
 
   // Construir filtros
@@ -63,12 +81,13 @@ export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest
     filters.syncStatus = syncStatus;
   }
 
+  let normalizedIsOffline: boolean | undefined;
+
   if (isOffline !== undefined) {
-    // isOffline puede ser string 'true'/'false' o boolean
-    const isOfflineValue = typeof isOffline === 'string' 
-      ? isOffline === 'true' 
+    normalizedIsOffline = typeof isOffline === 'string'
+      ? isOffline === 'true'
       : Boolean(isOffline);
-    filters.isOffline = isOfflineValue;
+    filters.isOffline = normalizedIsOffline;
   }
 
   if (startDate && endDate) {
@@ -78,35 +97,86 @@ export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest
     };
   }
 
-  // Búsqueda por texto
+  let searchProjection: Record<string, unknown> | undefined;
+  const sortQuery: Record<string, unknown> = {};
+
+  const allowedSortFields = new Set([
+    'date',
+    'createdAt',
+    'updatedAt',
+    'patientName',
+    'age',
+    'syncStatus'
+  ]);
+
+  const selectedSortField = allowedSortFields.has(String(sort)) ? String(sort) : 'date';
+  sortQuery[selectedSortField] = sortOrder;
+
   if (search) {
-    filters.$or = [
-      { patientName: { $regex: search, $options: 'i' } },
-      { diagnosis: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } }
-    ];
+    const normalizedSearch = search.trim();
+    if (normalizedSearch.length >= 3) {
+      filters.$text = { $search: normalizedSearch };
+      searchProjection = { score: { $meta: 'textScore' } };
+      sortQuery.score = { $meta: 'textScore' };
+    } else {
+      filters.$or = [
+        { patientName: { $regex: normalizedSearch, $options: 'i' } },
+        { diagnosis: { $regex: normalizedSearch, $options: 'i' } },
+        { description: { $regex: normalizedSearch, $options: 'i' } }
+      ];
+    }
   }
 
-  const medicalHistories = await MedicalHistory.find(filters)
-    .sort({ [sort]: sortOrder })
-    .skip(skip)
-    .limit(Number(limit))
-    .populate('doctorId', 'name email role');
+  const cacheKey = buildCacheKey(
+    CACHE_NAMESPACES.MEDICAL_HISTORIES,
+    req.user?._id?.toString() ?? 'anonymous',
+    {
+      page: pageNumber,
+      limit: sanitizedLimit,
+      sort: selectedSortField,
+      order: sortOrder,
+      search: search ? search.trim() : null,
+      patientId: patientId ?? null,
+      syncStatus: syncStatus ?? null,
+      isOffline: normalizedIsOffline ?? null,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
+      doctorId: req.user?.role !== 'admin' ? req.user?._id : 'all'
+    }
+  );
 
-  const total = await MedicalHistory.countDocuments(filters);
+  const cachedResponse = await getCachedValue<ApiResponse>(cacheKey);
+  if (cachedResponse) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    return res.status(200).json(cachedResponse);
+  }
+
+  const [medicalHistories, total] = await Promise.all([
+    MedicalHistory.find(filters, searchProjection)
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(sanitizedLimit)
+      .populate('doctorId', 'name email role')
+      .lean({ virtuals: true }),
+    MedicalHistory.countDocuments(filters)
+  ]);
 
   const response: ApiResponse = {
     success: true,
     message: 'Historias médicas obtenidas exitosamente',
     data: medicalHistories,
     pagination: {
-      page: Number(page),
-      limit: Number(limit),
+      page: pageNumber,
+      limit: sanitizedLimit,
       total,
-      pages: Math.ceil(total / Number(limit))
+      pages: Math.ceil(total / sanitizedLimit)
     }
   };
 
+  await setCachedValue(cacheKey, response, FIVE_MINUTES);
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.setHeader('Cache-Control', 'private, max-age=60');
   res.status(200).json(response);
 });
 
@@ -114,7 +184,15 @@ export const getMedicalHistories = asyncHandler(async (req: AuthenticatedRequest
 export const getMedicalHistoryById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const medicalHistory = await MedicalHistory.findById(id);
+  const cacheKey = `${CACHE_NAMESPACES.MEDICAL_HISTORY}:${id}`;
+  const cachedHistory = await getCachedValue<ApiResponse>(cacheKey);
+  if (cachedHistory) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    return res.status(200).json(cachedHistory);
+  }
+
+  const medicalHistory = await MedicalHistory.findById(id).lean({ virtuals: true });
   if (!medicalHistory) {
     throw new AppError('Historia médica no encontrada', 404);
   }
@@ -130,6 +208,9 @@ export const getMedicalHistoryById = asyncHandler(async (req: AuthenticatedReque
     data: medicalHistory
   };
 
+  await setCachedValue(cacheKey, response, FIVE_MINUTES);
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.setHeader('Cache-Control', 'private, max-age=300');
   res.status(200).json(response);
 });
 
@@ -137,7 +218,7 @@ export const getMedicalHistoryById = asyncHandler(async (req: AuthenticatedReque
 export const updateMedicalHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const medicalHistory = await MedicalHistory.findById(id);
+  const medicalHistory = await MedicalHistory.findById(id).lean();
   if (!medicalHistory) {
     throw new AppError('Historia médica no encontrada', 404);
   }
@@ -164,6 +245,12 @@ export const updateMedicalHistory = asyncHandler(async (req: AuthenticatedReques
     data: updatedMedicalHistory
   };
 
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:anonymous:*`);
+  await deleteCachedValue(`${CACHE_NAMESPACES.MEDICAL_HISTORY}:${id}`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_STATS}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_DIAGNOSES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_AGE_STATS}:${req.user?._id ?? '*'}:*`);
   res.status(200).json(response);
 });
 
@@ -171,7 +258,7 @@ export const updateMedicalHistory = asyncHandler(async (req: AuthenticatedReques
 export const deleteMedicalHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const medicalHistory = await MedicalHistory.findById(id);
+  const medicalHistory = await MedicalHistory.findById(id).lean();
   if (!medicalHistory) {
     throw new AppError('Historia médica no encontrada', 404);
   }
@@ -196,6 +283,12 @@ export const deleteMedicalHistory = asyncHandler(async (req: AuthenticatedReques
     message: 'Historia médica eliminada exitosamente'
   };
 
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:anonymous:*`);
+  await deleteCachedValue(`${CACHE_NAMESPACES.MEDICAL_HISTORY}:${id}`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_STATS}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_DIAGNOSES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_AGE_STATS}:${req.user?._id ?? '*'}:*`);
   res.status(200).json(response);
 });
 
@@ -242,11 +335,29 @@ export const syncOfflineHistories = asyncHandler(async (req: AuthenticatedReques
     }
   };
 
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORIES}:anonymous:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_STATS}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_DIAGNOSES}:${req.user?._id ?? '*'}:*`);
+  await invalidateCacheByPattern(`${CACHE_NAMESPACES.MEDICAL_HISTORY_AGE_STATS}:${req.user?._id ?? '*'}:*`);
   res.status(200).json(response);
 });
 
 // Obtener estadísticas de historias médicas
 export const getMedicalHistoryStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const cacheKey = buildCacheKey(
+    CACHE_NAMESPACES.MEDICAL_HISTORY_STATS,
+    req.user?._id?.toString() ?? 'global',
+    { scope: 'stats' }
+  );
+
+  const cachedStats = await getCachedValue<ApiResponse>(cacheKey);
+  if (cachedStats) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    return res.status(200).json(cachedStats);
+  }
+
   const stats = await MedicalHistory.getStats();
 
   const response: ApiResponse = {
@@ -255,12 +366,29 @@ export const getMedicalHistoryStats = asyncHandler(async (req: AuthenticatedRequ
     data: stats
   };
 
+  await setCachedValue(cacheKey, response, TEN_MINUTES);
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.setHeader('Cache-Control', 'private, max-age=600');
   res.status(200).json(response);
 });
 
 // Obtener diagnósticos más comunes
 export const getTopDiagnoses = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const limit = parseInt(req.query.limit as string) || 10;
+  const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 50);
+
+  const cacheKey = buildCacheKey(
+    CACHE_NAMESPACES.MEDICAL_HISTORY_DIAGNOSES,
+    req.user?._id?.toString() ?? 'global',
+    { limit }
+  );
+
+  const cachedDiagnoses = await getCachedValue<ApiResponse>(cacheKey);
+  if (cachedDiagnoses) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    return res.status(200).json(cachedDiagnoses);
+  }
+
   const diagnoses = await MedicalHistory.getTopDiagnoses(limit);
 
   const response: ApiResponse = {
@@ -269,11 +397,27 @@ export const getTopDiagnoses = asyncHandler(async (req: AuthenticatedRequest, re
     data: diagnoses
   };
 
+  await setCachedValue(cacheKey, response, TEN_MINUTES);
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.setHeader('Cache-Control', 'private, max-age=600');
   res.status(200).json(response);
 });
 
 // Obtener estadísticas por edad
 export const getAgeStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const cacheKey = buildCacheKey(
+    CACHE_NAMESPACES.MEDICAL_HISTORY_AGE_STATS,
+    req.user?._id?.toString() ?? 'global',
+    { scope: 'ageStats' }
+  );
+
+  const cachedAgeStats = await getCachedValue<ApiResponse>(cacheKey);
+  if (cachedAgeStats) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    return res.status(200).json(cachedAgeStats);
+  }
+
   const ageStats = await MedicalHistory.getAgeStats();
 
   const response: ApiResponse = {
@@ -282,6 +426,9 @@ export const getAgeStats = asyncHandler(async (req: AuthenticatedRequest, res: R
     data: ageStats
   };
 
+  await setCachedValue(cacheKey, response, TEN_MINUTES);
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.setHeader('Cache-Control', 'private, max-age=600');
   res.status(200).json(response);
 });
 

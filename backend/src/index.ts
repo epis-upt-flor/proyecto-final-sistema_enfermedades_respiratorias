@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 const hpp = require('hpp');
 const xss = require('xss-clean');
@@ -27,6 +26,9 @@ import { logger } from './utils/logger';
 // Importar configuración
 import { config } from './config/config';
 import { swaggerSpec } from './config/swagger';
+import { initializeRedis, disconnectRedis, getRedisClient } from './config/redisClient';
+import { brotliCompression } from './middleware/brotliCompression';
+import { smartRateLimiter } from './middleware/rateLimiter';
 
 class App {
   public app: express.Application;
@@ -37,6 +39,7 @@ class App {
     this.initializeRoutes();
     this.initializeErrorHandling();
     this.initializeDatabase();
+    this.initializeCache();
   }
 
   private initializeMiddlewares(): void {
@@ -47,18 +50,8 @@ class App {
       credentials: true
     }));
 
-    // Rate limiting
-    const limiter = rateLimit({
-      windowMs: config.security.rateLimitWindow,
-      max: config.security.rateLimitMax,
-      message: {
-        success: false,
-        message: 'Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde'
-      },
-      standardHeaders: true,
-      legacyHeaders: false
-    });
-    this.app.use('/api/', limiter);
+    // Rate limiting (Redis + fallback)
+    this.app.use('/api/', smartRateLimiter);
 
     // Body parsing middleware
     this.app.use(express.json({ limit: '10mb' }));
@@ -69,8 +62,18 @@ class App {
     this.app.use(xss());
     this.app.use(hpp());
 
-    // Compression
-    this.app.use(compression());
+    // Compression (Brotli + Gzip)
+    this.app.use(brotliCompression({ threshold: 2048 }));
+    this.app.use(compression({
+      threshold: 1024,
+      level: 6,
+      filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        return compression.filter(req, res);
+      }
+    }));
 
     // Logging
     if (config.server.env === 'development') {
@@ -86,13 +89,46 @@ class App {
     }));
 
     // Health check endpoint
-    this.app.get('/health', (_req, res) => {
+    this.app.get('/health', async (_req, res) => {
+      const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+      let redisStatus: 'connected' | 'disconnected' | 'error' | 'uninitialized' = 'uninitialized';
+      let redisLatencyMs: number | null = null;
+
+      try {
+        const redisClient = getRedisClient();
+
+        if (redisClient) {
+          const start = Date.now();
+          await redisClient.ping();
+          redisLatencyMs = Date.now() - start;
+          redisStatus = 'connected';
+        } else {
+          redisStatus = process.env.NODE_ENV === 'test' ? 'uninitialized' : 'disconnected';
+        }
+      } catch (error) {
+        redisStatus = 'error';
+        logger.error('❌ Error verificando estado de Redis', { error });
+      }
+
+      const overallStatus = redisStatus === 'connected' && mongoStatus === 'connected' ? 'healthy' : 'degraded';
+
       res.status(200).json({
-        success: true,
-        message: 'RespiCare Backend API está funcionando',
+        success: overallStatus === 'healthy',
+        status: overallStatus,
+        message: 'RespiCare Backend API health check',
         timestamp: new Date().toISOString(),
         environment: config.server.env,
-        version: '1.0.0'
+        version: '1.0.0',
+        dependencies: {
+          database: {
+            status: mongoStatus,
+            provider: 'mongodb'
+          },
+          redis: {
+            status: redisStatus,
+            latencyMs: redisLatencyMs
+          }
+        }
       });
     });
   }
@@ -154,9 +190,11 @@ class App {
       }
 
       await mongoose.connect(config.database.mongodb, {
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
+        maxPoolSize: config.database.maxPoolSize,
+        minPoolSize: config.database.minPoolSize,
+        maxIdleTimeMS: config.database.maxIdleTimeMS,
+        serverSelectionTimeoutMS: config.database.serverSelectionTimeoutMS,
+        socketTimeoutMS: config.database.socketTimeoutMS
       });
 
       logger.info('✅ Conectado a MongoDB');
@@ -165,6 +203,14 @@ class App {
       if (process.env.NODE_ENV !== 'test') {
         process.exit(1);
       }
+    }
+  }
+
+  private async initializeCache(): Promise<void> {
+    try {
+      await initializeRedis();
+    } catch (error) {
+      logger.error('❌ Error inicializando Redis:', error);
     }
   }
 
@@ -198,12 +244,12 @@ process.on('unhandledRejection', (err: Error) => {
 // Manejar señales de terminación
 process.on('SIGTERM', () => {
   logger.info('SIGTERM recibido. Cerrando servidor...');
-  process.exit(0);
+  disconnectRedis().finally(() => process.exit(0));
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT recibido. Cerrando servidor...');
-  process.exit(0);
+  disconnectRedis().finally(() => process.exit(0));
 });
 
 // Iniciar servidor solo si no estamos en modo test

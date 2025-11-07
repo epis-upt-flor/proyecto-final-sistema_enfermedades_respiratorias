@@ -5,8 +5,7 @@ Redis cache utilities
 import redis.asyncio as redis
 import json
 import structlog
-from typing import Any, Optional, Union
-from datetime import timedelta
+from typing import Any, Optional
 
 from .config import settings
 
@@ -14,30 +13,43 @@ logger = structlog.get_logger()
 
 # Global cache client
 cache_client: Optional[redis.Redis] = None
+_is_initializing: bool = False
 
 
 async def init_cache():
     """Initialize Redis cache connection"""
-    global cache_client
-    
+    global cache_client, _is_initializing
+
+    if cache_client is not None:
+        return cache_client
+
+    if _is_initializing:
+        return cache_client
+
     try:
-        cache_client = redis.from_url(
+        _is_initializing = True
+        client = redis.from_url(
             settings.REDIS_URL,
             encoding="utf-8",
             decode_responses=True
         )
-        
+
         # Test connection
-        await cache_client.ping()
+        await client.ping()
+        cache_client = client
         logger.info("Successfully connected to Redis cache")
-        
+        return cache_client
+
     except Exception as e:
         logger.error("Failed to connect to Redis", error=str(e))
         # Continue without cache if Redis is not available
         cache_client = None
+        return None
+    finally:
+        _is_initializing = False
 
 
-async def get_cache():
+async def get_cache_client():
     """Get cache client instance"""
     return cache_client
 
@@ -117,3 +129,19 @@ async def clear_cache_pattern(pattern: str) -> int:
     except Exception as e:
         logger.error("Failed to clear cache pattern", pattern=pattern, error=str(e))
         return 0
+
+
+async def close_cache():
+    """Close Redis cache connection"""
+    global cache_client
+
+    if not cache_client:
+        return
+
+    try:
+        await cache_client.close()
+        logger.info("Redis cache connection closed")
+    except Exception as e:
+        logger.error("Failed to close Redis cache", error=str(e))
+    finally:
+        cache_client = None

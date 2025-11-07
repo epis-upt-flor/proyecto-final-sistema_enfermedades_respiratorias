@@ -10,6 +10,11 @@ from typing import Optional, List, Dict, Any
 import structlog
 import re
 from datetime import datetime
+import time
+
+# Core services
+from core.cache import init_cache, close_cache, get_cache_client
+from data.medical_data import MedicalDataProcessor
 
 # Configure logging
 structlog.configure(
@@ -85,9 +90,6 @@ class AnalysisResponse(BaseModel):
     urgency_level: Optional[str] = None
     confidence: Optional[float] = None
     timestamp: str
-
-# Import medical data processor
-from data.medical_data import MedicalDataProcessor
 
 # Initialize medical processor
 medical_processor = MedicalDataProcessor()
@@ -432,11 +434,36 @@ async def root():
 @app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint"""
+    cache_status = "uninitialized"
+    cache_latency_ms: Optional[float] = None
+
+    cache_client = get_cache_client()
+
+    if cache_client:
+        try:
+            start = time.perf_counter()
+            await cache_client.ping()
+            cache_latency_ms = round((time.perf_counter() - start) * 1000, 3)
+            cache_status = "healthy"
+        except Exception as error:
+            cache_status = "unhealthy"
+            logger.error("redis_health_check_failed", error=str(error))
+    else:
+        cache_status = "disconnected"
+
+    overall_status = "healthy" if cache_status == "healthy" else "degraded"
+
     return {
-        "status": "healthy",
+        "status": overall_status,
         "service": "ai-services",
         "version": "1.0.0",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "dependencies": {
+            "redis": {
+                "status": cache_status,
+                "latency_ms": cache_latency_ms
+            }
+        }
     }
 
 # DEPRECATED: This endpoint is replaced by the new enhanced_chatbot_service
@@ -486,6 +513,7 @@ async def get_symptom_categories():
 # Startup event
 @app.on_event("startup")
 async def startup_event():
+    await init_cache()
     logger.info("ai_services_started", 
                message="RespiCare AI Services started successfully",
                diseases_count=len(RESPIRATORY_KNOWLEDGE_BASE))
@@ -493,6 +521,7 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
+    await close_cache()
     logger.info("ai_services_stopped", 
                message="RespiCare AI Services stopped")
 
