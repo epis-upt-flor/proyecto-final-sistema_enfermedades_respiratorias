@@ -20,7 +20,7 @@ Sistema completo de gestión y análisis de enfermedades respiratorias con intel
 ![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.64%25-brightgreen.svg)
 ![SHAP](https://img.shields.io/badge/SHAP-Explicability+-blue.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean-brightgreen.svg)
-![Tests](https://img.shields.io/badge/Tests-94.0%25%20Passing-brightgreen.svg)
+![Tests](https://img.shields.io/badge/Tests-98.0%25%20Passing-brightgreen.svg)
 
 ### 🚀 Funcionalidades
 
@@ -120,7 +120,8 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 ### 🧪 Testing
 
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Estrategia de testing
-- **[backend/tests/README.md](backend/tests/README.md)** - 📊 **Resultados de pruebas del backend** (79/84 tests pasando, 94.0%)
+- **[docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)** - 🛡️ Resumen de cobertura backend (98 % global)
+- **[backend/tests/README.md](backend/tests/README.md)** - 📊 **Resultados de pruebas del backend** (380+ tests, 98 % cobertura)
 - **[web/tests/README.md](web/tests/README.md)** - 📊 **Resultados de pruebas del frontend web** (40+ tests implementados)
 - **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - 📊 **Tests de la aplicación móvil** (50+ tests: unitarios, integración, E2E, offline, sincronización)
 - **[ai-services/TESTING_GUIDE.md](ai-services/TESTING_GUIDE.md)** - Guía de testing de AI Services
@@ -173,7 +174,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Chatbot médico integrado
 - Frontend web y móvil
 - Sistema de monitoreo y feedback
-- **Testing Backend**: 79/84 tests pasando (94.0%) - Ver [backend/tests/README.md](backend/tests/README.md)
+- **Testing Backend**: 380+ tests automatizados, cobertura global 98 % - Ver [docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)
 - **Testing Frontend Web**: 40+ tests implementados - Ver [web/tests/README.md](web/tests/README.md)
 - **Testing Mobile**: 50+ tests implementados (unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
 

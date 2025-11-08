@@ -6,11 +6,15 @@
 import request from 'supertest';
 import appInstance from '../../src/index';
 import { testUtils } from '../setup';
+import { randomUUID } from 'crypto';
 
 const app = appInstance.app;
 import User, { UserDocument } from '../../src/models/User';
 import MedicalHistory from '../../src/models/MedicalHistory';
 import mongoose from 'mongoose';
+
+const uniqueEmail = (prefix: string) => `${prefix}-${randomUUID()}@test.com`;
+const STRONG_PASSWORD = 'Password123!';
 
 describe('API Integration Tests', () => {
   let doctorToken: string;
@@ -25,7 +29,7 @@ describe('API Integration Tests', () => {
     const doctor = await User.create({
       name: 'Test Doctor',
       email: 'doctor@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'doctor',
       isActive: true
     }) as UserDocument;
@@ -36,7 +40,7 @@ describe('API Integration Tests', () => {
     const patient = await User.create({
       name: 'Test Patient',
       email: 'patient@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'patient',
       isActive: true
     }) as UserDocument;
@@ -103,8 +107,8 @@ describe('API Integration Tests', () => {
       // 1. Register new user
       const registerData = {
         name: 'New User',
-        email: 'newuser@test.com',
-        password: 'password123',
+        email: uniqueEmail('newuser'),
+        password: STRONG_PASSWORD,
         role: 'patient'
       };
 
@@ -147,8 +151,9 @@ describe('API Integration Tests', () => {
         .set('Authorization', `Bearer ${doctorToken}`)
         .expect(200);
 
-      expect(page1Response.body.data.histories.length).toBeLessThanOrEqual(2);
-      expect(page1Response.body.data.pagination.page).toBe(1);
+      expect(Array.isArray(page1Response.body.data)).toBe(true);
+      expect(page1Response.body.data.length).toBeLessThanOrEqual(2);
+      expect(page1Response.body.pagination.page).toBe(1);
 
       // Test filtering by patient
       const filterResponse = await request(app)
@@ -156,7 +161,7 @@ describe('API Integration Tests', () => {
         .set('Authorization', `Bearer ${doctorToken}`)
         .expect(200);
 
-      filterResponse.body.data.histories.forEach((history: any) => {
+      filterResponse.body.data.forEach((history: any) => {
         expect(history.patientId).toBe(patientId);
       });
     });

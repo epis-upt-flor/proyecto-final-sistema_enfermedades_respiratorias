@@ -1,238 +1,301 @@
 /**
- * Unit tests for Export Controller
+ * Revised unit/integration tests for Export Controller
  */
 
 import request from 'supertest';
 import appInstance from '../../../src/index';
 import { testUtils } from '../../setup';
-
-const app = appInstance.app;
 import User, { UserDocument } from '../../../src/models/User';
 import MedicalHistory from '../../../src/models/MedicalHistory';
 import mongoose from 'mongoose';
+import { ExportService } from '../../../src/services/exportService';
+import { AppError } from '../../../src/utils/AppError';
+
+jest.mock('../../../src/services/exportService', () => ({
+  ExportService: {
+    validateExportOptions: jest.fn(),
+    exportMedicalHistories: jest.fn(),
+    exportUserStats: jest.fn(),
+    getAvailableFormats: jest.fn(),
+  },
+}));
+
+const app = appInstance.app;
+const mockedExportService = ExportService as jest.Mocked<typeof ExportService>;
 
 describe('Export Controller', () => {
   let adminToken: string;
   let doctorToken: string;
   let patientToken: string;
-  let adminId: string;
   let doctorId: string;
   let patientId: string;
 
   beforeEach(async () => {
     await testUtils.cleanTestData();
+    jest.clearAllMocks();
 
-    // Create test admin
-    const admin = await User.create({
-      name: 'Test Admin',
-      email: 'admin@test.com',
-      password: 'password123',
-      role: 'admin',
-      isActive: true
-    }) as UserDocument;
-    adminId = admin._id.toString();
-    adminToken = testUtils.generateTestToken({ userId: adminId, role: 'admin' });
-
-    // Create test doctor
     const doctor = await User.create({
       name: 'Test Doctor',
       email: 'doctor@test.com',
       password: 'password123',
       role: 'doctor',
-      isActive: true
+      isActive: true,
     }) as UserDocument;
     doctorId = doctor._id.toString();
     doctorToken = testUtils.generateTestToken({ userId: doctorId, role: 'doctor' });
 
-    // Create test patient
     const patient = await User.create({
       name: 'Test Patient',
       email: 'patient@test.com',
       password: 'password123',
       role: 'patient',
-      isActive: true
+      isActive: true,
     }) as UserDocument;
     patientId = patient._id.toString();
     patientToken = testUtils.generateTestToken({ userId: patientId, role: 'patient' });
 
-    // Create test medical histories
-    await MedicalHistory.create([
-      {
-        patientId: patientId,
-        doctorId: doctorId,
-        patientName: 'Test Patient',
-        age: 45,
-        diagnosis: 'Bronquitis',
-        symptoms: [{ name: 'tos', severity: 'moderate', duration: '2 weeks' }],
-        date: new Date()
-      }
-    ]);
+    const admin = await User.create({
+      name: 'Test Admin',
+      email: 'admin@test.com',
+      password: 'password123',
+      role: 'admin',
+      isActive: true,
+    }) as UserDocument;
+    adminToken = testUtils.generateTestToken({ userId: admin._id.toString(), role: 'admin' });
+
+    await MedicalHistory.create({
+      patientId: new mongoose.Types.ObjectId(patientId),
+      doctorId: new mongoose.Types.ObjectId(doctorId),
+      patientName: 'Test Patient',
+      age: 45,
+      diagnosis: 'Bronquitis',
+      symptoms: [{ name: 'tos', severity: 'moderate', duration: '2 weeks' }],
+      date: new Date(),
+    });
+
+    mockedExportService.validateExportOptions.mockImplementation(() => undefined);
+    mockedExportService.exportMedicalHistories.mockImplementation(async (res, options) => {
+      res.status(200).json({
+        success: true,
+        message: 'Exportación completada',
+        data: { options },
+      });
+    });
+    mockedExportService.getAvailableFormats.mockReturnValue(['json', 'csv', 'pdf']);
+    mockedExportService.exportUserStats.mockImplementation(async (res) => {
+      res.status(200).json({
+        success: true,
+        message: 'Estadísticas exportadas',
+        data: { totalUsers: 10 },
+      });
+    });
   });
 
-  describe('GET /api/v1/export/medical-histories', () => {
-    it('should export medical histories in JSON format', async () => {
+  describe('POST /api/v1/export/medical-histories', () => {
+    it('exporta historias médicas en JSON para un doctor', async () => {
+      const payload = { format: 'json', includeImages: true };
+
       const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=json')
+        .post('/api/v1/export/medical-histories')
         .set('Authorization', `Bearer ${doctorToken}`)
+        .send(payload)
         .expect(200);
 
+      expect(mockedExportService.validateExportOptions).toHaveBeenCalledWith(expect.objectContaining(payload));
+      expect(mockedExportService.exportMedicalHistories).toHaveBeenCalledTimes(1);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
+      expect(response.body.data.options.doctorId).toBe(doctorId);
     });
 
-    it('should export medical histories in CSV format', async () => {
+    it('requiere autenticación', async () => {
       const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=csv')
-        .set('Authorization', `Bearer ${doctorToken}`);
-
-      // CSV export might return different content type
-      expect([200, 404]).toContain(response.status);
-    });
-
-    it('should export medical histories in PDF format', async () => {
-      const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=pdf')
-        .set('Authorization', `Bearer ${doctorToken}`);
-
-      expect([200, 404, 500]).toContain(response.status);
-    });
-
-    it('should filter by date range', async () => {
-      const dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const dateTo = new Date().toISOString();
-
-      const response = await request(app)
-        .get(`/api/v1/export/medical-histories?format=json&dateFrom=${dateFrom}&dateTo=${dateTo}`)
-        .set('Authorization', `Bearer ${doctorToken}`);
-
-      expect([200, 404]).toContain(response.status);
-    });
-
-    it('should filter by patient ID', async () => {
-      const response = await request(app)
-        .get(`/api/v1/export/medical-histories?format=json&patientId=${patientId}`)
-        .set('Authorization', `Bearer ${doctorToken}`);
-
-      expect([200, 404]).toContain(response.status);
-    });
-
-    it('should filter by doctor ID', async () => {
-      const response = await request(app)
-        .get(`/api/v1/export/medical-histories?format=json&doctorId=${doctorId}`)
-        .set('Authorization', `Bearer ${adminToken}`);
-
-      expect([200, 404]).toContain(response.status);
-    });
-
-    it('should allow patients to export their own data', async () => {
-      const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=json')
-        .set('Authorization', `Bearer ${patientToken}`);
-
-      expect([200, 403, 404]).toContain(response.status);
-    });
-
-    it('should prevent patients from exporting other patients data', async () => {
-      const otherPatient = await User.create({
-        name: 'Other Patient',
-        email: 'other.patient@test.com',
-        password: 'password123',
-        role: 'patient',
-        isActive: true
-      });
-
-      const response = await request(app)
-        .get(`/api/v1/export/medical-histories?format=json&patientId=${otherPatient._id}`)
-        .set('Authorization', `Bearer ${patientToken}`);
-
-      expect([403, 404]).toContain(response.status);
-    });
-
-    it('should prevent doctors from exporting other doctors data', async () => {
-      const otherDoctor = await User.create({
-        name: 'Other Doctor',
-        email: 'other.doctor@test.com',
-        password: 'password123',
-        role: 'doctor',
-        isActive: true
-      });
-
-      const response = await request(app)
-        .get(`/api/v1/export/medical-histories?format=json&doctorId=${otherDoctor._id}`)
-        .set('Authorization', `Bearer ${doctorToken}`);
-
-      expect([403, 404]).toContain(response.status);
-    });
-
-    it('should reject export from unauthorized users', async () => {
-      await request(app)
-        .get('/api/v1/export/medical-histories?format=json')
+        .post('/api/v1/export/medical-histories')
+        .send({ format: 'json' })
         .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token de acceso requerido');
+      expect(mockedExportService.validateExportOptions).not.toHaveBeenCalled();
     });
 
-    it('should handle invalid format gracefully', async () => {
+    it('valida formatos permitidos antes de llegar al controlador', async () => {
       const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=invalid')
-        .set('Authorization', `Bearer ${doctorToken}`);
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({ format: 'xml' })
+        .expect(400);
 
-      expect([400, 422]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('El formato debe ser json, csv o pdf');
+      expect(mockedExportService.validateExportOptions).not.toHaveBeenCalled();
     });
 
-    it('should handle invalid date range', async () => {
+    it('permite a un paciente exportar sus propios datos', async () => {
       const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=json&dateFrom=invalid-date')
-        .set('Authorization', `Bearer ${doctorToken}`);
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .send({ format: 'json' })
+        .expect(200);
 
-      expect([400, 422, 500]).toContain(response.status);
+      expect(mockedExportService.exportMedicalHistories).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ patientId })
+      );
+      expect(response.body.success).toBe(true);
     });
 
-    it('should include images when requested', async () => {
-      const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=json&includeImages=true')
-        .set('Authorization', `Bearer ${doctorToken}`);
+    it('rechaza a un paciente que intenta exportar datos de otro paciente', async () => {
+      const otherPatientId = new mongoose.Types.ObjectId().toString();
 
-      expect([200, 404]).toContain(response.status);
+      await request(app)
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .send({ format: 'json', patientId: otherPatientId })
+        .expect(403);
+
+      expect(mockedExportService.exportMedicalHistories).not.toHaveBeenCalled();
     });
 
-    it('should include audio when requested', async () => {
-      const response = await request(app)
-        .get('/api/v1/export/medical-histories?format=json&includeAudio=true')
-        .set('Authorization', `Bearer ${doctorToken}`);
+    it('rechaza a un doctor exportando datos de otro doctor', async () => {
+      const otherDoctorId = new mongoose.Types.ObjectId().toString();
 
-      expect([200, 404]).toContain(response.status);
+      await request(app)
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({ format: 'json', doctorId: otherDoctorId })
+        .expect(403);
+
+      expect(mockedExportService.exportMedicalHistories).not.toHaveBeenCalled();
+    });
+
+    it('propaga errores de validación del servicio', async () => {
+      mockedExportService.validateExportOptions.mockImplementation(() => {
+        throw new AppError('Formato inválido', 400);
+      });
+
+      const response = await request(app)
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({ format: 'json' })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Formato inválido');
+      expect(mockedExportService.exportMedicalHistories).not.toHaveBeenCalled();
+    });
+
+    it('propaga errores lanzados por exportMedicalHistories', async () => {
+      mockedExportService.exportMedicalHistories.mockImplementationOnce(async () => {
+        throw new AppError('Error exportando', 500);
+      });
+
+      const response = await request(app)
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({ format: 'json' })
+        .expect(500);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Error exportando');
+    });
+
+    it('aplica formato json por defecto cuando no se especifica', async () => {
+      await request(app)
+        .post('/api/v1/export/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({})
+        .expect(200);
+
+      const [options] = mockedExportService.validateExportOptions.mock.calls[0];
+      expect(options.format).toBe('json');
+      expect(options.includeImages).toBe(false);
+      expect(options.includeAudio).toBe(false);
+    });
+  });
+
+  describe('POST /api/v1/export/user-statistics', () => {
+    it('exporta estadísticas de usuarios para admin', async () => {
+      const response = await request(app)
+        .post('/api/v1/export/user-statistics')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(mockedExportService.exportUserStats).toHaveBeenCalledTimes(1);
+      expect(response.body.data.totalUsers).toBe(10);
+    });
+
+    it('rechaza estadísticas de usuarios para no admin', async () => {
+      await request(app)
+        .post('/api/v1/export/user-statistics')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .expect(403);
+
+      expect(mockedExportService.exportUserStats).not.toHaveBeenCalled();
+    });
+
+    it('requiere autenticación', async () => {
+      const response = await request(app)
+        .post('/api/v1/export/user-statistics')
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token de acceso requerido');
+      expect(mockedExportService.exportUserStats).not.toHaveBeenCalled();
     });
   });
 
   describe('GET /api/v1/export/formats', () => {
-    it('should get available export formats', async () => {
+    it('devuelve la lista de formatos disponibles', async () => {
+      mockedExportService.getAvailableFormats.mockReturnValue(['json', 'csv', 'pdf']);
+
       const response = await request(app)
         .get('/api/v1/export/formats')
         .set('Authorization', `Bearer ${doctorToken}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.formats).toBeDefined();
-      expect(Array.isArray(response.body.data.formats)).toBe(true);
+      expect(response.body.data.formats).toEqual(['json', 'csv', 'pdf']);
+      expect(response.body.data.descriptions.pdf).toContain('PDF');
+    });
+
+    it('requiere autenticación', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/formats')
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token de acceso requerido');
     });
   });
 
-  describe('GET /api/v1/export/users/stats', () => {
-    it('should export user statistics (admin only)', async () => {
+  describe('GET /api/v1/export/history', () => {
+    it('retorna historial placeholder', async () => {
       const response = await request(app)
-        .get('/api/v1/export/users/stats')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .get('/api/v1/export/history')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .expect(200);
 
-      expect([200, 404]).toContain(response.status);
-      if (response.status === 200) {
-        expect(response.body.success).toBe(true);
-      }
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.exports).toEqual([]);
     });
 
-    it('should reject export from non-admin users', async () => {
-      await request(app)
-        .get('/api/v1/export/users/stats')
+    it('requiere autenticación', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/history')
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token de acceso requerido');
+    });
+
+    it('valida parámetros de paginación', async () => {
+      const response = await request(app)
+        .get('/api/v1/export/history?page=0')
         .set('Authorization', `Bearer ${doctorToken}`)
-        .expect(403);
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('La página debe ser un número entero mayor a 0');
     });
   });
 });

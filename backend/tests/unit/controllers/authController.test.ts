@@ -3,12 +3,11 @@
  */
 
 import request from 'supertest';
-import appInstance from '../../src/index';
+import appInstance from '../../../src/index';
 
 const app = appInstance.app;
-import { testUtils } from '../../tests/setup';
-import User from '../../src/models/User';
-import bcrypt from 'bcryptjs';
+import { testUtils } from '../../setup';
+import User, { UserDocument } from '../../../src/models/User';
 import jwt from 'jsonwebtoken';
 
 describe('Auth Controller', () => {
@@ -18,7 +17,9 @@ describe('Auth Controller', () => {
 
   describe('POST /api/v1/auth/register', () => {
     it('should register a new user successfully', async () => {
-      const userData = testUtils.generateTestUser();
+      const userData = testUtils.generateTestUser({
+        email: 'register-success@test.com'
+      });
 
       const response = await request(app)
         .post('/api/v1/auth/register')
@@ -32,7 +33,9 @@ describe('Auth Controller', () => {
     });
 
     it('should not register user with existing email', async () => {
-      const userData = testUtils.generateTestUser();
+      const userData = testUtils.generateTestUser({
+        email: 'duplicate@test.com'
+      });
       
       // Create first user
       await request(app)
@@ -47,7 +50,7 @@ describe('Auth Controller', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('already exists');
+      expect(response.body.message).toContain('El usuario ya existe con este email');
     });
 
     it('should validate required fields', async () => {
@@ -57,7 +60,7 @@ describe('Auth Controller', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('validation');
+      expect(response.body.message).toContain('Datos de entrada inválidos');
     });
 
     it('should validate email format', async () => {
@@ -73,7 +76,7 @@ describe('Auth Controller', () => {
     });
 
     it('should validate password strength', async () => {
-      const userData = testUtils.generateTestUser({ password: '123' });
+      const userData = testUtils.generateTestUser({ password: 'weakpass' });
 
       const response = await request(app)
         .post('/api/v1/auth/register')
@@ -81,27 +84,51 @@ describe('Auth Controller', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('password');
+      expect(response.body.message).toContain('La contraseña debe');
+    });
+
+    it('should return 500 when JWT secrets are missing', async () => {
+      const originalJwtSecret = process.env.JWT_SECRET;
+      const originalRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+      const userData = testUtils.generateTestUser({
+        email: 'missing-secret@test.com'
+      });
+
+      try {
+        delete process.env.JWT_SECRET;
+        delete process.env.JWT_REFRESH_SECRET;
+
+        const response = await request(app)
+          .post('/api/v1/auth/register')
+          .send(userData)
+          .expect(500);
+
+        expect(response.body.success).toBe(false);
+      } finally {
+        process.env.JWT_SECRET = originalJwtSecret;
+        process.env.JWT_REFRESH_SECRET = originalRefreshSecret;
+      }
     });
   });
 
   describe('POST /api/v1/auth/login', () => {
     beforeEach(async () => {
       // Create test user
-      const userData = testUtils.generateTestUser();
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
+      const userData = testUtils.generateTestUser({
+        email: 'login@test.com'
+      });
       
       await User.create({
         ...userData,
-        password: hashedPassword,
         isEmailVerified: true
       });
     });
 
     it('should login with valid credentials', async () => {
       const loginData = {
-        email: 'test@example.com',
-        password: 'password123'
+        email: 'login@test.com',
+        password: 'Password123!'
       };
 
       const response = await request(app)
@@ -127,13 +154,13 @@ describe('Auth Controller', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid credentials');
+      expect(response.body.message).toContain('Credenciales inválidas');
     });
 
     it('should not login with invalid password', async () => {
       const loginData = {
-        email: 'test@example.com',
-        password: 'wrongpassword'
+        email: 'login@test.com',
+        password: 'WrongPassword123!'
       };
 
       const response = await request(app)
@@ -142,23 +169,20 @@ describe('Auth Controller', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid credentials');
+      expect(response.body.message).toContain('Credenciales inválidas');
     });
 
-    it('should not login unverified user', async () => {
-      // Create unverified user
-      const userData = testUtils.generateTestUser({ email: 'unverified@example.com' });
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
-      
+    it('should block login for inactive accounts', async () => {
+      const userData = testUtils.generateTestUser({ email: 'inactive@example.com' });
+
       await User.create({
         ...userData,
-        password: hashedPassword,
-        isEmailVerified: false
+        isActive: false
       });
 
       const loginData = {
-        email: 'unverified@example.com',
-        password: 'password123'
+        email: 'inactive@example.com',
+        password: 'Password123!'
       };
 
       const response = await request(app)
@@ -167,7 +191,7 @@ describe('Auth Controller', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Please verify your email');
+      expect(response.body.message).toContain('La cuenta está desactivada');
     });
 
     it('should validate required fields', async () => {
@@ -177,7 +201,7 @@ describe('Auth Controller', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('validation');
+      expect(response.body.message).toContain('Datos de entrada inválidos');
     });
   });
 
@@ -187,11 +211,8 @@ describe('Auth Controller', () => {
 
     beforeEach(async () => {
       const userData = testUtils.generateTestUser();
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
-      
       const user = await User.create({
         ...userData,
-        password: hashedPassword,
         isEmailVerified: true
       });
 
@@ -227,12 +248,13 @@ describe('Auth Controller', () => {
     });
 
     it('should not refresh with expired refresh token', async () => {
-      // Create expired refresh token
       const expiredToken = jwt.sign(
-        { userId: userId },
+        { userId },
         process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: '-1h' }
+        { expiresIn: '-1s' }
       );
+
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       const response = await request(app)
         .post('/api/v1/auth/refresh-token')
@@ -240,6 +262,31 @@ describe('Auth Controller', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Refresh token inválido');
+    });
+
+    it('should not refresh when user is inactive', async () => {
+      await User.updateOne({ _id: userId }, { isActive: false });
+
+      const response = await request(app)
+        .post('/api/v1/auth/refresh-token')
+        .send({ refreshToken })
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Refresh token inválido');
+    });
+
+    it('should return 401 when user no longer exists', async () => {
+      await User.deleteOne({ _id: userId });
+
+      const response = await request(app)
+        .post('/api/v1/auth/refresh-token')
+        .send({ refreshToken })
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Refresh token inválido');
     });
 
     it('should require refresh token in body', async () => {
@@ -250,6 +297,27 @@ describe('Auth Controller', () => {
 
       expect(response.body.success).toBe(false);
     });
+
+    it('should return 401 if signing secret is missing during refresh', async () => {
+      const originalJwtSecret = process.env.JWT_SECRET;
+      const originalRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+      try {
+        delete process.env.JWT_SECRET;
+        delete process.env.JWT_REFRESH_SECRET;
+
+        const response = await request(app)
+          .post('/api/v1/auth/refresh-token')
+          .send({ refreshToken })
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('Refresh token inválido');
+      } finally {
+        process.env.JWT_SECRET = originalJwtSecret;
+        process.env.JWT_REFRESH_SECRET = originalRefreshSecret;
+      }
+    });
   });
 
   describe('POST /api/v1/auth/logout', () => {
@@ -257,15 +325,17 @@ describe('Auth Controller', () => {
 
     beforeEach(async () => {
       const userData = testUtils.generateTestUser();
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
       
-      await User.create({
+      const createdUser = await User.create({
         ...userData,
-        password: hashedPassword,
         isEmailVerified: true
       });
 
-      authToken = testUtils.generateTestToken();
+      authToken = testUtils.generateTestToken({
+        userId: createdUser._id.toString(),
+        role: createdUser.role,
+        email: createdUser.email
+      });
     });
 
     it('should logout successfully with valid token', async () => {
@@ -275,7 +345,7 @@ describe('Auth Controller', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('logged out');
+      expect(response.body.message).toContain('Sesión cerrada');
     });
 
     it('should not logout without token', async () => {
@@ -284,7 +354,7 @@ describe('Auth Controller', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('No token provided');
+      expect(response.body.message).toContain('Token de acceso requerido');
     });
 
     it('should not logout with invalid token', async () => {
@@ -294,7 +364,7 @@ describe('Auth Controller', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid token');
+      expect(response.body.message).toContain('Token inválido');
     });
   });
 
@@ -308,12 +378,12 @@ describe('Auth Controller', () => {
       const user = await User.create({
         name: 'Test User',
         email: 'logout@test.com',
-        password: 'password123',
+        password: 'Password123!',
         role: 'patient',
         isActive: true
       }) as UserDocument;
       userId = user._id.toString();
-      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
+      userToken = testUtils.generateTestToken({ userId, role: 'patient', email: user.email });
     });
 
     it('should logout successfully', async () => {
@@ -365,6 +435,18 @@ describe('Auth Controller', () => {
         .get('/api/v1/auth/profile')
         .expect(401);
     });
+
+    it('should return 401 when user no longer exists', async () => {
+      await User.deleteOne({ _id: userId });
+
+      const response = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token inválido - Usuario no encontrado');
+    });
   });
 
   describe('PUT /api/v1/auth/profile', () => {
@@ -400,6 +482,19 @@ describe('Auth Controller', () => {
         .send({ name: 'Updated Name' })
         .expect(401);
     });
+
+    it('should return 401 when trying to update a missing user', async () => {
+      await User.deleteOne({ _id: userId });
+
+      const response = await request(app)
+        .put('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ name: 'Another Name' })
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token inválido - Usuario no encontrado');
+    });
   });
 
   describe('PUT /api/v1/auth/change-password', () => {
@@ -407,11 +502,10 @@ describe('Auth Controller', () => {
     let userId: string;
 
     beforeEach(async () => {
-      const hashedPassword = await bcrypt.hash('oldpassword123', 12);
       const user = await User.create({
         name: 'Test User',
         email: 'password@test.com',
-        password: hashedPassword,
+        password: 'oldpassword123',
         role: 'patient',
         isActive: true
       }) as UserDocument;
@@ -425,12 +519,17 @@ describe('Auth Controller', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           currentPassword: 'oldpassword123',
-          newPassword: 'newpassword123'
+          newPassword: 'NewPassword123!'
         })
         .expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('Contraseña cambiada');
+
+      const updatedUser = await User.findById(userId).select('+password');
+      expect(updatedUser).toBeTruthy();
+      const matchesNewPassword = await updatedUser!.comparePassword('NewPassword123!');
+      expect(matchesNewPassword).toBe(true);
     });
 
     it('should reject change password with incorrect current password', async () => {
@@ -439,7 +538,7 @@ describe('Auth Controller', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           currentPassword: 'wrongpassword',
-          newPassword: 'newpassword123'
+          newPassword: 'NewPassword123!'
         })
         .expect(400);
 
@@ -451,46 +550,25 @@ describe('Auth Controller', () => {
         .put('/api/v1/auth/change-password')
         .send({
           currentPassword: 'oldpassword123',
-          newPassword: 'newpassword123'
+          newPassword: 'NewPassword123!'
         })
         .expect(401);
     });
-  });
 
-  describe('POST /api/v1/auth/deactivate', () => {
-    let userToken: string;
-    let userId: string;
+    it('should return 401 when user does not exist', async () => {
+      await User.deleteOne({ _id: userId });
 
-    beforeEach(async () => {
-      const user = await User.create({
-        name: 'Test User',
-        email: 'deactivate@test.com',
-        password: 'password123',
-        role: 'patient',
-        isActive: true
-      }) as UserDocument;
-      userId = user._id.toString();
-      userToken = testUtils.generateTestToken({ userId, role: 'patient' });
-    });
-
-    it('should deactivate account successfully', async () => {
       const response = await request(app)
-        .post('/api/v1/auth/deactivate')
+        .put('/api/v1/auth/change-password')
         .set('Authorization', `Bearer ${userToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Cuenta desactivada');
-
-      // Verify user is deactivated
-      const user = await User.findById(userId);
-      expect(user?.isActive).toBe(false);
-    });
-
-    it('should require authentication', async () => {
-      await request(app)
-        .post('/api/v1/auth/deactivate')
+        .send({
+          currentPassword: 'oldpassword123',
+          newPassword: 'NewPassword123!'
+        })
         .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token inválido - Usuario no encontrado');
     });
   });
 
@@ -529,6 +607,18 @@ describe('Auth Controller', () => {
         .put('/api/v1/auth/deactivate')
         .expect(401);
     });
+
+    it('should return 401 if the account was already removed', async () => {
+      await User.deleteOne({ _id: userId });
+
+      const response = await request(app)
+        .put('/api/v1/auth/deactivate')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token inválido - Usuario no encontrado');
+    });
   });
 
   describe('GET /api/v1/auth/stats', () => {
@@ -553,6 +643,15 @@ describe('Auth Controller', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
+    });
+
+    it('should require authentication', async () => {
+      const response = await request(app)
+        .get('/api/v1/auth/stats')
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token de acceso requerido');
     });
 
     it('should reject access from non-admin users', async () => {
@@ -623,6 +722,15 @@ describe('Auth Controller', () => {
         .get('/api/v1/auth/users')
         .set('Authorization', `Bearer ${userToken}`)
         .expect(403);
+    });
+
+    it('should require authentication', async () => {
+      const response = await request(app)
+        .get('/api/v1/auth/users')
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token de acceso requerido');
     });
   });
 });

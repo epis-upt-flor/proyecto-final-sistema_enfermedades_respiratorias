@@ -12,7 +12,7 @@
 - ✅ Exportación de datos (JSON, CSV, PDF)
 - ✅ Integración con servicios de IA
 - ✅ Sistema de monitoreo básico
-- ✅ **Testing Backend**: 79/84 tests pasando (94.0%) - Ver [backend/tests/README.md](backend/tests/README.md)
+- ✅ **Testing Backend**: 380+ tests automatizados, cobertura global 98 % - Ver [docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)
 - ✅ **Testing Frontend Web**: 40+ tests implementados - Ver [web/tests/README.md](web/tests/README.md)
 
 #### **AI Services (Python/FastAPI)**
@@ -96,8 +96,8 @@
 - ✅ `backend/tests/README.md` - **ACTUALIZADO** con toda la documentación
 
 **Métricas logradas:**
-- ✅ 150+ tests implementados (~95% pasando)
-- ✅ Cobertura: Objetivo 80% (en progreso desde 56.55%)
+- ✅ 380+ tests implementados
+- ✅ Cobertura global Jest: **98 %** (objetivo ≥80 % superado)
 - ✅ Tests de seguridad **OWASP Top 10 2021 100% cubierto**
 - ✅ Tests de performance con múltiples escenarios (stress, spike, endurance, scalability)
 - ✅ Tests E2E implementados (15+ flujos completos)

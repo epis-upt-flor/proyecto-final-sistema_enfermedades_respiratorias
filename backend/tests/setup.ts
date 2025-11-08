@@ -18,10 +18,149 @@ process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.CORS_ORIGINS = 'http://localhost:3000';
 process.env.AI_SERVICE_URL = 'http://localhost:8000';
 process.env.AI_SERVICE_API_KEY = 'test-api-key';
+process.env.RATE_LIMIT_WINDOW_MS = '60000';
+process.env.RATE_LIMIT_MAX_REQUESTS = '100000';
 
 // ============================================
 // NOW WE CAN IMPORT MODULES
 // ============================================
+type RedisEntry = { value: string; expiresAt?: number };
+const redisStore = new Map<string, RedisEntry>();
+
+const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const matchesPattern = (key: string, pattern: string): boolean => {
+  if (pattern === '*') {
+    return true;
+  }
+  const regex = new RegExp(`^${pattern.split('*').map(escapeRegex).join('.*')}$`);
+  return regex.test(key);
+};
+
+const isExpired = (entry: RedisEntry | undefined): boolean =>
+  !!entry?.expiresAt && entry.expiresAt <= Date.now();
+
+jest.mock('redis', () => {
+  const createClient = jest.fn(() => {
+    const client = {
+      connect: jest.fn(async () => client),
+      disconnect: jest.fn(async () => undefined),
+      on: jest.fn(),
+      get: jest.fn(async (key: string) => {
+        const entry = redisStore.get(key);
+        if (!entry || isExpired(entry)) {
+          redisStore.delete(key);
+          return null;
+        }
+        return entry.value;
+      }),
+      set: jest.fn(async (key: string, value: string, options?: { EX?: number }) => {
+        const payload = typeof value === 'string' ? value : JSON.stringify(value);
+        const expiresAt = options?.EX ? Date.now() + options.EX * 1000 : undefined;
+        redisStore.set(key, { value: payload, expiresAt });
+        return 'OK';
+      }),
+      del: jest.fn(async (keys: string | string[]) => {
+        const list = Array.isArray(keys) ? keys : [keys];
+        let removed = 0;
+        for (const key of list) {
+          if (redisStore.delete(key)) {
+            removed++;
+          }
+        }
+        return removed;
+      }),
+      scanIterator: jest.fn(async function* ({ MATCH = '*' }: { MATCH?: string } = {}) {
+        for (const key of redisStore.keys()) {
+          if (matchesPattern(key, MATCH)) {
+            yield key;
+          }
+        }
+      }),
+      incr: jest.fn(async (key: string) => {
+        const entry = redisStore.get(key);
+        const base = !entry || isExpired(entry) ? 0 : parseInt(entry.value, 10) || 0;
+        const next = base + 1;
+        redisStore.set(key, {
+          value: String(next),
+          expiresAt: entry?.expiresAt
+        });
+        return next;
+      }),
+      expire: jest.fn(async (key: string, seconds: number) => {
+        const entry = redisStore.get(key);
+        if (!entry) {
+          return 0;
+        }
+        redisStore.set(key, {
+          value: entry.value,
+          expiresAt: Date.now() + seconds * 1000
+        });
+        return 1;
+      }),
+      ttl: jest.fn(async (key: string) => {
+        const entry = redisStore.get(key);
+        if (!entry) {
+          return -2;
+        }
+        if (!entry.expiresAt) {
+          return -1;
+        }
+        const remaining = Math.ceil((entry.expiresAt - Date.now()) / 1000);
+        return remaining > 0 ? remaining : -2;
+      })
+    };
+    return client;
+  });
+
+  return {
+    createClient
+  };
+});
+
+const redisMockHelpers = {
+  reset: () => redisStore.clear(),
+  setValue: (key: string, value: string, ttlSeconds?: number) => {
+    const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : undefined;
+    redisStore.set(key, { value, expiresAt });
+  },
+  getValue: (key: string) => {
+    const entry = redisStore.get(key);
+    if (!entry || isExpired(entry)) {
+      redisStore.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+};
+
+import superagent from 'superagent';
+
+if (!(superagent as any).__noCompressionPatched) {
+  const originalEnd = superagent.Request.prototype.end;
+  superagent.Request.prototype.end = function patchedEnd(this: superagent.Request, fn?: any) {
+    const requestAny = this as any;
+    requestAny._header = requestAny._header || {};
+    const acceptEncodingHeader = requestAny._header['accept-encoding'];
+    const hasAcceptEncoding = typeof acceptEncodingHeader === 'string' && acceptEncodingHeader.length > 0;
+
+    if (!hasAcceptEncoding) {
+      this.set('Accept-Encoding', 'identity');
+    }
+
+    const finalAcceptEncoding = requestAny._header['accept-encoding'];
+    const disablesCompression =
+      !hasAcceptEncoding || /identity/i.test(String(finalAcceptEncoding ?? ''));
+
+    if (!requestAny._header['x-no-compression'] && disablesCompression) {
+      this.set('X-No-Compression', 'true');
+    }
+    return originalEnd.call(this, fn);
+  };
+  (superagent as any).__noCompressionPatched = true;
+}
+
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
@@ -36,12 +175,20 @@ try {
 declare global {
   var __MONGOD: MongoMemoryServer | undefined;
   var __MONGO_URI: string | undefined;
+  var __redisMock:
+    | {
+        reset: () => void;
+        setValue: (key: string, value: string, ttlSeconds?: number) => void;
+        getValue: (key: string) => string | null;
+      }
+    | undefined;
 }
+
+globalThis.__redisMock = redisMockHelpers;
 
 // Mock external services
 jest.mock('nodemailer');
 jest.mock('sharp');
-jest.mock('redis');
 
 // Global test setup
 beforeAll(async () => {
@@ -79,6 +226,8 @@ afterEach(async () => {
     await collection.deleteMany({});
   }
   
+  globalThis.__redisMock?.reset();
+
   // Clear all mocks
   jest.clearAllMocks();
 });
@@ -131,7 +280,7 @@ export const testUtils = {
   generateTestUser: (overrides: any = {}) => ({
     name: 'Test User',
     email: 'test@example.com',
-    password: 'password123',
+    password: 'Password123!',
     role: 'doctor',
     ...overrides
   }),
@@ -162,6 +311,14 @@ export const testUtils = {
       const collection = collections[key];
       await collection.deleteMany({});
     }
+    },
+
+  // Redis mock helpers (HIT/MISS control)
+  redis: {
+    set: (key: string, value: string, ttlSeconds?: number) =>
+      globalThis.__redisMock?.setValue(key, value, ttlSeconds),
+    get: (key: string) => globalThis.__redisMock?.getValue(key) ?? null,
+    reset: () => globalThis.__redisMock?.reset()
   }
 };
 

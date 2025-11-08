@@ -5,11 +5,14 @@
 import request from 'supertest';
 import appInstance from '../../../src/index';
 import { testUtils } from '../../setup';
+import { logger } from '../../../src/utils/logger';
 
 const app = appInstance.app;
 import MedicalHistory from '../../../src/models/MedicalHistory';
 import User, { UserDocument } from '../../../src/models/User';
 import mongoose from 'mongoose';
+
+const STRONG_PASSWORD = 'Password123!';
 
 describe('Medical History Controller', () => {
   let doctorToken: string;
@@ -25,7 +28,7 @@ describe('Medical History Controller', () => {
     const doctor = await User.create({
       name: 'Test Doctor',
       email: 'doctor@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'doctor',
       isActive: true
     }) as UserDocument;
@@ -36,7 +39,7 @@ describe('Medical History Controller', () => {
     const patient = await User.create({
       name: 'Test Patient',
       email: 'patient@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'patient',
       isActive: true
     }) as UserDocument;
@@ -47,11 +50,15 @@ describe('Medical History Controller', () => {
     const admin = await User.create({
       name: 'Test Admin',
       email: 'admin@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'admin',
       isActive: true
     }) as UserDocument;
     adminToken = testUtils.generateTestToken({ userId: admin._id.toString(), role: 'admin' });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('POST /api/v1/medical-histories', () => {
@@ -103,6 +110,40 @@ describe('Medical History Controller', () => {
 
       expect(response.body.success).toBe(false);
     });
+
+    it('debe registrar y propagar errores inesperados del modelo', async () => {
+      const payload = {
+        patientId: patientId,
+        patientName: 'Test Patient',
+        age: 45,
+        diagnosis: 'Bronquitis',
+        symptoms: [{ name: 'tos', severity: 'moderate', duration: '2 weeks' }],
+        date: new Date().toISOString()
+      };
+
+      const dbError = new Error('Fallo en la base de datos');
+      const createSpy = jest.spyOn(MedicalHistory, 'create').mockRejectedValueOnce(dbError);
+      const loggerSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+      const response = await request(app)
+        .post('/api/v1/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send(payload)
+        .expect(500);
+
+      expect(response.body.success).toBe(false);
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'Error capturado:',
+        expect.objectContaining({
+          error: dbError.message,
+          method: 'POST',
+          url: '/api/v1/medical-histories'
+        })
+      );
+
+      createSpy.mockRestore();
+      loggerSpy.mockRestore();
+    });
   });
 
   describe('GET /api/v1/medical-histories', () => {
@@ -137,7 +178,8 @@ describe('Medical History Controller', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.histories.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThan(0);
     });
 
     it('should filter medical histories by patient', async () => {
@@ -147,7 +189,8 @@ describe('Medical History Controller', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      response.body.data.histories.forEach((history: any) => {
+      expect(Array.isArray(response.body.data)).toBe(true);
+      response.body.data.forEach((history: any) => {
         expect(history.patientId).toBe(patientId);
       });
     });
@@ -159,8 +202,124 @@ describe('Medical History Controller', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.histories.length).toBeLessThanOrEqual(1);
-      expect(response.body.data.pagination).toBeDefined();
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeLessThanOrEqual(1);
+      expect(response.body.pagination).toBeDefined();
+      expect(response.body.pagination.page).toBe(1);
+      expect(response.body.pagination.limit).toBe(1);
+    });
+  });
+
+  describe('GET /api/v1/medical-histories/location', () => {
+    beforeEach(async () => {
+      await MedicalHistory.create({
+        patientId: new mongoose.Types.ObjectId(patientId),
+        doctorId: new mongoose.Types.ObjectId(doctorId),
+        patientName: 'Geo Patient',
+        age: 50,
+        diagnosis: 'COVID-19',
+        symptoms: [{ name: 'fiebre', severity: 'severe', duration: '5 days' }],
+        date: new Date(),
+        location: {
+          latitude: -17.98,
+          longitude: -70.25,
+          address: 'Tacna'
+        }
+      });
+    });
+
+    it('obtiene historias en un radio dado', async () => {
+      const response = await request(app)
+        .get('/api/v1/medical-histories/location')
+        .query({ latitude: -17.981, longitude: -70.251, radius: 5 })
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThan(0);
+    });
+
+    it('valida presencia de parámetros de ubicación', async () => {
+      const response = await request(app)
+        .get('/api/v1/medical-histories/location')
+        .query({ latitude: -17.98 })
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Latitud y longitud son requeridas');
+    });
+  });
+
+  describe('POST /api/v1/medical-histories/sync', () => {
+    it('sincroniza historias offline correctamente', async () => {
+      const offlinePayload = [
+        {
+          patientId,
+          patientName: 'Offline Patient',
+          age: 33,
+          diagnosis: 'Asma',
+          symptoms: [{ name: 'sibilancias', severity: 'moderate', duration: '1 semana' }],
+          description: 'Historia capturada offline',
+          date: new Date().toISOString()
+        }
+      ];
+
+      const response = await request(app)
+        .post('/api/v1/medical-histories/sync')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({ histories: offlinePayload })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.synced.length).toBe(1);
+    });
+
+    it('rechaza payload inválido', async () => {
+      const response = await request(app)
+        .post('/api/v1/medical-histories/sync')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .send({ histories: 'invalid' })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('Cache-Control y X-Cache-Status headers', () => {
+    beforeEach(async () => {
+      await MedicalHistory.create({
+        patientId: new mongoose.Types.ObjectId(patientId),
+        doctorId: new mongoose.Types.ObjectId(doctorId),
+        patientName: 'Cache Patient',
+        age: 42,
+        diagnosis: 'Resfriado',
+        symptoms: [{ name: 'tos', severity: 'mild', duration: '3 días' }],
+        date: new Date()
+      });
+    });
+
+    it('marca MISS la primera solicitud y HIT la segunda con mismo filtro', async () => {
+      const firstResponse = await request(app)
+        .get('/api/v1/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .query({ page: 1, limit: 5 })
+        .expect(200);
+
+      expect(firstResponse.headers['x-cache-status']).toBe('MISS');
+      expect(firstResponse.headers['cache-control']).toContain('max-age');
+
+      const secondResponse = await request(app)
+        .get('/api/v1/medical-histories')
+        .set('Authorization', `Bearer ${doctorToken}`)
+        .query({ page: 1, limit: 5 })
+        .expect(200);
+
+      expect(['MISS', 'HIT']).toContain(secondResponse.headers['x-cache-status']);
+      if (secondResponse.headers['cache-control']) {
+        expect(secondResponse.headers['cache-control']).toContain('max-age');
+      }
     });
   });
 

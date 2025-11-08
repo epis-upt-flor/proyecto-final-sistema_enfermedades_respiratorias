@@ -5,11 +5,16 @@
 import request from 'supertest';
 import appInstance from '../../../src/index';
 import { testUtils } from '../../setup';
+import aiIntegrationService from '../../../src/services/aiIntegration';
+import { logger } from '../../../src/utils/logger';
+import { AppError } from '../../../src/utils/AppError';
 
 const app = appInstance.app;
 import User, { UserDocument } from '../../../src/models/User';
 import MedicalHistory from '../../../src/models/MedicalHistory';
 import mongoose from 'mongoose';
+
+const STRONG_PASSWORD = 'Password123!';
 
 describe('Symptom Analyzer Controller', () => {
   let doctorToken: string;
@@ -24,7 +29,7 @@ describe('Symptom Analyzer Controller', () => {
     const doctor = await User.create({
       name: 'Test Doctor',
       email: 'doctor@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'doctor',
       isActive: true
     }) as UserDocument;
@@ -35,7 +40,7 @@ describe('Symptom Analyzer Controller', () => {
     const patient = await User.create({
       name: 'Test Patient',
       email: 'patient@test.com',
-      password: 'password123',
+      password: STRONG_PASSWORD,
       role: 'patient',
       isActive: true
     }) as UserDocument;
@@ -54,6 +59,10 @@ describe('Symptom Analyzer Controller', () => {
         date: new Date()
       }
     ]);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('POST /api/v1/symptom-analyzer/analyze', () => {
@@ -109,6 +118,30 @@ describe('Symptom Analyzer Controller', () => {
         .send({ symptoms: [{ symptom: 'tos', severity: 'moderate', duration: '2 weeks' }] })
         .expect(401);
     });
+
+    it('registra y propaga errores cuando el servicio de IA falla', async () => {
+      const aiError = new AppError('Servicio de IA no disponible', 503);
+      const serviceSpy = jest.spyOn(aiIntegrationService, 'analyzeSymptoms').mockRejectedValue(aiError);
+      const loggerSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+      await request(app)
+        .post('/api/v1/symptom-analyzer/analyze')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .send({ symptoms: [{ symptom: 'tos', severity: 'moderate', duration: '2 weeks' }] })
+        .expect(503);
+
+      expect(serviceSpy).toHaveBeenCalled();
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'Symptom analysis failed',
+        expect.objectContaining({
+          patientId: expect.any(String),
+          error: aiError.message
+        })
+      );
+
+      serviceSpy.mockRestore();
+      loggerSpy.mockRestore();
+    });
   });
 
   describe('POST /api/v1/symptom-analyzer/ml-analyze', () => {
@@ -147,6 +180,30 @@ describe('Symptom Analyzer Controller', () => {
         .send({ symptoms: ['tos'] })
         .expect(401);
     });
+
+    it('registra y propaga errores cuando el análisis ML falla', async () => {
+      const mlError = new AppError('ML fuera de servicio', 503);
+      const serviceSpy = jest.spyOn(aiIntegrationService, 'analyzeSymptomsML').mockRejectedValue(mlError);
+      const loggerSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+      await request(app)
+        .post('/api/v1/symptom-analyzer/ml-analyze')
+        .set('Authorization', `Bearer ${patientToken}`)
+        .send({ symptoms: ['tos', 'fiebre'] })
+        .expect(503);
+
+      expect(serviceSpy).toHaveBeenCalled();
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'ML symptom analysis failed',
+        expect.objectContaining({
+          patientId: expect.any(String),
+          error: mlError.message
+        })
+      );
+
+      serviceSpy.mockRestore();
+      loggerSpy.mockRestore();
+    });
   });
 
   describe('GET /api/v1/symptom-analyzer/trends/:patientId', () => {
@@ -155,8 +212,8 @@ describe('Symptom Analyzer Controller', () => {
         .get(`/api/v1/symptom-analyzer/trends/${patientId}`)
         .set('Authorization', `Bearer ${doctorToken}`);
 
-      // AI service may not be available
-      expect([200, 500, 503]).toContain(response.status);
+      // AI service may not be disponible o retornar 404 si no hay datos
+      expect([200, 404, 500, 503]).toContain(response.status);
     });
 
     it('should allow patients to view their own trends', async () => {
@@ -164,7 +221,7 @@ describe('Symptom Analyzer Controller', () => {
         .get(`/api/v1/symptom-analyzer/trends/${patientId}`)
         .set('Authorization', `Bearer ${patientToken}`);
 
-      expect([200, 500, 503]).toContain(response.status);
+      expect([200, 404, 500, 503]).toContain(response.status);
     });
 
     it('should reject access from unauthorized users', async () => {

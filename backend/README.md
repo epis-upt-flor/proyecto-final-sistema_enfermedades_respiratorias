@@ -443,6 +443,11 @@ npm run test:coverage
 - **Validation tests** - Schemas Joi
 - **Security tests** - Autenticación y autorización
 
+### **Infraestructura para pruebas**
+- **MongoDB**: la suite utiliza `mongodb-memory-server`, por lo que no necesitas levantar un servicio externo para los tests unitarios/integración. Si prefieres usar una instancia real, exporta `MONGODB_URI` apuntando a tu servidor y ejecútalo (por ejemplo `docker compose up -d mongodb` desde la raíz del proyecto).
+- **Redis**: los tests usan un mock en memoria configurado en `tests/setup.ts`. Puedes forzar HIT/MISS desde tus pruebas con `testUtils.redis.set()` o reiniciar el estado con `testUtils.redis.reset()`. Para validar contra un Redis real, levanta el servicio (`docker compose up -d redis`) y elimina el mock si deseas probar la integración completa.
+- **Compresión Brotli**: durante las pruebas las peticiones HTTP se envían con `Accept-Encoding: identity` y el header `X-No-Compression` para evitar discrepancias al comparar cuerpos planos. Si necesitas probar compresión explícitamente, establece manualmente el header en tu petición dentro del test.
+
 ## 📈 Monitoreo y Logs
 
 ### **Logging:**

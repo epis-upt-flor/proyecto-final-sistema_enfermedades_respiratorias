@@ -13,6 +13,12 @@ export const brotliCompression = (options: BrotliOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const acceptEncoding = req.headers['accept-encoding'] || '';
 
+    const disableCompression = req.headers['x-no-compression'];
+    if (typeof disableCompression !== 'undefined' && disableCompression !== 'false') {
+      res.setHeader('X-No-Compression', 'true');
+      return next();
+    }
+
     if (!acceptEncoding.toString().includes('br')) {
       return next();
     }
