@@ -1,19 +1,29 @@
-import React, { useState } from 'react';
-import AnalyticsDashboardSimple from '../components/AnalyticsDashboardSimple';
-import TemporalTrends from '../components/TemporalTrends';
-import DiseaseReports from '../components/DiseaseReports';
+import React, { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import './Analytics.css';
+
+const AnalyticsDashboardSimple = lazy(() => import('../components/AnalyticsDashboardSimple'));
+const TemporalTrends = lazy(() => import('../components/TemporalTrends'));
+const DiseaseReports = lazy(() => import('../components/DiseaseReports'));
+
+const ANALYTICS_TABS = [
+  { id: 'dashboard', label: '📊 Dashboard', component: AnalyticsDashboardSimple },
+  { id: 'trends', label: '📈 Tendencias', component: TemporalTrends },
+  { id: 'diseases', label: '🦠 Enfermedades', component: DiseaseReports }
+];
 
 function Analytics() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  const tabs = [
-    { id: 'dashboard', label: '📊 Dashboard', component: AnalyticsDashboardSimple },
-    { id: 'trends', label: '📈 Tendencias', component: TemporalTrends },
-    { id: 'diseases', label: '🦠 Enfermedades', component: DiseaseReports }
-  ];
+  const handleTabChange = useCallback((tabId) => {
+    setActiveTab(tabId);
+  }, []);
 
-  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
+  const tabs = useMemo(() => ANALYTICS_TABS, []);
+
+  const ActiveComponent = useMemo(
+    () => tabs.find(tab => tab.id === activeTab)?.component ?? null,
+    [tabs, activeTab]
+  );
 
   return (
     <div className="analytics-page">
@@ -27,7 +37,7 @@ function Analytics() {
           <button
             key={tab.id}
             className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
           >
             {tab.label}
           </button>
@@ -35,7 +45,9 @@ function Analytics() {
       </div>
 
       <div className="analytics-content">
-        {ActiveComponent && <ActiveComponent />}
+        <Suspense fallback={<div className="tab-loading">Cargando módulo...</div>}>
+          {ActiveComponent && <ActiveComponent />}
+        </Suspense>
       </div>
     </div>
   );

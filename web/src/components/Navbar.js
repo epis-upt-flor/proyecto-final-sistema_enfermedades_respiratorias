@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Navbar.css';
 
+const NAV_LINKS = [
+  { to: '/', label: 'Inicio', icon: '🏠' },
+  { to: '/dashboard', label: 'Estado del Sistema', icon: '⚙️' },
+  { to: '/analytics', label: 'Análisis', icon: '📊' },
+  { to: '/heatmap', label: 'Mapa', icon: '🗺️' }
+];
+
 function Navbar() {
   const location = useLocation();
+
+  const links = useMemo(
+    () =>
+      NAV_LINKS.map(link => ({
+        ...link,
+        isActive: location.pathname === link.to
+      })),
+    [location.pathname]
+  );
 
   return (
     <nav className="navbar">
@@ -14,39 +30,21 @@ function Navbar() {
           <span className="brand-subtitle">Sistema de Enfermedades Respiratorias</span>
         </div>
         <div className="navbar-menu">
-          <Link 
-            to="/" 
-            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-          >
-            <span className="nav-icon">🏠</span>
-            Inicio
-          </Link>
-          <Link 
-            to="/dashboard" 
-            className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
-          >
-            <span className="nav-icon">⚙️</span>
-            Estado del Sistema
-          </Link>
-          <Link 
-            to="/analytics" 
-            className={`nav-link ${location.pathname === '/analytics' ? 'active' : ''}`}
-          >
-            <span className="nav-icon">📊</span>
-            Análisis
-          </Link>
-          <Link 
-            to="/heatmap" 
-            className={`nav-link ${location.pathname === '/heatmap' ? 'active' : ''}`}
-          >
-            <span className="nav-icon">🗺️</span>
-            Mapa
-          </Link>
+          {links.map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`nav-link ${link.isActive ? 'active' : ''}`}
+            >
+              <span className="nav-icon">{link.icon}</span>
+              {link.label}
+            </Link>
+          ))}
         </div>
       </div>
     </nav>
   );
 }
 
-export default Navbar;
+export default memo(Navbar);
 

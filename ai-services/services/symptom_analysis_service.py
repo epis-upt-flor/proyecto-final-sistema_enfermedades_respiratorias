@@ -71,6 +71,18 @@ class SymptomAnalysisService:
                         error=str(e))
             raise
     
+    async def analyze_symptoms_batch(
+        self,
+        batch_requests: List[Dict[str, Any]],
+        strategy_preference: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Delegates batch analysis to the AI service manager when available."""
+        manager = self.service_manager
+        if not manager:
+            from services.ai_service_manager import ai_service_manager  # evitar import circular
+            manager = ai_service_manager
+        return await manager.analyze_symptoms_batch(batch_requests, strategy_preference)
+    
     async def _perform_basic_analysis(
         self,
         symptoms: List[Dict[str, Any]],

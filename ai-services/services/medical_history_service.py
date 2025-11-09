@@ -75,6 +75,18 @@ class MedicalHistoryService:
                         error=str(e))
             raise
     
+    async def process_medical_history_batch(
+        self,
+        batch_requests: List[Dict[str, Any]],
+        strategy_preference: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Delegates batch processing to AI service manager if disponible."""
+        manager = self.service_manager
+        if not manager:
+            from services.ai_service_manager import ai_service_manager  # evita circularidad
+            manager = ai_service_manager
+        return await manager.process_medical_history_batch(batch_requests, strategy_preference)
+    
     async def _perform_basic_processing(
         self,
         text: str,

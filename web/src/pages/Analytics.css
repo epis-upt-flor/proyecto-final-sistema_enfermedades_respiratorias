@@ -78,6 +78,15 @@
   margin: 0 auto;
 }
 
+.tab-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  color: #1976d2;
+  font-weight: 500;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .analytics-header {

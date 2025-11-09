@@ -19,35 +19,43 @@ describe('SymptomFormatter', () => {
     it('debe convertir todos los síntomas a minúsculas', () => {
       const symptoms = ['TOS', 'Fiebre', 'Dificultad Respiratoria'];
       const result = formatSymptoms(symptoms);
-      expect(result).toEqual(['tos', 'fiebre', 'dificultad respiratoria']);
+      expect(result).toEqual(
+        ['tos', 'fiebre', 'dificultad respiratoria'].sort((a, b) => a.localeCompare(b, 'es'))
+      );
     });
 
     // Test 3: Debe eliminar espacios en blanco al inicio y final
     it('debe eliminar espacios en blanco al inicio y final', () => {
       const symptoms = ['  tos  ', ' fiebre ', 'dificultad respiratoria'];
       const result = formatSymptoms(symptoms);
-      expect(result).toEqual(['tos', 'fiebre', 'dificultad respiratoria']);
+      expect(result).toEqual(
+        ['tos', 'fiebre', 'dificultad respiratoria'].sort((a, b) => a.localeCompare(b, 'es'))
+      );
     });
 
     // Test 4: Debe eliminar síntomas vacíos o solo con espacios
     it('debe filtrar síntomas vacíos o solo con espacios', () => {
       const symptoms = ['tos', '   ', '', 'fiebre', '  '];
       const result = formatSymptoms(symptoms);
-      expect(result).toEqual(['tos', 'fiebre']);
+      expect(result).toEqual(['tos', 'fiebre'].sort((a, b) => a.localeCompare(b, 'es')));
     });
 
     // Test 5: Debe eliminar duplicados
     it('debe eliminar síntomas duplicados', () => {
       const symptoms = ['tos', 'fiebre', 'tos', 'congestión', 'fiebre'];
       const result = formatSymptoms(symptoms);
-      expect(result).toEqual(['tos', 'fiebre', 'congestión']);
+      expect(result).toEqual(
+        ['tos', 'fiebre', 'congestión'].sort((a, b) => a.localeCompare(b, 'es'))
+      );
     });
 
     // Test 6: Debe manejar combinación de problemas
     it('debe manejar múltiples problemas (mayúsculas, espacios, duplicados)', () => {
       const symptoms = ['  TOS  ', 'fiebre', ' TOS ', 'FIEBRE', 'congestión'];
       const result = formatSymptoms(symptoms);
-      expect(result).toEqual(['tos', 'fiebre', 'congestión']);
+      expect(result).toEqual(
+        ['tos', 'fiebre', 'congestión'].sort((a, b) => a.localeCompare(b, 'es'))
+      );
     });
 
     // Test 7: Debe ordenar alfabéticamente

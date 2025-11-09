@@ -3,11 +3,14 @@ AI Service Manager - Central coordinator for all AI services
 """
 
 import asyncio
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 import structlog
+
+from core.config import settings
+from decorators import with_cache, with_circuit_breaker, with_logging, with_metrics
 from factories.service_factory import ServiceFactory, ServiceType
 from factories.strategy_factory import StrategyFactory, StrategyType
-from decorators import with_logging, with_cache, with_metrics, with_circuit_breaker
 
 logger = structlog.get_logger()
 
@@ -17,9 +20,11 @@ class AIServiceManager:
     
     def __init__(self, environment: str = "production"):
         self.environment = environment
-        self.services = {}
-        self.strategies = {}
+        self.services: Dict[str, Any] = {}
+        self.repositories: Dict[str, Any] = {}
+        self.strategies: Dict[str, Any] = {}
         self._initialized = False
+        self._batch_semaphore = asyncio.Semaphore(settings.MAX_CONCURRENT_BATCH_JOBS)
     
     @with_logging(log_level="info", log_execution_time=True)
     async def initialize(self):
@@ -34,6 +39,11 @@ class AIServiceManager:
                 self.services = ServiceFactory.create_development_services()
             else:
                 self.services = ServiceFactory.create_medical_service_suite()
+            self.repositories = {}
+            self._batch_semaphore = asyncio.Semaphore(settings.MAX_CONCURRENT_BATCH_JOBS)
+            
+            # Warm-up heavy models when available
+            await self._warm_up_models()
             
             # Initialize strategies
             await self._initialize_strategies()
@@ -47,6 +57,33 @@ class AIServiceManager:
         except Exception as e:
             logger.error("Failed to initialize AI Service Manager", error=str(e))
             raise
+    
+    async def _warm_up_models(self):
+        """Ensure heavy AI models are pre-loaded and optimised."""
+        model_manager = self._get_model_manager()
+        if not model_manager:
+            return
+        try:
+            await model_manager.load_models()
+        except Exception as exc:
+            logger.warning("Model warm-up failed", error=str(exc))
+    
+    def _get_model_manager(self):
+        """Fetch or create the model manager service."""
+        model_manager = self.services.get('model_manager')
+        if model_manager:
+            return model_manager
+        model_manager = ServiceFactory.get_service(ServiceType.AI_MODEL_MANAGER)
+        if model_manager:
+            self.services['model_manager'] = model_manager
+            return model_manager
+        try:
+            model_manager = ServiceFactory.create_service(ServiceType.AI_MODEL_MANAGER)
+            self.services['model_manager'] = model_manager
+        except Exception as exc:
+            logger.warning("Model manager not available", error=str(exc))
+            return None
+        return model_manager
     
     async def _initialize_strategies(self):
         """Initialize analysis strategies"""
@@ -147,6 +184,45 @@ class AIServiceManager:
                         error=str(e))
             raise
     
+    @with_metrics(track_execution_time=True, track_success_rate=True)
+    async def analyze_symptoms_batch(
+        self,
+        batch_requests: List[Dict[str, Any]],
+        strategy_preference: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Process multiple symptom analyses concurrently with backpressure."""
+        if not batch_requests:
+            return []
+        if not self._initialized:
+            await self.initialize()
+
+        async def _run_single(entry: Dict[str, Any]) -> Dict[str, Any]:
+            symptoms = entry.get("symptoms", [])
+            patient_id = entry.get("patient_id", "unknown")
+            context = entry.get("context")
+            preference = entry.get("strategy_preference", strategy_preference)
+            async with self._batch_semaphore:
+                try:
+                    result = await self.analyze_symptoms(
+                        symptoms,
+                        patient_id,
+                        context,
+                        preference
+                    )
+                    if isinstance(result, dict):
+                        result.setdefault("patient_id", patient_id)
+                    return result
+                except Exception as exc:
+                    logger.error(
+                        "Batch symptom analysis failed",
+                        patient_id=patient_id,
+                        error=str(exc)
+                    )
+                    return {"patient_id": patient_id, "error": str(exc)}
+
+        tasks = [asyncio.create_task(_run_single(entry)) for entry in batch_requests]
+        return await asyncio.gather(*tasks)
+    
     @with_cache(ttl=3600, key_prefix="medical_history")
     @with_circuit_breaker("medical_history_processing", failure_threshold=3, recovery_timeout=300)
     @with_metrics(track_execution_time=True, track_success_rate=True)
@@ -220,6 +296,45 @@ class AIServiceManager:
                 )
             
             raise
+    
+    @with_metrics(track_execution_time=True, track_success_rate=True)
+    async def process_medical_history_batch(
+        self,
+        batch_requests: List[Dict[str, Any]],
+        strategy_preference: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Batch process multiple medical histories asynchronously."""
+        if not batch_requests:
+            return []
+        if not self._initialized:
+            await self.initialize()
+
+        async def _run_single(entry: Dict[str, Any]) -> Dict[str, Any]:
+            text = entry.get("text", "")
+            patient_id = entry.get("patient_id", "unknown")
+            context = entry.get("context")
+            preference = entry.get("strategy_preference", strategy_preference)
+            async with self._batch_semaphore:
+                try:
+                    result = await self.process_medical_history(
+                        text,
+                        patient_id,
+                        context,
+                        preference
+                    )
+                    if isinstance(result, dict):
+                        result.setdefault("patient_id", patient_id)
+                    return result
+                except Exception as exc:
+                    logger.error(
+                        "Batch medical history processing failed",
+                        patient_id=patient_id,
+                        error=str(exc)
+                    )
+                    return {"patient_id": patient_id, "error": str(exc)}
+
+        tasks = [asyncio.create_task(_run_single(entry)) for entry in batch_requests]
+        return await asyncio.gather(*tasks)
     
     def _select_strategy(self, preference: Optional[str] = None) -> Any:
         """Select the best strategy based on preference and availability"""

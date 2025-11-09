@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  LayoutAnimation,
+  Platform,
+  UIManager,
   View,
   StyleSheet,
   FlatList,
@@ -20,33 +23,63 @@ import {
 } from 'react-native-paper';
 import { useAppStore } from '../../store/useAppStore';
 import { MedicalHistory } from '../../types';
+import { LazyImage } from '../components/common/LazyImage';
+import { shallow } from 'zustand/shallow';
 
 const MedicalHistoryScreen: React.FC = () => {
-  const { offlineData, deleteMedicalHistory } = useAppStore();
+  const { histories, removeHistory } = useAppStore(
+    useCallback(
+      (state) => ({
+        histories: state.offlineData.medicalHistories,
+        removeHistory: state.deleteMedicalHistory,
+      }),
+      []
+    ),
+    shallow
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<MedicalHistory | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  const filteredHistories = offlineData.medicalHistories.filter(history =>
-    history.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    history.diagnosis.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  const filteredHistories = useMemo(
+    () =>
+      histories.filter(
+        (history) =>
+          history.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          history.diagnosis.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [histories, searchQuery]
   );
 
-  const handleRefresh = () => {
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [filteredHistories.length]);
+
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     // Simular refresh
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
-  };
+  }, []);
 
-  const handleDeleteHistory = (historyId: string) => {
-    deleteMedicalHistory(historyId);
+  const handleDeleteHistory = useCallback(
+    (historyId: string) => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      removeHistory(historyId);
     setShowDetailModal(false);
-  };
+  },
+    [removeHistory]
+  );
 
-  const getSyncStatusColor = (status: string) => {
+  const getSyncStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'synced':
         return '#4caf50';
@@ -57,9 +90,9 @@ const MedicalHistoryScreen: React.FC = () => {
       default:
         return '#757575';
     }
-  };
+  }, []);
 
-  const getSyncStatusIcon = (status: string) => {
+  const getSyncStatusIcon = useCallback((status: string) => {
     switch (status) {
       case 'synced':
         return 'check-circle';
@@ -70,9 +103,10 @@ const MedicalHistoryScreen: React.FC = () => {
       default:
         return 'help-circle';
     }
-  };
+  }, []);
 
-  const renderHistoryItem = ({ item }: { item: MedicalHistory }) => (
+  const renderHistoryItem = useCallback(
+    ({ item }: { item: MedicalHistory }) => (
     <Card 
       style={styles.historyCard}
       onPress={() => {
@@ -134,6 +168,12 @@ const MedicalHistoryScreen: React.FC = () => {
 
         {item.images && item.images.length > 0 && (
           <View style={styles.imagesContainer}>
+            <LazyImage
+              source={{ uri: item.images[0] }}
+              style={styles.imagePreview}
+              containerStyle={styles.imagePreviewContainer}
+              accessibilityLabel={`Imagen asociada a ${item.patientName}`}
+            />
             <Text style={styles.imagesText}>
               📷 {item.images.length} imagen(es)
             </Text>
@@ -141,6 +181,8 @@ const MedicalHistoryScreen: React.FC = () => {
         )}
       </Card.Content>
     </Card>
+    ),
+    [getSyncStatusColor, getSyncStatusIcon]
   );
 
   return (
@@ -358,6 +400,17 @@ const styles = StyleSheet.create({
   },
   imagesContainer: {
     marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    width: 64,
+    height: 64,
+    marginRight: 12,
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
   },
   imagesText: {
     fontSize: 12,

@@ -185,7 +185,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.disease-color {
+.disease-card .disease-color {
   width: 4px;
   border-radius: 2px;
   margin-right: 12px;
@@ -311,6 +311,25 @@ td {
   padding: 20px 0;
 }
 
+.virtualized-list {
+  position: relative;
+  width: 100%;
+}
+
+.virtualized-list > div {
+  width: 100% !important;
+}
+
+.empty-state {
+  text-align: center;
+  color: #718096;
+  background: #f7fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px dashed #cbd5f5;
+  font-size: 0.9rem;
+}
+
 .disease-item {
   display: flex;
   align-items: center;
@@ -325,7 +344,7 @@ td {
   background: #e2e8f0;
 }
 
-.disease-color {
+.disease-item .disease-color {
   width: 20px;
   height: 20px;
   border-radius: 50%;

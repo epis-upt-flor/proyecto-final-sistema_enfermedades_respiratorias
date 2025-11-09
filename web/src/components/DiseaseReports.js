@@ -1,6 +1,104 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import VirtualizedList from './VirtualizedList';
 import './DiseaseReports.css';
+
+const DISTRICTS = [
+  'all',
+  'Centro de Tacna',
+  'Gregorio Albarracín',
+  'Ciudad Nueva',
+  'Pocollay',
+  'Alto de la Alianza',
+  'Calana',
+  'Pachia',
+  'Boca del Río'
+];
+
+const PERIODS = [
+  { value: '7d', label: 'Últimos 7 días' },
+  { value: '30d', label: 'Últimos 30 días' },
+  { value: '90d', label: 'Últimos 90 días' },
+  { value: '1y', label: 'Último año' }
+];
+
+const DISEASE_COLORS = {
+  Asma: '#ff6b6b',
+  Bronquitis: '#4ecdc4',
+  'COVID-19': '#45b7d1',
+  Gripe: '#96ceb4',
+  Neumonía: '#feca57',
+  EPOC: '#ff9ff3',
+  Resfriado: '#54a0ff',
+  'Síntoma General': '#a4b0be'
+};
+
+const SEVERITY_MAP = {
+  1: 'Baja',
+  2: 'Moderada',
+  3: 'Alta',
+  4: 'Severa'
+};
+
+const getDiseaseColor = (diseaseName) =>
+  DISEASE_COLORS[diseaseName] || '#a4b0be';
+
+const formatSeverity = (severity) => {
+  if (!severity && severity !== 0) {
+    return 'Desconocida';
+  }
+  const rounded = Math.round(Number(severity));
+  return SEVERITY_MAP[rounded] || 'Desconocida';
+};
+
+const mapSymptomAnalysis = (diseaseData) => {
+  if (!diseaseData?.symptomAnalysis) return [];
+
+  return diseaseData.symptomAnalysis.slice(0, 50).map((symptom) => ({
+    name: symptom._id,
+    count: symptom.count,
+    avgSeverity: Math.round(symptom.avgSeverity * 100) / 100,
+    districts: symptom.districts.length,
+    categories: symptom.categories || []
+  }));
+};
+
+const mapChatDiseaseData = (diseaseData) => {
+  if (!diseaseData?.chatDiseaseAnalysis) return [];
+
+  return diseaseData.chatDiseaseAnalysis.map((disease) => ({
+    name: disease._id,
+    count: disease.count,
+    avgConfidence: Math.round(disease.avgConfidence * 100) / 100,
+    avgUrgency: Math.round(disease.avgUrgency * 100) / 100
+  }));
+};
+
+const mapDistrictDistributionData = (diseaseData) => {
+  if (!diseaseData?.districtDistribution) return [];
+
+  return diseaseData.districtDistribution.map((district) => ({
+    name: district._id,
+    totalReports: district.totalReports,
+    topSymptom: district.symptoms[0]?.name || 'N/A',
+    topSymptomCount: district.symptoms[0]?.count || 0
+  }));
+};
+
+const mapDiseasePieData = (chatDiseaseData) => {
+  if (!chatDiseaseData?.length) return [];
+  const total = chatDiseaseData.reduce((sum, item) => sum + item.count, 0);
+
+  if (!total) {
+    return [];
+  }
+
+  return chatDiseaseData.map((disease) => ({
+    name: disease.name,
+    value: disease.count,
+    percentage: Math.round((disease.count / total) * 100)
+  }));
+};
 
 function DiseaseReports() {
   const [diseaseData, setDiseaseData] = useState(null);
@@ -9,114 +107,129 @@ function DiseaseReports() {
   const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
-  const districts = [
-    'all', 'Centro de Tacna', 'Gregorio Albarracín', 'Ciudad Nueva', 'Pocollay',
-    'Alto de la Alianza', 'Calana', 'Pachia', 'Boca del Río'
-  ];
-
-  const periods = [
-    { value: '7d', label: 'Últimos 7 días' },
-    { value: '30d', label: 'Últimos 30 días' },
-    { value: '90d', label: 'Últimos 90 días' },
-    { value: '1y', label: 'Último año' }
-  ];
-
-  const diseaseColors = {
-    'Asma': '#ff6b6b',
-    'Bronquitis': '#4ecdc4',
-    'COVID-19': '#45b7d1',
-    'Gripe': '#96ceb4',
-    'Neumonía': '#feca57',
-    'EPOC': '#ff9ff3',
-    'Resfriado': '#54a0ff',
-    'Síntoma General': '#a4b0be'
-  };
-
-  useEffect(() => {
-    fetchDiseaseData();
-  }, [selectedDistrict, selectedPeriod]);
-
-  const fetchDiseaseData = async () => {
+  const fetchDiseaseData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/analytics/disease-reports', {
-        params: {
-          district: selectedDistrict !== 'all' ? selectedDistrict : undefined,
-          period: selectedPeriod
+      const response = await axios.get(
+        'http://localhost:3001/api/analytics/disease-reports',
+        {
+          params: {
+            district: selectedDistrict !== 'all' ? selectedDistrict : undefined,
+            period: selectedPeriod
+          }
         }
-      });
+      );
 
       if (response.data.success) {
         setDiseaseData(response.data.data);
       } else {
-        setError(response.data.message || 'Error al cargar datos de enfermedades');
+        setError(
+          response.data.message ||
+            'Error al cargar datos de enfermedades'
+        );
       }
     } catch (err) {
       console.error('Error fetching disease data:', err);
-      setError('No se pudieron cargar los datos de enfermedades. Verifica que el backend esté funcionando.');
+      setError(
+        'No se pudieron cargar los datos de enfermedades. Verifica que el backend esté funcionando.'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDistrict, selectedPeriod]);
 
-  const prepareSymptomAnalysisData = () => {
-    if (!diseaseData?.symptomAnalysis) return [];
-    
-    return diseaseData.symptomAnalysis.slice(0, 10).map(symptom => ({
-      name: symptom._id,
-      count: symptom.count,
-      avgSeverity: Math.round(symptom.avgSeverity * 100) / 100,
-      districts: symptom.districts.length
-    }));
-  };
+  useEffect(() => {
+    fetchDiseaseData();
+  }, [fetchDiseaseData]);
 
-  const prepareChatDiseaseData = () => {
-    if (!diseaseData?.chatDiseaseAnalysis) return [];
-    
-    return diseaseData.chatDiseaseAnalysis.map(disease => ({
-      name: disease._id,
-      count: disease.count,
-      avgConfidence: Math.round(disease.avgConfidence * 100) / 100,
-      avgUrgency: Math.round(disease.avgUrgency * 100) / 100
-    }));
-  };
+  const symptomData = useMemo(
+    () => mapSymptomAnalysis(diseaseData),
+    [diseaseData]
+  );
 
-  const prepareDistrictDistributionData = () => {
-    if (!diseaseData?.districtDistribution) return [];
-    
-    return diseaseData.districtDistribution.map(district => ({
-      name: district._id,
-      totalReports: district.totalReports,
-      topSymptom: district.symptoms[0]?.name || 'N/A',
-      topSymptomCount: district.symptoms[0]?.count || 0
-    }));
-  };
+  const chatDiseaseData = useMemo(
+    () => mapChatDiseaseData(diseaseData),
+    [diseaseData]
+  );
 
-  const prepareDiseasePieData = () => {
-    const chatData = prepareChatDiseaseData();
-    const total = chatData.reduce((sum, item) => sum + item.count, 0);
-    
-    return chatData.map(disease => ({
-      name: disease.name,
-      value: disease.count,
-      percentage: Math.round((disease.count / total) * 100)
-    }));
-  };
+  const districtData = useMemo(
+    () => mapDistrictDistributionData(diseaseData),
+    [diseaseData]
+  );
 
-  const getDiseaseColor = (diseaseName) => {
-    return diseaseColors[diseaseName] || '#a4b0be';
-  };
+  const pieData = useMemo(
+    () => mapDiseasePieData(chatDiseaseData),
+    [chatDiseaseData]
+  );
 
-  const formatSeverity = (severity) => {
-    const severityMap = {
-      1: 'Baja',
-      2: 'Moderada', 
-      3: 'Alta',
-      4: 'Severa'
-    };
-    return severityMap[severity] || 'Desconocida';
-  };
+  const renderPieItem = useCallback(
+    (disease) => (
+      <div className="disease-item">
+        <div
+          className="disease-color"
+          style={{ backgroundColor: getDiseaseColor(disease.name) }}
+        />
+        <div className="disease-info">
+          <div className="disease-name">{disease.name}</div>
+          <div className="disease-percentage">{disease.percentage}%</div>
+        </div>
+        <div className="disease-count">{disease.value} consultas</div>
+      </div>
+    ),
+    []
+  );
+
+  const renderSymptomItem = useCallback(
+    (symptom) => (
+      <div className="symptom-analysis-item">
+        <div className="symptom-name">{symptom.name}</div>
+        <div className="symptom-details">
+          <div className="symptom-count">{symptom.count} reportes</div>
+          <div className="symptom-severity">
+            Severidad: {symptom.avgSeverity}
+          </div>
+          <div className="symptom-districts">
+            {symptom.districts} distritos
+          </div>
+        </div>
+      </div>
+    ),
+    []
+  );
+
+  const renderDistrictItem = useCallback(
+    (district) => (
+      <div className="district-item">
+        <div className="district-name">{district.name}</div>
+        <div className="district-count">{district.totalReports} reportes</div>
+        <div className="district-symptom">
+          Síntoma: {district.topSymptom}
+        </div>
+      </div>
+    ),
+    []
+  );
+
+  const renderConfidenceItem = useCallback(
+    (disease) => (
+      <div className="confidence-item">
+        <div className="disease-name">{disease.name}</div>
+        <div className="confidence-details">
+          <div className="confidence-value">
+            Confianza: {(disease.avgConfidence * 100).toFixed(1)}%
+          </div>
+          <div className="urgency-value">
+            Urgencia: {formatSeverity(disease.avgUrgency)}
+          </div>
+          <div className="consultation-count">
+            {disease.count} consultas
+          </div>
+        </div>
+      </div>
+    ),
+    []
+  );
 
   if (loading) {
     return (
@@ -143,11 +256,6 @@ function DiseaseReports() {
     );
   }
 
-  const symptomData = prepareSymptomAnalysisData();
-  const chatDiseaseData = prepareChatDiseaseData();
-  const districtData = prepareDistrictDistributionData();
-  const pieData = prepareDiseasePieData();
-
   return (
     <div className="disease-reports-container">
       <div className="disease-header">
@@ -158,13 +266,13 @@ function DiseaseReports() {
       <div className="disease-controls">
         <div className="control-group">
           <label>Distrito:</label>
-          <select 
-            value={selectedDistrict} 
+          <select
+            value={selectedDistrict}
             onChange={(e) => setSelectedDistrict(e.target.value)}
             className="control-select"
           >
             <option value="all">Todos los distritos</option>
-            {districts.slice(1).map(district => (
+            {DISTRICTS.slice(1).map((district) => (
               <option key={district} value={district}>
                 {district}
               </option>
@@ -174,12 +282,12 @@ function DiseaseReports() {
 
         <div className="control-group">
           <label>Período:</label>
-          <select 
-            value={selectedPeriod} 
+          <select
+            value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
             className="control-select"
           >
-            {periods.map(period => (
+            {PERIODS.map((period) => (
               <option key={period.value} value={period.value}>
                 {period.label}
               </option>
@@ -193,82 +301,68 @@ function DiseaseReports() {
       </div>
 
       <div className="disease-charts">
-        {/* Disease Distribution */}
         <div className="chart-container">
           <h4>🥧 Distribución de Enfermedades (Chat)</h4>
-          <div className="simple-chart">
-            {pieData.map((disease, index) => (
-              <div key={index} className="disease-item">
-                <div className="disease-color" style={{ backgroundColor: getDiseaseColor(disease.name) }}></div>
-                <div className="disease-info">
-                  <div className="disease-name">{disease.name}</div>
-                  <div className="disease-percentage">{disease.percentage}%</div>
-                </div>
-                <div className="disease-count">{disease.value} consultas</div>
-              </div>
-            ))}
-          </div>
+          {pieData.length ? (
+            <VirtualizedList
+              items={pieData}
+              itemHeight={76}
+              renderItem={renderPieItem}
+            />
+          ) : (
+            <p className="empty-state">Sin datos disponibles para el período seleccionado.</p>
+          )}
         </div>
 
-        {/* Top Symptoms Analysis */}
         <div className="chart-container">
           <h4>📊 Análisis de Síntomas Principales</h4>
-          <div className="simple-chart">
-            {symptomData.map((symptom, index) => (
-              <div key={index} className="symptom-analysis-item">
-                <div className="symptom-name">{symptom.name}</div>
-                <div className="symptom-details">
-                  <div className="symptom-count">{symptom.count} reportes</div>
-                  <div className="symptom-severity">Severidad: {symptom.avgSeverity}</div>
-                  <div className="symptom-districts">{symptom.districts} distritos</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {symptomData.length ? (
+            <VirtualizedList
+              items={symptomData}
+              itemHeight={88}
+              renderItem={renderSymptomItem}
+            />
+          ) : (
+            <p className="empty-state">No se registraron síntomas en este período.</p>
+          )}
         </div>
 
-        {/* District Distribution */}
         <div className="chart-container">
           <h4>🏘️ Distribución por Distrito</h4>
-          <div className="simple-chart">
-            {districtData.map((district, index) => (
-              <div key={index} className="district-item">
-                <div className="district-name">{district.name}</div>
-                <div className="district-count">{district.totalReports} reportes</div>
-                <div className="district-symptom">Síntoma: {district.topSymptom}</div>
-              </div>
-            ))}
-          </div>
+          {districtData.length ? (
+            <VirtualizedList
+              items={districtData}
+              itemHeight={80}
+              renderItem={renderDistrictItem}
+            />
+          ) : (
+            <p className="empty-state">No hay registros por distrito para mostrar.</p>
+          )}
         </div>
 
-        {/* Disease Confidence vs Urgency */}
         <div className="chart-container">
           <h4>🎯 Confianza vs Urgencia (Chat)</h4>
-          <div className="simple-chart">
-            {chatDiseaseData.map((disease, index) => (
-              <div key={index} className="confidence-item">
-                <div className="disease-name">{disease.name}</div>
-                <div className="confidence-details">
-                  <div className="confidence-value">Confianza: {(disease.avgConfidence * 100).toFixed(1)}%</div>
-                  <div className="urgency-value">Urgencia: {formatSeverity(disease.avgUrgency)}</div>
-                  <div className="consultation-count">{disease.count} consultas</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {chatDiseaseData.length ? (
+            <VirtualizedList
+              items={chatDiseaseData}
+              itemHeight={92}
+              renderItem={renderConfidenceItem}
+            />
+          ) : (
+            <p className="empty-state">No hay consultas registradas en el período seleccionado.</p>
+          )}
         </div>
       </div>
 
-      {/* Disease Summary Cards */}
       <div className="disease-summary">
         <h4>📋 Resumen de Enfermedades</h4>
         <div className="summary-cards">
           {chatDiseaseData.slice(0, 6).map((disease, index) => (
-            <div key={index} className="disease-card">
-              <div 
-                className="disease-color" 
+            <div key={disease.name ?? index} className="disease-card">
+              <div
+                className="disease-color"
                 style={{ backgroundColor: getDiseaseColor(disease.name) }}
-              ></div>
+              />
               <div className="disease-info">
                 <h5>{disease.name}</h5>
                 <p className="disease-count">{disease.count} consultas</p>
@@ -284,7 +378,6 @@ function DiseaseReports() {
         </div>
       </div>
 
-      {/* Top Symptoms Table */}
       <div className="symptoms-table">
         <h4>🔍 Detalles de Síntomas</h4>
         <div className="table-container">
@@ -300,17 +393,23 @@ function DiseaseReports() {
             </thead>
             <tbody>
               {symptomData.map((symptom, index) => (
-                <tr key={index}>
+                <tr key={symptom.name ?? index}>
                   <td className="symptom-name">{symptom.name}</td>
                   <td className="symptom-count">{symptom.count}</td>
                   <td className="symptom-severity">
-                    <span className={`severity-badge severity-${Math.round(symptom.avgSeverity)}`}>
+                    <span
+                      className={`severity-badge severity-${Math.round(
+                        symptom.avgSeverity
+                      )}`}
+                    >
                       {formatSeverity(symptom.avgSeverity)}
                     </span>
                   </td>
                   <td className="symptom-districts">{symptom.districts}</td>
                   <td className="symptom-categories">
-                    {diseaseData?.symptomAnalysis[index]?.categories?.join(', ') || 'N/A'}
+                    {symptom.categories.length
+                      ? symptom.categories.join(', ')
+                      : 'N/A'}
                   </td>
                 </tr>
               ))}

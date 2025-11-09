@@ -177,31 +177,38 @@ describe('App initialization coverage', () => {
   });
 
   it('registra el error de conexión a Mongo y detiene el proceso fuera de test', async () => {
-    process.env.NODE_ENV = 'development';
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
     const exitSpy = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as any);
 
-    const expressModule = require('express');
-    const listenSpy = jest
-      .spyOn(expressModule.application, 'listen')
-      .mockImplementation(() => ({ close: jest.fn() } as any));
+    const { loggerError, appModule, mongooseConnectSpy } = await loadApp({ serverEnv: 'test' });
+    const mongoError = new Error('Mongo mocked failure');
+    const mongoUri = globalThis.__MONGO_URI || process.env.MONGODB_URI!;
 
-    const { loggerError } = await loadApp({ mongooseConnectReject: true });
+    try {
+      await mongoose.connection.close();
+      mongooseConnectSpy.mockRejectedValueOnce(mongoError);
+      process.env.NODE_ENV = 'development';
 
-    await new Promise<void>((resolve) => setImmediate(resolve));
+      await expect((appModule as any).initializeDatabase()).resolves.toBeUndefined();
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
 
-    expect(loggerError).toHaveBeenCalledWith(
-      '❌ Error conectando a MongoDB:',
-      expect.any(Error)
-    );
-    expect(exitSpy).toHaveBeenCalledWith(1);
-
-    listenSpy.mockRestore();
-    exitSpy.mockRestore();
+      expect(mongooseConnectSpy).toHaveBeenCalled();
+      expect(loggerError).toHaveBeenCalledWith('❌ Error conectando a MongoDB:', mongoError);
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally {
+      mongooseConnectSpy.mockReset();
+      exitSpy.mockRestore();
+      process.env.NODE_ENV = originalEnv;
+      if (mongoose.connection.readyState === 0) {
+        await mongoose.connect(mongoUri);
+      }
+    }
   });
 
   it('registra un mensaje de error si initializeRedis falla', async () => {
     process.env.NODE_ENV = 'test';
-    const { loggerError } = await loadApp({ redisInitReject: true });
+    const { loggerError } = await loadApp({ redisInitReject: true, serverEnv: 'test' });
 
     await new Promise<void>((resolve) => setImmediate(resolve));
 

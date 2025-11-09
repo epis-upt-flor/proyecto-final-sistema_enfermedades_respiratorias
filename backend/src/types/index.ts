@@ -29,6 +29,10 @@ export interface MedicalHistory {
     longitude: number;
     address: string;
   };
+  geoLocation?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
   images?: string[];
   audioNotes?: string;
   isOffline?: boolean;

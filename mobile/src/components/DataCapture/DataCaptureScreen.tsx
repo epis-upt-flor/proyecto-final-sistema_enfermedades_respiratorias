@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  LayoutAnimation,
+  UIManager,
   View,
   Text,
   StyleSheet,
   ScrollView,
   Alert,
   Platform,
-  PermissionsAndroid,
 } from 'react-native';
 import {
   TextInput,
@@ -18,7 +19,7 @@ import {
   FAB,
   Portal,
   Modal,
-  List,
+  Button,
   IconButton,
 } from 'react-native-paper';
 import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
@@ -26,9 +27,31 @@ import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Geolocation from 'react-native-geolocation-service';
 import { useAppStore } from '../../store/useAppStore';
 import { MedicalHistory, Symptom } from '../../types';
+import { LazyImage } from '../common/LazyImage';
+import { shallow } from 'zustand/shallow';
+
+const PREDEFINED_SYMPTOMS = Object.freeze([
+  { id: '1', name: 'Tos seca', severity: 'mild' as const },
+  { id: '2', name: 'Tos con flema', severity: 'mild' as const },
+  { id: '3', name: 'Dificultad respiratoria', severity: 'severe' as const },
+  { id: '4', name: 'Dolor de pecho', severity: 'severe' as const },
+  { id: '5', name: 'Fiebre', severity: 'moderate' as const },
+  { id: '6', name: 'Fatiga', severity: 'mild' as const },
+  { id: '7', name: 'Pérdida de apetito', severity: 'mild' as const },
+  { id: '8', name: 'Náuseas', severity: 'mild' as const },
+] as const);
 
 const DataCaptureScreen: React.FC = () => {
-  const { addMedicalHistory, isOnline } = useAppStore();
+  const { addMedicalHistory, isOnline } = useAppStore(
+    useCallback(
+      (state) => ({
+        addMedicalHistory: state.addMedicalHistory,
+        isOnline: state.isOnline,
+      }),
+      []
+    ),
+    shallow
+  );
   const [formData, setFormData] = useState({
     patientName: '',
     age: '',
@@ -42,23 +65,14 @@ const DataCaptureScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
 
-  // Síntomas predefinidos para selección rápida
-  const predefinedSymptoms = [
-    { id: '1', name: 'Tos seca', severity: 'mild' as const },
-    { id: '2', name: 'Tos con flema', severity: 'mild' as const },
-    { id: '3', name: 'Dificultad respiratoria', severity: 'severe' as const },
-    { id: '4', name: 'Dolor de pecho', severity: 'severe' as const },
-    { id: '5', name: 'Fiebre', severity: 'moderate' as const },
-    { id: '6', name: 'Fatiga', severity: 'mild' as const },
-    { id: '7', name: 'Pérdida de apetito', severity: 'mild' as const },
-    { id: '8', name: 'Náuseas', severity: 'mild' as const },
-  ];
-
   useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
     getCurrentLocation();
-  }, []);
+  }, [getCurrentLocation]);
 
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     try {
       const granted = await request(
         Platform.OS === 'ios' 
@@ -84,9 +98,19 @@ const DataCaptureScreen: React.FC = () => {
     } catch (error) {
       console.log('Permission error:', error);
     }
-  };
+  }, []);
 
-  const handleImagePicker = () => {
+  const handleImageResponse = useCallback((response: ImagePickerResponse) => {
+    if (response.assets && response.assets[0]) {
+      const imageUri = response.assets[0].uri;
+      if (imageUri) {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setImages(prev => [...prev, imageUri]);
+      }
+    }
+  }, []);
+
+  const handleImagePicker = useCallback(() => {
     const options = {
       mediaType: 'photo' as const,
       quality: 0.8,
@@ -103,36 +127,44 @@ const DataCaptureScreen: React.FC = () => {
         { text: 'Cancelar', style: 'cancel' },
       ]
     );
-  };
+  }, [handleImageResponse]);
 
-  const handleImageResponse = (response: ImagePickerResponse) => {
-    if (response.assets && response.assets[0]) {
-      const imageUri = response.assets[0].uri;
-      if (imageUri) {
-        setImages(prev => [...prev, imageUri]);
-      }
-    }
-  };
-
-  const removeImage = (index: number) => {
+  const removeImage = useCallback((index: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setImages(prev => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const addSymptom = (symptom: Symptom) => {
-    setFormData(prev => ({
-      ...prev,
-      symptoms: [...prev.symptoms, { ...symptom, id: Date.now().toString() }],
-    }));
-  };
+  const addSymptom = useCallback((symptom: typeof PREDEFINED_SYMPTOMS[number]) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFormData(prev => {
+      if (prev.symptoms.some(s => (s as any).name === symptom.name)) {
+        return prev;
+      }
 
-  const removeSymptom = (symptomId: string) => {
+      const newSymptom = {
+        id: Date.now().toString(),
+        name: symptom.name,
+        symptom: symptom.name,
+        severity: symptom.severity,
+        duration: 'N/A',
+      } as unknown as Symptom;
+
+      return {
+        ...prev,
+        symptoms: [...prev.symptoms, newSymptom],
+      };
+    });
+  }, []);
+
+  const removeSymptom = useCallback((symptomId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFormData(prev => ({
       ...prev,
       symptoms: prev.symptoms.filter(s => s.id !== symptomId),
     }));
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!formData.patientName || !formData.age || !formData.diagnosis) {
       Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
       return;
@@ -183,7 +215,7 @@ const DataCaptureScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addMedicalHistory, formData, images, isOnline, location]);
 
   return (
     <View style={styles.container}>
@@ -233,7 +265,7 @@ const DataCaptureScreen: React.FC = () => {
             <Title>Síntomas</Title>
             <Paragraph>Selecciona síntomas predefinidos:</Paragraph>
             <View style={styles.symptomsContainer}>
-              {predefinedSymptoms.map((symptom) => (
+              {PREDEFINED_SYMPTOMS.map((symptom) => (
                 <Chip
                   key={symptom.id}
                   selected={formData.symptoms.some(s => s.name === symptom.name)}
@@ -277,18 +309,24 @@ const DataCaptureScreen: React.FC = () => {
             
             {images.length > 0 && (
               <View style={styles.imagesContainer}>
-                {images.map((image, index) => (
-                  <View key={index} style={styles.imageItem}>
-                    <Text numberOfLines={1} style={styles.imageText}>
-                      Imagen {index + 1}
-                    </Text>
-                    <IconButton
-                      icon="close"
-                      size={20}
-                      onPress={() => removeImage(index)}
-                    />
-                  </View>
-                ))}
+            {images.map((image, index) => (
+              <View key={image} style={styles.imageItem}>
+                <LazyImage
+                  source={{ uri: image }}
+                  style={styles.previewImage}
+                  containerStyle={styles.previewContainer}
+                  accessibilityLabel={`Imagen seleccionada ${index + 1}`}
+                />
+                <Text numberOfLines={1} style={styles.imageText}>
+                  Imagen {index + 1}
+                </Text>
+                <IconButton
+                  icon="close"
+                  size={18}
+                  onPress={() => removeImage(index)}
+                />
+              </View>
+            ))}
               </View>
             )}
           </Card.Content>
@@ -400,19 +438,29 @@ const styles = StyleSheet.create({
   },
   imagesContainer: {
     marginTop: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   imageItem: {
-    flexDirection: 'row',
+    marginRight: 12,
+    marginBottom: 12,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f0f0f0',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 4,
   },
   imageText: {
-    flex: 1,
-    marginLeft: 8,
+    marginTop: 4,
+    maxWidth: 96,
+    textAlign: 'center',
+    color: '#666',
+  },
+  previewContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
   },
   fab: {
     position: 'absolute',

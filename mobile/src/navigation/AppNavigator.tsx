@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppStore } from '../store/useAppStore';
 import { RootStackParamList, MainTabParamList } from '../types';
+import { shallow } from 'zustand/shallow';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -21,12 +22,16 @@ const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const MainTabNavigator = () => {
-  const { notifications } = useAppStore();
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = useAppStore(
+    (state) => state.notifications.filter((n) => !n.isRead).length,
+    (a, b) => a === b
+  );
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        lazy: true,
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: string;
 
@@ -129,7 +134,7 @@ const MainTabNavigator = () => {
 };
 
 const AppNavigator = () => {
-  const { user } = useAppStore();
+  const isAuthenticated = useAppStore((state) => Boolean(state.user), shallow);
 
   return (
     <NavigationContainer>
@@ -145,7 +150,7 @@ const AppNavigator = () => {
           },
         }}
       >
-        {user ? (
+        {isAuthenticated ? (
           <Stack.Screen
             name="Main"
             component={MainTabNavigator}

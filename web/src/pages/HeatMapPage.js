@@ -1,11 +1,14 @@
-import React from 'react';
-import InteractiveHeatMap from '../components/InteractiveHeatMap';
+import React, { Suspense, lazy } from 'react';
 import './HeatMapPage.css';
+
+const InteractiveHeatMap = lazy(() => import('../components/InteractiveHeatMap'));
 
 function HeatMapPage() {
   return (
     <div className="heatmap-page">
-      <InteractiveHeatMap />
+      <Suspense fallback={<div className="heatmap-loading">Cargando mapa epidemiológico…</div>}>
+        <InteractiveHeatMap />
+      </Suspense>
     </div>
   );
 }

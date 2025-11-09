@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     MODEL_PATH: str = "/app/models"
     CACHE_PATH: str = "/app/cache"
+    ENABLE_BATCH_PROCESSING: bool = True
+    MAX_CONCURRENT_BATCH_JOBS: int = 4
+    ENABLE_ASYNC_MODEL_LOADING: bool = True
+    ENABLE_MODEL_QUANTIZATION: bool = True
+    ENABLE_GPU_ACCELERATION: bool = False
+    GPU_DEVICE: Optional[str] = None
+    ENABLE_ASYNC_INFERENCE: bool = True
     
     # Model Configuration
     MEDICAL_MODEL_NAME: str = "en_core_sci_sm"  # SciSpacy medical model

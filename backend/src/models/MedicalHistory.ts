@@ -140,6 +140,27 @@ const MedicalHistorySchema = new Schema<MedicalHistoryDocument>({
   toObject: { virtuals: true }
 });
 
+MedicalHistorySchema.add({
+  geoLocation: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number],
+      default: undefined,
+      validate: {
+        validator: function(this: any, coords: number[]) {
+          if (!coords) return true;
+          return coords.length === 2 && coords.every((value) => typeof value === 'number');
+        },
+        message: 'Las coordenadas deben tener formato [longitud, latitud]'
+      }
+    }
+  }
+});
+
 // Índices para optimizar consultas
 MedicalHistorySchema.index({ patientId: 1 });
 MedicalHistorySchema.index({ doctorId: 1 });
@@ -148,6 +169,7 @@ MedicalHistorySchema.index({ syncStatus: 1 });
 MedicalHistorySchema.index({ isOffline: 1 });
 MedicalHistorySchema.index({ 'location.latitude': 1, 'location.longitude': 1 });
 MedicalHistorySchema.index({ diagnosis: 'text', patientName: 'text', description: 'text' });
+MedicalHistorySchema.index({ geoLocation: '2dsphere' });
 
 // Índice compuesto para búsquedas eficientes
 MedicalHistorySchema.index({ 
@@ -171,6 +193,52 @@ MedicalHistorySchema.index({
   doctorId: 1,
   patientId: 1,
   date: -1
+});
+
+function buildGeoPoint(doc: any) {
+  const latitude = doc?.location?.latitude;
+  const longitude = doc?.location?.longitude;
+  if (typeof latitude === 'number' && typeof longitude === 'number') {
+    return {
+      type: 'Point',
+      coordinates: [Number(longitude), Number(latitude)]
+    };
+  }
+  return undefined;
+}
+
+MedicalHistorySchema.pre('save', function(next) {
+  const geoPoint = buildGeoPoint(this);
+  if (geoPoint) {
+    (this as any).geoLocation = geoPoint;
+  } else {
+    (this as any).geoLocation = undefined;
+  }
+  next();
+});
+
+MedicalHistorySchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate() as any;
+  const locationUpdate = update?.location ?? update?.$set?.location;
+  if (locationUpdate) {
+    const geoPoint = buildGeoPoint({ location: locationUpdate });
+    if (update.$set) {
+      update.$set.geoLocation = geoPoint;
+    } else {
+      update.geoLocation = geoPoint;
+    }
+  }
+  next();
+});
+
+MedicalHistorySchema.pre('insertMany', function(next, docs: any[]) {
+  docs.forEach((doc) => {
+    const geoPoint = buildGeoPoint(doc);
+    if (geoPoint) {
+      doc.geoLocation = geoPoint;
+    }
+  });
+  next();
 });
 
 // Virtual para obtener la edad en años
@@ -216,15 +284,39 @@ MedicalHistorySchema.statics.findByDateRange = function(startDate: Date, endDate
 };
 
 // Método estático para buscar por ubicación
-MedicalHistorySchema.statics.findByLocation = function(latitude: number, longitude: number, radius: number = 10) {
+MedicalHistorySchema.statics.findByLocation = async function(latitude: number, longitude: number, radius: number = 10) {
+  const hasValidCoordinates = typeof latitude === 'number' && typeof longitude === 'number';
+  if (!hasValidCoordinates) {
+    return this.find({});
+  }
+
+  const maxDistanceMeters = Math.max(radius, 1) * 1000;
+
+  const geoResults = await this.find({
+    geoLocation: {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [Number(longitude), Number(latitude)]
+        },
+        $maxDistance: maxDistanceMeters
+      }
+    }
+  });
+
+  if (geoResults.length > 0) {
+    return geoResults;
+  }
+
+  const degreeRadius = radius / 111;
   return this.find({
     'location.latitude': {
-      $gte: latitude - (radius / 111), // Aproximación: 1 grado ≈ 111 km
-      $lte: latitude + (radius / 111)
+      $gte: latitude - degreeRadius,
+      $lte: latitude + degreeRadius
     },
     'location.longitude': {
-      $gte: longitude - (radius / 111),
-      $lte: longitude + (radius / 111)
+      $gte: longitude - degreeRadius,
+      $lte: longitude + degreeRadius
     }
   });
 };

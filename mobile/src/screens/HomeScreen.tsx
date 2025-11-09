@@ -2,8 +2,9 @@
  * Home Screen - Main dashboard with quick access to all features
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  InteractionManager,
   View,
   Text,
   ScrollView,
@@ -17,28 +18,142 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAppStore } from '../store/useAppStore';
 import { MedicalHistory, SymptomAnalysis, SyncStatus } from '../types';
 import { localStorageService } from '../services/localStorage';
-import { aiService } from '../services/aiService';
+import { shallow } from 'zustand/shallow';
+
+type QuickAction = {
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  action: string;
+};
+
+const QuickActionCard = React.memo(
+  ({
+    title,
+    description,
+    icon,
+    color,
+    action,
+    onPress,
+  }: QuickAction & { onPress: (action: string) => void }) => (
+    <TouchableOpacity onPress={() => onPress(action)} style={styles.quickActionCard}>
+      <Card style={[styles.card, { borderLeftColor: color, borderLeftWidth: 4 }]}>
+        <Card.Content style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Avatar.Icon size={40} icon={icon} style={{ backgroundColor: color }} />
+            <View style={styles.cardText}>
+              <Title style={styles.cardTitle}>{title}</Title>
+              <Paragraph style={styles.cardDescription}>{description}</Paragraph>
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  )
+);
+
+QuickActionCard.displayName = 'QuickActionCard';
+
+const RecentItemCard = React.memo(
+  ({
+    item,
+    type,
+  }: {
+    item: MedicalHistory | SymptomAnalysis;
+    type: 'history' | 'analysis';
+  }) => {
+    const isHistory = type === 'history';
+    const history = item as MedicalHistory;
+    const analysis = item as SymptomAnalysis;
+
+    const urgencyConfig = useMemo(() => {
+      if (isHistory) {
+        return {
+          background: '#e3f2fd',
+          color: '#1976d2',
+          label: 'Historia',
+        };
+      }
+
+      switch (analysis.urgencyLevel) {
+        case 'high':
+          return { background: '#ffebee', color: '#d32f2f', label: 'high' };
+        case 'medium':
+          return { background: '#fff3e0', color: '#f57c00', label: 'medium' };
+        default:
+          return { background: '#e8f5e8', color: '#388e3c', label: 'low' };
+      }
+    }, [analysis, isHistory]);
+
+    return (
+      <Card style={styles.recentCard}>
+        <Card.Content>
+          <View style={styles.recentItemHeader}>
+            <View style={styles.recentItemInfo}>
+              <Title style={styles.recentItemTitle}>
+                {isHistory ? history.patientName : 'Análisis de Síntomas'}
+              </Title>
+              <Paragraph style={styles.recentItemSubtitle}>
+                {isHistory
+                  ? `${history.diagnosis} • ${new Date(history.date).toLocaleDateString()}`
+                  : `Urgencia: ${analysis.urgencyLevel} • ${new Date(
+                      analysis.analyzedAt
+                    ).toLocaleDateString()}`}
+              </Paragraph>
+            </View>
+            <Chip
+              mode="outlined"
+              style={[styles.statusChip, { backgroundColor: urgencyConfig.background }]}
+              textStyle={{ color: urgencyConfig.color }}
+            >
+              {isHistory ? urgencyConfig.label : analysis.urgencyLevel}
+            </Chip>
+          </View>
+        </Card.Content>
+      </Card>
+    );
+  }
+);
+
+RecentItemCard.displayName = 'RecentItemCard';
 
 const HomeScreen: React.FC = () => {
-  const { 
-    user, 
-    isOnline, 
-    offlineData, 
-    syncStatus, 
-    isLoading,
+  const {
+    user,
+    isOnline,
+    offlineData,
+    syncStatus,
     syncData,
-    addNotification 
-  } = useAppStore();
+    addNotification,
+  } = useAppStore(
+    useCallback(
+      (state) => ({
+        user: state.user,
+        isOnline: state.isOnline,
+        offlineData: state.offlineData,
+        syncStatus: state.syncStatus,
+        syncData: state.syncData,
+        addNotification: state.addNotification,
+      }),
+      []
+    ),
+    shallow
+  );
 
   const [recentHistories, setRecentHistories] = useState<MedicalHistory[]>([]);
   const [recentAnalyses, setRecentAnalyses] = useState<SymptomAnalysis[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadRecentData();
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      loadRecentData();
+    });
+
+    return () => interaction.cancel();
   }, []);
 
-  const loadRecentData = async () => {
+  const loadRecentData = useCallback(async () => {
     try {
       const histories = await localStorageService.getMedicalHistories();
       const analyses = await localStorageService.getSymptomAnalyses();
@@ -49,9 +164,9 @@ const HomeScreen: React.FC = () => {
     } catch (error) {
       console.error('Error loading recent data:', error);
     }
-  };
+  }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await loadRecentData();
@@ -63,10 +178,11 @@ const HomeScreen: React.FC = () => {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [isOnline, loadRecentData, syncData]);
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
+  const handleQuickAction = useCallback(
+    (action: string) => {
+      switch (action) {
       case 'capture':
         // Navigate to data capture
         break;
@@ -91,111 +207,66 @@ const HomeScreen: React.FC = () => {
         }
         break;
     }
-  };
+  },
+    [isOnline, syncData]
+  );
 
-  const getSyncStatusColor = (): string => {
+  const syncStatusColor = useMemo((): string => {
     if (!isOnline) return '#f44336';
     if (syncStatus.isSyncing) return '#ff9800';
     if (syncStatus.pendingItems > 0) return '#ff9800';
     return '#4caf50';
-  };
+  }, [isOnline, syncStatus]);
 
-  const getSyncStatusText = (): string => {
+  const syncStatusText = useMemo((): string => {
     if (!isOnline) return 'Sin conexión';
     if (syncStatus.isSyncing) return 'Sincronizando...';
     if (syncStatus.pendingItems > 0) return `${syncStatus.pendingItems} pendientes`;
     return 'Sincronizado';
-  };
+  }, [isOnline, syncStatus]);
 
-  const QuickActionCard = ({ 
-    title, 
-    description, 
-    icon, 
-    color, 
-    onPress 
-  }: {
-    title: string;
-    description: string;
-    icon: string;
-    color: string;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity onPress={onPress} style={styles.quickActionCard}>
-      <Card style={[styles.card, { borderLeftColor: color, borderLeftWidth: 4 }]}>
-        <Card.Content style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Avatar.Icon 
-              size={40} 
-              icon={icon} 
-              style={{ backgroundColor: color }} 
-            />
-            <View style={styles.cardText}>
-              <Title style={styles.cardTitle}>{title}</Title>
-              <Paragraph style={styles.cardDescription}>{description}</Paragraph>
-            </View>
-          </View>
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
+  const quickActionItems: QuickAction[] = useMemo(
+    () => [
+      {
+        title: 'Capturar Datos',
+        description: 'Registrar nueva historia médica',
+        icon: 'add-circle',
+        color: '#4caf50',
+        action: 'capture',
+      },
+      {
+        title: 'Análisis IA',
+        description: 'Analizar síntomas con inteligencia artificial',
+        icon: 'psychology',
+        color: '#9c27b0',
+        action: 'analyze',
+      },
+      {
+        title: 'Chat Médico',
+        description: 'Consultar con asistente médico virtual',
+        icon: 'chat',
+        color: '#2196f3',
+        action: 'chat',
+      },
+      {
+        title: 'Ver Historial',
+        description: 'Revisar historias médicas anteriores',
+        icon: 'history',
+        color: '#ff9800',
+        action: 'history',
+      },
+      {
+        title: isOnline ? 'Sincronizar' : 'Sin conexión',
+        description: isOnline
+          ? 'Sincronizar datos pendientes con la nube'
+          : 'Se sincronizará automáticamente al volver a estar en línea',
+        icon: 'sync',
+        color: isOnline ? '#1976d2' : '#9e9e9e',
+        action: 'sync',
+      },
+    ],
+    [isOnline]
   );
-
-  const RecentItemCard = ({ 
-    item, 
-    type 
-  }: {
-    item: MedicalHistory | SymptomAnalysis;
-    type: 'history' | 'analysis';
-  }) => {
-    const isHistory = type === 'history';
-    const history = item as MedicalHistory;
-    const analysis = item as SymptomAnalysis;
-
-    return (
-      <Card style={styles.recentCard}>
-        <Card.Content>
-          <View style={styles.recentItemHeader}>
-            <View style={styles.recentItemInfo}>
-              <Title style={styles.recentItemTitle}>
-                {isHistory ? history.patientName : 'Análisis de Síntomas'}
-              </Title>
-              <Paragraph style={styles.recentItemSubtitle}>
-                {isHistory 
-                  ? `${history.diagnosis} • ${new Date(history.date).toLocaleDateString()}`
-                  : `Urgencia: ${analysis.urgencyLevel} • ${new Date(analysis.analyzedAt).toLocaleDateString()}`
-                }
-              </Paragraph>
-            </View>
-            <Chip 
-              mode="outlined" 
-              style={[
-                styles.statusChip,
-                { 
-                  backgroundColor: isHistory 
-                    ? '#e3f2fd' 
-                    : analysis.urgencyLevel === 'high' 
-                      ? '#ffebee' 
-                      : analysis.urgencyLevel === 'medium'
-                        ? '#fff3e0'
-                        : '#e8f5e8'
-                }
-              ]}
-              textStyle={{
-                color: isHistory 
-                  ? '#1976d2' 
-                  : analysis.urgencyLevel === 'high'
-                    ? '#d32f2f'
-                    : analysis.urgencyLevel === 'medium'
-                      ? '#f57c00'
-                      : '#388e3c'
-              }}
-            >
-              {isHistory ? 'Historia' : analysis.urgencyLevel}
-            </Chip>
-          </View>
-        </Card.Content>
-      </Card>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -230,10 +301,10 @@ const HomeScreen: React.FC = () => {
                 <Icon 
                   name={isOnline ? 'wifi' : 'wifi-off'} 
                   size={16} 
-                  color={getSyncStatusColor()} 
+                  color={syncStatusColor} 
                 />
-                <Text style={[styles.syncStatusText, { color: getSyncStatusColor() }]}>
-                  {getSyncStatusText()}
+                <Text style={[styles.syncStatusText, { color: syncStatusColor }]}>
+                  {syncStatusText}
                 </Text>
               </View>
               {syncStatus.lastSyncTime && (
@@ -249,37 +320,9 @@ const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <Title style={styles.sectionTitle}>Acciones Rápidas</Title>
           
-          <QuickActionCard
-            title="Capturar Datos"
-            description="Registrar nueva historia médica"
-            icon="add-circle"
-            color="#4caf50"
-            onPress={() => handleQuickAction('capture')}
-          />
-          
-          <QuickActionCard
-            title="Análisis IA"
-            description="Analizar síntomas con inteligencia artificial"
-            icon="psychology"
-            color="#9c27b0"
-            onPress={() => handleQuickAction('analyze')}
-          />
-          
-          <QuickActionCard
-            title="Chat Médico"
-            description="Consultar con asistente médico virtual"
-            icon="chat"
-            color="#2196f3"
-            onPress={() => handleQuickAction('chat')}
-          />
-          
-          <QuickActionCard
-            title="Ver Historial"
-            description="Revisar historias médicas anteriores"
-            icon="history"
-            color="#ff9800"
-            onPress={() => handleQuickAction('history')}
-          />
+          {quickActionItems.map((item) => (
+            <QuickActionCard key={item.action} {...item} onPress={handleQuickAction} />
+          ))}
         </View>
 
         {/* Recent Data */}
