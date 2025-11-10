@@ -117,11 +117,19 @@
 - ✅ Tests de performance de modelos (latencia)
 - ✅ Validación cruzada en nuevos datos
 - ✅ Tests de retraining automático
+- ✅ Suite específica para monitoreo/fairness/drift (`ml_tests/test_fairness_and_drift.py`)
+- ✅ Stubs/mocks ligeros para dependencias pesadas (SHAP, OpenAI, torch) durante las pruebas
 
 **Archivos creados:**
 - ✅ `ai-services/tests/test_model_predictions.py`
 - ✅ `ai-services/tests/test_ensemble_performance.py`
 - ✅ `ai-services/tests/test_retraining_pipeline.py`
+- ✅ `ai-services/ml_tests/test_fairness_and_drift.py`
+- ✅ `ai-services/tests/conftest.py` *(actualizado para mocking de SHAP/OpenAI y cache client)*
+
+**Métricas logradas:**
+- ✅ Cobertura focalizada de ML monitoring/fairness: **~83 %** (`ml_models.trend_predictor`, `ml_models.anomaly_detector`, `ml_models.prediction_monitor`)
+- ✅ Métricas PSI, fairness por cohortes y detección de anomalías automatizadas en CI
 
 #### **5.3 Testing Frontend Web** ✅
 **Estado: COMPLETADO** | **Prioridad: MEDIA** | **Fecha: Noviembre 2025**

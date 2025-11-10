@@ -342,6 +342,10 @@ class XGBoostDiseaseClassifier:
         print(f"Model loaded from {filepath}")
 
 
+# Backwards compatibility alias for legacy imports
+XGBoostClassifier = XGBoostDiseaseClassifier
+
+
 if __name__ == "__main__":
     # Example usage
     from synthetic_dataset_generator import SyntheticDatasetGenerator

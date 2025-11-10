@@ -176,6 +176,7 @@ RespiCare Testing Architecture
 - **Model Validation**: Comparación de modelos nuevos vs producción (t-test de accuracy, curvas ROC).
 - **Adversarial Testing**: Inputs maliciosos al chatbot y servicios ML (ruido, mezcla idiomas, emoji).
 - **Data Quality Tests**: Validación de datasets con Great Expectations (disponible en backlog).
+- **Suite dedicada**: `ml_tests/test_fairness_and_drift.py` cubre PSI, fairness por cohortes, anomalías y exportaciones.
 
 ### 10. Pruebas de Accesibilidad (A11y)
 - **Estándar**: WCAG 2.1 nivel AA.
@@ -260,7 +261,7 @@ RespiCare Testing Architecture
 | Backend API | 80% | 90%+ | ✅ 98% |
 | Web Frontend | 70% | 80%+ | ⚙️ ~62% (plan: 82% tras Sprints 12-13) |
 | Mobile App | 70% | 80%+ | ⚙️ ~68% (plan: 80% con suites offline/sync) |
-| AI Services | 85% | 95%+ | ⚠️ ~78% (meta 90% con fairness/drift tests) |
+| AI Services | 85% | 95%+ | ⚙️ ~83% (suite `ml_tests` con fairness/drift) |
 | APIs críticas | 90% | 95%+ | ✅ 94% |
 | Lógica crítica (auth, alertas, ML core) | 100% | 100% | ⚙️ 95% (gap en adversarial testing) |
 
@@ -448,7 +449,7 @@ La estrategia de testing implementada para RespiCare proporciona:
 
 Siguientes pasos prioritarios:
 - Elevar cobertura web/mobile por encima del 80% con suites adicionales (dashboard, offline, sync).
-- Implementar las pruebas de drift/fairness/adversarial en ai-services y documentar cobertura ML.
+- Completar escenarios adversariales en ai-services y documentar cobertura ML (fairness/drift ya cubiertos en `ml_tests`).
 - Ejecutar campañas de accesibilidad (WCAG 2.1 AA), recuperaciones simuladas y pruebas de compliance HL7/FHIR antes del lanzamiento productivo.
 
 Con estos compromisos, RespiCare estará alineado con los estándares de software médico en producción, garantizando calidad, resiliencia y confianza para usuarios y entidades reguladoras.

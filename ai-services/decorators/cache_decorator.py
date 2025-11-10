@@ -85,6 +85,15 @@ def with_cache(ttl: int = 3600, key_prefix: str = ""):
     return decorator
 
 
+# Backwards compatibility helper expected by pruebas antiguas
+def cache_decorator(ttl: int = 3600, key_prefix: str = ""):
+    """
+    Mantiene compatibilidad con la versión anterior donde `cache_decorator`
+    devolvía directamente el decorador configurado.
+    """
+    return with_cache(ttl=ttl, key_prefix=key_prefix)
+
+
 class ConditionalCacheDecorator:
     """Decorator for conditional caching based on function result"""
     

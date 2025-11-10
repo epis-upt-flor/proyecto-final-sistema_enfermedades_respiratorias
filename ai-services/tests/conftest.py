@@ -2,20 +2,40 @@
 Pytest configuration and shared fixtures for AI Services tests
 """
 
+import os
+import tempfile
+import json
+import sys
 import asyncio
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock
 from typing import AsyncGenerator, Generator
-import os
-import tempfile
-import json
 
 # Set test environment variables
 os.environ["TESTING"] = "true"
 os.environ["LOG_LEVEL"] = "DEBUG"
 os.environ["CACHE_ENABLED"] = "false"
 os.environ["CIRCUIT_BREAKER_ENABLED"] = "false"
+
+
+# Lightweight module stubs for heavy optional dependencies
+if "shap" not in sys.modules:
+    shap_mock = MagicMock(name="shap_mock")
+    shap_explainer_mock = MagicMock(name="TreeExplainer")
+    shap_explainer_mock.shap_values.return_value = []
+    shap_mock.TreeExplainer.return_value = shap_explainer_mock
+    shap_mock.Explanation = MagicMock()
+    shap_mock.Cohorts = MagicMock()
+    shap_mock.force_plot = MagicMock()
+    sys.modules["shap"] = shap_mock
+
+if "openai" not in sys.modules:
+    openai_mock = MagicMock(name="openai_mock")
+    openai_mock.ChatCompletion = MagicMock()
+    openai_mock.AsyncConfiguration = MagicMock()
+    sys.modules["openai"] = openai_mock
+
 
 from fastapi.testclient import TestClient
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -25,7 +45,8 @@ import mongomock
 
 from main import app
 from core.config import settings
-from core.database import get_database, get_cache
+from core.database import get_database
+from core.cache import get_cache_client as get_cache
 from core.pattern_config import PatternConfig
 
 

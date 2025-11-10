@@ -268,6 +268,11 @@ class RandomForestDiseaseClassifier:
         print(f"Model loaded from {filepath}")
 
 
+# Backwards compatibility aliases for legacy imports
+RandomForestClassifier = RandomForestDiseaseClassifier
+RandomForestModel = RandomForestDiseaseClassifier
+
+
 if __name__ == "__main__":
     # Example usage
     from synthetic_dataset_generator import SyntheticDatasetGenerator

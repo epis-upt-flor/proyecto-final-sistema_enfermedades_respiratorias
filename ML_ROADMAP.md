@@ -235,6 +235,7 @@ User receives comprehensive prediction with full explainability
 - ✅ `ml_models/demand_forecasting.py` – Forecasting de demanda de recursos sanitarios (camas, personal, insumos).
 - ✅ `ml_models/__init__.py` – Exporta los nuevos modelos para uso en servicios externos.
 - ✅ `tests/ml_models/test_analytics_models.py` – Cobertura unitaria completa con `pytest` para los tres modelos (mocks de `pandas`/`numpy`).
+- ✅ `ml_tests/test_fairness_and_drift.py` – Suite enfocada en fairness, PSI, anomalías y exportaciones del monitor.
 - ✅ `requirements-test.txt` actualizado con dependencias de testing (pytest, pytest-asyncio, httpx<0.24, fakeredis, scikit-learn 1.3.2, etc.).
 
 **Integración**:
@@ -247,6 +248,7 @@ User receives comprehensive prediction with full explainability
 - ✅ Identificación automática de anomalías con umbrales adaptativos.
 - ✅ Curva de demanda proyectada a 7 días con confianza creciente (70% → 90%).
 - ✅ Métricas de validación cubiertas en unit tests (MAE < 5 para forecast sintético).
+- ✅ Cobertura de monitoreo ML (trend/anomaly/prediction_monitor) ~83 % mediante suites `tests/` y `ml_tests/`.
 
 ---
 
@@ -305,6 +307,7 @@ User receives comprehensive prediction with full explainability
 - ✅ Modelos de tendencia, anomalías y demanda creados en `ml_models/`.
 - ✅ Suite de tests `tests/ml_models/test_analytics_models.py` validando escenarios felices y adversos.
 - ✅ Integración con servicios de analítica y dashboard ejecutivo (backend + web).
+- ✅ Suite adicional `ml_tests/test_fairness_and_drift.py` para PSI, fairness por cohortes y exportación de monitoreo.
 - ✅ Ajustes de dependencias y entorno de pruebas (`requirements-test.txt`, instalación de pytest plugins).
 
 ---
@@ -448,6 +451,7 @@ User receives comprehensive prediction with full explainability
 | **Personalización** | ✅ COMPLETADO | - | Por edad/grupo de riesgo |
 | **Retraining Automático** | ✅ COMPLETADO | - | Basado en feedback médico |
 | **Fase 5: Analítica Predictiva** | ✅ COMPLETADO | Métricas MAE < 5 (datos sintéticos) | `trend_predictor.py`, `anomaly_detector.py`, `demand_forecasting.py` |
+| **Pruebas ML (fairness/drift)** | ✅ COMPLETADO | Cobertura ~83 % (monitoring + analytics) | `tests/ml_models/test_analytics_models.py`, `ml_tests/test_fairness_and_drift.py` |
 
 \* *Validado con 307,295 casos (61,459 casos de test)*
 

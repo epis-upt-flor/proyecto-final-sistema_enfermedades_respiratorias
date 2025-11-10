@@ -12,7 +12,7 @@ Monitorea predicciones del modelo en producción para:
 
 import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Sequence
 from pathlib import Path
 from collections import defaultdict, deque
 
@@ -67,7 +67,8 @@ class PredictionMonitor:
                       prediction: Dict[str, Any],
                       model_name: str = 'xgboost',
                       patient_id: Optional[str] = None,
-                      session_id: Optional[str] = None) -> str:
+                      session_id: Optional[str] = None,
+                      patient_metadata: Optional[Dict[str, Any]] = None) -> str:
         """
         Log a prediction for monitoring
         
@@ -101,7 +102,8 @@ class PredictionMonitor:
             },
             'metadata': {
                 'has_explanation': 'explanation' in prediction,
-                'explanation_length': len(prediction.get('explanation', '')) if 'explanation' in prediction else 0
+                'explanation_length': len(prediction.get('explanation', '')) if 'explanation' in prediction else 0,
+                'patient': patient_metadata or {}
             }
         }
         
@@ -167,6 +169,105 @@ class PredictionMonitor:
                    feedback_type=feedback_type)
         
         return True
+
+    # --- Analytics helpers -------------------------------------------------
+
+    def calculate_psi(
+        self,
+        reference: Sequence[float],
+        current: Sequence[float],
+        bins: int = 10,
+        epsilon: float = 1e-6,
+    ) -> float:
+        """
+        Population Stability Index para detectar drift entre distribuciones.
+
+        Returns
+        -------
+        float
+            Valor de PSI (>=0). Valores mayores a 0.2 suelen indicar drift significativo.
+        """
+        if not HAS_NUMPY:
+            raise RuntimeError("NumPy es requerido para calcular PSI.")
+
+        ref = np.asarray(reference, dtype=float)
+        cur = np.asarray(current, dtype=float)
+
+        if ref.size == 0 or cur.size == 0:
+            raise ValueError("Se requieren muestras en ambas distribuciones para calcular PSI.")
+
+        if bins < 2:
+            raise ValueError("`bins` debe ser al menos 2.")
+
+        # Usar percentiles de referencia para definir buckets estables.
+        quantiles = np.linspace(0, 100, bins + 1)
+        cut_points = np.unique(np.percentile(ref, quantiles))
+        if cut_points.size < 2:
+            cut_points = np.linspace(ref.min(), ref.max() + epsilon, bins + 1)
+
+        ref_counts, _ = np.histogram(ref, bins=cut_points)
+        cur_counts, _ = np.histogram(cur, bins=cut_points)
+
+        ref_ratios = np.clip(ref_counts / max(ref_counts.sum(), epsilon), epsilon, None)
+        cur_ratios = np.clip(cur_counts / max(cur_counts.sum(), epsilon), epsilon, None)
+
+        psi = np.sum((cur_ratios - ref_ratios) * np.log(cur_ratios / ref_ratios))
+        return float(psi)
+
+    def fairness_metrics(
+        self,
+        group_field: str,
+        high_confidence_threshold: float = 0.7,
+    ) -> Dict[str, Any]:
+        """
+        Calcula métricas de equidad por grupos demográficos en las predicciones registradas.
+
+        Parameters
+        ----------
+        group_field : str
+            Llave dentro de `patient_metadata` (ej. "gender" o "age_band").
+        high_confidence_threshold : float
+            Umbral para considerar una predicción como de alta confianza.
+
+        Returns
+        -------
+        dict
+            Métricas por grupo con conteos, confianza promedio y distribución de urgencias.
+        """
+        groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for entry in self.predictions_log:
+            patient_meta = entry['metadata'].get('patient') or {}
+            group_value = patient_meta.get(group_field)
+            if group_value is None:
+                continue
+            groups[str(group_value)].append(entry)
+
+        metrics: Dict[str, Any] = {}
+        for group, entries in groups.items():
+            confidences = [e['prediction']['confidence'] for e in entries]
+            urgency_counts = defaultdict(int)
+            for e in entries:
+                urgency_counts[e['prediction']['urgency_level']] += 1
+
+            total = len(entries)
+            high_conf = sum(conf >= high_confidence_threshold for conf in confidences)
+
+            if confidences:
+                if HAS_NUMPY:
+                    avg_conf = float(np.mean(confidences))
+                else:
+                    avg_conf = float(sum(confidences) / total)
+            else:
+                avg_conf = 0.0
+
+            metrics[group] = {
+                'count': total,
+                'avg_confidence': avg_conf,
+                'high_confidence_rate': float(high_conf / total) if total else 0.0,
+                'urgency_distribution': dict(urgency_counts),
+            }
+
+        return metrics
     
     def get_metrics(self, days: int = 1) -> Dict[str, Any]:
         """

@@ -197,6 +197,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - **Testing Backend**: 380+ tests automatizados, cobertura global 98 % - Ver [docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)
 - **Testing Frontend Web**: 40+ tests implementados - Ver [web/tests/README.md](web/tests/README.md)
 - **Testing Mobile**: 50+ tests implementados (unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
+- **Testing AI Services**: Cobertura ~83 % en monitoreo/fairness/drift con `ml_tests/test_fairness_and_drift.py` y suites unitarias (`tests/ml_models/test_analytics_models.py`)
 
 ### 🚧 En Progreso
 - Incrementar cobertura de tests front/mobile >80 % (nuevas suites web para `AlertConsole`, `TemporalTrends`, `Analytics`)
