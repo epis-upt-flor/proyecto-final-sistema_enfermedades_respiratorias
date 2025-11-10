@@ -18,6 +18,7 @@ describe('SymptomReportForm Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   describe('Component Rendering', () => {
@@ -81,13 +82,13 @@ describe('SymptomReportForm Component', () => {
       expect(tosCheckbox).toBeChecked();
     });
 
-    it('should allow adding custom symptom', () => {
+    it('should display severity controls after selecting a symptom', () => {
       render(<SymptomReportForm onClose={mockOnClose} onSuccess={mockOnSuccess} />);
-      
-      const customInput = screen.getByPlaceholderText(/otro síntoma/i);
-      fireEvent.change(customInput, { target: { value: 'Dolor de espalda' } });
-      
-      expect(customInput.value).toBe('Dolor de espalda');
+
+      const tosCheckbox = screen.getByLabelText('Tos seca');
+      fireEvent.click(tosCheckbox);
+
+      expect(screen.getByDisplayValue('Leve')).toBeInTheDocument();
     });
   });
 
@@ -151,6 +152,8 @@ describe('SymptomReportForm Component', () => {
     });
 
     it('should call onSuccess callback after successful submission', async () => {
+      jest.useFakeTimers();
+
       mockedAxios.post.mockResolvedValueOnce({
         data: { success: true }
       });
@@ -167,7 +170,15 @@ describe('SymptomReportForm Component', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
+        expect(mockedAxios.post).toHaveBeenCalled();
+      });
+
+      // Avanza el temporizador que controla el cierre automático (2 segundos)
+      jest.advanceTimersByTime(2000);
+
+      await waitFor(() => {
         expect(mockOnSuccess).toHaveBeenCalled();
+        expect(mockOnClose).toHaveBeenCalled();
       });
     });
 

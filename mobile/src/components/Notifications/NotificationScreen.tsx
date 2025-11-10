@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,22 +9,31 @@ import {
   Card,
   Title,
   Paragraph,
-  List,
   IconButton,
   Chip,
   FAB,
   Portal,
   Modal,
   Button,
-  Text,
+  ActivityIndicator,
 } from 'react-native-paper';
 import { useAppStore } from '../../store/useAppStore';
-import { NotificationData } from '../../types';
+import { NotificationData, Alert } from '../../types';
+import Toast from 'react-native-toast-message';
 
 const NotificationScreen: React.FC = () => {
-  const { notifications, markNotificationAsRead, clearNotifications } = useAppStore();
+  const {
+    notifications,
+    alerts,
+    markNotificationAsRead,
+    clearNotifications,
+    fetchAlerts,
+    acknowledgeAlertById,
+  } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -56,12 +65,57 @@ const NotificationScreen: React.FC = () => {
     }
   };
 
-  const handleRefresh = () => {
+  const getAlertColor = (priority: string) => {
+    switch (priority) {
+      case 'critical':
+        return '#d32f2f';
+      case 'high':
+        return '#f57c00';
+      case 'medium':
+        return '#1976d2';
+      default:
+        return '#388e3c';
+    }
+  };
+
+  const loadAlerts = useCallback(async () => {
+    try {
+      setLoadingAlerts(true);
+      await fetchAlerts();
+    } finally {
+      setLoadingAlerts(false);
+    }
+  }, [fetchAlerts]);
+
+  useEffect(() => {
+    void loadAlerts();
+  }, [loadAlerts]);
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    // Simular refresh
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await loadAlerts();
+    setRefreshing(false);
+  };
+
+  const handleAcknowledge = async (alertId: string) => {
+    try {
+      setAcknowledgingId(alertId);
+      const success = await acknowledgeAlertById(alertId);
+      if (success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Alerta reconocida',
+          text2: 'La alerta ha sido marcada como atendida.',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'No se pudo reconocer la alerta',
+        });
+      }
+    } finally {
+      setAcknowledgingId(null);
+    }
   };
 
   const handleClearAll = () => {
@@ -117,6 +171,106 @@ const NotificationScreen: React.FC = () => {
   );
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const pendingAlerts = alerts.filter((alert) => alert.status !== 'acknowledged').length;
+
+  const renderAlertCard = (alert: Alert) => (
+    <Card key={alert.id} style={styles.alertCard}>
+      <Card.Content>
+        <View style={styles.alertHeader}>
+          <Title style={styles.alertTitle}>{alert.title}</Title>
+          <Chip
+            mode="outlined"
+            compact
+            style={[styles.alertPriorityChip, { borderColor: getAlertColor(alert.priority) }]}
+            textStyle={{ color: getAlertColor(alert.priority) }}
+          >
+            {alert.priority.toUpperCase()}
+          </Chip>
+        </View>
+        <Paragraph style={styles.alertMessage}>{alert.message}</Paragraph>
+        <View style={styles.alertMetaRow}>
+          <Chip mode="flat" compact icon="tag-text-outline" style={styles.alertMetaChip}>
+            {alert.category.replace('_', ' ')}
+          </Chip>
+          <Chip mode="flat" compact icon="clock-outline" style={styles.alertMetaChip}>
+            {new Date(alert.createdAt).toLocaleString()}
+          </Chip>
+        </View>
+        {alert.scheduledAt && (
+          <Paragraph style={styles.alertScheduled}>
+            ⏰ Programada para {new Date(alert.scheduledAt).toLocaleString()}
+          </Paragraph>
+        )}
+        <View style={styles.alertActions}>
+          <Chip
+            compact
+            icon={alert.status === 'acknowledged' ? 'check-circle' : 'alert-circle-outline'}
+            style={[
+              styles.alertStatusChip,
+              alert.status === 'acknowledged' && styles.alertStatusAcknowledged,
+            ]}
+          >
+            {alert.status === 'acknowledged' ? 'Reconocida' : 'Pendiente'}
+          </Chip>
+          {alert.status !== 'acknowledged' && (
+            <Button
+              mode="contained"
+              icon="check"
+              onPress={() => handleAcknowledge(alert.id)}
+              style={styles.alertButton}
+              buttonColor="#1976d2"
+              loading={acknowledgingId === alert.id}
+              disabled={acknowledgingId === alert.id}
+            >
+              Reconocer
+            </Button>
+          )}
+        </View>
+      </Card.Content>
+    </Card>
+  );
+
+  const renderAlertsSection = () => (
+    <View style={styles.alertSection}>
+      <View style={styles.alertSectionHeader}>
+        <Title style={styles.alertSectionTitle}>⚠️ Alertas del sistema</Title>
+        {pendingAlerts > 0 && (
+          <Chip style={styles.alertPendingChip}>{pendingAlerts} pendientes</Chip>
+        )}
+      </View>
+      {loadingAlerts ? (
+        <ActivityIndicator animating size="small" />
+      ) : alerts.length === 0 ? (
+        <Paragraph style={styles.alertEmptyMessage}>
+          No hay alertas registradas para tu cuenta.
+        </Paragraph>
+      ) : (
+        alerts.map(renderAlertCard)
+      )}
+    </View>
+  );
+
+  const renderEmptyNotifications = () => {
+    if (alerts.length > 0) {
+      return null;
+    }
+
+    return (
+      <Card style={styles.emptyCard}>
+        <Card.Content style={styles.emptyContent}>
+          <IconButton
+            icon="bell-off"
+            size={48}
+            iconColor="#757575"
+          />
+          <Title style={styles.emptyTitle}>No hay notificaciones</Title>
+          <Paragraph style={styles.emptyMessage}>
+            Las notificaciones importantes aparecerán aquí
+          </Paragraph>
+        </Card.Content>
+      </Card>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -129,36 +283,22 @@ const NotificationScreen: React.FC = () => {
         )}
       </View>
 
-      {notifications.length === 0 ? (
-        <Card style={styles.emptyCard}>
-          <Card.Content style={styles.emptyContent}>
-            <IconButton
-              icon="bell-off"
-              size={48}
-              iconColor="#757575"
-            />
-            <Title style={styles.emptyTitle}>No hay notificaciones</Title>
-            <Paragraph style={styles.emptyMessage}>
-              Las notificaciones importantes aparecerán aquí
-            </Paragraph>
-          </Card.Content>
-        </Card>
-      ) : (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={['#1976d2']}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
-      )}
+      <FlatList
+        data={notifications}
+        renderItem={renderNotification}
+        keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#1976d2']}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={renderAlertsSection}
+        ListEmptyComponent={renderEmptyNotifications}
+      />
 
       {notifications.length > 0 && (
         <FAB
@@ -224,6 +364,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+    paddingBottom: 80,
   },
   notificationCard: {
     marginBottom: 8,
@@ -311,6 +452,81 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     backgroundColor: '#ff5722',
+  },
+  alertSection: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    elevation: 1,
+  },
+  alertSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  alertSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  alertPendingChip: {
+    backgroundColor: '#ffcc80',
+  },
+  alertEmptyMessage: {
+    color: '#757575',
+    fontStyle: 'italic',
+  },
+  alertCard: {
+    marginTop: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1976d2',
+    elevation: 1,
+  },
+  alertHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  alertTitle: {
+    flex: 1,
+    fontSize: 16,
+  },
+  alertPriorityChip: {
+    marginLeft: 8,
+  },
+  alertMessage: {
+    marginTop: 8,
+    color: '#424242',
+  },
+  alertMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+  },
+  alertMetaChip: {
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  alertScheduled: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#757575',
+  },
+  alertActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  alertStatusChip: {
+    backgroundColor: '#ffe0b2',
+  },
+  alertStatusAcknowledged: {
+    backgroundColor: '#c8e6c9',
+  },
+  alertButton: {
+    marginLeft: 8,
   },
 });
 

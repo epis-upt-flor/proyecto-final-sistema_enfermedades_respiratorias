@@ -15,9 +15,12 @@ import authRoutes from './routes/authRoutes';
 import medicalHistoryRoutes from './routes/medicalHistoryRoutes';
 import symptomAnalyzerRoutes from './routes/symptomAnalyzerRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import alertRoutes from './routes/alertRoutes';
 import fileUploadRoutes from './routes/fileUploadRoutes';
 import exportRoutes from './routes/exportRoutes';
 import wearableRoutes from './routes/wearableRoutes';
+import appointmentsRoutes from './routes/appointmentsRoutes';
+import prescriptionRoutes from './routes/prescriptionRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -29,6 +32,8 @@ import { swaggerSpec } from './config/swagger';
 import { initializeRedis, disconnectRedis, getRedisClient } from './config/redisClient';
 import { brotliCompression } from './middleware/brotliCompression';
 import { smartRateLimiter } from './middleware/rateLimiter';
+import { startAlertJobs, stopAlertJobs } from './jobs/alertJobs';
+import { startAppointmentJobs, stopAppointmentJobs } from './jobs/appointmentJobs';
 
 class App {
   public app: express.Application;
@@ -40,6 +45,7 @@ class App {
     this.initializeErrorHandling();
     this.initializeDatabase();
     this.initializeCache();
+    this.initializeJobs();
   }
 
   private initializeMiddlewares(): void {
@@ -142,6 +148,9 @@ class App {
     this.app.use('/api/v1/upload', fileUploadRoutes);
     this.app.use('/api/v1/export', exportRoutes);
     this.app.use('/api/v1/wearables', wearableRoutes);
+    this.app.use('/api/v1/alerts', alertRoutes);
+    this.app.use('/api/v1/appointments', appointmentsRoutes);
+    this.app.use('/api/v1/prescriptions', prescriptionRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {
@@ -158,7 +167,10 @@ class App {
           dashboard: '/api/v1/dashboard',
           fileUpload: '/api/v1/upload',
           export: '/api/v1/export',
-          wearables: '/api/v1/wearables'
+          wearables: '/api/v1/wearables',
+          alerts: '/api/v1/alerts',
+          appointments: '/api/v1/appointments',
+          prescriptions: '/api/v1/prescriptions'
         }
       });
     });
@@ -214,6 +226,15 @@ class App {
     }
   }
 
+  private initializeJobs(): void {
+    if (process.env.NODE_ENV === 'test') {
+      return;
+    }
+
+    startAlertJobs();
+    startAppointmentJobs();
+  }
+
   public listen(): void {
     const port = config.server.port;
     const host = config.server.host;
@@ -244,11 +265,15 @@ process.on('unhandledRejection', (err: Error) => {
 // Manejar señales de terminación
 process.on('SIGTERM', () => {
   logger.info('SIGTERM recibido. Cerrando servidor...');
+  stopAlertJobs();
+  stopAppointmentJobs();
   disconnectRedis().finally(() => process.exit(0));
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT recibido. Cerrando servidor...');
+  stopAlertJobs();
+  stopAppointmentJobs();
   disconnectRedis().finally(() => process.exit(0));
 });
 

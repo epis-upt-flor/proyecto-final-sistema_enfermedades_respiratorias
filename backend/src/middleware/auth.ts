@@ -64,6 +64,36 @@ export const authorize = (...roles: string[]) => {
   };
 };
 
+export const INTERNAL_REQUEST_HEADER = 'x-internal-service-token';
+
+export const authorizeInternalOrRoles = (roles: string[], allowedTokens: string[] = []) => {
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+    const header = req.headers[INTERNAL_REQUEST_HEADER] ?? req.headers[INTERNAL_REQUEST_HEADER.toLowerCase()];
+    const token = Array.isArray(header) ? header[0] : header;
+
+    if (token && typeof token === 'string') {
+      if (allowedTokens.includes(token)) {
+        return next();
+      }
+    }
+
+    if (!req.user) {
+      return next(new AppError('No autenticado', 401));
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError(
+          `Acceso denegado. Se requieren roles: ${roles.join(', ')} o un token interno válido en ${INTERNAL_REQUEST_HEADER}`,
+          403
+        )
+      );
+    }
+
+    return next();
+  };
+};
+
 // Middleware para verificar si es el propietario del recurso o admin
 export const authorizeOwnerOrAdmin = (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
   if (!req.user) {

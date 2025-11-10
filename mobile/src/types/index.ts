@@ -104,6 +104,42 @@ export interface NotificationData {
   isRead: boolean;
 }
 
+export type AlertCategory =
+  | 'critical_symptom'
+  | 'medication_reminder'
+  | 'follow_up'
+  | 'doctor_notification'
+  | 'system';
+
+export type AlertPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export type AlertStatus =
+  | 'pending'
+  | 'scheduled'
+  | 'sent'
+  | 'delivered'
+  | 'failed'
+  | 'acknowledged'
+  | 'expired';
+
+export interface Alert {
+  id: string;
+  userId: string;
+  patientId?: string;
+  doctorId?: string;
+  title: string;
+  message: string;
+  category: AlertCategory;
+  priority: AlertPriority;
+  status: AlertStatus;
+  channels: string[];
+  createdAt: string;
+  scheduledAt?: string;
+  acknowledgedAt?: string;
+  dispatchedAt?: string;
+  metadata?: Record<string, any>;
+}
+
 export interface SyncStatus {
   isOnline: boolean;
   isSyncing: boolean;
@@ -124,6 +160,7 @@ export interface AppState {
   isOnline: boolean;
   offlineData: OfflineData;
   notifications: NotificationData[];
+  alerts: Alert[];
   isLoading: boolean;
   syncStatus: SyncStatus;
 }

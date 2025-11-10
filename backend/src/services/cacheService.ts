@@ -110,7 +110,9 @@ export const CACHE_NAMESPACES = {
   MEDICAL_HISTORY: 'medicalHistory',
   MEDICAL_HISTORY_STATS: 'medicalHistoryStats',
   MEDICAL_HISTORY_DIAGNOSES: 'medicalHistoryDiagnoses',
-  MEDICAL_HISTORY_AGE_STATS: 'medicalHistoryAgeStats'
+  MEDICAL_HISTORY_AGE_STATS: 'medicalHistoryAgeStats',
+  ALERTS: 'alerts',
+  ALERT_SUMMARY: 'alertSummary'
 } as const;
 
 export const TEN_MINUTES = 600;

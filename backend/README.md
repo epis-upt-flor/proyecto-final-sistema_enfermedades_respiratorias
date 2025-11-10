@@ -216,9 +216,30 @@ JWT_REFRESH_EXPIRE=30d
 BCRYPT_ROUNDS=12
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
+INTERNAL_SERVICE_TOKENS=service-token-1,service-token-2
+CRITICAL_ALERT_ROLES=doctor,admin
+PUSH_PROVIDER=expo
+PUSH_API_KEY=your_push_api_key
+PUSH_PROJECT_ID=your_push_project_id
+DRUG_INTERACTION_API_URL=https://api.drugs.com/v1
+DRUG_INTERACTION_API_KEY=your_api_key_here
+
+# Jobs de alertas
+ALERTS_SCHEDULED_INTERVAL_MS=30000
+ALERTS_PENDING_INTERVAL_MS=45000
 
 # CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+```
+
+### **Scripts de Seeding**
+
+```bash
+# Poblar usuarios e historias médicas de ejemplo
+npm run seed
+
+# Generar alertas y métricas para el dashboard de alertas
+npm run seed:alerts
 ```
 
 ## 📚 API Endpoints
@@ -293,6 +314,32 @@ POST   /medical-histories # Exportar historias médicas
 POST   /user-statistics   # Exportar estadísticas (admin)
 GET    /formats           # Formatos disponibles
 GET    /history           # Historial de exportaciones
+```
+
+### **Alertas (`/api/v1/alerts`)**
+```http
+POST   /critical-symptom             # Crear alerta automática por síntoma crítico
+POST   /medication-reminders         # Programar recordatorio de medicamento
+POST   /follow-up                    # Programar seguimiento médico
+POST   /doctor-notifications         # Notificar a médicos sobre casos urgentes
+POST   /:alertId/acknowledge         # Reconocer una alerta como atendida
+GET    /                              # Listar alertas del usuario autenticado
+GET    /dashboard/summary            # Resumen global de alertas (admin)
+GET    /monitoring                   # Métricas de cola Redis y fallos (admin)
+POST   /admin/process                # Forzar procesamiento inmediato (admin)
+```
+
+### **Citas Médicas (`/api/v1/appointments`)**
+```http
+POST   /                             # Crear cita (doctor/admin/paciente con token válido)
+GET    /                             # Listar citas (filtros por doctor, paciente, estado, fechas)
+GET    /me/upcoming                  # Listar próximas citas del usuario autenticado
+GET    /doctor/:doctorId/availability # Disponibilidad del doctor en un rango
+GET    /:appointmentId               # Obtener detalle de cita
+PUT    /:appointmentId               # Actualizar detalles (doctor/admin)
+PATCH  /:appointmentId/cancel        # Cancelar cita (doctor/admin)
+PATCH  /:appointmentId/reschedule    # Reprogramar cita (doctor/admin)
+PATCH  /:appointmentId/complete      # Marcar cita como completada (doctor/admin)
 ```
 
 ## 🔒 Seguridad

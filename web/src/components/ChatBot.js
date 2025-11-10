@@ -63,7 +63,7 @@ function ChatBot() {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -540,6 +540,7 @@ function ChatBot() {
           onClick={handleSend} 
           disabled={isLoading || !inputText.trim()}
           className="send-button"
+          aria-label="Enviar mensaje"
         >
           {isLoading ? '⏳' : '📤'}
         </button>

@@ -6,6 +6,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import { Alert, AlertCategory, AlertPriority, AlertStatus } from '../types';
 
 // Types
 export interface ApiResponse<T = any> {
@@ -108,6 +109,23 @@ class ApiService {
   private client: AxiosInstance;
   private isOnline: boolean = true;
   private retryQueue: Array<() => Promise<void>> = [];
+  private normalizeAlert = (raw: any): Alert => ({
+    id: raw.id || raw._id,
+    userId: raw.userId,
+    patientId: raw.patientId,
+    doctorId: raw.doctorId,
+    title: raw.title,
+    message: raw.message,
+    category: raw.category,
+    priority: raw.priority,
+    status: raw.status,
+    channels: raw.channels ?? [],
+    createdAt: raw.createdAt,
+    scheduledAt: raw.scheduledAt,
+    acknowledgedAt: raw.acknowledgedAt,
+    dispatchedAt: raw.dispatchedAt,
+    metadata: raw.metadata,
+  });
 
   constructor() {
     this.client = this.createClient();
@@ -439,6 +457,49 @@ class ApiService {
       return {
         success: true,
         data: response.data,
+      };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async getAlerts(params?: {
+    status?: AlertStatus[];
+    priority?: AlertPriority[];
+    category?: AlertCategory[];
+    from?: string;
+    to?: string;
+  }): Promise<ApiResponse<Alert[]>> {
+    try {
+      const response = await this.client.get('/alerts', {
+        params: {
+          ...params,
+        },
+      });
+
+      const alerts: Alert[] = Array.isArray(response.data.data)
+        ? response.data.data.map(this.normalizeAlert)
+        : [];
+
+      return {
+        success: true,
+        data: alerts,
+        message: response.data.message,
+      };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async acknowledgeAlert(alertId: string): Promise<ApiResponse<Alert>> {
+    try {
+      const response = await this.client.post(`/alerts/${alertId}/acknowledge`);
+      const alert = this.normalizeAlert(response.data.data);
+
+      return {
+        success: true,
+        data: alert,
+        message: response.data.message,
       };
     } catch (error: any) {
       return this.handleError(error);

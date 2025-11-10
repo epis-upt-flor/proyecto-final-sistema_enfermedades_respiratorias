@@ -65,6 +65,65 @@ export interface AIAnalysis {
   updatedAt: Date;
 }
 
+export type AlertCategory =
+  | 'critical_symptom'
+  | 'medication_reminder'
+  | 'follow_up'
+  | 'doctor_notification'
+  | 'system';
+
+export type AlertChannel = 'in_app' | 'push' | 'email' | 'sms';
+
+export type AlertPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export type AlertStatus =
+  | 'pending'
+  | 'scheduled'
+  | 'sent'
+  | 'delivered'
+  | 'failed'
+  | 'acknowledged'
+  | 'expired';
+
+export type AlertTriggerSource =
+  | 'symptom_analysis'
+  | 'medication_schedule'
+  | 'follow_up_rule'
+  | 'manual'
+  | 'system'
+  | 'doctor_portal';
+
+export interface AlertTrigger {
+  source: AlertTriggerSource;
+  referenceId?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface Alert {
+  _id: string;
+  userId: string;
+  patientId?: string;
+  doctorId?: string;
+  title: string;
+  message: string;
+  category: AlertCategory;
+  channels: AlertChannel[];
+  priority: AlertPriority;
+  status: AlertStatus;
+  trigger?: AlertTrigger;
+  metadata?: Record<string, any>;
+  tags?: string[];
+  scheduledAt?: Date;
+  dispatchedAt?: Date;
+  acknowledgedAt?: Date;
+  expiresAt?: Date;
+  retries: number;
+  lastError?: string;
+  priorityWeight?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Notification {
   _id: string;
   userId: string;
@@ -75,6 +134,7 @@ export interface Notification {
   scheduledTime?: Date;
   isRead: boolean;
   isSent: boolean;
+  alertId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -88,6 +148,89 @@ export interface HeatMapData {
   district: string;
   cases: number;
   date: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type AppointmentStatus =
+  | 'scheduled'
+  | 'completed'
+  | 'cancelled'
+  | 'rescheduled'
+  | 'no_show';
+
+export interface Appointment {
+  _id: string;
+  patientId: string;
+  doctorId: string;
+  createdBy: string;
+  scheduledAt: Date;
+  durationMinutes: number;
+  status: AppointmentStatus;
+  reason?: string;
+  notes?: string;
+  location?: {
+    type: 'virtual' | 'in_person';
+    description?: string;
+    meetingLink?: string;
+    address?: string;
+  };
+  reminderMinutesBefore?: number;
+  tags?: string[];
+  rescheduledFrom?: string;
+  cancellationReason?: string;
+  metadata?: Record<string, any>;
+  reminderSentAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type PrescriptionStatus =
+  | 'draft'
+  | 'pending_validation'
+  | 'active'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected';
+
+export interface PrescriptionMedication {
+  name: string;
+  dosage: string;
+  form?: string;
+  frequencyPerDay: number;
+  durationDays: number;
+  startDate?: Date;
+  instructions?: string;
+  notes?: string;
+  reminderTimes?: string[];
+  smartDosage?: {
+    recommended: string;
+    rationale: string;
+  };
+}
+
+export interface DrugInteraction {
+  medicationA: string;
+  medicationB: string;
+  severity: 'minor' | 'moderate' | 'major' | 'contraindicated';
+  description?: string;
+  source?: string;
+}
+
+export interface Prescription {
+  _id: string;
+  patientId: string;
+  doctorId: string;
+  createdBy: string;
+  diagnosis?: string;
+  observations?: string;
+  medications: PrescriptionMedication[];
+  status: PrescriptionStatus;
+  interactions?: DrugInteraction[];
+  validatedBy?: string;
+  validatedAt?: Date;
+  validationNotes?: string;
+  metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -216,6 +359,7 @@ export interface NotificationRequest {
   type: 'reminder' | 'alert' | 'emergency' | 'sync' | 'system';
   data?: any;
   scheduledTime?: Date;
+  alertId?: string;
 }
 
 export interface PushNotificationPayload {
@@ -225,6 +369,7 @@ export interface PushNotificationPayload {
   data?: any;
   sound?: string;
   badge?: number;
+  alertId?: string;
 }
 
 // Tipos para archivos
@@ -334,10 +479,17 @@ export interface AppConfig {
     pass: string;
     from: string;
   };
+  push: {
+    provider: 'expo' | 'firebase' | 'onesignal' | 'none';
+    apiKey?: string;
+    projectId?: string;
+  };
   security: {
     bcryptRounds: number;
     rateLimitWindow: number;
     rateLimitMax: number;
+    internalTokens?: string[];
+    criticalAlertRoles?: Array<'doctor' | 'admin'>;
   };
   cors: {
     origins: string[];
@@ -345,5 +497,17 @@ export interface AppConfig {
   logging: {
     level: string;
     file: string;
+  };
+  jobs: {
+    alerts: {
+      scheduledIntervalMs: number;
+      pendingIntervalMs: number;
+    };
+  };
+  integrations: {
+    drugInteractions: {
+      url: string | null;
+      apiKey: string | null;
+    };
   };
 }

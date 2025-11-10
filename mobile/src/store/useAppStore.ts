@@ -2,7 +2,19 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState, User, MedicalHistory, NotificationData, OfflineData, SymptomAnalysis, SyncStatus } from '../types';
+import {
+  AppState,
+  User,
+  MedicalHistory,
+  NotificationData,
+  OfflineData,
+  SymptomAnalysis,
+  SyncStatus,
+  Alert,
+  AlertStatus,
+  AlertPriority,
+  AlertCategory,
+} from '../types';
 import { apiService } from '../services/api';
 import { localStorageService } from '../services/localStorage';
 import { aiService } from '../services/aiService';
@@ -21,6 +33,12 @@ interface AppStore extends AppState {
   updateOfflineData: (data: Partial<OfflineData>) => void;
   setLoading: (loading: boolean) => void;
   syncData: () => Promise<void>;
+  fetchAlerts: (filters?: {
+    status?: AlertStatus[];
+    priority?: AlertPriority[];
+    category?: AlertCategory[];
+  }) => Promise<void>;
+  acknowledgeAlertById: (alertId: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   register: (userData: any) => Promise<boolean>;
@@ -41,6 +59,7 @@ export const useAppStore = create<AppStore>()(
         pendingSync: 0,
       },
       notifications: [],
+      alerts: [],
       isLoading: false,
       syncStatus: {
         isOnline: true,
@@ -183,6 +202,35 @@ export const useAppStore = create<AppStore>()(
         } finally {
           set({ isLoading: false });
         }
+      },
+
+      fetchAlerts: async (filters) => {
+        try {
+          const response = await apiService.getAlerts(filters);
+          if (response.success && response.data) {
+            set({ alerts: response.data });
+          }
+        } catch (error) {
+          console.error('Error fetching alerts:', error);
+        }
+      },
+
+      acknowledgeAlertById: async (alertId) => {
+        try {
+          const response = await apiService.acknowledgeAlert(alertId);
+          if (response.success && response.data) {
+            const updatedAlert = response.data;
+            set((state) => ({
+              alerts: state.alerts.map((alert) =>
+                alert.id === alertId ? updatedAlert : alert
+              ),
+            }));
+            return true;
+          }
+        } catch (error) {
+          console.error('Error acknowledging alert:', error);
+        }
+        return false;
       },
 
       login: async (email, password) => {

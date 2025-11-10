@@ -29,6 +29,14 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Mock scrollIntoView used in chat components
+if (!window.HTMLElement.prototype.scrollIntoView) {
+  window.HTMLElement.prototype.scrollIntoView = jest.fn();
+}
+if (!window.Element.prototype.scrollIntoView) {
+  window.Element.prototype.scrollIntoView = jest.fn();
+}
+
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}

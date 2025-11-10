@@ -20,6 +20,10 @@ process.env.AI_SERVICE_URL = 'http://localhost:8000';
 process.env.AI_SERVICE_API_KEY = 'test-api-key';
 process.env.RATE_LIMIT_WINDOW_MS = '60000';
 process.env.RATE_LIMIT_MAX_REQUESTS = '100000';
+process.env.INTERNAL_SERVICE_TOKENS = 'internal-test-token';
+process.env.CRITICAL_ALERT_ROLES = 'doctor,admin';
+process.env.ALERTS_SCHEDULED_INTERVAL_MS = '15000';
+process.env.ALERTS_PENDING_INTERVAL_MS = '20000';
 
 // ============================================
 // NOW WE CAN IMPORT MODULES

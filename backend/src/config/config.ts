@@ -10,7 +10,13 @@ const requiredEnvVars = [
   'PORT',
   'MONGODB_URI',
   'JWT_SECRET',
-  'JWT_REFRESH_SECRET'
+  'JWT_REFRESH_SECRET',
+  'REDIS_URL',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'PUSH_PROVIDER',
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -18,6 +24,33 @@ for (const envVar of requiredEnvVars) {
     throw new Error(`Variable de entorno requerida no encontrada: ${envVar}`);
   }
 }
+
+const parseCommaSeparated = (value?: string): string[] | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  const items = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+  return items.length ? items : undefined;
+};
+
+const parseCriticalRoles = (value?: string): Array<'doctor' | 'admin'> | undefined => {
+  const allowed: Array<'doctor' | 'admin'> = ['doctor', 'admin'];
+  const roles = parseCommaSeparated(value)?.filter((role): role is 'doctor' | 'admin' =>
+    allowed.includes(role as 'doctor' | 'admin')
+  );
+  return roles && roles.length ? roles : undefined;
+};
+
+const parseInterval = (value: string | undefined, fallback: number): number => {
+  const parsed = parseInt(value || '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const DEFAULT_SCHEDULED_INTERVAL_MS = 30 * 1000;
+const DEFAULT_PENDING_INTERVAL_MS = 45 * 1000;
 
 export const config: AppConfig = {
   server: {
@@ -51,10 +84,17 @@ export const config: AppConfig = {
     pass: process.env.SMTP_PASS || '',
     from: process.env.FROM_EMAIL || 'noreply@respicare.com'
   },
+  push: {
+    provider: (process.env.PUSH_PROVIDER as AppConfig['push']['provider']) || 'none',
+    apiKey: process.env.PUSH_API_KEY,
+    projectId: process.env.PUSH_PROJECT_ID,
+  },
   security: {
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '12'),
     rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutos
-    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100')
+    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
+    internalTokens: parseCommaSeparated(process.env.INTERNAL_SERVICE_TOKENS),
+    criticalAlertRoles: parseCriticalRoles(process.env.CRITICAL_ALERT_ROLES),
   },
   cors: {
     origins: process.env.CORS_ORIGINS?.split(',') || [
@@ -66,5 +106,17 @@ export const config: AppConfig = {
   logging: {
     level: process.env.LOG_LEVEL || 'info',
     file: process.env.LOG_FILE || './logs/app.log'
+  },
+  jobs: {
+    alerts: {
+      scheduledIntervalMs: parseInterval(process.env.ALERTS_SCHEDULED_INTERVAL_MS, DEFAULT_SCHEDULED_INTERVAL_MS),
+      pendingIntervalMs: parseInterval(process.env.ALERTS_PENDING_INTERVAL_MS, DEFAULT_PENDING_INTERVAL_MS)
+    }
+  },
+  integrations: {
+    drugInteractions: {
+      url: process.env.DRUG_INTERACTION_API_URL ?? null,
+      apiKey: process.env.DRUG_INTERACTION_API_KEY ?? null,
+    },
   }
 };

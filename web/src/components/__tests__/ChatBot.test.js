@@ -18,12 +18,18 @@ describe('ChatBot Component', () => {
     // Mock localStorage
     Storage.prototype.getItem = jest.fn(() => null);
     Storage.prototype.setItem = jest.fn();
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        success: true,
+        data: { sessionId: 'test-session-id' }
+      }
+    });
   });
 
   describe('Component Rendering', () => {
     it('should render the chatbot component', () => {
       render(<ChatBot />);
-      expect(screen.getByText(/RespiCare/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Asistente Respicare/i })).toBeInTheDocument();
     });
 
     it('should display welcome message on mount', async () => {
@@ -43,13 +49,13 @@ describe('ChatBot Component', () => {
 
     it('should render input field', () => {
       render(<ChatBot />);
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
       expect(input).toBeInTheDocument();
     });
 
     it('should render send button', () => {
       render(<ChatBot />);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
       expect(sendButton).toBeInTheDocument();
     });
   });
@@ -107,8 +113,8 @@ describe('ChatBot Component', () => {
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -132,8 +138,8 @@ describe('ChatBot Component', () => {
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -162,8 +168,8 @@ describe('ChatBot Component', () => {
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -188,15 +194,21 @@ describe('ChatBot Component', () => {
           }
         })
         .mockResolvedValueOnce({
+          data: { success: true }
+        })
+        .mockResolvedValueOnce({
           data: {
             message: 'Esta es una respuesta del bot'
           }
+        })
+        .mockResolvedValueOnce({
+          data: { success: true }
         });
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -218,12 +230,15 @@ describe('ChatBot Component', () => {
             data: { sessionId: 'test-session-id' }
           }
         })
+        .mockResolvedValueOnce({
+          data: { success: true }
+        })
         .mockRejectedValueOnce(new Error('API Error'));
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -247,6 +262,9 @@ describe('ChatBot Component', () => {
             data: { sessionId: 'test-session-id' }
           }
         })
+        .mockResolvedValueOnce({
+          data: { success: true }
+        })
         .mockImplementationOnce(() => {
           return new Promise(resolve => {
             setTimeout(() => {
@@ -257,12 +275,15 @@ describe('ChatBot Component', () => {
               });
             }, 100);
           });
+        })
+        .mockResolvedValueOnce({
+          data: { success: true }
         });
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -307,8 +328,8 @@ describe('ChatBot Component', () => {
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -333,20 +354,22 @@ describe('ChatBot Component', () => {
   describe('Accessibility', () => {
     it('should have proper ARIA labels', () => {
       render(<ChatBot />);
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      expect(input).toHaveAttribute('aria-label');
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
+      expect(sendButton).toHaveAttribute('aria-label', 'Enviar mensaje');
     });
 
     it('should be keyboard accessible', () => {
       render(<ChatBot />);
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
-      const sendButton = screen.getByRole('button', { name: /enviar/i });
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       // Input should be focusable
       input.focus();
       expect(input).toHaveFocus();
 
       // Button should be focusable
+      fireEvent.change(input, { target: { value: 'Mensaje de prueba' } });
+      expect(sendButton).not.toBeDisabled();
       sendButton.focus();
       expect(sendButton).toHaveFocus();
     });
@@ -360,14 +383,21 @@ describe('ChatBot Component', () => {
           }
         })
         .mockResolvedValueOnce({
+          data: { success: true }
+        })
+        .mockResolvedValueOnce({
           data: {
             message: 'Respuesta del bot'
           }
+        })
+        .mockResolvedValueOnce({
+          data: { success: true }
         });
 
       render(<ChatBot />);
 
-      const input = screen.getByPlaceholderText(/escribe tu mensaje/i);
+      const input = screen.getByPlaceholderText(/describe tus síntomas/i);
+      const sendButton = screen.getByRole('button', { name: /enviar mensaje/i });
 
       await waitFor(() => {
         expect(screen.getByText(/Hola!/i)).toBeInTheDocument();
@@ -378,6 +408,7 @@ describe('ChatBot Component', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Test message')).toBeInTheDocument();
+        expect(sendButton).toBeInTheDocument();
       });
     });
   });
@@ -392,7 +423,7 @@ describe('ChatBot Component', () => {
       });
 
       render(<ChatBot />);
-      expect(screen.getByText(/RespiCare/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Asistente Respicare/i })).toBeInTheDocument();
     });
 
     it('should render correctly on tablet viewport', () => {
@@ -403,7 +434,7 @@ describe('ChatBot Component', () => {
       });
 
       render(<ChatBot />);
-      expect(screen.getByText(/RespiCare/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Asistente Respicare/i })).toBeInTheDocument();
     });
 
     it('should render correctly on desktop viewport', () => {
@@ -414,7 +445,7 @@ describe('ChatBot Component', () => {
       });
 
       render(<ChatBot />);
-      expect(screen.getByText(/RespiCare/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Asistente Respicare/i })).toBeInTheDocument();
     });
   });
 });

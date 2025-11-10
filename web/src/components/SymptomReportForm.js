@@ -184,8 +184,15 @@ function SymptomReportForm({ onClose, onSuccess }) {
     <div className="symptom-report-modal">
       <div className="symptom-report-content">
         <div className="symptom-report-header">
-          <h2>📋 Reportar Síntomas</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
+          <h2 id="symptom-report-title">📋 Reportar Síntomas</h2>
+          <button
+            className="close-btn"
+            onClick={onClose}
+            type="button"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
         </div>
 
         {success ? (
@@ -208,8 +215,9 @@ function SymptomReportForm({ onClose, onSuccess }) {
               <h3>📍 Ubicación</h3>
               
               <div className="form-group">
-                <label>Distrito *</label>
+                <label htmlFor="symptom-district">Distrito *</label>
                 <select
+                  id="symptom-district"
                   value={formData.district}
                   onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                   required
@@ -222,8 +230,9 @@ function SymptomReportForm({ onClose, onSuccess }) {
               </div>
 
               <div className="form-group">
-                <label>Dirección (opcional)</label>
+                <label htmlFor="symptom-address">Dirección (opcional)</label>
                 <input
+                  id="symptom-address"
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}

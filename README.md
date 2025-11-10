@@ -166,6 +166,24 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Notificaciones push
 - ✅ **Suite completa de tests** (50+ tests: unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
 
+## ✅ Módulos Clínicos Avanzados (Fase 7 Completada)
+
+- **Alertas y notificaciones**  
+  - Alertas automáticas por síntomas críticos, recordatorios de medicamentos, notificaciones push programadas y dashboard global.
+  - Endpoints REST: `/api/v1/alerts` (filtros, resumen, monitorización) + consola web de administración.
+
+- **Citas médicas**  
+  - CRUD completo, disponibilidad de doctores, cancelación/reprogramación y recordatorios automáticos.
+  - Implementación clave: `AppointmentModel`, `appointmentService`, rutas REST y jobs periódicos (`appointmentJobs`).
+
+- **Prescripciones**  
+  - Generación y validación médica con dosificación inteligente, chequeo de interacciones externas y recordatorios de toma.
+  - Endpoints: `/api/v1/prescriptions` (historial, estados, anexado de medicamentos) + integración con `drugInteractionService`.
+
+- **Reportes médicos (PDF)**  
+  - Plantillas personalizables, exportación profesional, historial con firma digital y compartición entre médicos.
+  - Utilidades: `reportService.ts`, `pdfGenerator.ts` y consola web `MedicalReport`.
+
 ## 📈 Estado del Proyecto
 
 ### ✅ Completado
@@ -174,14 +192,15 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Chatbot médico integrado
 - Frontend web y móvil
 - Sistema de monitoreo y feedback
+- Sistema de alertas avanzadas, citas médicas, prescripciones y reportes PDF profesionales
 - **Testing Backend**: 380+ tests automatizados, cobertura global 98 % - Ver [docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)
 - **Testing Frontend Web**: 40+ tests implementados - Ver [web/tests/README.md](web/tests/README.md)
 - **Testing Mobile**: 50+ tests implementados (unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
 
 ### 🚧 En Progreso
-- Mejora de cobertura de tests (objetivo: 80%)
-- Optimizaciones de performance
-- Nuevas funcionalidades (citas, prescripciones)
+- Incrementar cobertura de tests front/mobile >80%
+- Optimizaciones de performance y seguridad avanzada
+- Integraciones externas (FHIR, APIs de medicamentos) siguientes fases
 
 ## 🤝 Contribución
 

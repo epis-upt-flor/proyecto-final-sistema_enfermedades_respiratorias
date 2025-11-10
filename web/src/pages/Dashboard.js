@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
+import AlertConsole from '../components/AlertConsole';
+import AppointmentCalendar from '../components/AppointmentCalendar';
 
 function Dashboard() {
   const [backendStatus, setBackendStatus] = useState(null);
@@ -132,6 +134,14 @@ function Dashboard() {
                 </a>
               </div>
             </div>
+          </div>
+
+          <div className="alert-console-section">
+            <AlertConsole />
+          </div>
+
+          <div className="appointment-calendar-section">
+            <AppointmentCalendar />
           </div>
 
           <div className="admin-tools">
