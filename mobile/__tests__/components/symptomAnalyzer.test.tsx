@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import AIAnalysisScreen from '../../src/components/AI/AIAnalysisScreen';
 import { useAppStore } from '../../src/store/useAppStore';
 
@@ -20,14 +20,22 @@ const mockStore = {
 
 describe('AIAnalysisScreen', () => {
   beforeEach(() => {
-    (useAppStore as jest.Mock).mockReturnValue(mockStore);
+  jest.useFakeTimers();
+  (useAppStore as jest.Mock).mockReturnValue(mockStore);
+});
+
+afterEach(() => {
+  act(() => {
+    jest.runOnlyPendingTimers();
+  });
+  jest.useRealTimers();
   });
 
   it('debe renderizar correctamente', () => {
     const { getByText } = render(<AIAnalysisScreen />);
 
-    expect(getByText('Seleccionar Síntomas')).toBeTruthy();
-    expect(getByText('Analizar con IA')).toBeTruthy();
+    expect(getByText(/Seleccionar Síntomas/i)).toBeTruthy();
+    expect(getByText(/Analizar con IA/i)).toBeTruthy();
   });
 
   it('debe mostrar lista de síntomas disponibles', () => {
@@ -81,6 +89,10 @@ describe('AIAnalysisScreen', () => {
     const analyzeButton = getByText('🤖 Analizar con IA');
     fireEvent.press(analyzeButton);
 
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
     // Verificar que se muestra el progreso
     await waitFor(() => {
       expect(getByText(/Analizando/i)).toBeTruthy();
@@ -97,6 +109,10 @@ describe('AIAnalysisScreen', () => {
     // Iniciar análisis
     const analyzeButton = getByText('🤖 Analizar con IA');
     fireEvent.press(analyzeButton);
+
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
 
     // Esperar a que termine el análisis
     await waitFor(
@@ -120,6 +136,10 @@ describe('AIAnalysisScreen', () => {
     // Iniciar análisis
     const analyzeButton = getByText('🤖 Analizar con IA');
     fireEvent.press(analyzeButton);
+
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
 
     await waitFor(
       () => {

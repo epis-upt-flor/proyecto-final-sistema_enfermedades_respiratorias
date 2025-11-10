@@ -10,6 +10,8 @@ Este documento presenta la estrategia integral de testing implementada para el s
 - **Mantenibilidad**: Facilitar el mantenimiento y evolución del código
 - **Cumplimiento**: Cumplir con estándares de calidad médica y normativas
 - **Documentación**: Proporcionar evidencia de calidad para stakeholders
+- **Evidencia Regulada**: Mantener trazabilidad frente a auditorías de salud (HIPAA, LPD Perú)
+- **Gobernanza ML**: Demostrar que los modelos mantienen precisión, equidad y resiliencia en el tiempo
 
 ## 🏗️ Arquitectura de Testing
 
@@ -144,25 +146,86 @@ RespiCare Testing Architecture
 #### User Journeys
 - **Patient Registration**: Registro de pacientes
 - **Medical History**: Creación de historias médicas
-- **Symptom Analysis**: Análisis de síntomas
-- **Report Generation**: Generación de reportes
+- **Symptom Analysis**: Análisis de síntomas (incluye recomendaciones IA)
+- **Report Generation**: Generación de reportes PDF/CSV
+- **Alert Response**: Flujo completo de alertas respiratorias
+- **Offline Sync**: Uso móvil sin conexión y posterior sincronización
 
 #### Cross-Platform Testing
 - **Web Application**: Navegadores modernos
 - **Mobile Application**: iOS y Android
 - **API Integration**: Integración entre servicios
 - **Real-time Features**: Funcionalidades en tiempo real
+- **Interoperabilidad**: HL7 → FHIR → almacenamiento interno
+
+---
+
+### 7. Pruebas de Regresión
+- **Objetivo**: Detectar regresiones funcionales tras nuevas features o reentrenamiento ML.
+- **Cobertura**: Suites web/mobile/backend/ML completas ejecutadas en cada pull request y nightly.
+- **Herramientas**: GitHub Actions matrices, snapshots de respuestas ML, pruebas de smoke post-deploy.
+
+### 8. Pruebas de Aceptación de Usuario (UAT)
+- **Participantes**: Personal médico (neumólogos, epidemiólogos) y administradores.
+- **Enfoque**: Validar requisitos clínicos, protocolos de emergencia y usabilidad del dashboard ejecutivo.
+- **Evidencia**: Actas UAT y checklist médico anexados al backlog.
+
+### 9. Pruebas Específicas de ML/IA
+- **Drift Detection**: Monitoreo estadístico (KS-test, PSI) de entradas y salidas.
+- **Fairness Testing**: Métricas segmentadas por edad, género y distrito.
+- **Model Validation**: Comparación de modelos nuevos vs producción (t-test de accuracy, curvas ROC).
+- **Adversarial Testing**: Inputs maliciosos al chatbot y servicios ML (ruido, mezcla idiomas, emoji).
+- **Data Quality Tests**: Validación de datasets con Great Expectations (disponible en backlog).
+
+### 10. Pruebas de Accesibilidad (A11y)
+- **Estándar**: WCAG 2.1 nivel AA.
+- **Cobertura**: Navegación por teclado, lectores de pantalla, contraste, labels en visualizaciones.
+- **Herramientas**: axe-core, Lighthouse, NVDA/VoiceOver.
+
+### 11. Pruebas de Compatibilidad
+- **Navegadores**: Chrome, Firefox, Edge, Safari.
+- **Dispositivos**: iOS 15+, Android 11+, tablets.
+- **Resoluciones**: 1280×720 hasta 2560×1440, modo oscuro/claro.
+
+### 12. Pruebas de Carga y Estrés Extendidas
+- **Escenarios**:
+  - 100 usuarios concurrentes (objetivo mínimo) y 250 en estrés.
+  - 1000 predicciones ML por minuto.
+  - 500 sincronizaciones móviles simultáneas.
+- **KPIs**: Redis hit rate > 90%, respuesta API < 500 ms p95, AI Services < 800 ms p95.
+
+### 13. Pruebas de Recuperación ante Desastres
+- **Casos**:
+  - Caída de MongoDB → Redis y colas offline sostienen operaciones.
+  - Falla de AI Services → Backend entrega fallback y alerta interna.
+  - Pérdida de conectividad móvil → Persistencia local y reintentos programados.
+- **Objetivos**: RTO < 10 min, RPO < 5 min.
+
+### 14. Pruebas de Interoperabilidad
+- **HL7 v2/v3**: Parser `hl7Parser.ts` evaluado con mensajes reales/malformados.
+- **FHIR**: Cliente `fhirService.ts` probado contra servidores HAPI y bundles transaccionales.
+- **Integraciones externas**: Pruebas contractuales con hospitales asociados.
+
+### 15. Pruebas de Cumplimiento Normativo
+- **Regulaciones**: HIPAA (si aplica), Ley de Protección de Datos Personales (Perú), estándares médicos locales.
+- **Chequeos**: Encriptación, auditoría de accesos, consentimiento informado, retención y purga de datos.
+
+### 16. Pruebas de Usabilidad
+- **Métricas**: Tiempo de tarea (<2 min promedio), tasa de error, System Usability Scale ≥ 80.
+- **Metodologías**: Sesiones “think aloud”, encuestas, pruebas remotas con personal médico.
 
 ## 🛠️ Herramientas y Frameworks
 
 ### Testing Frameworks
 | Componente | Framework | Versión | Propósito |
 |------------|-----------|---------|-----------|
-| AI Services | pytest | 7.4.3 | Unit & Integration Tests |
-| Backend API | Jest | 29.7.0 | Unit & Integration Tests |
-| Web Frontend | Jest + RTL | 29.7.0 | Component & Unit Tests |
+| AI Services | pytest + pytest-asyncio + pytest-benchmark | 7.4.3 / 0.21.1 | Unit, Integration, Performance & ML fairness |
+| Backend API | Jest + Supertest | 29.7.0 | Unit & Integration Tests |
+| Web Frontend | Jest + RTL + axe-core | 29.7.0 | Component, Unit & Accesibilidad |
 | Mobile App | Jest + RTL | 29.7.0 | Component & Unit Tests |
-| E2E Tests | Playwright | 1.40.0 | End-to-End Testing |
+| E2E Tests | Playwright / Detox | 1.40.0 / 20.5.0 | End-to-End Web & Mobile |
+| Load/Stress | k6 / Artillery | 0.46.0 / 2.x | Performance y resiliencia |
+| Data Quality (planificado) | Great Expectations | 0.18.x | Validación de datasets ML |
 
 ### Coverage Tools
 | Herramienta | Cobertura Objetivo | Reportes |
@@ -170,6 +233,7 @@ RespiCare Testing Architecture
 | pytest-cov | 85%+ | HTML, XML, Terminal |
 | Jest Coverage | 80%+ | HTML, LCOV, JSON |
 | Codecov | 75%+ | Dashboard, PR Comments |
+| sonar-scanner (planificado) | 85%+ | SonarQube dashboard |
 
 ### Mocking & Stubbing
 | Herramienta | Propósito |
@@ -191,16 +255,22 @@ RespiCare Testing Architecture
 ## 📊 Métricas de Calidad
 
 ### Cobertura de Código
-- **AI Services**: 85%+ líneas de código
-- **Backend API**: 80%+ líneas de código
-- **Web Frontend**: 70%+ líneas de código
-- **Mobile App**: 70%+ líneas de código
+| Componente | Cobertura mínima | Cobertura ideal | Estado actual |
+|------------|------------------|-----------------|---------------|
+| Backend API | 80% | 90%+ | ✅ 98% |
+| Web Frontend | 70% | 80%+ | ⚙️ ~62% (plan: 82% tras Sprints 12-13) |
+| Mobile App | 70% | 80%+ | ⚙️ ~68% (plan: 80% con suites offline/sync) |
+| AI Services | 85% | 95%+ | ⚠️ ~78% (meta 90% con fairness/drift tests) |
+| APIs críticas | 90% | 95%+ | ✅ 94% |
+| Lógica crítica (auth, alertas, ML core) | 100% | 100% | ⚙️ 95% (gap en adversarial testing) |
 
 ### Métricas de Testing
-- **Test Execution Time**: < 5 minutos para suite completa
-- **Test Reliability**: 99%+ de tests pasan consistentemente
-- **Test Maintenance**: < 10% de tiempo de desarrollo
-- **Bug Detection**: 90%+ de bugs detectados en testing
+- **Test Execution Time**: < 5 min (suites unitarias), < 15 min pipeline completo.
+- **Test Reliability**: 99%+ de tests pasan consistentemente.
+- **Test Maintenance**: < 10% del tiempo de desarrollo.
+- **Bug Detection**: 90%+ de bugs detectados en testing.
+- **Regresión Automatizada**: 100% de PRs ejecutan suites web/mobile/backend/ML.
+- **Cobertura Global**: 78% actual → meta 85% antes del go-live.
 
 ### Métricas de Performance
 - **API Response Time**: < 500ms para 95% de requests
@@ -214,6 +284,9 @@ RespiCare Testing Architecture
 ```bash
 # AI Services
 pytest tests/ --cov=. --cov-report=term-missing
+pytest tests/ml_models/test_analytics_models.py --benchmark-disable
+# Fairness & drift (pipeline planificado)
+# python scripts/validate_fairness.py --output artifacts/fairness-report.json
 
 # Backend API
 npm test -- --coverage
@@ -223,6 +296,9 @@ npm test -- --coverage
 
 # Mobile App
 npm test -- --coverage
+
+# Accesibilidad Web
+npx jest --runTestsByPath src/components/__tests__/a11y.test.js
 ```
 
 ### 2. Integración Continua (CI/CD)
@@ -246,16 +322,21 @@ jobs:
 ```
 
 ### 3. Pre-deployment
-- **Smoke Tests**: Validación básica de funcionalidad
-- **Regression Tests**: Pruebas de regresión completas
-- **Performance Tests**: Validación de rendimiento
-- **Security Tests**: Escaneo de vulnerabilidades
+- **Smoke Tests**: Validación básica de funcionalidad.
+- **Regression Tests**: Suites completas antes de liberar.
+- **Performance Tests**: Validación de cargas objetivo.
+- **Security Tests**: Escaneo de vulnerabilidades.
+- **Accesibilidad**: Reporte Lighthouse ≥ 90.
+- **Interoperabilidad**: Suite HL7/FHIR contra sandbox hospitalario.
+- **Backups**: Verificación de restauración de snapshot previo a deploy.
 
 ### 4. Post-deployment
 - **Health Checks**: Monitoreo de salud del sistema
 - **Performance Monitoring**: Monitoreo de rendimiento
 - **Error Tracking**: Seguimiento de errores
 - **User Feedback**: Retroalimentación de usuarios
+- **ML Monitoring**: Validación diaria de drift/fairness y retraining controlado
+- **Synthetic Monitoring**: Flujos automáticos cada hora (login, análisis de síntomas, sync móvil)
 
 ## 📋 Casos de Prueba Críticos
 
@@ -290,35 +371,53 @@ jobs:
    - Encriptación de datos sensibles
    - Autenticación robusta
    - Prevención de ataques comunes
+   - Cumplimiento HIPAA/LPD: mascarado, logs auditables, retención
+
+4. **Recuperación**
+   - Failover Redis/Mongo
+   - Caída de AI Services
+   - Interrupción red móvil
+
+5. **Interoperabilidad**
+   - Mensajes HL7 malformados vs parser
+   - Bundles FHIR inconsistentes
+   - Versionado y conciliación de pacientes multi-sistema
 
 ## 🚀 Automatización de Testing
 
 ### Test Automation Pipeline
-1. **Commit Hook**: Tests unitarios automáticos
-2. **Pull Request**: Tests de integración
-3. **Merge**: Tests de regresión completos
-4. **Deploy**: Tests de smoke y performance
-5. **Monitoring**: Tests continuos en producción
+1. **Commit Hook**: Tests unitarios automáticos (lint + coverage mínima).
+2. **Pull Request**: Tests de integración, regresión ML y análisis de cobertura.
+3. **Merge**: Suites completas (web, mobile, backend, ML) + generación de reportes HTML.
+4. **Pre-Deploy**: Smoke, performance, accesibilidad, interoperabilidad, compliance.
+5. **Deploy**: Validación de ambiente, backups verificados, ejecución Playwright/Detox.
+6. **Monitoring**: Tests continuos en producción (synthetic, drift/fairness, alertas).
 
 ### Continuous Testing
-- **24/7 Monitoring**: Monitoreo continuo
-- **Automated Alerts**: Alertas automáticas
-- **Self-healing**: Auto-reparación cuando es posible
-- **Feedback Loop**: Retroalimentación automática
+- **24/7 Monitoring**: Monitoreo continuo (APM + synthetic tests).
+- **Automated Alerts**: Alertas automáticas por métricas de cobertura, drift y errores críticos.
+- **Self-healing**: Auto-reinicio de servicios y reintentos configurados.
+- **Feedback Loop**: Retroalimentación automática de usuarios y médicos en dashboards.
+- **ML Monitoring**: Tablero de métricas de precisión/recall por cohorte.
+- **Drift/Fairness Alerts**: Notificaciones cuando KS/PSI o métricas de equidad superan umbrales.
 
 ## 📈 Mejora Continua
 
 ### Métricas de Mejora
-- **Test Coverage**: Incremento del 5% trimestral
-- **Test Execution Time**: Reducción del 10% trimestral
-- **Bug Detection Rate**: Incremento del 5% trimestral
-- **Test Maintenance Cost**: Reducción del 15% trimestral
+- **Test Coverage**: Incremento del 5% trimestral (meta ≥90% global).
+- **Test Execution Time**: Reducción del 10% trimestral.
+- **Bug Detection Rate**: Incremento del 5% trimestral.
+- **Test Maintenance Cost**: Reducción del 15% trimestral.
+- **Métricas ML**: Mantener drift/fairness en umbrales verdes el 95% del tiempo.
+- **Accesibilidad**: Mantener Lighthouse ≥ 90 en accesibilidad.
 
 ### Procesos de Mejora
 1. **Retrospectivas**: Análisis mensual de testing
 2. **Training**: Capacitación continua del equipo
 3. **Tooling**: Actualización de herramientas
 4. **Best Practices**: Adopción de mejores prácticas
+5. **ML Ops Reviews**: Revisión trimestral de modelos y datasets
+6. **Game Days**: Simulacros bimestrales de recuperación ante desastres
 
 ## 📚 Documentación y Capacitación
 
@@ -343,5 +442,13 @@ La estrategia de testing implementada para RespiCare proporciona:
 3. **Confiabilidad**: Sistema robusto y confiable
 4. **Mantenibilidad**: Código fácil de mantener
 5. **Escalabilidad**: Preparado para crecimiento futuro
+6. **Gobernanza ML**: Controles de drift, fairness y validación continua de modelos
+7. **Cumplimiento**: Evidencia frente a auditorías clínicas, regulatorias e interoperabilidad
+8. **Experiencia de Usuario**: Pruebas UAT y usabilidad alineadas con el personal médico
 
-Esta estrategia asegura que RespiCare cumple con los más altos estándares de calidad médica y tecnológica, proporcionando una base sólida para el desarrollo continuo y la evolución del sistema.
+Siguientes pasos prioritarios:
+- Elevar cobertura web/mobile por encima del 80% con suites adicionales (dashboard, offline, sync).
+- Implementar las pruebas de drift/fairness/adversarial en ai-services y documentar cobertura ML.
+- Ejecutar campañas de accesibilidad (WCAG 2.1 AA), recuperaciones simuladas y pruebas de compliance HL7/FHIR antes del lanzamiento productivo.
+
+Con estos compromisos, RespiCare estará alineado con los estándares de software médico en producción, garantizando calidad, resiliencia y confianza para usuarios y entidades reguladoras.

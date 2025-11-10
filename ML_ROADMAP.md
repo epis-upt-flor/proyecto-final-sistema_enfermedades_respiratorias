@@ -225,6 +225,31 @@ User receives comprehensive prediction with full explainability
 
 ---
 
+### **Fase 5: Analítica Predictiva y Tendencias Epidemiológicas** ✅ COMPLETADO
+
+**Objetivo**: Incorporar modelos de analítica avanzada para apoyar dashboards ejecutivos, predicción de tendencias y planeación de recursos.
+
+**Componentes**:
+- ✅ `ml_models/trend_predictor.py` – Predicción de tendencias de enfermedades con proyecciones multihorizonte.
+- ✅ `ml_models/anomaly_detector.py` – Detección estadística de anomalías y clústeres de riesgo de pacientes.
+- ✅ `ml_models/demand_forecasting.py` – Forecasting de demanda de recursos sanitarios (camas, personal, insumos).
+- ✅ `ml_models/__init__.py` – Exporta los nuevos modelos para uso en servicios externos.
+- ✅ `tests/ml_models/test_analytics_models.py` – Cobertura unitaria completa con `pytest` para los tres modelos (mocks de `pandas`/`numpy`).
+- ✅ `requirements-test.txt` actualizado con dependencias de testing (pytest, pytest-asyncio, httpx<0.24, fakeredis, scikit-learn 1.3.2, etc.).
+
+**Integración**:
+- ✅ Servicios backend (`analyticsService`, `epidemiologicalService`) consumen los modelos para alimentar KPI en tiempo real.
+- ✅ `ExecutiveDashboard` (web) muestra salidas predictivas, tendencias, riesgos y demanda proyectada.
+- ✅ Se exponen endpoints REST `/api/v1/analytics/...` que orquestan llamados a los modelos de analítica.
+
+**Resultados**:
+- ✅ Predicciones diarias/semanales de incidencia con intervalos de confianza.
+- ✅ Identificación automática de anomalías con umbrales adaptativos.
+- ✅ Curva de demanda proyectada a 7 días con confianza creciente (70% → 90%).
+- ✅ Métricas de validación cubiertas en unit tests (MAE < 5 para forecast sintético).
+
+---
+
 ## 📈 Hoja de Ruta Detallada
 
 ### **Semana 1-2: Dataset y Random Forest** ✅ COMPLETADO
@@ -273,6 +298,14 @@ User receives comprehensive prediction with full explainability
 - ✅ Monitoreo de predicciones implementado
 - ✅ Sistema de feedback médico implementado
 - ✅ Documentación completa (CHATBOT_ML_INTEGRATION_COMPLETE.md)
+
+---
+
+### **Semana 11-12: Analítica Predictiva** ✅ COMPLETADO
+- ✅ Modelos de tendencia, anomalías y demanda creados en `ml_models/`.
+- ✅ Suite de tests `tests/ml_models/test_analytics_models.py` validando escenarios felices y adversos.
+- ✅ Integración con servicios de analítica y dashboard ejecutivo (backend + web).
+- ✅ Ajustes de dependencias y entorno de pruebas (`requirements-test.txt`, instalación de pytest plugins).
 
 ---
 
@@ -345,6 +378,8 @@ User receives comprehensive prediction with full explainability
    - Backup automático de modelos
    - API endpoints para gestión
    - Scripts de ejecución automática
+5. ✅ Modelos de analítica predictiva (tendencias, anomalías, demanda) integrados con servicios de negocio.
+6. ✅ Visualizaciones ejecutivas y métricas predictivas conectadas al dashboard web.
 
 ### **Sugerencias Futuras** (Opcional):
 1. ⏳ Dashboard de visualizaciones SHAP
@@ -362,6 +397,8 @@ User receives comprehensive prediction with full explainability
 - ✅ **SHAP**: Explainability (implementado completamente)
 - ✅ **joblib**: Model persistence
 - ✅ **scikit-learn MLPClassifier**: Neural Network Multi-Tarea (99.64% accuracy, 307k casos validados)
+- ✅ **pandas / numpy**: Preparación de datos para modelos analíticos (tendencias/anomalías/demanda).
+- ✅ **scikit-learn clustering & metrics**: Algoritmos auxiliares para detección de anomalías y clústeres.
 
 ### **Métodologías Aplicadas**:
 - ✅ Model-Driven Development (MDSD)
@@ -369,6 +406,7 @@ User receives comprehensive prediction with full explainability
 - ✅ Feature Engineering (15 features avanzadas)
 - ✅ Explainable AI (XAI) con SHAP
 - ✅ Sistema Híbrido (Reglas + ML)
+- ✅ ML Ops ligero para despliegue rápido de modelos analíticos.
 
 ### **Archivos y Documentación**:
 - ✅ `ML_SYSTEM_COMPLETE.md` - Resumen del sistema ML
@@ -385,10 +423,15 @@ User receives comprehensive prediction with full explainability
 - ✅ `ml_models/ensemble_predictor.py` - Sistema ensemble de modelos
 - ✅ `ml_models/neural_network_wrapper.py` - Wrapper de red neuronal
 - ✅ `ml_models/auto_retraining.py` - Sistema de retraining automático
+- ✅ `ml_models/trend_predictor.py` - Predicción de tendencias de enfermedades
+- ✅ `ml_models/anomaly_detector.py` - Detección de anomalías/clústeres
+- ✅ `ml_models/demand_forecasting.py` - Forecasting de demanda médica
 - ✅ `api/routes/ml_monitoring.py` - API endpoints de monitoreo y feedback
 - ✅ `api/routes/model_retraining.py` - API endpoints de retraining
 - ✅ `generate_extended_dataset.py` - Generador de dataset extendido
 - ✅ `retrain_models_from_feedback.py` - Script de retraining desde feedback
+- ✅ `tests/ml_models/test_analytics_models.py` - Suite unitaria para modelos de analítica
+- ✅ `requirements-test.txt` - Dependencias de pruebas (PyPI) actualizadas para la suite ML.
 
 ---
 
@@ -404,6 +447,7 @@ User receives comprehensive prediction with full explainability
 | **Ensemble System** | ✅ COMPLETADO | >99.8% | Ensemble de 3 modelos |
 | **Personalización** | ✅ COMPLETADO | - | Por edad/grupo de riesgo |
 | **Retraining Automático** | ✅ COMPLETADO | - | Basado en feedback médico |
+| **Fase 5: Analítica Predictiva** | ✅ COMPLETADO | Métricas MAE < 5 (datos sintéticos) | `trend_predictor.py`, `anomaly_detector.py`, `demand_forecasting.py` |
 
 \* *Validado con 307,295 casos (61,459 casos de test)*
 

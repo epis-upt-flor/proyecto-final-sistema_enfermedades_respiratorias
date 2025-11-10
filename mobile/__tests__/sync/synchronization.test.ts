@@ -127,6 +127,8 @@ describe('Synchronization Tests', () => {
         success: true,
       });
 
+      (localStorageService as any).syncQueue = JSON.parse(JSON.stringify(mockQueue));
+
       await localStorageService.syncPendingData();
 
       expect(apiService.createMedicalHistory).toHaveBeenCalled();
@@ -167,6 +169,8 @@ describe('Synchronization Tests', () => {
         success: true,
       });
 
+      (localStorageService as any).syncQueue = JSON.parse(JSON.stringify(mockQueue));
+
       await localStorageService.syncPendingData();
 
       // Verificar que se llamó para ambos items
@@ -199,6 +203,8 @@ describe('Synchronization Tests', () => {
         new Error('Server error')
       );
 
+      (localStorageService as any).syncQueue = JSON.parse(JSON.stringify(mockQueue));
+
       await localStorageService.syncPendingData();
 
       // Verificar que el item permanece en la cola con retryCount incrementado
@@ -230,6 +236,8 @@ describe('Synchronization Tests', () => {
       (apiService.createMedicalHistory as jest.Mock).mockRejectedValue(
         new Error('Server error')
       );
+
+      (localStorageService as any).syncQueue = JSON.parse(JSON.stringify(mockQueue));
 
       await localStorageService.syncPendingData();
 
@@ -282,13 +290,23 @@ describe('Synchronization Tests', () => {
   });
 
   describe('Listeners de Sincronización', () => {
-    it('debe notificar listeners cuando cambia estado de sincronización', () => {
+    it('debe notificar listeners cuando cambia estado de sincronización', async () => {
       const mockListener = jest.fn();
 
       localStorageService.addSyncListener(mockListener);
 
-      // Simular cambio de estado
-      localStorageService.syncPendingData();
+      (localStorageService as any).syncQueue = [
+        {
+          id: 'sync-1',
+          type: 'CREATE',
+          entity: 'medical_history',
+          data: { id: 'history-1' },
+          timestamp: Date.now(),
+          retryCount: 0,
+        },
+      ];
+
+      await localStorageService.syncPendingData();
 
       // El listener debería ser llamado
       expect(mockListener).toHaveBeenCalled();

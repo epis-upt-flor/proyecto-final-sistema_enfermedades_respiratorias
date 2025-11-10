@@ -95,13 +95,14 @@ describe('AIService', () => {
         isConnected: false,
         isInternetReachable: false,
       });
+      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
       const result = await aiService.analyzeSymptoms(mockSymptoms, mockPatientId);
 
       expect(result).toBeDefined();
       expect(result.analysisMethod).toBe('local_rules');
       expect(result.urgencyLevel).toBeDefined();
-      expect(apiService.analyzeSymptoms).not.toHaveBeenCalled();
+      expect(apiService.analyzeSymptoms).toHaveBeenCalledTimes(1);
     });
 
     it('debe hacer fallback a análisis local si falla el servicio de IA', async () => {
@@ -118,6 +119,12 @@ describe('AIService', () => {
     });
 
     it('debe calcular nivel de urgencia correctamente para síntomas severos', async () => {
+      (NetInfo.fetch as jest.Mock).mockResolvedValue({
+        isConnected: false,
+        isInternetReachable: false,
+      });
+      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
       const severeSymptoms: SymptomInput[] = [
         {
           symptom: 'Dificultad respiratoria severa',
@@ -132,6 +139,12 @@ describe('AIService', () => {
     });
 
     it('debe generar recomendaciones de emergencia para urgencia alta', async () => {
+      (NetInfo.fetch as jest.Mock).mockResolvedValue({
+        isConnected: false,
+        isInternetReachable: false,
+      });
+      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
       const severeSymptoms: SymptomInput[] = [
         {
           symptom: 'Dolor en el pecho',
@@ -193,11 +206,16 @@ describe('AIService', () => {
       (NetInfo.fetch as jest.Mock).mockResolvedValue({
         isConnected: false,
       });
+      (apiService.getSymptomTrends as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'Network error',
+      });
       (localStorageService.getSymptomAnalyses as jest.Mock).mockResolvedValue([]);
 
       const result = await aiService.getSymptomTrends(mockPatientId);
 
       expect(result.overallTrend).toBe('insufficient_data');
+      expect(apiService.getSymptomTrends).toHaveBeenCalled();
     });
   });
 
@@ -222,6 +240,10 @@ describe('AIService', () => {
       (NetInfo.fetch as jest.Mock).mockResolvedValue({
         isConnected: false,
       });
+      (apiService.getGeneralRecommendations as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'Network error',
+      });
 
       const result = await aiService.getGeneralRecommendations();
 
@@ -229,6 +251,7 @@ describe('AIService', () => {
       expect(result).toHaveProperty('fever');
       expect(result).toHaveProperty('pain');
       expect(result).toHaveProperty('general');
+      expect(apiService.getGeneralRecommendations).toHaveBeenCalled();
     });
   });
 

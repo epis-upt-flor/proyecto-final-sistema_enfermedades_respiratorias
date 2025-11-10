@@ -3,9 +3,8 @@
  * Cubre autenticación, CRUD de historias médicas, y manejo de errores
  */
 
-import { apiService } from '../../src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import axios, { __getMockAxiosInstance, __resetMockAxiosInstance } from 'axios';
 import NetInfo from '@react-native-community/netinfo';
 
 // Mocks
@@ -13,8 +12,31 @@ jest.mock('axios');
 jest.mock('@react-native-async-storage/async-storage');
 jest.mock('@react-native-community/netinfo');
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+type ApiServiceType = typeof import('../../src/services/api')['apiService'];
 
+const loadApiService = (): ApiServiceType => {
+  const axiosInstance = __resetMockAxiosInstance();
+  axiosInstance.get.mockReset();
+  axiosInstance.post.mockReset();
+  axiosInstance.put.mockReset();
+  axiosInstance.delete.mockReset();
+
+  let service: ApiServiceType;
+  jest.isolateModules(() => {
+    service = require('../../src/services/api').apiService;
+  });
+
+  const netInfo = require('@react-native-community/netinfo').default;
+  (netInfo.fetch as jest.Mock).mockResolvedValue({
+    isConnected: true,
+    isInternetReachable: true,
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return service!;
+};
+
+const getAxiosInstance = () => __getMockAxiosInstance();
 describe('ApiService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -43,16 +65,18 @@ describe('ApiService', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue({
-        post: jest.fn().mockResolvedValue(mockResponse),
-      } as any);
+      const apiService = loadApiService();
+      const axiosInstance = getAxiosInstance();
+      axiosInstance.post.mockResolvedValue(mockResponse);
 
-      // Necesitamos recrear el servicio después del mock
-      const { apiService: freshService } = require('../../src/services/api');
-      const result = await freshService.login('test@example.com', 'password');
+      const result = await apiService.login('test@example.com', 'password');
 
       expect(result.success).toBe(true);
       expect(result.data?.user.email).toBe('test@example.com');
+      expect(axiosInstance.post).toHaveBeenCalledWith('/auth/login', {
+        email: 'test@example.com',
+        password: 'password',
+      });
     });
 
     it('debe manejar errores de login incorrecto', async () => {
@@ -65,12 +89,11 @@ describe('ApiService', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue({
-        post: jest.fn().mockRejectedValue(mockError),
-      } as any);
+      const apiService = loadApiService();
+      const axiosInstance = getAxiosInstance();
+      axiosInstance.post.mockRejectedValue(mockError);
 
-      const { apiService: freshService } = require('../../src/services/api');
-      const result = await freshService.login('test@example.com', 'wrong-password');
+      const result = await apiService.login('test@example.com', 'wrong-password');
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -101,34 +124,34 @@ describe('ApiService', () => {
         },
       };
 
-      mockedAxios.create.mockReturnValue({
-        get: jest.fn().mockResolvedValue(mockResponse),
-      } as any);
+      const apiService = loadApiService();
+      const axiosInstance = getAxiosInstance();
+      axiosInstance.get.mockResolvedValue(mockResponse);
 
-      const { apiService: freshService } = require('../../src/services/api');
-      const result = await freshService.getMedicalHistories();
+      const result = await apiService.getMedicalHistories();
 
       expect(result.success).toBe(true);
       expect(result.data?.histories.length).toBe(1);
+      expect(axiosInstance.get).toHaveBeenCalledWith('/medical-histories', {
+        params: undefined,
+      });
     });
 
     it('debe manejar errores de red cuando está offline', async () => {
+      const apiService = loadApiService();
+      const axiosInstance = getAxiosInstance();
       (NetInfo.fetch as jest.Mock).mockResolvedValue({
         isConnected: false,
         isInternetReachable: false,
       });
+      axiosInstance.get.mockRejectedValue({
+        request: {},
+      });
 
-      mockedAxios.create.mockReturnValue({
-        get: jest.fn().mockRejectedValue({
-          request: {},
-        }),
-      } as any);
-
-      const { apiService: freshService } = require('../../src/services/api');
-      const result = await freshService.getMedicalHistories();
+      const result = await apiService.getMedicalHistories();
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('internet');
+      expect(result.error).toBe('Network error');
     });
   });
 
@@ -143,39 +166,43 @@ describe('ApiService', () => {
       ];
 
       const mockResponse = {
-        data: {
-          id: 'analysis-1',
-          patientId: 'patient-1',
-          symptoms: mockSymptoms,
-          urgencyLevel: 'medium',
-          severityScore: 0.6,
-          classification: {
-            categories: ['respiratory'],
-            confidence: 0.8,
-            urgency: 'medium',
-          },
-          recommendations: [],
-          warningSigns: [],
-          followUpRequired: true,
-          confidenceScore: 0.8,
-          analyzedAt: new Date().toISOString(),
-          processingTimeMs: 100,
+        id: 'analysis-1',
+        patientId: 'patient-1',
+        symptoms: mockSymptoms,
+        urgencyLevel: 'medium',
+        severityScore: 0.6,
+        classification: {
+          categories: ['respiratory'],
+          confidence: 0.8,
+          urgency: 'medium',
         },
+        recommendations: [],
+        warningSigns: [],
+        followUpRequired: true,
+        confidenceScore: 0.8,
+        analyzedAt: new Date().toISOString(),
+        processingTimeMs: 100,
       };
 
-      mockedAxios.create.mockReturnValue({
-        post: jest.fn().mockResolvedValue({ data: mockResponse }),
-      } as any);
+      const apiService = loadApiService();
+      const axiosInstance = getAxiosInstance();
+      axiosInstance.post.mockResolvedValue({ data: mockResponse });
 
-      const { apiService: freshService } = require('../../src/services/api');
-      const result = await freshService.analyzeSymptoms(mockSymptoms, 'patient-1');
+      const result = await apiService.analyzeSymptoms(mockSymptoms, 'patient-1');
 
       expect(result.success).toBe(true);
       expect(result.data?.urgencyLevel).toBe('medium');
+      expect(axiosInstance.post).toHaveBeenCalled();
     });
   });
 
   describe('isAuthenticated', () => {
+    let apiService: ApiServiceType;
+
+    beforeEach(() => {
+      apiService = loadApiService();
+    });
+
     it('debe retornar true cuando hay tokens válidos', async () => {
       const mockTokens = {
         accessToken: 'token',

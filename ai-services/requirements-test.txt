@@ -6,7 +6,7 @@ pytest-mock==3.12.0
 pytest-xdist==3.5.0
 
 # HTTP testing
-httpx==0.25.2
+httpx==0.23.3
 pytest-httpx==0.21.3
 
 # Database testing

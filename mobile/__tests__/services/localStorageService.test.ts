@@ -25,6 +25,10 @@ describe('LocalStorageService', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('getMedicalHistories', () => {
     it('debe retornar array vacío cuando no hay historias guardadas', async () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
@@ -79,7 +83,7 @@ describe('LocalStorageService', () => {
     };
 
     it('debe guardar nueva historia médica cuando está online', async () => {
-      (localStorageService.getMedicalHistories as jest.Mock).mockResolvedValue([]);
+      jest.spyOn(localStorageService, 'getMedicalHistories').mockResolvedValue([]);
       (apiService.createMedicalHistory as jest.Mock).mockResolvedValue({
         success: true,
         data: mockHistory,
@@ -96,7 +100,7 @@ describe('LocalStorageService', () => {
         isConnected: false,
         isInternetReachable: false,
       });
-      (localStorageService.getMedicalHistories as jest.Mock).mockResolvedValue([]);
+      jest.spyOn(localStorageService, 'getMedicalHistories').mockResolvedValue([]);
 
       await localStorageService.saveMedicalHistory(mockHistory);
 
@@ -108,7 +112,7 @@ describe('LocalStorageService', () => {
       const existingHistory = { ...mockHistory };
       const updatedHistory = { ...mockHistory, diagnosis: 'Neumonía' };
 
-      (localStorageService.getMedicalHistories as jest.Mock).mockResolvedValue([existingHistory]);
+      jest.spyOn(localStorageService, 'getMedicalHistories').mockResolvedValue([existingHistory]);
       (apiService.updateMedicalHistory as jest.Mock).mockResolvedValue({
         success: true,
         data: updatedHistory,

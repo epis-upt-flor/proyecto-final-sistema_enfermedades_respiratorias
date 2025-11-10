@@ -158,6 +158,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Tendencias temporales
 - ✅ Reportes geográficos
 - ✅ Analytics de síntomas
+- ✅ Predicción de tendencias, detección de anomalías y forecast de demanda (Analytics ML suite)
 
 ### 📱 Mobile
 - ✅ App completa React Native
@@ -198,9 +199,9 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - **Testing Mobile**: 50+ tests implementados (unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
 
 ### 🚧 En Progreso
-- Incrementar cobertura de tests front/mobile >80%
+- Incrementar cobertura de tests front/mobile >80 % (nuevas suites web para `AlertConsole`, `TemporalTrends`, `Analytics`)
 - Optimizaciones de performance y seguridad avanzada
-- Integraciones externas (FHIR, APIs de medicamentos) siguientes fases
+- Integraciones externas: cliente FHIR + parser HL7 listos; próximos pasos publicados en Fase 8 (endpoints, interoperabilidad hospitalaria)
 
 ## 🤝 Contribución
 

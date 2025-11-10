@@ -88,6 +88,12 @@ ai-services/
 - Recomendaciones de tratamiento personalizadas
 - Análisis de riesgo y planificación de seguimiento
 
+### Analytics & Business Intelligence (Nuevo)
+- Predicción de tendencias por enfermedad (`DiseaseTrendPredictor`)
+- Detección estadística de anomalías y clusters de riesgo (`StatisticalAnomalyDetector`, `PatientRiskClusterer`)
+- Forecast de demanda de recursos médicos (`HealthcareDemandForecaster`)
+- Soporte para dashboards ejecutivos y modelos epidemiológicos
+
 ### API REST Robusta
 - Endpoints para procesamiento de historias médicas con circuit breakers
 - Análisis de síntomas en tiempo real con cache inteligente
@@ -333,6 +339,9 @@ Los logs se generan en formato JSON estructurado con los siguientes niveles:
 
 ### Ejecutar Tests
 ```bash
+# Instalar dependencias de testing
+pip install -r requirements-test.txt
+
 # Tests unitarios
 pytest tests/
 

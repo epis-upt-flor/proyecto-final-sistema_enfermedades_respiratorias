@@ -19,7 +19,6 @@ import {
   FAB,
   Portal,
   Modal,
-  Button,
   IconButton,
 } from 'react-native-paper';
 import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';

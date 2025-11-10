@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -25,6 +25,33 @@ const AIAnalysisScreen: React.FC = () => {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearProgressInterval = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  };
+
+  const clearResetTimeout = () => {
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = null;
+    }
+  };
+
+  const cleanupTimers = () => {
+    clearProgressInterval();
+    clearResetTimeout();
+  };
+
+  useEffect(() => {
+    return () => {
+      cleanupTimers();
+    };
+  }, []);
 
   // Síntomas predefinidos para análisis
   const availableSymptoms = [
@@ -59,12 +86,14 @@ const AIAnalysisScreen: React.FC = () => {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
 
+    cleanupTimers();
+
     try {
       // Simular análisis con IA
-      const progressInterval = setInterval(() => {
+      progressIntervalRef.current = setInterval(() => {
         setAnalysisProgress(prev => {
           if (prev >= 100) {
-            clearInterval(progressInterval);
+            clearProgressInterval();
             return 100;
           }
           return prev + 20;
@@ -78,15 +107,21 @@ const AIAnalysisScreen: React.FC = () => {
       const mockAnalysis = generateMockAnalysis(selectedSymptoms);
       setAnalysis(mockAnalysis);
 
-      setTimeout(() => {
-        setIsAnalyzing(false);
-        setAnalysisProgress(0);
-      }, 1000);
+      await new Promise(resolve => {
+        resetTimeoutRef.current = setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          clearResetTimeout();
+          resolve(undefined);
+        }, 1000);
+      });
 
     } catch (error) {
       setIsAnalyzing(false);
       setAnalysisProgress(0);
       Alert.alert('Error', 'No se pudo realizar el análisis');
+    } finally {
+      clearProgressInterval();
     }
   };
 

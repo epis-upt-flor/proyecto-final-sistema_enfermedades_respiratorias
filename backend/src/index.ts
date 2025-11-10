@@ -21,6 +21,7 @@ import exportRoutes from './routes/exportRoutes';
 import wearableRoutes from './routes/wearableRoutes';
 import appointmentsRoutes from './routes/appointmentsRoutes';
 import prescriptionRoutes from './routes/prescriptionRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -145,6 +146,7 @@ class App {
     this.app.use('/api/v1/medical-histories', medicalHistoryRoutes);
     this.app.use('/api/v1/symptom-analyzer', symptomAnalyzerRoutes);
     this.app.use('/api/v1/dashboard', dashboardRoutes);
+    this.app.use('/api/v1/analytics', analyticsRoutes);
     this.app.use('/api/v1/upload', fileUploadRoutes);
     this.app.use('/api/v1/export', exportRoutes);
     this.app.use('/api/v1/wearables', wearableRoutes);

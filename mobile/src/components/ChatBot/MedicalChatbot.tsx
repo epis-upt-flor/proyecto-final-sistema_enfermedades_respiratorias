@@ -18,8 +18,18 @@ import {
 } from 'react-native';
 import { Card, Avatar, Chip, Button, Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { aiService, AISymptomAnalysis } from '../services/aiService';
-import { localStorageService } from '../services/localStorage';
+import { aiService, AISymptomAnalysis } from '../../services/aiService';
+import {
+  isEmergencyMessage,
+  isSymptomDescription,
+  getCategoryDisplayName,
+  getTrendEmoji,
+  getTrendText,
+  getUrgencyEmoji,
+  getUrgencyText,
+  parseSymptomsFromText,
+  generateAnalysisResponse,
+} from './medicalChatbotUtils';
 
 // Types
 interface ChatMessage {
@@ -106,7 +116,7 @@ const MedicalChatbot: React.FC = () => {
     const lowerMessage = message.toLowerCase();
 
     // Check for emergency keywords
-    if (this.isEmergencyMessage(lowerMessage)) {
+    if (isEmergencyMessage(lowerMessage)) {
       addBotMessage(
         '🚨 **EMERGENCIA MÉDICA DETECTADA** 🚨\n\n' +
         'Si estás experimentando una emergencia médica:\n\n' +
@@ -127,7 +137,7 @@ const MedicalChatbot: React.FC = () => {
     }
 
     // Check if user is describing symptoms
-    if (this.isSymptomDescription(lowerMessage)) {
+    if (isSymptomDescription(lowerMessage)) {
       await analyzeSymptoms(message);
       return;
     }
@@ -222,7 +232,7 @@ const MedicalChatbot: React.FC = () => {
       let response = '**Recomendaciones Generales de Salud:**\n\n';
       
       Object.entries(recommendations).forEach(([category, items]) => {
-        const categoryName = this.getCategoryDisplayName(category);
+        const categoryName = getCategoryDisplayName(category);
         response += `**${categoryName}:**\n`;
         items.forEach(item => {
           response += `• ${item}\n`;
@@ -264,8 +274,8 @@ const MedicalChatbot: React.FC = () => {
         return;
       }
 
-      const trendEmoji = this.getTrendEmoji(trends.overallTrend);
-      const trendText = this.getTrendText(trends.overallTrend);
+      const trendEmoji = getTrendEmoji(trends.overallTrend);
+      const trendText = getTrendText(trends.overallTrend);
       
       let response = `${trendEmoji} **Análisis de Tendencia de Síntomas**\n\n`;
       response += `**Tendencia General:** ${trendText}\n\n`;
@@ -313,158 +323,6 @@ const MedicalChatbot: React.FC = () => {
   };
 
   // Parse symptoms from text description
-  const parseSymptomsFromText = (text: string) => {
-    const symptoms = [];
-    const words = text.toLowerCase().split(/\s+/);
-    
-    // Common symptom patterns
-    const symptomPatterns = [
-      { pattern: /tos/i, symptom: 'tos', severity: 'moderate' as const },
-      { pattern: /fiebre/i, symptom: 'fiebre', severity: 'moderate' as const },
-      { pattern: /dolor.*pecho/i, symptom: 'dolor en el pecho', severity: 'severe' as const },
-      { pattern: /dificultad.*respir/i, symptom: 'dificultad respiratoria', severity: 'severe' as const },
-      { pattern: /dolor.*cabeza/i, symptom: 'dolor de cabeza', severity: 'moderate' as const },
-      { pattern: /fatiga|cansancio/i, symptom: 'fatiga', severity: 'mild' as const },
-      { pattern: /nausea|vomito/i, symptom: 'nausea', severity: 'moderate' as const },
-    ];
-
-    symptomPatterns.forEach(({ pattern, symptom, severity }) => {
-      if (pattern.test(text)) {
-        symptoms.push({
-          symptom,
-          severity,
-          duration: 'desconocida',
-        });
-      }
-    });
-
-    return symptoms;
-  };
-
-  // Generate analysis response
-  const generateAnalysisResponse = (analysis: AISymptomAnalysis) => {
-    const urgencyEmoji = this.getUrgencyEmoji(analysis.urgencyLevel);
-    const urgencyText = this.getUrgencyText(analysis.urgencyLevel);
-    
-    let response = `${urgencyEmoji} **Análisis de Síntomas**\n\n`;
-    response += `**Nivel de Urgencia:** ${urgencyText}\n`;
-    response += `**Puntuación de Severidad:** ${(analysis.severityScore * 100).toFixed(0)}%\n`;
-    response += `**Confianza del Análisis:** ${(analysis.confidenceScore * 100).toFixed(0)}%\n\n`;
-
-    if (analysis.classification.possibleConditions.length > 0) {
-      response += `**Posibles Condiciones:**\n`;
-      analysis.classification.possibleConditions.forEach(condition => {
-        response += `• ${condition.condition} (${(condition.probability * 100).toFixed(0)}%)\n`;
-      });
-      response += '\n';
-    }
-
-    if (analysis.recommendations.immediate.length > 0) {
-      response += `**Acciones Inmediatas:**\n`;
-      analysis.recommendations.immediate.forEach(rec => {
-        response += `• ${rec}\n`;
-      });
-      response += '\n';
-    }
-
-    if (analysis.warningSigns.length > 0) {
-      response += `**⚠️ Signos de Alerta:**\n`;
-      analysis.warningSigns.forEach(sign => {
-        response += `• ${sign}\n`;
-      });
-      response += '\n';
-    }
-
-    if (analysis.followUpRequired) {
-      response += `**📋 Seguimiento Requerido:** Sí\n\n`;
-    }
-
-    const suggestions = [
-      'Ver recomendaciones detalladas',
-      'Analizar tendencias',
-      'Contactar médico',
-    ];
-
-    if (analysis.urgencyLevel === 'high') {
-      suggestions.unshift('🚨 EMERGENCIA - Llamar 911');
-    }
-
-    return { content: response, suggestions };
-  };
-
-  // Utility methods
-  private isEmergencyMessage = (message: string): boolean => {
-    const emergencyKeywords = [
-      'emergencia', 'urgencia', 'grave', 'crítico', 'morir', 'muerte',
-      'infarto', 'derrame', 'convulsión', 'sangrado severo',
-      'dificultad respiratoria severa', 'dolor pecho intenso'
-    ];
-    
-    return emergencyKeywords.some(keyword => message.includes(keyword));
-  };
-
-  private isSymptomDescription = (message: string): boolean => {
-    const symptomKeywords = [
-      'tengo', 'siento', 'me duele', 'tengo dolor', 'síntoma',
-      'tos', 'fiebre', 'dolor', 'fatiga', 'nausea', 'vomito'
-    ];
-    
-    return symptomKeywords.some(keyword => message.includes(keyword));
-  };
-
-  private getCategoryDisplayName = (category: string): string => {
-    const names: Record<string, string> = {
-      respiratory: 'Respiratorias',
-      fever: 'Fiebre',
-      pain: 'Dolor',
-      general: 'Generales',
-    };
-    
-    return names[category] || category;
-  };
-
-  private getTrendEmoji = (trend: string): string => {
-    const emojis: Record<string, string> = {
-      improving: '📈',
-      worsening: '📉',
-      stable: '➡️',
-      insufficient_data: '❓',
-    };
-    
-    return emojis[trend] || '❓';
-  };
-
-  private getTrendText = (trend: string): string => {
-    const texts: Record<string, string> = {
-      improving: 'Mejorando',
-      worsening: 'Empeorando',
-      stable: 'Estable',
-      insufficient_data: 'Datos insuficientes',
-    };
-    
-    return texts[trend] || 'Desconocido';
-  };
-
-  private getUrgencyEmoji = (urgency: string): string => {
-    const emojis: Record<string, string> = {
-      low: '🟢',
-      medium: '🟡',
-      high: '🔴',
-    };
-    
-    return emojis[urgency] || '❓';
-  };
-
-  private getUrgencyText = (urgency: string): string => {
-    const texts: Record<string, string> = {
-      low: 'Baja',
-      medium: 'Media',
-      high: 'Alta',
-    };
-    
-    return texts[urgency] || 'Desconocida';
-  };
-
   // Render message
   const renderMessage = (message: ChatMessage) => {
     const isUser = message.type === 'user';
@@ -553,11 +411,13 @@ const MedicalChatbot: React.FC = () => {
           placeholder="Describe tus síntomas o haz una pregunta..."
           multiline
           maxLength={500}
+          testID="chatbot-input"
         />
         <TouchableOpacity
           style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
           onPress={sendMessage}
           disabled={!inputText.trim() || isTyping}
+          testID="chatbot-send-button"
         >
           <Icon name="send" size={24} color={inputText.trim() ? "#007AFF" : "#999"} />
         </TouchableOpacity>

@@ -48,6 +48,9 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Analytics geográficos por ubicación
 - ✅ Análisis de síntomas más frecuentes
 - ✅ Clasificación por severidad (bajo, medio, alto, severo)
+- ✅ Dashboard ejecutivo (KPIs de alertas, IA, citas, satisfacción)
+- ✅ Predicción temprana de brotes epidemiológicos
+- ✅ Endpoints REST para analytics predictivo (`/api/v1/analytics/*`)
 
 #### **6. Gestión de Archivos**
 - ✅ Subida de imágenes médicas
@@ -98,6 +101,13 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Validación de datos robusta con Joi
 - ✅ TypeScript con configuración optimizada para CI/CD
 
+#### **13. Integraciones HL7 / FHIR** *(En progreso)*
+- ✅ Cliente FHIR configurable con soporte CRUD, búsqueda y bundles transaccionales
+- ✅ Parser HL7 v2 (segmentos MSH/PID/OBR/OBX) y conversor a recursos FHIR `Observation`
+- ✅ Soporte HL7 v3 (XML) mediante `xml2js`
+- ✅ Pruebas unitarias dedicadas (`npm run test -- fhirService`, `npm run test -- hl7Parser`)
+- ⏳ Publicación de endpoints REST externos y flujos de interoperabilidad hospitalaria
+
 ## 🏗️ Arquitectura Técnica
 
 ### **Stack Tecnológico:**
@@ -108,11 +118,12 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - **Joi** - Validación de datos
 - **Winston** - Logging
 - **Helmet** - Seguridad
-- **Axios** - Cliente HTTP para IA
+- **Axios** - Cliente HTTP para IA y FHIR
 - **Multer** - Manejo de archivos
 - **Sharp** - Procesamiento de imágenes
 - **PDFKit** - Generación de PDFs
 - **CSV-Writer** - Exportación CSV
+- **xml2js** - Procesamiento de mensajes HL7 v3 (XML)
 - **Swagger** - Documentación API
 
 ### **Estructura del Proyecto:**
@@ -144,7 +155,9 @@ backend/
 │   ├── services/           # Servicios de negocio
 │   │   ├── aiIntegration.ts
 │   │   ├── fileUploadService.ts
-│   │   └── exportService.ts
+│   │   ├── exportService.ts
+│   │   ├── analyticsService.ts
+│   │   └── epidemiologicalService.ts
 │   ├── validators/         # Validadores Joi
 │   │   ├── authValidators.ts
 │   │   └── medicalHistoryValidators.ts
@@ -482,6 +495,10 @@ npm run test:watch
 
 # Coverage report
 npm run test:coverage
+
+# Suites específicas recientes (HL7 / FHIR)
+npm run test -- fhirService
+npm run test -- hl7Parser
 ```
 
 ### **Tipos de Tests:**

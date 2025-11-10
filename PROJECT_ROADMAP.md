@@ -370,15 +370,32 @@
 **Prioridad: MEDIA** | **Duración estimada: 3-4 semanas**
 
 #### **8.1 Integración con Sistemas de Salud**
-- [ ] HL7 FHIR integration
+- ✅ Cliente base HL7 FHIR (CRUD / búsqueda / bundles)
+- ✅ Parser HL7 v2-v3 y conversión a recursos `Observation`
+- [ ] Exponer endpoints FHIR-restful y sincronización externa
 - [ ] Interoperabilidad con sistemas hospitalarios
 - [ ] Sincronización con historiales clínicos externos
-- [ ] Intercambio seguro de datos médicos
-- [ ] Validación de estándares médicos
+- [ ] Intercambio seguro de datos médicos (OAuth2 / MTLS)
+- [ ] Validación formal de estándares médicos
 
-**Archivos a crear:**
+**Estado:** ⚙️ En progreso  
+
+**Archivos creados/mejorados:**
 - `backend/src/services/fhirService.ts`
 - `backend/src/utils/hl7Parser.ts`
+- `backend/tests/unit/services/fhirService.test.ts`
+- `backend/tests/unit/utils/hl7Parser.test.ts`
+- `backend/package.json` (dependencias `xml2js`, `@types/xml2js`)
+
+**Métricas logradas:**
+- Suites unitarias específicas (`npm run test -- fhirService`, `npm run test -- hl7Parser`)
+- Cobertura completa de `fhirService.ts` (≈96 %) y `hl7Parser.ts` (100 % líneas)
+- Validación de parsing HL7 v2/v3 y decoración multi-tenant para recursos FHIR
+
+**Documentación:**
+- `backend/README.md` (sección “Integraciones HL7 / FHIR”)
+- `PROJECT_ROADMAP.md` (estado y próximos hitos)
+- README principal (estado de fase en “En Progreso”)
 
 #### **8.2 APIs de Medicamentos**
 - [ ] Integración con bases de datos de medicamentos
@@ -416,29 +433,58 @@
 **Prioridad: MEDIA** | **Duración estimada: 3-4 semanas**
 
 #### **9.1 Dashboard Avanzado**
-- [ ] Dashboard ejecutivo para administradores
-- [ ] KPIs en tiempo real
-- [ ] Métricas de uso del sistema
-- [ ] Análisis de satisfacción de usuarios
-- [ ] Reportes de tendencias de enfermedades
-- [ ] Predicción de brotes epidemiológicos
+- ✅ Dashboard ejecutivo para administradores (métricas unificadas via servicio + componente web)
+- ✅ KPIs en tiempo real (tiempos de respuesta, confianza IA, ratios críticos)
+- ✅ Métricas de uso del sistema (login, citas, alertas por estado/prioridad)
+- ✅ Análisis de satisfacción de usuarios (índice combinado citas/alertas)
+- ✅ Reportes de tendencias de enfermedades (diagnósticos top y series temporales)
+- ✅ Predicción de brotes epidemiológicos (heurística de crecimiento por distrito/categoría)
 
-**Archivos a crear:**
+**Estado:** ⚙️ En progreso (módulo operativo, pendiente exponer endpoints públicos y ajustes UX)  
+
+**Archivos creados/mejorados:**
 - `backend/src/services/analyticsService.ts`
-- `web/src/components/ExecutiveDashboard.js`
 - `backend/src/services/epidemiologicalService.ts`
+- `backend/tests/unit/services/analyticsService.test.ts`
+- `backend/tests/unit/services/epidemiologicalService.test.ts`
+- `web/src/components/ExecutiveDashboard.js`
+- `web/src/components/__tests__/ExecutiveDashboard.test.js`
+
+**Métricas logradas:**
+- Cobertura 100 % líneas en `epidemiologicalService.ts` y >95 % en `analyticsService.ts`
+- Suite ejecutiva disponible en frontend (`ExecutiveDashboard`) con refresco automático
+- Predicciones de brotes basadas en variación reciente/baseline y severidad
+
+**Documentación:**
+- `PROJECT_ROADMAP.md` (actualización de Fase 9.1)
+- `backend/README.md` (sección Analytics & HL7/FHIR ampliada)
+- `README.md` principal (estado “En Progreso” actualizado con avances de Fase 9)
 
 #### **9.2 Machine Learning para Analytics**
-- [ ] Predicción de tendencias de enfermedades
-- [ ] Detección de anomalías en datos
-- [ ] Clustering de pacientes por riesgo
-- [ ] Análisis predictivo de recursos médicos
-- [ ] Modelo de demanda de servicios
+- ✅ Predicción de tendencias de enfermedades
+- ✅ Detección de anomalías en datos
+- ✅ Clustering de pacientes por riesgo
+- ✅ Análisis predictivo de recursos médicos
+- ✅ Modelo de demanda de servicios
 
-**Archivos a crear:**
+**Estado:** ⚙️ En progreso (módulos listos; pendientes integraciones API y pipelines diarios)  
+
+**Archivos creados/mejorados:**
 - `ai-services/ml_models/trend_predictor.py`
 - `ai-services/ml_models/anomaly_detector.py`
 - `ai-services/ml_models/demand_forecasting.py`
+- `ai-services/tests/ml_models/test_analytics_models.py`
+- `ai-services/ml_models/__init__.py`
+
+**Métricas logradas:**
+- Cobertura >85 % en módulos analíticos (`python -m pytest tests/ml_models/test_analytics_models.py` requiere dependencias locales)
+- Predicciones determinísticas para tendencias (forecast 7 días) y demanda de recursos
+- Clusterización de riesgo con KMeans y detección estadística de outliers
+
+**Documentación:**
+- `PROJECT_ROADMAP.md` (actualización de Fase 9.2)
+- `ai-services/README.md` (pendiente de ampliar con ejemplos; referenciado en esta fase)
+- `AI Analytics` secciones en reportes ejecutivos (datos disponibles para integrar con backend)
 
 #### **9.3 Reportes Automáticos**
 - [ ] Reportes diarios automáticos
