@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './ChatBot.css';
+import { API_BASE, AI_BASE_URL, LEGACY_API_BASE } from '../utils/apiBase';
 
 function ChatBot() {
   const [sessionId, setSessionId] = useState(null);
@@ -13,7 +14,6 @@ function ChatBot() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false); // Cambiado a false para mostrar chat directamente
   const messagesEndRef = useRef(null);
 
   // Initialize conversation session
@@ -23,7 +23,7 @@ function ChatBot() {
 
   const initializeSession = async () => {
     try {
-      const response = await axios.post('http://localhost:3001/api/chat-conversations', {
+      const response = await axios.post(`${LEGACY_API_BASE}/chat-conversations`, {
         metadata: {
           source: 'web',
           language: 'es'
@@ -49,7 +49,7 @@ function ChatBot() {
     
     try {
       await axios.post(
-        `http://localhost:3001/api/chat-conversations/${sessionId}/messages`,
+        `${LEGACY_API_BASE}/chat-conversations/${sessionId}/messages`,
         {
           role,
           content,
@@ -80,7 +80,6 @@ function ChatBot() {
       'pecho', 'picazón', 'lagrimeo', 'goteo nasal', 'malestar general'
     ];
     
-    const words = text.toLowerCase().split(/\s+/);
     const foundSymptoms = [];
     const seenSymptoms = new Set();
     
@@ -93,7 +92,7 @@ function ChatBot() {
     }
     
     // Also check for common symptom phrases
-    const phrases = text.toLowerCase().match(/(tos|fiebre|dolor|dificultad)[^\.,;]*/gi);
+    const phrases = text.toLowerCase().match(/(tos|fiebre|dolor|dificultad)[^.,;]*/gi);
     if (phrases) {
       phrases.forEach(phrase => {
         const cleaned = phrase.trim();
@@ -138,7 +137,7 @@ function ChatBot() {
           const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
           
           const mlResponse = await axios.post(
-            'http://localhost:3001/api/v1/symptom-analyzer/ml-analyze',
+            `${API_BASE}/symptom-analyzer/ml-analyze`,
             {
               symptoms: extractedSymptoms,
               patient_age: 35, // Could be extracted from user profile
@@ -169,7 +168,7 @@ function ChatBot() {
         }));
       
       // Call the conversational AI service
-      const response = await axios.post('http://localhost:8000/api/v1/analyze', {
+      const response = await axios.post(`${AI_BASE_URL}/analyze`, {
         message: currentInput,
         conversation_history: conversationHistory,
         context: {
@@ -404,7 +403,6 @@ function ChatBot() {
   ];
 
   const handleQuickAction = (action) => {
-    setShowWelcome(false);
     let question = '';
     
     switch(action.id) {
@@ -438,7 +436,7 @@ function ChatBot() {
       .replace(/#{3}\s?(.*?)$/gm, '<h4>$1</h4>')
       .replace(/#{2}\s?(.*?)$/gm, '<h3>$1</h3>')
       .replace(/#{1}\s?(.*?)$/gm, '<h2>$1</h2>')
-      .replace(/^\•\s/gm, '• ')
+      .replace(/^•\s/gm, '• ')
       .replace(/^-\s/gm, '• ')
       .replace(/\n/g, '<br />');
     
@@ -449,17 +447,6 @@ function ChatBot() {
     const formatted = formatMessage(text);
     return <div dangerouslySetInnerHTML={{ __html: formatted }} />;
   };
-
-  const startConversation = () => {
-    setShowWelcome(false);
-    const welcomeMessage = {
-      type: 'bot',
-      text: '¡Hola! Soy tu asistente médico de Respicare. Estoy aquí para ayudarte con información sobre salud respiratoria, síntomas y orientación médica. ¿En qué puedo ayudarte hoy?',
-      timestamp: new Date()
-    };
-    setMessages([welcomeMessage]);
-  };
-
   return (
     <div className="chatbot-container">
       <div className="chatbot-header">

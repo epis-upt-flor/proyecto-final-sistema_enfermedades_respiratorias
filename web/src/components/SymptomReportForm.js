@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './SymptomReportForm.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 const DISTRICTS = [
   'Centro de Tacna',
@@ -161,7 +162,7 @@ function SymptomReportForm({ onClose, onSuccess }) {
 
       // Submit report
       const response = await axios.post(
-        'http://localhost:3001/api/symptom-reports',
+        `${LEGACY_API_BASE}/symptom-reports`,
         reportData
       );
 

@@ -1,8 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
 import AlertConsole from '../components/AlertConsole';
 import AppointmentCalendar from '../components/AppointmentCalendar';
+import { BACKEND_BASE_URL, AI_BASE_URL } from '../utils/apiBase';
+
+const tryFetch = async (urls, config) => {
+  let lastError;
+  for (const url of urls) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const response = await axios.get(url, config);
+      return { response, url };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+};
 
 function Dashboard() {
   const [backendStatus, setBackendStatus] = useState(null);
@@ -10,28 +25,41 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    checkServices();
-  }, []);
+  const backendApiRoot = useMemo(() => `${BACKEND_BASE_URL}/api`, [BACKEND_BASE_URL]);
+  const backendHealthCandidates = useMemo(
+    () => [`${BACKEND_BASE_URL}/health`, `${BACKEND_BASE_URL}/api/health`],
+    [BACKEND_BASE_URL]
+  );
+  const aiHealthUrl = useMemo(() => `${AI_BASE_URL}/health`, [AI_BASE_URL]);
+  const aiDocsUrl = useMemo(
+    () => `${AI_BASE_URL.replace(/\/api\/v\d+$/i, '')}/docs`,
+    [AI_BASE_URL]
+  );
 
-  const checkServices = async () => {
+  const checkServices = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       // Check Backend
-      const backendResponse = await axios.get('http://localhost:3001/api/health');
-      setBackendStatus(backendResponse.data);
+      const { response: backendResponse, url: resolvedBackendHealthUrl } = await tryFetch(
+        backendHealthCandidates
+      );
+      setBackendStatus({ ...backendResponse.data, resolvedUrl: resolvedBackendHealthUrl });
 
       // Check AI Services
-      const aiResponse = await axios.get('http://localhost:8000/api/v1/health');
+      const aiResponse = await axios.get(aiHealthUrl);
       setAiStatus(aiResponse.data);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [backendHealthCandidates, aiHealthUrl]);
+
+  useEffect(() => {
+    checkServices();
+  }, [checkServices]);
 
   return (
     <div className="dashboard-page">
@@ -75,7 +103,7 @@ function Dashboard() {
                       <p><strong>Uptime:</strong> {Math.floor(backendStatus.uptime)}s</p>
                     </div>
                   )}
-                  <a href="http://localhost:3001/api" target="_blank" rel="noopener noreferrer" className="service-link">
+                  <a href={backendApiRoot} target="_blank" rel="noopener noreferrer" className="service-link">
                     Ver API →
                   </a>
                 </div>
@@ -92,7 +120,7 @@ function Dashboard() {
                       <p><strong>Servicio:</strong> {aiStatus.service}</p>
                     </div>
                   )}
-                  <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="service-link">
+                  <a href={aiDocsUrl} target="_blank" rel="noopener noreferrer" className="service-link">
                     Ver Docs →
                   </a>
                 </div>
@@ -109,13 +137,17 @@ function Dashboard() {
             <div className="endpoints-list">
               <div className="endpoint">
                 <span className="method method-get">GET</span>
-                <a href="http://localhost:3001/api/health" target="_blank" rel="noopener noreferrer">
+                <a
+                  href={backendStatus?.resolvedUrl || backendHealthCandidates[0]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   /api/health
                 </a>
               </div>
               <div className="endpoint">
                 <span className="method method-get">GET</span>
-                <a href="http://localhost:3001/api" target="_blank" rel="noopener noreferrer">
+                <a href={backendApiRoot} target="_blank" rel="noopener noreferrer">
                   /api
                 </a>
               </div>
@@ -129,7 +161,7 @@ function Dashboard() {
               </div>
               <div className="endpoint">
                 <span className="method method-get">GET</span>
-                <a href="http://localhost:8000/api/v1/health" target="_blank" rel="noopener noreferrer">
+                <a href={aiHealthUrl} target="_blank" rel="noopener noreferrer">
                   /api/v1/health (AI)
                 </a>
               </div>

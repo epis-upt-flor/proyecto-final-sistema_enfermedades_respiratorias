@@ -49,7 +49,7 @@ async def init_cache():
         _is_initializing = False
 
 
-async def get_cache_client():
+def get_cache_client():
     """Get cache client instance"""
     return cache_client
 

@@ -4,6 +4,7 @@ import L from 'leaflet';
 import axios from 'axios';
 import VirtualizedList from './VirtualizedList';
 import './InteractiveHeatMap.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -161,7 +162,7 @@ function InteractiveHeatMap() {
     setError(null);
     try {
       const response = await axios.get(
-        'http://localhost:3001/api/symptom-reports/heatmap'
+        `${LEGACY_API_BASE}/symptom-reports/heatmap`
       );
 
       if (response.data.success) {

@@ -13,8 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import './ShapDashboard.css';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
+import API_BASE from '../utils/apiBase';
 
 const FAIRNESS_OPTIONS = [
   { value: 'gender', label: 'Género' },

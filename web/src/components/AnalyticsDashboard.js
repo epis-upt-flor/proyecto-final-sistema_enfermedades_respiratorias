@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
   ResponsiveContainer,
@@ -14,6 +14,7 @@ import {
   Legend
 } from 'recharts';
 import './AnalyticsDashboard.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 function AnalyticsDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -21,18 +22,11 @@ function AnalyticsDashboard() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-    // Auto-refresh every 5 minutes
-    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/analytics/dashboard');
+      const response = await axios.get(`${LEGACY_API_BASE}/analytics/dashboard`);
       
       if (response.data.success) {
         setDashboardData(response.data.data);
@@ -46,7 +40,13 @@ function AnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {

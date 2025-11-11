@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import VirtualizedList from './VirtualizedList';
 import './DiseaseReports.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 const DISTRICTS = [
   'all',
@@ -112,7 +113,7 @@ function DiseaseReports() {
     setError(null);
     try {
       const response = await axios.get(
-        'http://localhost:3001/api/analytics/disease-reports',
+        `${LEGACY_API_BASE}/analytics/disease-reports`,
         {
           params: {
             district: selectedDistrict !== 'all' ? selectedDistrict : undefined,

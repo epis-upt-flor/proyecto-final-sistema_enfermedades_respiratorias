@@ -21,6 +21,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "seed": "ts-node src/scripts/seed.ts",
+    "seed:demo": "ts-node --transpile-only src/scripts/seedDemoData.ts",
     "seed:alerts": "ts-node src/scripts/seedAlerts.ts",
     "generate": "bash scripts/generate-code.sh",
     "generate:dtos": "ts-node src/generators/dto-generator.ts",

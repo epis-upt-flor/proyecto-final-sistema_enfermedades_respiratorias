@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -155,6 +156,48 @@ app.get('/api/health', (req, res) => {
 
 /**
  * @swagger
+ * /health:
+ *   get:
+ *     summary: Legacy health check
+ *     description: Compatibility endpoint that mirrors /api/health
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: System health status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 service:
+ *                   type: string
+ *                 version:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ *                 uptime:
+ *                   type: number
+ *                 memory:
+ *                   type: object
+ */
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'backend',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    metadata: {
+      aliasOf: '/api/health'
+    }
+  });
+});
+
+/**
+ * @swagger
  * /api:
  *   get:
  *     summary: API information
@@ -266,6 +309,239 @@ app.use('/api/analytics', simpleAnalyticsRoutes);
 // Mock Analytics Routes (for demonstration)
 const mockAnalyticsRoutes = require('./routes/mockAnalyticsRoutes');
 app.use('/api/analytics', mockAnalyticsRoutes);
+
+// ---------------------------------------------------------------------------
+// Mocked Appointments API (development-only)
+// ---------------------------------------------------------------------------
+
+const SAMPLE_APPOINTMENTS = [
+  {
+    id: 'apt-001',
+    patientId: 'patient-456',
+    doctorId: 'doctor-123',
+    scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    durationMinutes: 30,
+    status: 'scheduled',
+    reason: 'Consulta de control',
+    notes: 'Paciente con historial de asma leve',
+  },
+  {
+    id: 'apt-002',
+    patientId: 'patient-789',
+    doctorId: 'doctor-123',
+    scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    durationMinutes: 30,
+    status: 'scheduled',
+    reason: 'Evaluación de tos persistente',
+  },
+  {
+    id: 'apt-003',
+    patientId: 'patient-123',
+    doctorId: 'doctor-999',
+    scheduledAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    durationMinutes: 45,
+    status: 'completed',
+    reason: 'Control post tratamiento',
+  },
+];
+
+const normalizeArrayParam = (value) => {
+  if (!value) return undefined;
+  if (Array.isArray(value)) return value.flatMap((item) => String(item).split(','));
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+app.get('/api/v1/appointments', (req, res) => {
+  const { doctorId, patientId, status, from, to } = req.query;
+
+  let results = [...SAMPLE_APPOINTMENTS];
+
+  if (doctorId) {
+    results = results.filter((appointment) => appointment.doctorId === String(doctorId));
+  }
+
+  if (patientId) {
+    results = results.filter((appointment) => appointment.patientId === String(patientId));
+  }
+
+  const statusFilter = normalizeArrayParam(status);
+  if (statusFilter && statusFilter.length > 0) {
+    results = results.filter((appointment) => statusFilter.includes(appointment.status));
+  }
+
+  if (from) {
+    const fromDate = new Date(String(from));
+    results = results.filter(
+      (appointment) => new Date(appointment.scheduledAt).getTime() >= fromDate.getTime(),
+    );
+  }
+
+  if (to) {
+    const toDate = new Date(String(to));
+    results = results.filter(
+      (appointment) => new Date(appointment.scheduledAt).getTime() <= toDate.getTime(),
+    );
+  }
+
+  res.json({
+    success: true,
+    message: 'Listado de citas (mock)',
+    data: results,
+  });
+});
+
+const buildAvailabilitySlots = ({ doctorId, start, end, slotMinutes = 30 }) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const slots = [];
+
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return slots;
+  }
+
+  const busySlots = SAMPLE_APPOINTMENTS.filter(
+    (appointment) => appointment.doctorId === doctorId && appointment.status !== 'cancelled',
+  ).map((appointment) => {
+    const slotStart = new Date(appointment.scheduledAt);
+    const slotEnd = new Date(slotStart.getTime() + appointment.durationMinutes * 60 * 1000);
+    return { start: slotStart, end: slotEnd };
+  });
+
+  for (let cursor = new Date(startDate); cursor < endDate; cursor = new Date(cursor.getTime() + slotMinutes * 60 * 1000)) {
+    const slotEnd = new Date(cursor.getTime() + slotMinutes * 60 * 1000);
+    if (slotEnd > endDate) {
+      break;
+    }
+
+    const overlap = busySlots.some(
+      (busy) => cursor < busy.end && slotEnd > busy.start,
+    );
+
+    slots.push({
+      start: cursor.toISOString(),
+      end: slotEnd.toISOString(),
+      available: !overlap,
+    });
+  }
+
+  return slots;
+};
+
+app.get('/api/v1/appointments/doctor/:doctorId/availability', (req, res) => {
+  const { doctorId } = req.params;
+  const { start, end, slotMinutes } = req.query;
+
+  if (!start || !end) {
+    return res.status(400).json({
+      success: false,
+      message: 'Los parámetros start y end son obligatorios',
+    });
+  }
+
+  const slots = buildAvailabilitySlots({
+    doctorId,
+    start,
+    end,
+    slotMinutes: slotMinutes ? Number(slotMinutes) : 30,
+  });
+
+  return res.json({
+    success: true,
+    message: 'Disponibilidad generada (mock)',
+    data: slots,
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ML Monitoring proxy endpoints (bridge to AI Services for dev)
+// ---------------------------------------------------------------------------
+
+const AI_SERVICE_CANDIDATES = [
+  process.env.AI_SERVICE_URL ? process.env.AI_SERVICE_URL.replace(/\/$/, '') : null,
+  'http://ai-services:8000/api/v1',
+  'http://localhost:8000/api/v1',
+].filter(Boolean);
+
+const fetchFromAiService = async (path, options = {}) => {
+  let lastError;
+
+  for (const base of AI_SERVICE_CANDIDATES) {
+    const url = `${base}${path}`;
+    try {
+      const response = await axios.get(url, {
+        timeout: 8000,
+        ...options,
+      });
+      return response.data;
+    } catch (error) {
+      lastError = error;
+      console.warn(`AI service request failed for ${url}`, error.message);
+    }
+  }
+
+  throw lastError;
+};
+
+const monitoringRoutes = ['/api/analytics/ml/monitoring', '/api/v1/analytics/ml/monitoring'];
+const featureRoutes = ['/api/analytics/ml/features', '/api/v1/analytics/ml/features'];
+const fairnessRoutes = ['/api/analytics/ml/fairness', '/api/v1/analytics/ml/fairness'];
+
+app.get(monitoringRoutes, async (req, res) => {
+  try {
+    const params = {};
+    if (req.query.days) {
+      params.days = Number(req.query.days);
+    }
+    const data = await fetchFromAiService('/ml/monitoring/metrics', { params });
+    res.json({ success: true, data });
+  } catch (error) {
+    const status = error?.response?.status || 502;
+    res.status(status).json({
+      success: false,
+      message: error?.response?.data?.detail || error.message || 'Error al obtener métricas de monitoreo',
+    });
+  }
+});
+
+app.get(featureRoutes, async (req, res) => {
+  try {
+    const params = {};
+    if (req.query.top) {
+      params.top_n = Number(req.query.top);
+    }
+    const data = await fetchFromAiService('/ml/monitoring/features', { params });
+    res.json({ success: true, data });
+  } catch (error) {
+    const status = error?.response?.status || 502;
+    res.status(status).json({
+      success: false,
+      message: error?.response?.data?.detail || error.message || 'Error al obtener contribuciones de características',
+    });
+  }
+});
+
+app.get(fairnessRoutes, async (req, res) => {
+  try {
+    const params = {};
+    if (req.query.groupField) {
+      params.group_field = req.query.groupField;
+    }
+    if (req.query.highConfidenceThreshold) {
+      params.high_confidence_threshold = Number(req.query.highConfidenceThreshold);
+    }
+    const data = await fetchFromAiService('/ml/monitoring/fairness', { params });
+    res.json({ success: true, data });
+  } catch (error) {
+    const status = error?.response?.status || 502;
+    res.status(status).json({
+      success: false,
+      message: error?.response?.data?.detail || error.message || 'Error al obtener métricas de equidad',
+    });
+  }
+});
 
 // 404 handler
 app.use((req, res) => {

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import './AppointmentCalendar.css';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
+import API_BASE from '../utils/apiBase';
 
 const formatDateTime = (value) => {
   if (!value) return '—';
@@ -29,7 +28,7 @@ const AppointmentCalendar = ({ token }) => {
     return h;
   }, [token]);
 
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     setLoading(true);
     setMessage(null);
     try {
@@ -54,9 +53,9 @@ const AppointmentCalendar = ({ token }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId, headers, patientId]);
 
-  const loadAvailability = async () => {
+  const loadAvailability = useCallback(async () => {
     if (!doctorId.trim()) {
       setMessage({ type: 'error', text: 'Ingrese un ID de doctor para consultar disponibilidad.' });
       return;
@@ -89,11 +88,11 @@ const AppointmentCalendar = ({ token }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId, headers, selectedDate]);
 
   useEffect(() => {
     loadAppointments().catch(() => undefined);
-  }, []);
+  }, [loadAppointments]);
 
   return (
     <section className="appointment-calendar">

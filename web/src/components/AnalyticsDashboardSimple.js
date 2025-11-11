@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './AnalyticsDashboard.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 function AnalyticsDashboardSimple() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       console.log('Fetching dashboard data...');
-      const response = await axios.get('http://localhost:3001/api/analytics/mock-dashboard');
+      const response = await axios.get(`${LEGACY_API_BASE}/analytics/mock-dashboard`);
       console.log('Dashboard response:', response.data);
       
       if (response.data.success) {
@@ -30,7 +27,11 @@ function AnalyticsDashboardSimple() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   if (loading) {
     return (

@@ -557,6 +557,32 @@ docker-compose -f docker-compose.prod.yml build backend
 docker-compose -f docker-compose.prod.yml up -d --no-deps backend
 ```
 
+#### 7. Dependencias faltantes en el frontend web
+
+Si al compilar el frontend aparecen errores como `Module not found: Can't resolve 'react-window'`, reinstala las dependencias dentro del contenedor y reconstruye el servicio:
+
+```bash
+# Entorno de desarrollo
+docker-compose -f docker-compose.dev.yml run --rm web sh -c "rm -rf node_modules package-lock.json && npm install"
+docker-compose -f docker-compose.dev.yml up -d --build web
+```
+
+Para producción:
+
+```bash
+docker-compose -f docker-compose.prod.yml run --rm web sh -c "rm -rf node_modules package-lock.json && npm install"
+docker-compose -f docker-compose.prod.yml up -d --build web
+```
+
+Si trabajas sin Docker, ejecuta la limpieza directamente en la carpeta `web/`:
+
+```bash
+cd web
+rm -rf node_modules package-lock.json
+npm install
+npm start
+```
+
 ### Logs de Depuración
 
 ```bash

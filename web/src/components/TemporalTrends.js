@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './TemporalTrends.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 function TemporalTrends() {
   const [trendsData, setTrendsData] = useState(null);
@@ -26,15 +27,11 @@ function TemporalTrends() {
     { value: '1y', label: 'Último año' }
   ];
 
-  useEffect(() => {
-    fetchTrendsData();
-  }, [selectedPeriod, selectedDistrict, selectedCategory]);
-
-  const fetchTrendsData = async () => {
+  const fetchTrendsData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/analytics/temporal-trends', {
+      const response = await axios.get(`${LEGACY_API_BASE}/analytics/temporal-trends`, {
         params: {
           period: selectedPeriod,
           district: selectedDistrict !== 'all' ? selectedDistrict : undefined,
@@ -53,7 +50,11 @@ function TemporalTrends() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, selectedDistrict, selectedPeriod]);
+
+  useEffect(() => {
+    fetchTrendsData();
+  }, [fetchTrendsData]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

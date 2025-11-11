@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './MedicalReport.css';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
+import API_BASE from '../utils/apiBase';
 
 const DEFAULT_TEMPLATES = [
   { id: 'clinical-summary', name: 'Resumen Clínico' },

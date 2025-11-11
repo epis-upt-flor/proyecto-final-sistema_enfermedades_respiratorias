@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './HeatMap.css';
+import { LEGACY_API_BASE } from '../utils/apiBase';
 
 function HeatMap() {
   const [reportData, setReportData] = useState([]);
@@ -19,7 +20,7 @@ function HeatMap() {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get('http://localhost:3001/api/symptom-reports/heatmap');
+      const response = await axios.get(`${LEGACY_API_BASE}/symptom-reports/heatmap`);
       
       if (response.data.success && response.data.data) {
         // Transform backend data to frontend format
