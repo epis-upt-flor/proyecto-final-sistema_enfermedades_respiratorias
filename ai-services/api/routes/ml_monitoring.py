@@ -107,6 +107,46 @@ async def get_monitoring_metrics(days: int = 1) -> Dict[str, Any]:
         )
 
 
+@router.get("/v1/ml/monitoring/features")
+async def get_feature_contributions(top_n: int = 10) -> Dict[str, Any]:
+    """
+    Get aggregated SHAP feature contributions from the prediction monitor.
+    """
+    try:
+        monitor = get_monitor()
+        features = monitor.get_feature_influence(top_n=top_n)
+        return features
+    except Exception as e:
+        logger.error("Error getting feature contributions", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error getting feature contributions: {str(e)}"
+        )
+
+
+@router.get("/v1/ml/monitoring/fairness")
+async def get_fairness_metrics(
+    group_field: str = "gender",
+    high_confidence_threshold: float = 0.7
+) -> Dict[str, Any]:
+    """
+    Get fairness metrics for a given demographic group field.
+    """
+    try:
+        monitor = get_monitor()
+        metrics = monitor.fairness_metrics(
+            group_field=group_field,
+            high_confidence_threshold=high_confidence_threshold
+        )
+        return metrics
+    except Exception as e:
+        logger.error("Error getting fairness metrics", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error getting fairness metrics: {str(e)}"
+        )
+
+
 @router.get("/v1/ml/monitoring/anomalies")
 async def get_anomalies(window_size: int = 100) -> Dict[str, Any]:
     """

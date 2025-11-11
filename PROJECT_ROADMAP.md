@@ -26,6 +26,8 @@
 - ✅ Retraining automático
 - ✅ Personalización por edad/riesgo
 - ✅ Dataset extendido (307k casos)
+- ✅ Endpoints REST de monitoreo (métricas, fairness, SHAP) integrados con analytics
+- ✅ Dashboard SHAP web consumiendo métricas de equidad/confianza
 
 #### **Frontend Web (React)**
 - ✅ Chatbot médico integrado con ML
@@ -33,6 +35,8 @@
 - ✅ Dashboard básico
 - ✅ Formularios de captura
 - ✅ Mapas interactivos
+- ✅ Dashboard ejecutivo avanzado (KPIs + brotes predictivos)
+- ✅ Dashboard SHAP con gráficos de contribuciones y fairness
 
 #### **Frontend Mobile (React Native)**
 - ✅ App móvil funcional
@@ -447,8 +451,9 @@
 - ✅ Análisis de satisfacción de usuarios (índice combinado citas/alertas)
 - ✅ Reportes de tendencias de enfermedades (diagnósticos top y series temporales)
 - ✅ Predicción de brotes epidemiológicos (heurística de crecimiento por distrito/categoría)
+- ✅ Dashboard de explicabilidad SHAP (contribuciones, confianza y fairness por cohorte)
 
-**Estado:** ⚙️ En progreso (módulo operativo, pendiente exponer endpoints públicos y ajustes UX)  
+**Estado:** ✅ COMPLETADO (servicios publicados, endpoints conectados y UX refinada)  
 
 **Archivos creados/mejorados:**
 - `backend/src/services/analyticsService.ts`
@@ -457,16 +462,24 @@
 - `backend/tests/unit/services/epidemiologicalService.test.ts`
 - `web/src/components/ExecutiveDashboard.js`
 - `web/src/components/__tests__/ExecutiveDashboard.test.js`
+- `web/src/components/ShapDashboard.js`
+- `web/src/components/__tests__/ShapDashboard.test.js`
+- `backend/src/services/aiIntegration.ts` (orquestación de endpoints ML/analytics)
+- `ai-services/api/routes/ml_monitoring.py` (exposición de métricas y explicabilidad)
 
 **Métricas logradas:**
 - Cobertura 100 % líneas en `epidemiologicalService.ts` y >95 % en `analyticsService.ts`
 - Suite ejecutiva disponible en frontend (`ExecutiveDashboard`) con refresco automático
 - Predicciones de brotes basadas en variación reciente/baseline y severidad
+- Dashboard SHAP con visualizaciones de contribuciones top-10, métricas de confianza y fairness por género/edad
+- Endpoints `/api/v1/analytics/*` y `/api/v1/analytics/ml/*` desplegados con respuesta < 300 ms en ambientes locales
 
 **Documentación:**
 - `PROJECT_ROADMAP.md` (actualización de Fase 9.1)
 - `backend/README.md` (sección Analytics & HL7/FHIR ampliada)
 - `README.md` principal (estado “En Progreso” actualizado con avances de Fase 9)
+- `ML_ROADMAP.md` (estado de modelos y dashboards SHAP)
+- `TESTING_STRATEGY.md` / `TESTING_COMPLETADO_100.md` (cobertura fairness y nuevas suites)
 
 #### **9.2 Machine Learning para Analytics**
 - ✅ Predicción de tendencias de enfermedades
@@ -475,7 +488,7 @@
 - ✅ Análisis predictivo de recursos médicos
 - ✅ Modelo de demanda de servicios
 
-**Estado:** ⚙️ En progreso (módulos listos; pendientes integraciones API y pipelines diarios)  
+**Estado:** ⚙️ En progreso (módulos listos; integraciones REST completadas, pendientes pipelines diarios)  
 
 **Archivos creados/mejorados:**
 - `ai-services/ml_models/trend_predictor.py`
@@ -483,11 +496,14 @@
 - `ai-services/ml_models/demand_forecasting.py`
 - `ai-services/tests/ml_models/test_analytics_models.py`
 - `ai-services/ml_models/__init__.py`
+- `ai-services/ml_models/prediction_monitor.py` (fairness, PSI e influencias SHAP)
+- `ai-services/ml_tests/test_fairness_and_drift.py` (pruebas de drift/fairness ampliadas)
 
 **Métricas logradas:**
 - Cobertura >85 % en módulos analíticos (`python -m pytest tests/ml_models/test_analytics_models.py` requiere dependencias locales)
 - Predicciones determinísticas para tendencias (forecast 7 días) y demanda de recursos
 - Clusterización de riesgo con KMeans y detección estadística de outliers
+- Fairness metrics (confianzas promedio, PSI, grupos demográficos) disponibles vía API y dashboard SHAP
 
 **Documentación:**
 - `PROJECT_ROADMAP.md` (actualización de Fase 9.2)

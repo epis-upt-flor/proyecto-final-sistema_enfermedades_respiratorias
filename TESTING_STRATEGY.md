@@ -86,6 +86,7 @@ RespiCare Testing Architecture
 - **Data Flow**: Flujo de datos entre componentes
 - **Error Handling**: Manejo de errores en cascada
 - **Performance**: Tiempos de respuesta y throughput
+- **Analytics/Monitoring**: Endpoints `/api/v1/analytics/*` y `/api/v1/analytics/ml/*` verifican KPIs, predicciones, explicabilidad SHAP y métricas de fairness
 
 ### 3. Pruebas de Patrones de Diseño
 
@@ -177,6 +178,7 @@ RespiCare Testing Architecture
 - **Adversarial Testing**: Inputs maliciosos al chatbot y servicios ML (ruido, mezcla idiomas, emoji).
 - **Data Quality Tests**: Validación de datasets con Great Expectations (disponible en backlog).
 - **Suite dedicada**: `ml_tests/test_fairness_and_drift.py` cubre PSI, fairness por cohortes, anomalías y exportaciones.
+- **Explicabilidad visual**: Verificación de API `ml-explanation` y dashboard `ShapDashboard` (React) para consistencia de factores positivos/negativos y confianza reportada.
 
 ### 10. Pruebas de Accesibilidad (A11y)
 - **Estándar**: WCAG 2.1 nivel AA.
@@ -261,7 +263,7 @@ RespiCare Testing Architecture
 | Backend API | 80% | 90%+ | ✅ 98% |
 | Web Frontend | 70% | 80%+ | ⚙️ ~62% (plan: 82% tras Sprints 12-13) |
 | Mobile App | 70% | 80%+ | ⚙️ ~68% (plan: 80% con suites offline/sync) |
-| AI Services | 85% | 95%+ | ⚙️ ~83% (suite `ml_tests` con fairness/drift) |
+| AI Services | 85% | 95%+ | ⚙️ ~83% (suite `ml_tests` con fairness/drift + endpoints `ml_monitoring`) |
 | APIs críticas | 90% | 95%+ | ✅ 94% |
 | Lógica crítica (auth, alertas, ML core) | 100% | 100% | ⚙️ 95% (gap en adversarial testing) |
 

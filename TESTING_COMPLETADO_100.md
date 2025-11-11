@@ -21,7 +21,7 @@ Se ha completado exitosamente la implementación del sistema de testing al 100% 
 | **CI/CD GitHub Actions** | ✅ 100% | 5 workflows | Pipeline completo |
 | **Tests Frontend Web** | ⚙️ En progreso | 40+ tests | ~62 % (meta 80 %) |
 | **Tests Mobile** | ⚙️ En progreso | 50+ tests | ~68 % (meta 80 %) |
-| **Tests ML (fairness/drift)** | ✅ 100% | 10+ tests | ~83 % (`ml_tests`) |
+| **Tests ML (fairness/drift)** | ✅ 100% | 12+ tests | ~83 % (`ml_tests` + endpoints `ml_monitoring`) |
 
 ---
 
@@ -409,7 +409,8 @@ Features avanzadas:
 ### ML (Monitoreo, Fairness y Drift)
 - **Suite dedicada:** `ml_tests/test_fairness_and_drift.py`
 - **Cobertura focalizada:** ~83 % sobre `ml_models.trend_predictor`, `ml_models.anomaly_detector`, `ml_models.prediction_monitor`
-- **Validaciones clave:** PSI, métricas de equidad por cohortes, detección de anomalías, exportación de logs
+- **Validaciones clave:** PSI, métricas de equidad por cohortes, detección de anomalías, exportación de logs y análisis de influencia SHAP
+- **Endpoints cubiertos:** `/api/v1/analytics/ml/metrics`, `/api/v1/analytics/ml/fairness`, `/api/v1/analytics/ml/contributions`
 - **Mocks/stubs:** SHAP, OpenAI y torch aislados en `tests/conftest.py` para CI
 - **Dependencias de prueba:** `motor`, `structlog`, `pydantic-settings` instaladas vía `requirements-test.txt`
 
@@ -422,6 +423,9 @@ Features avanzadas:
 - ✅ `web/tests/README.md` - Documentación completa de tests frontend
 - ✅ `PROJECT_ROADMAP.md` - Actualizado con estado 100%
 - ✅ `TESTING_COMPLETADO_100.md` - Este documento
+- ✅ `ML_ROADMAP.md` - Estado de analytics ML y dashboard SHAP
+- ✅ `README.md` - Resumen actualizado de dashboards ejecutivos y SHAP
+- ✅ `TESTING_STRATEGY.md` - Estrategia extendida con endpoints `ml_monitoring`
 
 ### Documentación de Tests
 Cada test suite incluye:
@@ -439,6 +443,8 @@ Cada test suite incluye:
 1. `backend/tests/integration/advanced-api.test.ts` - Tests de integración avanzados
 2. `.github/workflows/ci-cd-complete.yml` - Pipeline maestro de CI/CD
 3. `TESTING_COMPLETADO_100.md` - Este documento de resumen
+4. `web/src/components/__tests__/ShapDashboard.test.js` - Suite de explicabilidad visual
+5. `web/src/components/ShapDashboard.js` - Dashboard de métricas SHAP (cobertura acompañante)
 
 ### Archivos Mejorados
 1. `backend/tests/unit/controllers/exportController.test.ts` - 15+ tests (de 4 a 15+)
@@ -448,6 +454,8 @@ Cada test suite incluye:
 5. `.github/workflows/backend-tests.yml` - Jobs adicionales (E2E, audit, lint)
 6. `backend/tests/README.md` - Documentación completa actualizada
 7. `PROJECT_ROADMAP.md` - Estado 100% actualizado
+8. `ML_ROADMAP.md` - Integración de métricas SHAP/fairness
+9. `TESTING_STRATEGY.md` - Estrategia ampliada para endpoints de analytics ML
 
 ---
 

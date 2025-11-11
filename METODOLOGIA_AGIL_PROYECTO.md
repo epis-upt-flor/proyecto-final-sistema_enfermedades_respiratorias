@@ -144,12 +144,15 @@ graph TB
 - ✅ Componentes web `ExecutiveDashboard.js` con visualizaciones avanzadas
 - ✅ Predicciones de brotes, demanda y KPIs en tiempo real
 - ✅ Pruebas unitarias del dashboard (`ExecutiveDashboard.test.js`)
+- ✅ Dashboard de explicabilidad `ShapDashboard.js` + pruebas (`ShapDashboard.test.js`) integrando métricas de confianza y fairness desde AI Services
 
 #### **Sprint 12: Modelos ML Predictivos y Cobertura**
 - ✅ Modelos ML (`trend_predictor.py`, `anomaly_detector.py`, `demand_forecasting.py`)
 - ✅ Suite `tests/ml_models/test_analytics_models.py` con pytest
 - ✅ Instalación/ajuste de `requirements-test.txt` (pytest-asyncio, httpx<0.24, fakeredis)
 - ✅ Ejecución de `pytest` y pipeline ML documentado en `ML_ROADMAP.md`
+- ✅ Endpoints REST de monitoreo (`api/routes/ml_monitoring.py`) y actualizaciones en `prediction_monitor.py` para fairness/SHAP
+- ✅ Actualización de documentación (`README.md`, `PROJECT_ROADMAP.md`, `TESTING_*`, `ML_ROADMAP.md`) con cobertura y dashboards ML
 
 ---
 

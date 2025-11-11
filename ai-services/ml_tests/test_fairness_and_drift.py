@@ -129,6 +129,64 @@ def test_prediction_monitor_fallback_modes(monkeypatch, tmp_path):
     assert empty_monitor.detect_anomalies(window_size=5) == []
 
 
+def test_prediction_monitor_feature_influence(tmp_path):
+    monitor = PredictionMonitor(storage_path=str(tmp_path))
+
+    monitor.log_prediction(
+      symptoms=["tos", "fiebre"],
+      prediction={
+        "disease": "asma",
+        "confidence": 0.9,
+        "urgency_level": "medium",
+        "top_3_predictions": [],
+        "explanation": {
+          "method": "shap",
+          "raw_contributions": {
+            "positive_factors": [
+              {"feature_name": "tos", "shap_value": 0.45, "feature_importance": 0.45},
+            ],
+            "negative_factors": [
+              {"feature_name": "fiebre", "shap_value": -0.2, "feature_importance": 0.2},
+            ],
+          },
+        },
+      },
+      model_name="xgboost",
+    )
+
+    monitor.log_prediction(
+      symptoms=["disnea"],
+      prediction={
+        "disease": "neumonía",
+        "confidence": 0.75,
+        "urgency_level": "high",
+        "top_3_predictions": [],
+        "explanation": {
+          "method": "shap",
+          "raw_contributions": {
+            "positive_factors": [
+              {"feature_name": "disnea", "shap_value": 0.3, "feature_importance": 0.3},
+            ],
+            "decision_factors": [
+              {"feature_name": "tos", "shap_value": 0.1, "feature_importance": 0.1},
+            ],
+          },
+          "friendly": {
+            "key_factors": ["El síntoma 'disnea' aumenta la probabilidad de este diagnóstico"],
+          },
+        },
+      },
+      model_name="xgboost",
+    )
+
+    influence = monitor.get_feature_influence(top_n=5)
+
+    feature_names = [item["feature_name"] for item in influence["top_features"]]
+    assert "tos" in feature_names
+    assert any(item["feature_name"] == "disnea" for item in influence["top_features"])
+    assert influence["friendly_factors"][0]["description"].startswith("El síntoma 'disnea'")
+
+
 def test_trend_predictor_requires_min_support():
     df = pd.DataFrame(
         {

@@ -28,6 +28,10 @@ class SHAPDiseaseExplainer:
         self.feature_engineer = None
         self.explainer = None
         
+        self.vectorizer_feature_names = []
+        self.engineered_feature_names = []
+        self.feature_names = []
+
         if model_path:
             self.load_model(model_path)
     
@@ -46,6 +50,24 @@ class SHAPDiseaseExplainer:
             # Fallback for models without feature engineer
             from train_xgboost_model import AdvancedFeatureEngineering
             self.feature_engineer = AdvancedFeatureEngineering()
+
+        # Cache feature names for SHAP outputs
+        if hasattr(self.vectorizer, 'get_feature_names_out'):
+            self.vectorizer_feature_names = list(self.vectorizer.get_feature_names_out())
+        elif hasattr(self.vectorizer, 'get_feature_names'):
+            self.vectorizer_feature_names = list(self.vectorizer.get_feature_names())
+        else:
+            self.vectorizer_feature_names = []
+
+        if self.feature_engineer and hasattr(self.feature_engineer, 'get_feature_names'):
+            try:
+                self.engineered_feature_names = list(self.feature_engineer.get_feature_names())
+            except Exception:
+                self.engineered_feature_names = []
+        else:
+            self.engineered_feature_names = []
+
+        self.feature_names = self.vectorizer_feature_names + self.engineered_feature_names
         
         # Create SHAP explainer
         self.explainer = shap.TreeExplainer(self.model)
@@ -100,10 +122,21 @@ class SHAPDiseaseExplainer:
         # Get feature contributions
         contributions = []
         for i, value in enumerate(shap_values_for_prediction):
+            feature_name = None
+            if i < len(self.vectorizer_feature_names):
+                feature_name = self.vectorizer_feature_names[i]
+            else:
+                engineered_idx = i - len(self.vectorizer_feature_names)
+                if 0 <= engineered_idx < len(self.engineered_feature_names):
+                    feature_name = self.engineered_feature_names[engineered_idx]
+            if feature_name is None:
+                feature_name = f"feature_{i}"
+
             contributions.append({
                 'feature_index': i,
                 'shap_value': float(value),
-                'feature_importance': abs(float(value))
+                'feature_importance': abs(float(value)),
+                'feature_name': feature_name
             })
         
         # Sort by importance

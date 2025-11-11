@@ -235,13 +235,16 @@ User receives comprehensive prediction with full explainability
 - ✅ `ml_models/demand_forecasting.py` – Forecasting de demanda de recursos sanitarios (camas, personal, insumos).
 - ✅ `ml_models/__init__.py` – Exporta los nuevos modelos para uso en servicios externos.
 - ✅ `tests/ml_models/test_analytics_models.py` – Cobertura unitaria completa con `pytest` para los tres modelos (mocks de `pandas`/`numpy`).
-- ✅ `ml_tests/test_fairness_and_drift.py` – Suite enfocada en fairness, PSI, anomalías y exportaciones del monitor.
+- ✅ `ml_tests/test_fairness_and_drift.py` – Suite enfocada en fairness, PSI, anomalías, influencia de características y exportaciones del monitor.
 - ✅ `requirements-test.txt` actualizado con dependencias de testing (pytest, pytest-asyncio, httpx<0.24, fakeredis, scikit-learn 1.3.2, etc.).
+- ✅ `ml_models/prediction_monitor.py` – Extendido con captura de metadata demográfica y métricas avanzadas de equidad/SHAP.
+- ✅ API de monitoreo (`api/routes/ml_monitoring.py`) con endpoints REST para métricas, fairness y análisis SHAP conectados al backend.
 
 **Integración**:
 - ✅ Servicios backend (`analyticsService`, `epidemiologicalService`) consumen los modelos para alimentar KPI en tiempo real.
 - ✅ `ExecutiveDashboard` (web) muestra salidas predictivas, tendencias, riesgos y demanda proyectada.
 - ✅ Se exponen endpoints REST `/api/v1/analytics/...` que orquestan llamados a los modelos de analítica.
+- ✅ Dashboard SHAP web consume los endpoints de monitoreo ML para explicabilidad, confianza y fairness.
 
 **Resultados**:
 - ✅ Predicciones diarias/semanales de incidencia con intervalos de confianza.
@@ -383,12 +386,12 @@ User receives comprehensive prediction with full explainability
    - Scripts de ejecución automática
 5. ✅ Modelos de analítica predictiva (tendencias, anomalías, demanda) integrados con servicios de negocio.
 6. ✅ Visualizaciones ejecutivas y métricas predictivas conectadas al dashboard web.
+7. ✅ Dashboard SHAP en web con métricas de confianza, contribuciones e indicadores de fairness alimentado por endpoints ML.
 
 ### **Sugerencias Futuras** (Opcional):
-1. ⏳ Dashboard de visualizaciones SHAP
-2. ⏳ Análisis de tendencias temporales de predicciones
-3. ⏳ Más factores de riesgo (alergias, medicamentos, historial familiar)
-4. ⏳ Validación comparativa automática de modelos
+1. ⏳ Análisis de tendencias temporales de predicciones
+2. ⏳ Más factores de riesgo (alergias, medicamentos, historial familiar)
+3. ⏳ Validación comparativa automática de modelos
 
 ---
 
@@ -433,8 +436,11 @@ User receives comprehensive prediction with full explainability
 - ✅ `api/routes/model_retraining.py` - API endpoints de retraining
 - ✅ `generate_extended_dataset.py` - Generador de dataset extendido
 - ✅ `retrain_models_from_feedback.py` - Script de retraining desde feedback
-- ✅ `tests/ml_models/test_analytics_models.py` - Suite unitaria para modelos de analítica
+- ✅ `tests/ml_models/test_analytics_models.py` – Suite unitaria para modelos de analítica
 - ✅ `requirements-test.txt` - Dependencias de pruebas (PyPI) actualizadas para la suite ML.
+- ✅ `api/routes/ml_monitoring.py` - Endpoints REST de métricas, fairness y explicabilidad SHAP
+- ✅ `web/src/components/ShapDashboard.js` - Visualización interactiva de contribuciones SHAP y métricas de equidad
+- ✅ `web/src/components/__tests__/ShapDashboard.test.js` - Cobertura unitaria del dashboard SHAP
 
 ---
 

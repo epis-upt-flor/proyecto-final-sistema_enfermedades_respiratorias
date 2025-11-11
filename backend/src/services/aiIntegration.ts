@@ -402,6 +402,42 @@ class AIIntegrationService {
     }
   }
 
+  async getMlMonitoringMetrics(params?: { days?: number }) {
+    try {
+      const response = await this.aiClient.get('/api/v1/ml/monitoring/metrics', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      logger.error('AI ML Monitoring Metrics Failed', { error: error.message });
+      throw new AppError('Error al obtener métricas de monitoreo ML', 500);
+    }
+  }
+
+  async getMlFeatureInfluence(params?: { top_n?: number }) {
+    try {
+      const response = await this.aiClient.get('/api/v1/ml/monitoring/features', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      logger.error('AI Feature Influence Fetch Failed', { error: error.message });
+      throw new AppError('Error al obtener contribuciones SHAP', 500);
+    }
+  }
+
+  async getMlFairnessMetrics(params?: { group_field?: string; high_confidence_threshold?: number }) {
+    try {
+      const response = await this.aiClient.get('/api/v1/ml/monitoring/fairness', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      logger.error('AI Fairness Metrics Fetch Failed', { error: error.message });
+      throw new AppError('Error al obtener métricas de equidad ML', 500);
+    }
+  }
+
   /**
    * Get AI service status
    */

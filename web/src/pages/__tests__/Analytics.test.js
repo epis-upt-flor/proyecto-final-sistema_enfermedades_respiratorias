@@ -19,6 +19,11 @@ jest.mock('../../components/DiseaseReports', () => ({
   default: () => <div data-testid="disease-reports">Módulo Enfermedades</div>,
 }));
 
+jest.mock('../../components/ShapDashboard', () => ({
+  __esModule: true,
+  default: () => <div data-testid="shap-dashboard">Módulo SHAP</div>,
+}));
+
 describe('Analytics page', () => {
   it('muestra el encabezado y el dashboard por defecto', async () => {
     render(<Analytics />);
@@ -49,6 +54,12 @@ describe('Analytics page', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('disease-reports')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /Explicabilidad/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('shap-dashboard')).toBeInTheDocument();
     });
   });
 });

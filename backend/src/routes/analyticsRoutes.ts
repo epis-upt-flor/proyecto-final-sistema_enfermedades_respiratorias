@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { analyticsService } from '../services/analyticsService';
 import { epidemiologicalService } from '../services/epidemiologicalService';
+import { aiIntegrationService } from '../services/aiIntegration';
 
 const router = Router();
 
@@ -63,6 +64,41 @@ router.get(
       success: true,
       data,
     });
+  }),
+);
+
+router.get(
+  '/ml/monitoring',
+  asyncHandler(async (req: Request, res: Response) => {
+    const days = req.query.days ? parseInt(req.query.days as string, 10) : undefined;
+    const data = await aiIntegrationService.getMlMonitoringMetrics({ days });
+    res.status(200).json({ success: true, data });
+  }),
+);
+
+router.get(
+  '/ml/features',
+  asyncHandler(async (req: Request, res: Response) => {
+    const top = req.query.top ? parseInt(req.query.top as string, 10) : undefined;
+    const data = await aiIntegrationService.getMlFeatureInfluence({ top_n: top });
+    res.status(200).json({ success: true, data });
+  }),
+);
+
+router.get(
+  '/ml/fairness',
+  asyncHandler(async (req: Request, res: Response) => {
+    const groupField = (req.query.groupField as string) || 'gender';
+    const highConfidenceThreshold = req.query.highConfidenceThreshold
+      ? parseFloat(req.query.highConfidenceThreshold as string)
+      : undefined;
+
+    const data = await aiIntegrationService.getMlFairnessMetrics({
+      group_field: groupField,
+      high_confidence_threshold: highConfidenceThreshold,
+    });
+
+    res.status(200).json({ success: true, data });
   }),
 );
 

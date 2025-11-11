@@ -206,6 +206,7 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput, use_ensemble: bool = T
                 friendly_explanation = None
         
         # Build response
+        raw_explanation = prediction.get('explanation')
         explanation_data = None
         if input_data.include_explanation:
             if friendly_explanation:
@@ -216,10 +217,13 @@ async def analyze_symptoms_ml(input_data: SymptomMLInput, use_ensemble: bool = T
                     'key_factors': friendly_explanation.get('key_factors', []),
                     'reasoning': friendly_explanation.get('reasoning', ''),
                     'summary': friendly_explanation.get('summary', ''),
-                    'decision_factors': friendly_explanation.get('key_factors', [])[:3]  # For compatibility
+                    'decision_factors': friendly_explanation.get('key_factors', [])[:3],  # For compatibility
+                    'raw_contributions': raw_explanation
                 }
             else:
-                explanation_data = prediction.get('explanation')
+                explanation_data = raw_explanation
+        else:
+            explanation_data = raw_explanation if raw_explanation else None
         
         response = SymptomMLOutput(
             disease=prediction['disease'],

@@ -14,7 +14,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Sequence
 from pathlib import Path
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 
 try:
     import pandas as pd
@@ -98,7 +98,8 @@ class PredictionMonitor:
                 'disease': prediction.get('disease', 'unknown'),
                 'confidence': prediction.get('confidence', 0.0),
                 'urgency_level': prediction.get('urgency_level', 'medium'),
-                'top_3_predictions': prediction.get('top_3_predictions', [])
+                'top_3_predictions': prediction.get('top_3_predictions', []),
+                'explanation': prediction.get('explanation')
             },
             'metadata': {
                 'has_explanation': 'explanation' in prediction,
@@ -268,6 +269,82 @@ class PredictionMonitor:
             }
 
         return metrics
+
+    def get_feature_influence(self, top_n: int = 10) -> Dict[str, Any]:
+        """
+        Aggregate SHAP feature influence across logged predictions.
+        Returns the top features by absolute SHAP contribution as well as
+        the most common patient-friendly factors.
+        """
+        feature_stats: Dict[str, Dict[str, float]] = defaultdict(
+            lambda: {
+                'feature_name': '',
+                'shap_total': 0.0,
+                'shap_abs': 0.0,
+                'positive': 0.0,
+                'negative': 0.0,
+                'count': 0,
+                'positive_count': 0,
+                'negative_count': 0,
+            }
+        )
+        friendly_counter: Counter[str] = Counter()
+
+        for entry in self.predictions_log:
+            explanation = (entry.get('prediction') or {}).get('explanation') or {}
+            raw_contributions = explanation.get('raw_contributions') or explanation
+
+            if isinstance(raw_contributions, dict):
+                for key in ('positive_factors', 'negative_factors', 'decision_factors'):
+                    factors = raw_contributions.get(key) or []
+                    for factor in factors:
+                        feature_name = factor.get('feature_name')
+                        if not feature_name and factor.get('feature_index') is not None:
+                            feature_name = f"feature_{factor['feature_index']}"
+
+                        if not feature_name:
+                            continue
+
+                        shap_value = float(factor.get('shap_value', 0.0))
+                        stats = feature_stats[feature_name]
+                        stats['feature_name'] = feature_name
+                        stats['shap_total'] += shap_value
+                        stats['shap_abs'] += abs(shap_value)
+                        stats['count'] += 1
+
+                        if shap_value >= 0:
+                            stats['positive'] += shap_value
+                            stats['positive_count'] += 1
+                        else:
+                            stats['negative'] += shap_value
+                            stats['negative_count'] += 1
+
+            friendly = explanation.get('friendly') or {}
+            friendly_factors = friendly.get('key_factors') or []
+            for factor_text in friendly_factors:
+                friendly_counter[factor_text] += 1
+
+        top_features = sorted(
+            feature_stats.values(),
+            key=lambda item: item['shap_abs'],
+            reverse=True,
+        )[:top_n]
+
+        for feature in top_features:
+            if feature['count']:
+                feature['avg_contribution'] = feature['shap_total'] / feature['count']
+            else:
+                feature['avg_contribution'] = 0.0
+
+        friendly_list = [
+            {'description': text, 'count': count}
+            for text, count in friendly_counter.most_common(top_n)
+        ]
+
+        return {
+            'top_features': top_features,
+            'friendly_factors': friendly_list,
+        }
     
     def get_metrics(self, days: int = 1) -> Dict[str, Any]:
         """
