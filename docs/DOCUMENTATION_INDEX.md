@@ -13,6 +13,7 @@
 | [DEPLOYMENT.md](../DEPLOYMENT.md) | Guía de deployment | ✅ |
 | [SECURITY.md](../SECURITY.md) | Políticas y medidas de seguridad | ✅ |
 | [TESTING_STRATEGY.md](../TESTING_STRATEGY.md) | Estrategia de testing | ✅ |
+| [docs/STATIC_CODE_ANALYSIS.md](../docs/STATIC_CODE_ANALYSIS.md) | Análisis de código estático | ✅ Nuevo |
 | [METODOLOGIA_AGIL_PROYECTO.md](../METODOLOGIA_AGIL_PROYECTO.md) | Metodología ágil aplicada | ✅ |
 
 ### 🏗️ Documentación de Arquitectura
@@ -87,6 +88,7 @@ Archivos temporales o con timestamps que ya no son necesarios:
 1. Empezar: [QUICKSTART.md](../QUICKSTART.md)
 2. Arquitectura: [backend/CLEAN_ARCHITECTURE.md](../backend/CLEAN_ARCHITECTURE.md)
 3. Roadmap: [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md)
+4. Calidad de Código: [docs/STATIC_CODE_ANALYSIS.md](../docs/STATIC_CODE_ANALYSIS.md)
 
 ### Para ML Engineers
 1. ML Roadmap: [ML_ROADMAP.md](../ML_ROADMAP.md)

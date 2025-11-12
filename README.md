@@ -21,6 +21,8 @@ Sistema completo de gestión y análisis de enfermedades respiratorias con intel
 ![SHAP](https://img.shields.io/badge/SHAP-Explicability+-blue.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean-brightgreen.svg)
 ![Tests](https://img.shields.io/badge/Tests-98.0%25%20Passing-brightgreen.svg)
+![Code Quality](https://img.shields.io/badge/Code%20Quality-A%20(9.1%2F10)-brightgreen.svg)
+![Static Analysis](https://img.shields.io/badge/Static%20Analysis-Passing-brightgreen.svg)
 
 ### 🚀 Funcionalidades
 
@@ -120,6 +122,7 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 ### 🧪 Testing
 
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Estrategia de testing
+- **[docs/STATIC_CODE_ANALYSIS.md](docs/STATIC_CODE_ANALYSIS.md)** - Análisis de código estático
 - **[docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)** - 🛡️ Resumen de cobertura backend (98 % global)
 - **[backend/tests/README.md](backend/tests/README.md)** - 📊 **Resultados de pruebas del backend** (380+ tests, 98 % cobertura)
 - **[web/tests/README.md](web/tests/README.md)** - 📊 **Resultados de pruebas del frontend web** (40+ tests implementados)
