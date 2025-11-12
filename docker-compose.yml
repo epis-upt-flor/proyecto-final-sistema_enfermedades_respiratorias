@@ -105,9 +105,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: production
       PORT: 3001
-      MONGODB_URI: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/${MONGO_DB:-respicare}?authSource=admin
+      MONGO_DB: respicare_dev
+      MONGODB_URI: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/respicare_dev?authSource=admin
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
       AI_SERVICE_URL: http://ai-services:8000

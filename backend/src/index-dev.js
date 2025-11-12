@@ -12,6 +12,7 @@ const morgan = require('morgan');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // Initialize express app
 const app = express();
@@ -53,6 +54,23 @@ const swaggerOptions = {
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+const DEFAULT_MONGO_URI = 'mongodb://admin:change_this_password@mongodb:27017/respicare_dev?authSource=admin';
+const MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+
+mongoose.set('strictQuery', false);
+
+mongoose
+  .connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 20000
+  })
+  .then(() => {
+    console.log('[MongoDB] Conexión establecida correctamente');
+  })
+  .catch((error) => {
+    console.error('[MongoDB] Error al conectar:', error.message);
+  });
 
 // Middleware
 app.use(helmet({

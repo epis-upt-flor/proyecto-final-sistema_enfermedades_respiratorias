@@ -1,13 +1,13 @@
 import React, { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import './Analytics.css';
 
-const AnalyticsDashboardSimple = lazy(() => import('../components/AnalyticsDashboardSimple'));
+const AnalyticsDashboard = lazy(() => import('../components/AnalyticsDashboard'));
 const TemporalTrends = lazy(() => import('../components/TemporalTrends'));
 const DiseaseReports = lazy(() => import('../components/DiseaseReports'));
 const ShapDashboard = lazy(() => import('../components/ShapDashboard'));
 
 const ANALYTICS_TABS = [
-  { id: 'dashboard', label: '📊 Dashboard', component: AnalyticsDashboardSimple },
+  { id: 'dashboard', label: '📊 Dashboard', component: AnalyticsDashboard },
   { id: 'trends', label: '📈 Tendencias', component: TemporalTrends },
   { id: 'diseases', label: '🦠 Enfermedades', component: DiseaseReports },
   { id: 'shap', label: '🧠 Explicabilidad', component: ShapDashboard },

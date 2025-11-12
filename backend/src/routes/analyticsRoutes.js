@@ -116,16 +116,27 @@ router.get('/temporal-trends', async (req, res) => {
 // GET /api/analytics/disease-reports - Get reports by disease type
 router.get('/disease-reports', async (req, res) => {
   try {
-    const { period = '30d', district } = req.body;
-    
-    // Calculate date range
-    const now = new Date();
-    const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const filter = {
-      reportedAt: { $gte: startDate }
+    const { period = '30d', district } = req.query;
+
+    const periodToDays = {
+      '7d': 7,
+      '30d': 30,
+      '90d': 90,
+      '1y': 365
     };
-    if (district) filter['location.district'] = district;
+
+    const days = periodToDays[period] || 30;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    const filter = {
+      createdAt: { $gte: startDate, $lte: now }
+    };
+
+    if (district) {
+      filter['location.district'] = district;
+    }
 
     // Analyze symptoms to detect potential diseases
     const diseaseAnalysis = await SymptomReport.aggregate([
@@ -135,17 +146,18 @@ router.get('/disease-reports', async (req, res) => {
         $group: {
           _id: "$symptoms.name",
           count: { $sum: 1 },
-          avgSeverity: { $avg: {
-            $switch: {
-              branches: [
-                { case: { $eq: ["$symptoms.severity", "low"] }, then: 1 },
-                { case: { $eq: ["$symptoms.severity", "moderate"] }, then: 2 },
-                { case: { $eq: ["$symptoms.severity", "high"] }, then: 3 },
-                { case: { $eq: ["$symptoms.severity", "severe"] }, then: 4 }
-              ],
-              default: 1
+          avgSeverity: {
+            $avg: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ["$symptoms.severity", "mild"] }, then: 1 },
+                  { case: { $eq: ["$symptoms.severity", "moderate"] }, then: 2 },
+                  { case: { $eq: ["$symptoms.severity", "severe"] }, then: 3 }
+                ],
+                default: 1
+              }
             }
-          }},
+          },
           districts: { $addToSet: "$location.district" },
           categories: { $addToSet: "$category" }
         }
@@ -234,17 +246,18 @@ router.get('/disease-reports', async (req, res) => {
             symptom: "$symptoms.name"
           },
           count: { $sum: 1 },
-          severity: { $avg: {
-            $switch: {
-              branches: [
-                { case: { $eq: ["$symptoms.severity", "low"] }, then: 1 },
-                { case: { $eq: ["$symptoms.severity", "moderate"] }, then: 2 },
-                { case: { $eq: ["$symptoms.severity", "high"] }, then: 3 },
-                { case: { $eq: ["$symptoms.severity", "severe"] }, then: 4 }
-              ],
-              default: 1
+          severity: {
+            $avg: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ["$symptoms.severity", "mild"] }, then: 1 },
+                  { case: { $eq: ["$symptoms.severity", "moderate"] }, then: 2 },
+                  { case: { $eq: ["$symptoms.severity", "severe"] }, then: 3 }
+                ],
+                default: 1
+              }
             }
-          }}
+          }
         }
       },
       {

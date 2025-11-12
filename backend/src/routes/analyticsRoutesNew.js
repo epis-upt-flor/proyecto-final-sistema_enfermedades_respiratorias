@@ -1,101 +1,145 @@
 const express = require('express');
 const router = express.Router();
 
+const SymptomReport = require('../models/SymptomReport');
+const ChatConversation = require('../models/ChatConversation');
+
 // GET /api/analytics/dashboard - Get comprehensive dashboard data
 router.get('/dashboard', async (req, res) => {
   try {
     const now = new Date();
-    
-    // Generate dynamic mock data that changes over time
-    const baseTime = Math.floor(now.getTime() / (1000 * 60 * 5)); // Change every 5 minutes
-    const randomSeed = baseTime % 1000;
-    
-    // Create deterministic but changing data
-    const generateValue = (base, variation, seed) => {
-      return base + (Math.sin(seed + baseTime) * variation) + (Math.random() * variation * 0.1);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const overviewPromise = Promise.all([
+      SymptomReport.countDocuments().exec(),
+      SymptomReport.countDocuments({ createdAt: { $gte: sevenDaysAgo, $lte: now } }).exec(),
+      SymptomReport.countDocuments({ overallSeverity: 'high' }).exec(),
+      ChatConversation.countDocuments().exec(),
+      ChatConversation.countDocuments({ createdAt: { $gte: sevenDaysAgo, $lte: now } }).exec(),
+    ]);
+
+    const severityDistributionPromise = SymptomReport.aggregate([
+      {
+        $group: {
+          _id: '$overallSeverity',
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    const categoryDistributionPromise = SymptomReport.aggregate([
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    const severitySwitch = {
+      $switch: {
+        branches: [
+          { case: { $eq: ['$overallSeverity', 'low'] }, then: 1 },
+          { case: { $eq: ['$overallSeverity', 'medium'] }, then: 2 },
+          { case: { $eq: ['$overallSeverity', 'high'] }, then: 3 },
+        ],
+        default: 1,
+      },
     };
-    
+
+    const topDistrictsPromise = SymptomReport.aggregate([
+      {
+        $group: {
+          _id: '$location.district',
+          count: { $sum: 1 },
+          avgSeverity: { $avg: severitySwitch },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 8 },
+    ]);
+
+    const recentActivityPromise = SymptomReport.find()
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select(['location', 'symptoms', 'overallSeverity', 'category', 'createdAt'])
+      .lean();
+
+    const [
+      overviewCounts,
+      severityDistribution,
+      categoryDistribution,
+      topDistricts,
+      recentActivityRaw,
+    ] = await Promise.all([
+      overviewPromise,
+      severityDistributionPromise,
+      categoryDistributionPromise,
+      topDistrictsPromise,
+      recentActivityPromise,
+    ]);
+
+    const [
+      totalReports,
+      recentReports,
+      urgentReports,
+      totalConversations,
+      recentConversations,
+    ] = overviewCounts;
+
+    const formatSeverityLevel = (value) => {
+      if (value >= 2.5) return 'high';
+      if (value >= 1.5) return 'medium';
+      return 'low';
+    };
+
     const dashboardData = {
       overview: {
-        totalReports: Math.floor(generateValue(750, 200, randomSeed)),
-        recentReports: Math.floor(generateValue(75, 25, randomSeed + 1)),
-        urgentReports: Math.floor(generateValue(25, 15, randomSeed + 2)),
-        totalConversations: Math.floor(generateValue(150, 50, randomSeed + 3)),
-        recentConversations: Math.floor(generateValue(20, 10, randomSeed + 4))
+        totalReports,
+        recentReports,
+        urgentReports,
+        totalConversations,
+        recentConversations,
       },
       distributions: {
-        severity: [
-          { _id: 'low', count: Math.floor(generateValue(400, 100, randomSeed + 5)) },
-          { _id: 'medium', count: Math.floor(generateValue(250, 75, randomSeed + 6)) },
-          { _id: 'high', count: Math.floor(generateValue(100, 50, randomSeed + 7)) }
-        ],
-        category: [
-          { _id: 'respiratory', count: Math.floor(generateValue(200, 50, randomSeed + 8)) },
-          { _id: 'fever', count: Math.floor(generateValue(150, 40, randomSeed + 9)) },
-          { _id: 'pain', count: Math.floor(generateValue(100, 30, randomSeed + 10)) },
-          { _id: 'fatigue', count: Math.floor(generateValue(80, 25, randomSeed + 11)) },
-          { _id: 'digestive', count: Math.floor(generateValue(60, 20, randomSeed + 12)) },
-          { _id: 'neurological', count: Math.floor(generateValue(40, 15, randomSeed + 13)) }
-        ]
+        severity: severityDistribution.map((item) => ({
+          _id: item._id,
+          count: item.count,
+        })),
+        category: categoryDistribution.map((item) => ({
+          _id: item._id,
+          count: item.count,
+        })),
       },
-      topDistricts: [
-        { _id: 'Centro de Tacna', count: Math.floor(generateValue(80, 20, randomSeed + 14)) },
-        { _id: 'Gregorio Albarracín', count: Math.floor(generateValue(65, 15, randomSeed + 15)) },
-        { _id: 'Ciudad Nueva', count: Math.floor(generateValue(50, 12, randomSeed + 16)) },
-        { _id: 'Pocollay', count: Math.floor(generateValue(35, 10, randomSeed + 17)) },
-        { _id: 'Alto de la Alianza', count: Math.floor(generateValue(25, 8, randomSeed + 18)) }
-      ],
-      recentActivity: [
-        {
-          district: 'Centro de Tacna',
-          symptoms: ['Tos seca', 'Dificultad respiratoria'],
-          severity: 'high',
-          reportedAt: new Date(now.getTime() - Math.random() * 2 * 60 * 60 * 1000),
-          category: 'respiratory'
-        },
-        {
-          district: 'Gregorio Albarracín',
-          symptoms: ['Fiebre', 'Dolor de cabeza'],
-          severity: 'medium',
-          reportedAt: new Date(now.getTime() - Math.random() * 4 * 60 * 60 * 1000),
-          category: 'fever'
-        },
-        {
-          district: 'Ciudad Nueva',
-          symptoms: ['Fatiga', 'Dolor muscular'],
-          severity: 'low',
-          reportedAt: new Date(now.getTime() - Math.random() * 6 * 60 * 60 * 1000),
-          category: 'fatigue'
-        },
-        {
-          district: 'Pocollay',
-          symptoms: ['Dolor de garganta', 'Congestión nasal'],
-          severity: 'medium',
-          reportedAt: new Date(now.getTime() - Math.random() * 8 * 60 * 60 * 1000),
-          category: 'respiratory'
-        },
-        {
-          district: 'Alto de la Alianza',
-          symptoms: ['Náuseas', 'Dolor abdominal'],
-          severity: 'low',
-          reportedAt: new Date(now.getTime() - Math.random() * 12 * 60 * 60 * 1000),
-          category: 'digestive'
-        }
-      ],
+      topDistricts: topDistricts.map((district) => ({
+        _id: district._id,
+        count: district.count,
+        avgSeverity: Number(district.avgSeverity?.toFixed(2) ?? '0'),
+        severityLevel: formatSeverityLevel(district.avgSeverity ?? 1),
+      })),
+      recentActivity: recentActivityRaw.map((report) => ({
+        district: report.location?.district ?? 'Sin distrito',
+        symptoms: (report.symptoms || []).slice(0, 4),
+        severityLevel: report.overallSeverity ?? 'low',
+        category: report.category ?? 'respiratory',
+        reportedAt: report.createdAt,
+      })),
       lastUpdated: now,
-      dataSource: 'dynamic-mock'
+      dataSource: 'database',
     };
 
     res.status(200).json({
       success: true,
-      data: dashboardData
+      data: dashboardData,
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching dashboard data',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -184,129 +228,140 @@ router.get('/temporal-trends', async (req, res) => {
 router.get('/disease-reports', async (req, res) => {
   try {
     const { district, period = '30d' } = req.query;
-    
-    const now = new Date();
-    const baseTime = Math.floor(now.getTime() / (1000 * 60 * 5)); // Change every 5 minutes
-    const randomSeed = baseTime % 1000;
-    
-    const generateValue = (base, variation, seed) => {
-      return base + (Math.sin(seed + baseTime) * variation) + (Math.random() * variation * 0.1);
+
+    const periodToDays = {
+      '7d': 7,
+      '30d': 30,
+      '90d': 90,
+      '1y': 365
     };
-    
-    const diseaseData = {
-      summary: {
-        totalDiseases: 7,
-        totalReports: Math.floor(generateValue(150, 30, randomSeed)),
-        urgentCases: Math.floor(generateValue(25, 10, randomSeed + 1)),
-        recoveredCases: Math.floor(generateValue(120, 20, randomSeed + 2))
-      },
-      diseases: [
-        {
-          name: 'Asma',
-          count: Math.floor(generateValue(35, 10, randomSeed + 3)),
-          severity: 'medium',
-          trend: 'increasing',
-          symptoms: ['Tos seca', 'Dificultad respiratoria', 'Sibilancias'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(15, 5, randomSeed + 4)) },
-            { name: 'Gregorio Albarracín', count: Math.floor(generateValue(12, 3, randomSeed + 5)) },
-            { name: 'Ciudad Nueva', count: Math.floor(generateValue(8, 2, randomSeed + 6)) }
-          ]
-        },
-        {
-          name: 'Bronquitis',
-          count: Math.floor(generateValue(28, 8, randomSeed + 7)),
-          severity: 'medium',
-          trend: 'stable',
-          symptoms: ['Tos con flema', 'Dificultad respiratoria', 'Fatiga'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(12, 4, randomSeed + 8)) },
-            { name: 'Pocollay', count: Math.floor(generateValue(10, 3, randomSeed + 9)) },
-            { name: 'Alto de la Alianza', count: Math.floor(generateValue(6, 2, randomSeed + 10)) }
-          ]
-        },
-        {
-          name: 'COVID-19',
-          count: Math.floor(generateValue(25, 12, randomSeed + 11)),
-          severity: 'high',
-          trend: 'decreasing',
-          symptoms: ['Fiebre', 'Tos seca', 'Dificultad respiratoria', 'Fatiga'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(10, 5, randomSeed + 12)) },
-            { name: 'Gregorio Albarracín', count: Math.floor(generateValue(8, 3, randomSeed + 13)) },
-            { name: 'Ciudad Nueva', count: Math.floor(generateValue(7, 2, randomSeed + 14)) }
-          ]
-        },
-        {
-          name: 'Gripe',
-          count: Math.floor(generateValue(22, 6, randomSeed + 15)),
-          severity: 'low',
-          trend: 'increasing',
-          symptoms: ['Fiebre', 'Dolor de cabeza', 'Dolor muscular', 'Fatiga'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(8, 3, randomSeed + 16)) },
-            { name: 'Pocollay', count: Math.floor(generateValue(7, 2, randomSeed + 17)) },
-            { name: 'Alto de la Alianza', count: Math.floor(generateValue(7, 2, randomSeed + 18)) }
-          ]
-        },
-        {
-          name: 'Neumonía',
-          count: Math.floor(generateValue(18, 5, randomSeed + 19)),
-          severity: 'high',
-          trend: 'stable',
-          symptoms: ['Fiebre alta', 'Tos con flema', 'Dificultad respiratoria', 'Dolor en el pecho'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(6, 2, randomSeed + 20)) },
-            { name: 'Gregorio Albarracín', count: Math.floor(generateValue(5, 2, randomSeed + 21)) },
-            { name: 'Ciudad Nueva', count: Math.floor(generateValue(4, 1, randomSeed + 22)) }
-          ]
-        },
-        {
-          name: 'EPOC',
-          count: Math.floor(generateValue(15, 4, randomSeed + 23)),
-          severity: 'high',
-          trend: 'stable',
-          symptoms: ['Tos crónica', 'Dificultad respiratoria', 'Fatiga', 'Sibilancias'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(5, 2, randomSeed + 24)) },
-            { name: 'Gregorio Albarracín', count: Math.floor(generateValue(4, 1, randomSeed + 25)) },
-            { name: 'Pocollay', count: Math.floor(generateValue(3, 1, randomSeed + 26)) }
-          ]
-        },
-        {
-          name: 'Resfriado',
-          count: Math.floor(generateValue(12, 3, randomSeed + 27)),
-          severity: 'low',
-          trend: 'decreasing',
-          symptoms: ['Congestión nasal', 'Dolor de garganta', 'Estornudos', 'Fatiga leve'],
-          districts: [
-            { name: 'Centro de Tacna', count: Math.floor(generateValue(4, 1, randomSeed + 28)) },
-            { name: 'Ciudad Nueva', count: Math.floor(generateValue(3, 1, randomSeed + 29)) },
-            { name: 'Alto de la Alianza', count: Math.floor(generateValue(3, 1, randomSeed + 30)) }
-          ]
-        }
-      ],
-      chatAnalysis: {
-        totalConsultations: Math.floor(generateValue(45, 10, randomSeed + 31)),
-        diseasesDetected: [
-          { name: 'Asma', count: Math.floor(generateValue(12, 3, randomSeed + 32)), confidence: 0.85 },
-          { name: 'Bronquitis', count: Math.floor(generateValue(10, 2, randomSeed + 33)), confidence: 0.78 },
-          { name: 'COVID-19', count: Math.floor(generateValue(8, 2, randomSeed + 34)), confidence: 0.92 },
-          { name: 'Gripe', count: Math.floor(generateValue(7, 2, randomSeed + 35)), confidence: 0.80 },
-          { name: 'Neumonía', count: Math.floor(generateValue(5, 1, randomSeed + 36)), confidence: 0.88 },
-          { name: 'EPOC', count: Math.floor(generateValue(3, 1, randomSeed + 37)), confidence: 0.75 }
+
+    const days = periodToDays[period] || 30;
+    const now = new Date();
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    const symptomFilter = {
+      createdAt: { $gte: startDate, $lte: now }
+    };
+
+    if (district && district !== 'all') {
+      symptomFilter['location.district'] = district;
+    }
+
+    const symptomSeveritySwitch = {
+      $switch: {
+        branches: [
+          { case: { $eq: ["$symptoms.severity", "mild"] }, then: 1 },
+          { case: { $eq: ["$symptoms.severity", "moderate"] }, then: 2 },
+          { case: { $eq: ["$symptoms.severity", "severe"] }, then: 3 }
         ],
-        urgencyLevels: {
-          low: Math.floor(generateValue(15, 5, randomSeed + 38)),
-          medium: Math.floor(generateValue(20, 5, randomSeed + 39)),
-          high: Math.floor(generateValue(10, 3, randomSeed + 40))
-        }
+        default: 1
       }
     };
 
+    const symptomAnalysis = await SymptomReport.aggregate([
+      { $match: symptomFilter },
+      { $unwind: "$symptoms" },
+      {
+        $group: {
+          _id: "$symptoms.name",
+          count: { $sum: 1 },
+          avgSeverity: { $avg: symptomSeveritySwitch },
+          districts: { $addToSet: "$location.district" },
+          categories: { $addToSet: "$category" }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    const chatDiseaseAnalysis = await ChatConversation.aggregate([
+      { $match: { createdAt: { $gte: startDate, $lte: now } } },
+      { $unwind: "$messages" },
+      {
+        $match: {
+          "messages.role": "bot",
+          $expr: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: { $ifNull: ["$messages.metadata.detectedDiseases", []] },
+                    as: "disease",
+                    cond: { $ne: ["$$disease", null] }
+                  }
+                }
+              },
+              0
+            ]
+          }
+        }
+      },
+      { $unwind: "$messages.metadata.detectedDiseases" },
+      {
+        $group: {
+          _id: "$messages.metadata.detectedDiseases",
+          count: { $sum: 1 },
+          avgConfidence: { $avg: "$messages.metadata.confidence" },
+          avgUrgency: {
+            $avg: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ["$messages.metadata.urgencyLevel", "very_low"] }, then: 1 },
+                  { case: { $eq: ["$messages.metadata.urgencyLevel", "low"] }, then: 2 },
+                  { case: { $eq: ["$messages.metadata.urgencyLevel", "medium"] }, then: 3 },
+                  { case: { $eq: ["$messages.metadata.urgencyLevel", "high"] }, then: 4 },
+                  { case: { $eq: ["$messages.metadata.urgencyLevel", "critical"] }, then: 5 }
+                ],
+                default: 1
+              }
+            }
+          }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    const districtDiseaseDistribution = await SymptomReport.aggregate([
+      { $match: symptomFilter },
+      { $unwind: "$symptoms" },
+      {
+        $group: {
+          _id: {
+            district: "$location.district",
+            symptom: "$symptoms.name"
+          },
+          count: { $sum: 1 },
+          severity: { $avg: symptomSeveritySwitch }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.district",
+          symptoms: {
+            $push: {
+              name: "$_id.symptom",
+              count: "$count",
+              severity: "$severity"
+            }
+          },
+          totalReports: { $sum: "$count" }
+        }
+      },
+      { $sort: { totalReports: -1 } }
+    ]);
+
     res.status(200).json({
       success: true,
-      data: diseaseData
+      data: {
+        symptomAnalysis,
+        chatDiseaseAnalysis,
+        districtDistribution: districtDiseaseDistribution,
+        period,
+        dateRange: {
+          start: startDate,
+          end: now
+        }
+      }
     });
   } catch (error) {
     console.error('Error fetching disease reports:', error);
