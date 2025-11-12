@@ -207,5 +207,5 @@ El workflow de GitHub Actions (`.github/workflows/web-tests.yml`) está configur
 - [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 
 ---
-**Última actualización:** Noviembre 2025
+**Última actualización:** Diciembre 2024
 

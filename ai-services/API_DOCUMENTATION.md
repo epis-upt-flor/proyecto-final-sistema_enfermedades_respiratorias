@@ -402,6 +402,6 @@ Para problemas o preguntas:
 ---
 
 **Versión:** 1.0.0  
-**Última actualización:** 24 de Octubre, 2025  
+**Última actualización:** Diciembre 2024  
 **Autor:** RespiCare Development Team
 

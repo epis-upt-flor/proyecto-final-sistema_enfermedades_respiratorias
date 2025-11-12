@@ -350,3 +350,7 @@ Si tienes problemas:
 
 **¡Happy Coding! 🎉**
 
+---
+
+**Última actualización:** Diciembre 2024
+

@@ -201,5 +201,5 @@ mobile/
 
 ---
 
-**Última actualización:** Noviembre 2025
+**Última actualización:** Diciembre 2024
 

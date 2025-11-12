@@ -681,6 +681,6 @@ Si encuentras problemas:
 
 ---
 
-**Última actualización**: Octubre 2024
+**Última actualización**: Diciembre 2024
 **Versión**: 1.0.0
 

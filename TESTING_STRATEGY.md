@@ -455,3 +455,7 @@ Siguientes pasos prioritarios:
 - Ejecutar campañas de accesibilidad (WCAG 2.1 AA), recuperaciones simuladas y pruebas de compliance HL7/FHIR antes del lanzamiento productivo.
 
 Con estos compromisos, RespiCare estará alineado con los estándares de software médico en producción, garantizando calidad, resiliencia y confianza para usuarios y entidades reguladoras.
+
+---
+
+**Última actualización:** Diciembre 2024

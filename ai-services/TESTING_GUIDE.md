@@ -559,7 +559,7 @@ pytest -v --cov=. --cov-report=term-missing
 
 ---
 
-**Última Actualización**: 6 de Octubre de 2025  
+**Última Actualización**: Diciembre 2024  
 **Versión**: 1.0  
 **Mantenedor**: Equipo de Desarrollo RespiCare
 

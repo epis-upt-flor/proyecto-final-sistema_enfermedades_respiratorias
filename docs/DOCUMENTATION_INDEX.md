@@ -105,5 +105,5 @@ Archivos temporales o con timestamps que ya no son necesarios:
 
 ---
 
-**Última actualización:** Noviembre 2024
+**Última actualización:** Diciembre 2024
 

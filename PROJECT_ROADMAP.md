@@ -833,6 +833,6 @@
 
 ---
 
-**Última actualización:** Noviembre 2025  
-**Próxima revisión:** Diciembre 2025
+**Última actualización:** Diciembre 2024  
+**Próxima revisión:** Enero 2025
 
