@@ -173,6 +173,10 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Predicción de tendencias, detección de anomalías y forecast de demanda (Analytics ML suite)
 - ✅ Dashboard ejecutivo avanzado con KPIs, brotes y demanda proyectada
 - ✅ Dashboard de explicabilidad SHAP (contribuciones, confianza y fairness por cohorte)
+- ✅ **Reportes Automáticos**: Generación automática de reportes diarios, semanales y mensuales
+- ✅ **Alertas de Métricas Anormales**: Detección automática de anomalías en métricas del sistema
+- ✅ **Exportación Automática**: Exportación automática de reportes en PDF, CSV y JSON
+- ✅ **Dashboard Personalizable**: Visualización y gestión de reportes automáticos desde el frontend
 
 ### 📱 Mobile
 - ✅ App completa React Native
@@ -199,6 +203,18 @@ Los reportes de implementación de features completadas están en [`docs/impleme
   - Plantillas personalizables, exportación profesional, historial con firma digital y compartición entre médicos.
   - Utilidades: `reportService.ts`, `pdfGenerator.ts` y consola web `MedicalReport`.
 
+## ✅ Analytics y Business Intelligence (Fase 9 Completada)
+
+- **Reportes Automáticos**  
+  - Generación automática de reportes diarios (23:59), semanales (domingos 23:59) y mensuales (día 1, 00:00).
+  - Detección automática de anomalías en métricas usando z-score y análisis de tendencias históricas.
+  - Exportación automática de reportes en formatos PDF, CSV y JSON.
+  - Dashboard personalizable con filtros por tipo, visualización de métricas y anomalías.
+  - Sistema completo de alertas de métricas anormales con niveles de severidad (low, medium, high, critical).
+  - Métricas incluidas: pacientes, doctores, administradores, historias médicas, alertas, citas, análisis IA, top diagnósticos, distribución geográfica.
+  - Endpoints REST: `/api/v1/reports/automatic` + dashboard web `AutomaticReportsDashboard`.
+  - Jobs programados: `reportJobs.ts` con node-cron para ejecución automática.
+
 ## 📈 Estado del Proyecto
 
 ### ✅ Completado
@@ -208,6 +224,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Frontend web y móvil
 - Sistema de monitoreo y feedback
 - Sistema de alertas avanzadas, citas médicas, prescripciones y reportes PDF profesionales
+- **Sistema de Reportes Automáticos**: Generación automática diaria, semanal y mensual con detección de anomalías
 - **Testing Backend**: 380+ tests automatizados, cobertura global 98 % - Ver [docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)
 - **Testing Frontend Web**: 40+ tests implementados - Ver [web/tests/README.md](web/tests/README.md)
 - **Testing Mobile**: 50+ tests implementados (unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)

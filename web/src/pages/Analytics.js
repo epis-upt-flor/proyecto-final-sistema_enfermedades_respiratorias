@@ -5,12 +5,14 @@ const AnalyticsDashboard = lazy(() => import('../components/AnalyticsDashboard')
 const TemporalTrends = lazy(() => import('../components/TemporalTrends'));
 const DiseaseReports = lazy(() => import('../components/DiseaseReports'));
 const ShapDashboard = lazy(() => import('../components/ShapDashboard'));
+const AutomaticReportsDashboard = lazy(() => import('../components/AutomaticReportsDashboard'));
 
 const ANALYTICS_TABS = [
   { id: 'dashboard', label: '📊 Dashboard', component: AnalyticsDashboard },
   { id: 'trends', label: '📈 Tendencias', component: TemporalTrends },
   { id: 'diseases', label: '🦠 Enfermedades', component: DiseaseReports },
   { id: 'shap', label: '🧠 Explicabilidad', component: ShapDashboard },
+  { id: 'reports', label: '📋 Reportes Automáticos', component: AutomaticReportsDashboard },
 ];
 
 function Analytics() {

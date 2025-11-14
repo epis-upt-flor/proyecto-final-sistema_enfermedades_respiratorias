@@ -42,7 +42,7 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Reportes geográficos por distrito
 - ✅ Gráficos interactivos
 
-#### **5. Analytics Avanzados** (Nuevo)
+#### **5. Analytics Avanzados**
 - ✅ Tendencias temporales de síntomas
 - ✅ Reportes de enfermedades por tipo
 - ✅ Analytics geográficos por ubicación
@@ -51,6 +51,18 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Dashboard ejecutivo (KPIs de alertas, IA, citas, satisfacción)
 - ✅ Predicción temprana de brotes epidemiológicos
 - ✅ Endpoints REST para analytics predictivo (`/api/v1/analytics/*`)
+
+#### **5.1 Reportes Automáticos** (Nuevo)
+- ✅ Generación automática de reportes diarios (23:59 diario)
+- ✅ Generación automática de reportes semanales (domingos 23:59)
+- ✅ Generación automática de reportes mensuales (día 1, 00:00)
+- ✅ Detección automática de anomalías en métricas usando z-score y análisis de tendencias
+- ✅ Exportación automática de reportes en formatos PDF, CSV y JSON
+- ✅ Dashboard personalizable con filtros por tipo, visualización de métricas y anomalías
+- ✅ Sistema completo de alertas de métricas anormales con niveles de severidad (low, medium, high, critical)
+- ✅ Métricas de crecimiento comparativas (pacientes, historias, alertas)
+- ✅ Análisis de top diagnósticos, categorías de síntomas y distribución por distrito
+- ✅ Endpoints REST completos (`/api/v1/reports/automatic/*`)
 
 #### **6. Gestión de Archivos**
 - ✅ Subida de imágenes médicas
@@ -136,11 +148,17 @@ backend/
 │   │   ├── symptomAnalyzerController.ts
 │   │   ├── dashboardController.ts
 │   │   ├── fileUploadController.ts
-│   │   └── exportController.ts
+│   │   ├── exportController.ts
+│   │   ├── automaticReportController.ts
+│   │   ├── alertController.ts
+│   │   └── appointmentController.ts
 │   ├── models/             # Modelos de MongoDB
 │   │   ├── User.ts
 │   │   ├── MedicalHistory.ts
-│   │   └── AIAnalysis.ts
+│   │   ├── AIAnalysis.ts
+│   │   ├── AutomaticReport.ts
+│   │   ├── Alert.ts
+│   │   └── Appointment.ts
 │   ├── middleware/         # Middleware personalizado
 │   │   ├── auth.ts
 │   │   ├── errorHandler.ts
@@ -151,13 +169,24 @@ backend/
 │   │   ├── symptomAnalyzerRoutes.ts
 │   │   ├── dashboardRoutes.ts
 │   │   ├── fileUploadRoutes.ts
-│   │   └── exportRoutes.ts
+│   │   ├── exportRoutes.ts
+│   │   ├── automaticReportRoutes.ts
+│   │   ├── alertRoutes.ts
+│   │   └── appointmentsRoutes.ts
 │   ├── services/           # Servicios de negocio
 │   │   ├── aiIntegration.ts
 │   │   ├── fileUploadService.ts
 │   │   ├── exportService.ts
 │   │   ├── analyticsService.ts
-│   │   └── epidemiologicalService.ts
+│   │   ├── epidemiologicalService.ts
+│   │   ├── automaticReportService.ts
+│   │   ├── metricAlertService.ts
+│   │   ├── alertService.ts
+│   │   └── appointmentService.ts
+│   ├── jobs/               # Jobs programados
+│   │   ├── alertJobs.ts
+│   │   ├── appointmentJobs.ts
+│   │   └── reportJobs.ts
 │   ├── validators/         # Validadores Joi
 │   │   ├── authValidators.ts
 │   │   └── medicalHistoryValidators.ts
@@ -241,6 +270,11 @@ DRUG_INTERACTION_API_KEY=your_api_key_here
 ALERTS_SCHEDULED_INTERVAL_MS=30000
 ALERTS_PENDING_INTERVAL_MS=45000
 
+# Jobs de reportes automáticos (configurados con node-cron)
+# Reporte diario: 23:59 diario
+# Reporte semanal: domingos 23:59
+# Reporte mensual: día 1 de cada mes 00:00
+
 # CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
@@ -304,12 +338,15 @@ GET    /patient           # Dashboard de paciente
 GET    /health            # Estado del sistema
 ```
 
-### **Analytics (`/api/analytics`)** (Nuevo)
+### **Analytics (`/api/v1/analytics`)**
 ```http
-GET    /temporal-trends   # Tendencias temporales de síntomas
-GET    /disease-reports    # Reportes por tipo de enfermedad
-GET    /geographic-data    # Datos geográficos de síntomas
-GET    /symptom-summary    # Resumen de síntomas más frecuentes
+GET    /executive-dashboard        # Dashboard ejecutivo con KPIs y brotes
+GET    /temporal-trends            # Tendencias temporales de síntomas
+GET    /disease-reports             # Reportes por tipo de enfermedad
+GET    /geographic-data             # Datos geográficos de síntomas
+GET    /symptom-summary             # Resumen de síntomas más frecuentes
+GET    /district-trends             # Tendencias por distrito
+GET    /outbreak-predictions        # Predicciones de brotes epidemiológicos
 ```
 
 ### **Gestión de Archivos (`/api/v1/upload`)**
@@ -353,6 +390,42 @@ PUT    /:appointmentId               # Actualizar detalles (doctor/admin)
 PATCH  /:appointmentId/cancel        # Cancelar cita (doctor/admin)
 PATCH  /:appointmentId/reschedule    # Reprogramar cita (doctor/admin)
 PATCH  /:appointmentId/complete      # Marcar cita como completada (doctor/admin)
+```
+
+### **Reportes Automáticos (`/api/v1/reports/automatic`)** (Nuevo)
+```http
+GET    /                             # Listar todos los reportes automáticos (filtros: type, status, limit, page)
+GET    /stats                        # Estadísticas de reportes (admin)
+GET    /latest/:type                 # Obtener último reporte por tipo (daily/weekly/monthly)
+GET    /:type/list                   # Listar reportes por tipo (daily/weekly/monthly)
+GET    /:id                          # Obtener reporte por ID
+POST   /generate                     # Generar reporte manualmente (admin)
+POST   /:id/export                   # Exportar reporte (PDF/CSV/JSON)
+```
+
+**Ejemplo de uso:**
+```bash
+# Generar reporte diario manualmente
+curl -X POST http://localhost:3001/api/v1/reports/automatic/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reportType": "daily",
+    "includeAnomalies": true,
+    "autoExport": true,
+    "exportFormat": "pdf"
+  }'
+
+# Obtener último reporte semanal
+curl -X GET http://localhost:3001/api/v1/reports/automatic/latest/weekly \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Exportar reporte a CSV
+curl -X POST http://localhost:3001/api/v1/reports/automatic/REPORT_ID/export \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"format": "csv"}' \
+  --output report.csv
 ```
 
 ## 🔒 Seguridad
@@ -483,6 +556,53 @@ PATCH  /:appointmentId/complete      # Marcar cita como completada (doctor/admin
 }
 ```
 
+### **AutomaticReport** (Nuevo)
+```typescript
+{
+  _id: string;
+  reportType: 'daily' | 'weekly' | 'monthly';
+  period: {
+    startDate: Date;
+    endDate: Date;
+  };
+  status: 'pending' | 'generating' | 'completed' | 'failed' | 'exported';
+  metrics: {
+    totalPatients: number;
+    totalDoctors: number;
+    totalAdmins: number;
+    totalMedicalHistories: number;
+    totalAlerts: number;
+    criticalAlerts: number;
+    totalAppointments: number;
+    completedAppointments: number;
+    aiAnalyses: number;
+    averageAIConfidence: number;
+    topDiagnoses: Array<{ diagnosis: string; count: number }>;
+    symptomCategories: Array<{ category: string; total: number }>;
+    districtDistribution: Array<{ district: string; count: number }>;
+    growthMetrics: {
+      patientsGrowth: number;
+      historiesGrowth: number;
+      alertsGrowth: number;
+    };
+  };
+  anomalies?: Array<{
+    metric: string;
+    value: number;
+    expectedRange: { min: number; max: number };
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+    detectedAt: Date;
+  }>;
+  filePath?: string;
+  exportedAt?: Date;
+  exportFormat?: 'pdf' | 'csv' | 'json';
+  generatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ## 🧪 Testing
 
 ### **Ejecutar Tests:**
@@ -535,6 +655,18 @@ Respuesta:
 }
 ```
 
+## 📊 Jobs Programados
+
+### **Jobs Automáticos:**
+- **Alertas** (`alertJobs.ts`): Procesa alertas programadas y pendientes cada 30-45 segundos
+- **Citas Médicas** (`appointmentJobs.ts`): Envía recordatorios de citas próximas
+- **Reportes Automáticos** (`reportJobs.ts`): Genera reportes periódicos
+  - **Diario**: Todos los días a las 23:59
+  - **Semanal**: Domingos a las 23:59
+  - **Mensual**: Día 1 de cada mes a las 00:00
+
+Los jobs se inician automáticamente al arrancar el servidor y se detienen correctamente al recibir señales SIGTERM/SIGINT.
+
 ## 🤖 Integración con IA
 
 ### **Servicios AI Disponibles:**
@@ -543,6 +675,7 @@ Respuesta:
 - **Clasificación de enfermedades** (124 enfermedades respiratorias)
 - **Explicabilidad SHAP** - Factores de decisión y predicciones alternativas
 - **Confianza del modelo**: 99.81% accuracy
+- **Analytics ML**: Predicción de tendencias, detección de anomalías, clustering de riesgo
 
 ### **Endpoints de IA:**
 ```http
