@@ -108,10 +108,10 @@ jobs:
           bandit -r api/ core/ services/ ml_models/ -f json -o bandit-report.json || true
         continue-on-error: true
       
-      - name: Run Safety check
+      - name: Run pip-audit
         working-directory: ./ai-services
         run: |
-          safety check --json --output safety-report.json || true
+          pip-audit --format json --output audit-report.json || true
         continue-on-error: true
       
       - name: Upload analysis reports
@@ -122,7 +122,7 @@ jobs:
           path: |
             ai-services/pylint-report.json
             ai-services/bandit-report.json
-            ai-services/safety-report.json
+            ai-services/audit-report.json
           if-no-files-found: ignore
 
   frontend-analysis:
@@ -199,7 +199,7 @@ jobs:
           echo "- Pylint: ✅ Completed" >> $GITHUB_STEP_SUMMARY
           echo "- Flake8: ✅ Completed" >> $GITHUB_STEP_SUMMARY
           echo "- Bandit: ✅ Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- Safety: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- pip-audit: ✅ Completed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📝 Ver reporte completo en: [docs/STATIC_CODE_ANALYSIS.md](docs/STATIC_CODE_ANALYSIS.md)" >> $GITHUB_STEP_SUMMARY
 

@@ -62,6 +62,73 @@ class PredictionMonitor:
         self.urgency_distribution = defaultdict(int)
         self.error_log = []
         
+        # Load existing predictions from JSONL files
+        self._load_existing_predictions()
+    
+    def _load_existing_predictions(self, days: int = 30, force_reload: bool = False):
+        """
+        Load existing predictions from JSONL files
+        
+        Args:
+            days: Number of days to load (default: 30)
+            force_reload: If True, clear existing data and reload (default: False)
+        """
+        try:
+            cutoff_date = datetime.now() - timedelta(days=days)
+            
+            # Track loaded prediction IDs to avoid duplicates
+            if force_reload:
+                existing_ids = set()
+                self.predictions_log.clear()
+                self.disease_counts.clear()
+                self.confidence_distribution.clear()
+                self.urgency_distribution.clear()
+            else:
+                existing_ids = {entry.get('prediction_id') for entry in self.predictions_log if entry.get('prediction_id')}
+            
+            loaded_count = 0
+            
+            # Load from all JSONL files in storage path
+            for jsonl_file in sorted(self.storage_path.glob('predictions_*.jsonl')):
+                try:
+                    with open(jsonl_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            if line.strip():
+                                try:
+                                    entry = json.loads(line)
+                                    entry_date = datetime.fromisoformat(entry.get('timestamp', ''))
+                                    prediction_id = entry.get('prediction_id')
+                                    
+                                    # Skip if already loaded or too old
+                                    if entry_date < cutoff_date:
+                                        continue
+                                    if prediction_id and prediction_id in existing_ids:
+                                        continue
+                                    
+                                    self.predictions_log.append(entry)
+                                    existing_ids.add(prediction_id)
+                                    loaded_count += 1
+                                    
+                                    # Update metrics
+                                    disease = entry.get('prediction', {}).get('disease', 'unknown')
+                                    confidence = entry.get('prediction', {}).get('confidence', 0.0)
+                                    urgency = entry.get('prediction', {}).get('urgency_level', 'medium')
+                                    
+                                    self.disease_counts[disease] += 1
+                                    self.confidence_distribution.append(confidence)
+                                    self.urgency_distribution[urgency] += 1
+                                except (json.JSONDecodeError, ValueError) as e:
+                                    logger.warning(f"Error parsing line in {jsonl_file}: {e}")
+                                    continue
+                except Exception as e:
+                    logger.warning(f"Error reading {jsonl_file}: {e}")
+                    continue
+            
+            if loaded_count > 0:
+                logger.info(f"Loaded {loaded_count} predictions from JSONL files (total: {len(self.predictions_log)})")
+        except Exception as e:
+            logger.warning(f"Error loading existing predictions: {e}")
+        
     def log_prediction(self, 
                       symptoms: List[str],
                       prediction: Dict[str, Any],
@@ -365,7 +432,31 @@ class PredictionMonitor:
         ]
         
         if not recent_predictions:
-            return {'error': 'No predictions found for the specified period'}
+            # Return empty structure instead of error for better frontend handling
+            return {
+                'period': {
+                    'days': days,
+                    'start_date': cutoff_date.isoformat(),
+                    'end_date': datetime.now().isoformat()
+                },
+                'summary': {
+                    'total_predictions': 0,
+                    'avg_confidence': 0.0,
+                    'median_confidence': 0.0,
+                    'low_confidence_predictions': 0,
+                    'low_confidence_percentage': 0.0
+                },
+                'distributions': {
+                    'diseases': {},
+                    'urgency_levels': {},
+                    'models': {}
+                },
+                'quality_metrics': {
+                    'high_confidence_rate': 0.0,
+                    'medium_confidence_rate': 0.0,
+                    'low_confidence_rate': 0.0
+                }
+            }
         
         # Calculate metrics
         total_predictions = len(recent_predictions)

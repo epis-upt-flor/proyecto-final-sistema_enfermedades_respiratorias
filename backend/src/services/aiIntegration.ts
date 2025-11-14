@@ -407,7 +407,27 @@ class AIIntegrationService {
       const response = await this.aiClient.get('/api/v1/ml/monitoring/metrics', {
         params,
       });
-      return response.data;
+      // AI service returns {success: true, data: {...}}, extract only data
+      const result = response.data;
+      logger.debug('AI Service Response', { 
+        hasData: !!result, 
+        hasNestedData: !!(result?.data),
+        resultKeys: result ? Object.keys(result) : []
+      });
+      
+      // Extract data from {success: true, data: {...}} structure
+      if (result && typeof result === 'object') {
+        // If it has the expected structure, extract data
+        if ('data' in result && result.success === true) {
+          return result.data;
+        }
+        // If result itself is the data (no wrapper), return it
+        if (!('success' in result) && !('data' in result)) {
+          return result;
+        }
+      }
+      // Fallback: return empty object
+      return result || {};
     } catch (error: any) {
       logger.error('AI ML Monitoring Metrics Failed', { error: error.message });
       throw new AppError('Error al obtener métricas de monitoreo ML', 500);
@@ -419,7 +439,13 @@ class AIIntegrationService {
       const response = await this.aiClient.get('/api/v1/ml/monitoring/features', {
         params,
       });
-      return response.data;
+      // AI service returns {success: true, data: {...}}, extract only data
+      const result = response.data;
+      if (result && typeof result === 'object' && 'data' in result && result.success) {
+        return result.data;
+      }
+      // Fallback: if structure is different, return as is
+      return result || {};
     } catch (error: any) {
       logger.error('AI Feature Influence Fetch Failed', { error: error.message });
       throw new AppError('Error al obtener contribuciones SHAP', 500);
@@ -431,7 +457,13 @@ class AIIntegrationService {
       const response = await this.aiClient.get('/api/v1/ml/monitoring/fairness', {
         params,
       });
-      return response.data;
+      // AI service returns {success: true, data: {...}}, extract only data
+      const result = response.data;
+      if (result && typeof result === 'object' && 'data' in result && result.success) {
+        return result.data;
+      }
+      // Fallback: if structure is different, return as is
+      return result || {};
     } catch (error: any) {
       logger.error('AI Fairness Metrics Fetch Failed', { error: error.message });
       throw new AppError('Error al obtener métricas de equidad ML', 500);

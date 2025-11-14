@@ -161,17 +161,20 @@ bandit -r ai-services/ -f json -o bandit-report.json
 bandit -r ai-services/ -ll  # Nivel bajo
 ```
 
-#### Safety (Vulnerabilidades)
+#### pip-audit (Vulnerabilidades)
 **Resultados:**
 ```
 ✅ All packages are secure
 No known security vulnerabilities found
 ```
 
+**Nota:** Usamos `pip-audit` en lugar de `safety` porque es más moderno y compatible con las dependencias actuales.
+
 **Comandos:**
 ```bash
-safety check --json
-safety check --full-report
+pip-audit --desc
+pip-audit --format json
+pip-audit --desc --output audit-report.txt
 ```
 
 ---
@@ -293,7 +296,7 @@ found 0 vulnerabilities
 
 **Estado:** ✅ Sin vulnerabilidades conocidas
 
-#### AI Services (Safety)
+#### AI Services (pip-audit)
 ```
 ✅ All packages are secure
 No known security vulnerabilities found

@@ -39,7 +39,7 @@ Esto instalará:
 - Black
 - mypy
 - Bandit
-- Safety
+- pip-audit (alternativa moderna a safety)
 
 ## 🎯 Uso Rápido
 
@@ -108,8 +108,8 @@ mypy api/ core/ services/ ml_models/
 # Bandit (seguridad)
 bandit -r api/ core/ services/ ml_models/
 
-# Safety (vulnerabilidades)
-safety check
+# pip-audit (vulnerabilidades)
+pip-audit --desc
 ```
 
 ## 📊 Interpretación de Resultados

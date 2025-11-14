@@ -123,6 +123,7 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Estrategia de testing
 - **[docs/STATIC_CODE_ANALYSIS.md](docs/STATIC_CODE_ANALYSIS.md)** - Análisis de código estático
+- **[docs/SHAP_DASHBOARD_TROUBLESHOOTING.md](docs/SHAP_DASHBOARD_TROUBLESHOOTING.md)** - Solución de problemas del dashboard SHAP
 - **[docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)** - 🛡️ Resumen de cobertura backend (98 % global)
 - **[backend/tests/README.md](backend/tests/README.md)** - 📊 **Resultados de pruebas del backend** (380+ tests, 98 % cobertura)
 - **[web/tests/README.md](web/tests/README.md)** - 📊 **Resultados de pruebas del frontend web** (40+ tests implementados)
@@ -155,6 +156,14 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Explicaciones SHAP integradas
 - ✅ Detección automática de emergencias
 - ✅ Recomendaciones personalizadas
+
+### 📊 Dashboard de Explicabilidad SHAP
+- ✅ Visualización de contribuciones SHAP principales
+- ✅ Métricas de confianza del modelo
+- ✅ Distribución de enfermedades y urgencias
+- ✅ Análisis de equidad por grupos demográficos
+- ✅ Factores explicativos frecuentes
+- ⚠️ **Nota:** Requiere datos de predicciones ML. Ver [docs/SHAP_DASHBOARD_TROUBLESHOOTING.md](docs/SHAP_DASHBOARD_TROUBLESHOOTING.md) para poblar datos de prueba
 
 ### 📊 Analytics
 - ✅ Dashboard en tiempo real

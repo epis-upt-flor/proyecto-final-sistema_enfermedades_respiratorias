@@ -7,7 +7,7 @@ help:
 	@echo "  make format         - Formatear código con Black"
 	@echo "  make format-check   - Verificar formato sin modificar"
 	@echo "  make type-check     - Verificar tipos con mypy"
-	@echo "  make security-check - Ejecutar Bandit y Safety"
+	@echo "  make security-check - Ejecutar Bandit y pip-audit"
 	@echo "  make analyze        - Ejecutar todos los análisis"
 
 lint:
@@ -38,8 +38,8 @@ security-check:
 	@echo "🔒 Ejecutando análisis de seguridad..."
 	@echo "  - Bandit (análisis de código)..."
 	@bandit -r api/ core/ services/ ml_models/ -ll || true
-	@echo "  - Safety (vulnerabilidades de dependencias)..."
-	@safety check || true
+	@echo "  - pip-audit (vulnerabilidades de dependencias)..."
+	@pip-audit --desc || true
 	@echo "✅ Análisis de seguridad completado"
 
 analyze: lint format-check type-check security-check

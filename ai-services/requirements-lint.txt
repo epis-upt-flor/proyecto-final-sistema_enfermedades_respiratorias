@@ -4,6 +4,7 @@ flake8==6.1.0
 black==23.12.1
 mypy==1.7.1
 bandit==1.7.5
-safety==2.3.5
+# pip-audit es la alternativa moderna a safety (sin conflictos de dependencias)
+pip-audit==2.6.2
 pylint-django==2.5.5
 

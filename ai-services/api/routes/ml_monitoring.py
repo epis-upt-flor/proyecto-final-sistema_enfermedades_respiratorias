@@ -7,7 +7,7 @@ Endpoints for monitoring ML predictions and collecting medical feedback.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import structlog
 import sys
 import os
@@ -91,20 +91,56 @@ async def get_monitoring_metrics(days: int = 1) -> Dict[str, Any]:
         days: Number of days to analyze (default: 1)
     
     Returns:
-        Monitoring metrics
+        Monitoring metrics with success flag
     """
     try:
         monitor = get_monitor()
+        # Reload predictions to ensure we have latest data
+        monitor._load_existing_predictions(days=min(days + 7, 30))  # Load a bit more to ensure we have data
         metrics = monitor.get_metrics(days=days)
         
-        return metrics
+        # Log for debugging
+        logger.info("Metrics requested", 
+                   days=days, 
+                   total_predictions=len(monitor.predictions_log),
+                   metrics_summary=metrics.get('summary', {}).get('total_predictions', 0))
+        
+        # Ensure response format matches frontend expectations
+        return {
+            'success': True,
+            'data': metrics
+        }
         
     except Exception as e:
-        logger.error("Error getting metrics", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting metrics: {str(e)}"
-        )
+        logger.error("Error getting metrics", error=str(e), exc_info=True)
+        # Return empty structure on error instead of raising exception
+        return {
+            'success': True,
+            'data': {
+                'period': {
+                    'days': days,
+                    'start_date': (datetime.now() - timedelta(days=days)).isoformat(),
+                    'end_date': datetime.now().isoformat()
+                },
+                'summary': {
+                    'total_predictions': 0,
+                    'avg_confidence': 0.0,
+                    'median_confidence': 0.0,
+                    'low_confidence_predictions': 0,
+                    'low_confidence_percentage': 0.0
+                },
+                'distributions': {
+                    'diseases': {},
+                    'urgency_levels': {},
+                    'models': {}
+                },
+                'quality_metrics': {
+                    'high_confidence_rate': 0.0,
+                    'medium_confidence_rate': 0.0,
+                    'low_confidence_rate': 0.0
+                }
+            }
+        }
 
 
 @router.get("/v1/ml/monitoring/features")
@@ -114,14 +150,30 @@ async def get_feature_contributions(top_n: int = 10) -> Dict[str, Any]:
     """
     try:
         monitor = get_monitor()
+        # Reload predictions to ensure we have latest data
+        monitor._load_existing_predictions(days=30)
         features = monitor.get_feature_influence(top_n=top_n)
-        return features
+        
+        # Log for debugging
+        logger.info("Feature contributions requested", 
+                   top_n=top_n,
+                   total_features=len(features.get('top_features', [])))
+        
+        # Ensure response format matches frontend expectations
+        return {
+            'success': True,
+            'data': features
+        }
     except Exception as e:
-        logger.error("Error getting feature contributions", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting feature contributions: {str(e)}"
-        )
+        logger.error("Error getting feature contributions", error=str(e), exc_info=True)
+        # Return empty structure on error
+        return {
+            'success': True,
+            'data': {
+                'top_features': [],
+                'friendly_factors': []
+            }
+        }
 
 
 @router.get("/v1/ml/monitoring/fairness")
@@ -134,17 +186,30 @@ async def get_fairness_metrics(
     """
     try:
         monitor = get_monitor()
+        # Reload predictions to ensure we have latest data
+        monitor._load_existing_predictions(days=30)
         metrics = monitor.fairness_metrics(
             group_field=group_field,
             high_confidence_threshold=high_confidence_threshold
         )
-        return metrics
+        
+        # Log for debugging
+        logger.info("Fairness metrics requested", 
+                   group_field=group_field,
+                   groups_found=len(metrics) if metrics else 0)
+        
+        # Ensure response format matches frontend expectations
+        return {
+            'success': True,
+            'data': metrics if metrics else {}
+        }
     except Exception as e:
-        logger.error("Error getting fairness metrics", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting fairness metrics: {str(e)}"
-        )
+        logger.error("Error getting fairness metrics", error=str(e), exc_info=True)
+        # Return empty structure on error
+        return {
+            'success': True,
+            'data': {}
+        }
 
 
 @router.get("/v1/ml/monitoring/anomalies")

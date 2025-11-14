@@ -93,34 +93,192 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   GET /api/symptom-reports/heatmap
- * @desc    Get aggregated data for heatmap visualization
+ * @desc    Get aggregated data for heatmap visualization (real-time)
  * @access  Public
  * @query   startDate, endDate
  */
 router.get('/heatmap', async (req, res) => {
   try {
     const Model = initializeModel();
-    if (!Model) {
-      // Return mock data if database not available
-      return res.json({
-        success: true,
-        message: 'Using mock data (database not connected)',
-        data: getMockHeatmapData()
+    const mongoose = require('mongoose');
+    
+    // Get data from both SymptomReport and MedicalHistory
+    let aggregatedData = [];
+    
+    if (Model) {
+      const { startDate, endDate } = req.query;
+      
+      // Get data from SymptomReport
+      const symptomReportData = await Model.getAggregatedByDistrict({
+        startDate,
+        endDate
       });
+      
+      // Get data from MedicalHistory (real cases)
+      let medicalHistoryData = [];
+      try {
+        const MedicalHistory = mongoose.models.MedicalHistory || 
+          mongoose.model('MedicalHistory', new mongoose.Schema({}, { strict: false }));
+        
+        const matchStage = {
+          'location.latitude': { $exists: true, $ne: null },
+          'location.longitude': { $exists: true, $ne: null }
+        };
+        
+        if (startDate) {
+          matchStage.date = { $gte: new Date(startDate) };
+        }
+        if (endDate) {
+          matchStage.date = { ...matchStage.date, $lte: new Date(endDate) };
+        }
+        
+        // Map coordinates to districts (simplified mapping)
+        const districtMapping = {
+          'Centro de Tacna': { lat: -18.0066, lng: -70.2463, bounds: { lat: 0.01, lng: 0.01 } },
+          'Alto de la Alianza': { lat: -18.0167, lng: -70.25, bounds: { lat: 0.01, lng: 0.01 } },
+          'Gregorio Albarracín': { lat: -18.0, lng: -70.24, bounds: { lat: 0.01, lng: 0.01 } },
+          'Ciudad Nueva': { lat: -18.01, lng: -70.23, bounds: { lat: 0.01, lng: 0.01 } },
+          'Pocollay': { lat: -18.02, lng: -70.26, bounds: { lat: 0.01, lng: 0.01 } },
+          'Calana': { lat: -17.95, lng: -70.2, bounds: { lat: 0.01, lng: 0.01 } },
+          'Pachia': { lat: -17.9, lng: -70.15, bounds: { lat: 0.01, lng: 0.01 } },
+          'Boca del Río': { lat: -18.1, lng: -70.3, bounds: { lat: 0.01, lng: 0.01 } }
+        };
+        
+        const medicalHistories = await MedicalHistory.find(matchStage)
+          .select('location symptoms date diagnosis')
+          .lean();
+        
+        // Group by district based on coordinates
+        const districtCounts = {};
+        medicalHistories.forEach(history => {
+          if (history.location && history.location.latitude && history.location.longitude) {
+            // Find closest district
+            let closestDistrict = null;
+            let minDistance = Infinity;
+            
+            for (const [district, coords] of Object.entries(districtMapping)) {
+              const distance = Math.sqrt(
+                Math.pow(history.location.latitude - coords.lat, 2) +
+                Math.pow(history.location.longitude - coords.lng, 2)
+              );
+              if (distance < minDistance && distance < 0.05) { // Within ~5km
+                minDistance = distance;
+                closestDistrict = district;
+              }
+            }
+            
+            if (closestDistrict) {
+              if (!districtCounts[closestDistrict]) {
+                districtCounts[closestDistrict] = {
+                  district: closestDistrict,
+                  totalCases: 0,
+                  highSeverity: 0,
+                  mediumSeverity: 0,
+                  lowSeverity: 0,
+                  coordinates: {
+                    latitude: districtMapping[closestDistrict].lat,
+                    longitude: districtMapping[closestDistrict].lng
+                  },
+                  symptoms: new Set(),
+                  lastReport: null
+                };
+              }
+              
+              districtCounts[closestDistrict].totalCases++;
+              if (history.symptoms) {
+                history.symptoms.forEach(s => {
+                  if (s.name) districtCounts[closestDistrict].symptoms.add(s.name);
+                  if (s.severity === 'severe') districtCounts[closestDistrict].highSeverity++;
+                  else if (s.severity === 'moderate') districtCounts[closestDistrict].mediumSeverity++;
+                  else districtCounts[closestDistrict].lowSeverity++;
+                });
+              }
+              
+              if (!districtCounts[closestDistrict].lastReport || 
+                  new Date(history.date) > new Date(districtCounts[closestDistrict].lastReport)) {
+                districtCounts[closestDistrict].lastReport = history.date;
+              }
+            }
+          }
+        });
+        
+        medicalHistoryData = Object.values(districtCounts).map(d => ({
+          district: d.district,
+          totalCases: d.totalCases,
+          highSeverity: d.highSeverity,
+          mediumSeverity: d.mediumSeverity,
+          lowSeverity: d.lowSeverity,
+          coordinates: d.coordinates,
+          severity: d.highSeverity >= 10 ? 'high' : (d.totalCases >= 20 ? 'medium' : 'low'),
+          symptoms: Array.from(d.symptoms),
+          lastReport: d.lastReport
+        }));
+      } catch (mhError) {
+        console.warn('Error fetching MedicalHistory data:', mhError.message);
+      }
+      
+      // Merge data from both sources
+      const mergedData = {};
+      
+      // Add SymptomReport data
+      symptomReportData.forEach(item => {
+        mergedData[item.district] = {
+          ...item,
+          count: item.totalCases || 0,
+          symptoms: new Set(Array.isArray(item.symptoms) ? item.symptoms : [])
+        };
+      });
+      
+      // Add/merge MedicalHistory data
+      medicalHistoryData.forEach(item => {
+        if (mergedData[item.district]) {
+          mergedData[item.district].totalCases += item.totalCases;
+          mergedData[item.district].count += item.totalCases;
+          mergedData[item.district].highSeverity += item.highSeverity;
+          mergedData[item.district].mediumSeverity += item.mediumSeverity;
+          mergedData[item.district].lowSeverity += item.lowSeverity;
+          // Merge symptoms
+          if (Array.isArray(item.symptoms)) {
+            item.symptoms.forEach(s => mergedData[item.district].symptoms.add(s));
+          }
+          // Use most recent lastReport
+          if (item.lastReport && (!mergedData[item.district].lastReport || 
+              new Date(item.lastReport) > new Date(mergedData[item.district].lastReport))) {
+            mergedData[item.district].lastReport = item.lastReport;
+          }
+        } else {
+          mergedData[item.district] = {
+            ...item,
+            count: item.totalCases || 0,
+            symptoms: new Set(Array.isArray(item.symptoms) ? item.symptoms : [])
+          };
+        }
+      });
+      
+      aggregatedData = Object.values(mergedData).map(item => ({
+        district: item.district,
+        count: item.count || item.totalCases || 0,
+        totalCases: item.totalCases || item.count || 0,
+        highSeverity: item.highSeverity || 0,
+        mediumSeverity: item.mediumSeverity || 0,
+        lowSeverity: item.lowSeverity || 0,
+        coordinates: item.coordinates,
+        severity: item.severity || 'low',
+        riskLevel: item.severity || 'low',
+        symptoms: item.symptoms instanceof Set ? Array.from(item.symptoms) : (Array.isArray(item.symptoms) ? item.symptoms : []),
+        lastReport: item.lastReport || new Date().toISOString()
+      }));
+    } else {
+      // Return mock data if database not available
+      aggregatedData = getMockHeatmapData();
     }
-
-    const { startDate, endDate } = req.query;
-
-    const aggregatedData = await Model.getAggregatedByDistrict({
-      startDate,
-      endDate
-    });
 
     res.json({
       success: true,
       count: aggregatedData.length,
       data: aggregatedData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      realTime: true
     });
   } catch (error) {
     console.error('Error fetching heatmap data:', error);
@@ -130,7 +288,8 @@ router.get('/heatmap', async (req, res) => {
       success: true,
       message: 'Using mock data due to error',
       data: getMockHeatmapData(),
-      error: error.message
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });

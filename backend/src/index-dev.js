@@ -493,7 +493,25 @@ const fetchFromAiService = async (path, options = {}) => {
         timeout: 8000,
         ...options,
       });
-      return response.data;
+      // AI service returns {success: true, data: {...}}, extract only data
+      const result = response.data;
+      // Check if result has the expected structure {success: true, data: {...}}
+      if (result && typeof result === 'object') {
+        if (result.success === true && 'data' in result) {
+          // Extract the inner data
+          const innerData = result.data;
+          // If innerData also has the same structure, extract again
+          if (innerData && typeof innerData === 'object' && innerData.success === true && 'data' in innerData) {
+            return innerData.data;
+          }
+          return innerData;
+        }
+        // If result itself is the data (no wrapper), return it
+        if (!('success' in result)) {
+          return result;
+        }
+      }
+      return result || {};
     } catch (error) {
       lastError = error;
       console.warn(`AI service request failed for ${url}`, error.message);

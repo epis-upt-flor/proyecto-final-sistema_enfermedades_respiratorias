@@ -157,34 +157,48 @@ function InteractiveHeatMap() {
     return 'normal';
   }, []);
 
-  const fetchHeatmapData = useCallback(async () => {
-    setLoading(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const fetchHeatmapData = useCallback(async (showUpdating = false) => {
+    if (showUpdating) {
+      setIsUpdating(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const response = await axios.get(
-        `${LEGACY_API_BASE}/symptom-reports/heatmap`
+        `${LEGACY_API_BASE}/symptom-reports/heatmap`,
+        {
+          params: {
+            // Get data from last 7 days by default for real-time updates
+            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        }
       );
 
       if (response.data.success) {
         const transformedData = response.data.data.map((item) => {
           const epidemiologicalAlert = calculateEpidemiologicalAlert(
             item.district,
-            item.count
+            item.count || item.totalCases || 0
           );
           return {
             district: item.district,
-            count: item.count,
-            severity: item.riskLevel,
+            count: item.count || item.totalCases || 0,
+            severity: item.riskLevel || item.severity,
             epidemiologicalAlert,
-            lat: DISTRICT_COORDINATES[item.district]?.[0] || -18.0066,
-            lng: DISTRICT_COORDINATES[item.district]?.[1] || -70.2463,
-            symptoms: item.symptoms || ['Síntomas respiratorios'],
+            lat: item.coordinates?.latitude || DISTRICT_COORDINATES[item.district]?.[0] || -18.0066,
+            lng: item.coordinates?.longitude || DISTRICT_COORDINATES[item.district]?.[1] || -70.2463,
+            symptoms: Array.isArray(item.symptoms) ? item.symptoms : (item.symptoms || ['Síntomas respiratorios']),
             lastReport: item.lastReport || new Date().toISOString(),
             historicalData: HISTORICAL_DATA[item.district] || null
           };
         });
 
         setHeatmapData(transformedData);
+        setLastUpdate(new Date());
       } else {
         setError(
           response.data.message || 'Error al cargar datos del mapa'
@@ -197,11 +211,22 @@ function InteractiveHeatMap() {
       );
     } finally {
       setLoading(false);
+      setIsUpdating(false);
     }
   }, [calculateEpidemiologicalAlert]);
 
+  // Initial load
   useEffect(() => {
     fetchHeatmapData();
+  }, [fetchHeatmapData]);
+
+  // Real-time updates every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchHeatmapData(true); // Show updating indicator
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, [fetchHeatmapData]);
 
   const stats = useMemo(() => ({
@@ -302,9 +327,20 @@ function InteractiveHeatMap() {
             <div className="stat-number">{stats.totalCases}</div>
             <div className="stat-label">Casos Totales</div>
           </div>
-          <button className="refresh-button" onClick={fetchHeatmapData}>
-            🔄 Actualizar
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button 
+              className="refresh-button" 
+              onClick={() => fetchHeatmapData(true)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? '🔄 Actualizando...' : '🔄 Actualizar'}
+            </button>
+            {lastUpdate && (
+              <div className="last-update">
+                Última actualización: {lastUpdate.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
