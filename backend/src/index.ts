@@ -22,6 +22,7 @@ import wearableRoutes from './routes/wearableRoutes';
 import appointmentsRoutes from './routes/appointmentsRoutes';
 import prescriptionRoutes from './routes/prescriptionRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import automaticReportRoutes from './routes/automaticReportRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -35,6 +36,7 @@ import { brotliCompression } from './middleware/brotliCompression';
 import { smartRateLimiter } from './middleware/rateLimiter';
 import { startAlertJobs, stopAlertJobs } from './jobs/alertJobs';
 import { startAppointmentJobs, stopAppointmentJobs } from './jobs/appointmentJobs';
+import { startReportJobs, stopReportJobs } from './jobs/reportJobs';
 
 class App {
   public app: express.Application;
@@ -153,6 +155,7 @@ class App {
     this.app.use('/api/v1/alerts', alertRoutes);
     this.app.use('/api/v1/appointments', appointmentsRoutes);
     this.app.use('/api/v1/prescriptions', prescriptionRoutes);
+    this.app.use('/api/v1/reports/automatic', automaticReportRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {
@@ -172,7 +175,8 @@ class App {
           wearables: '/api/v1/wearables',
           alerts: '/api/v1/alerts',
           appointments: '/api/v1/appointments',
-          prescriptions: '/api/v1/prescriptions'
+          prescriptions: '/api/v1/prescriptions',
+          automaticReports: '/api/v1/reports/automatic'
         }
       });
     });
@@ -235,6 +239,7 @@ class App {
 
     startAlertJobs();
     startAppointmentJobs();
+    startReportJobs();
   }
 
   public listen(): void {
@@ -269,6 +274,7 @@ process.on('SIGTERM', () => {
   logger.info('SIGTERM recibido. Cerrando servidor...');
   stopAlertJobs();
   stopAppointmentJobs();
+  stopReportJobs();
   disconnectRedis().finally(() => process.exit(0));
 });
 
@@ -276,6 +282,7 @@ process.on('SIGINT', () => {
   logger.info('SIGINT recibido. Cerrando servidor...');
   stopAlertJobs();
   stopAppointmentJobs();
+  stopReportJobs();
   disconnectRedis().finally(() => process.exit(0));
 });
 
