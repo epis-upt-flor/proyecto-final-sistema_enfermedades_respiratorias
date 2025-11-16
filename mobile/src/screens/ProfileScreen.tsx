@@ -18,6 +18,7 @@ import {
 } from 'react-native-paper';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../services/i18nService';
 
 const ProfileScreen: React.FC = () => {
   const { 
@@ -29,15 +30,16 @@ const ProfileScreen: React.FC = () => {
     clearNotifications 
   } = useAppStore();
   const { themeMode, setThemeMode, toggleTheme } = useTheme();
+  const { t, language, setLanguage } = useTranslation();
 
   const handleLogout = () => {
     Alert.alert(
-      'Cerrar Sesión',
+      t('auth.logout'),
       '¿Estás seguro de que deseas cerrar sesión?',
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Cerrar Sesión', 
+          text: t('auth.logout'), 
           style: 'destructive',
           onPress: () => setUser(null)
         },
@@ -47,12 +49,12 @@ const ProfileScreen: React.FC = () => {
 
   const handleClearNotifications = () => {
     Alert.alert(
-      'Limpiar Notificaciones',
+      t('notifications.title'),
       '¿Deseas eliminar todas las notificaciones?',
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Limpiar', 
+          text: t('notifications.clearAll'), 
           onPress: () => clearNotifications()
         },
       ]
@@ -66,7 +68,7 @@ const ProfileScreen: React.FC = () => {
       <View style={styles.container}>
         <Card style={styles.card}>
           <Card.Content>
-            <Title>No hay usuario logueado</Title>
+            <Title>{t('auth.login')}</Title>
           </Card.Content>
         </Card>
       </View>
@@ -102,6 +104,60 @@ const ProfileScreen: React.FC = () => {
       {/* Estado de Conexión */}
       <Card style={styles.card}>
         <Card.Content>
+          <Title>{t('settings.title')}</Title>
+          <List.Item
+            title={t('notifications.title')}
+            description={`${unreadNotifications} ${t('notifications.title').toLowerCase()}`}
+            left={(props) => <List.Icon {...props} icon="bell" />}
+            right={() => (
+              unreadNotifications > 0 && (
+                <Chip style={styles.badgeChip}>
+                  {unreadNotifications}
+                </Chip>
+              )
+            )}
+          />
+          <List.Item
+            title={t('settings.language')}
+            description={language === 'en' ? 'English' : 'Español'}
+            left={(props) => <List.Icon {...props} icon="translate" />}
+            right={() => (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Chip onPress={() => setLanguage('es')} style={{ marginRight: 8 }} selected={language === 'es'}>
+                  ES
+                </Chip>
+                <Chip onPress={() => setLanguage('en')} selected={language === 'en'}>
+                  EN
+                </Chip>
+              </View>
+            )}
+          />
+          <List.Item
+            title={t('settings.theme')}
+            description={
+              themeMode === 'auto' ? 'Automático (según sistema)' : themeMode === 'dark' ? 'Oscuro' : 'Claro'
+            }
+            left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
+            right={() => (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Chip onPress={() => setThemeMode('light')} style={{ marginRight: 8 }} selected={themeMode === 'light'}>
+                  Claro
+                </Chip>
+                <Chip onPress={() => setThemeMode('dark')} style={{ marginRight: 8 }} selected={themeMode === 'dark'}>
+                  Oscuro
+                </Chip>
+                <Chip onPress={() => setThemeMode('auto')} selected={themeMode === 'auto'}>
+                  Auto
+                </Chip>
+              </View>
+            )}
+          />
+        </Card.Content>
+      </Card>
+
+      {/* Estado del Sistema */}
+      <Card style={styles.card}>
+        <Card.Content>
           <Title>Estado del Sistema</Title>
           <List.Item
             title="Conexión a Internet"
@@ -130,104 +186,23 @@ const ProfileScreen: React.FC = () => {
         </Card.Content>
       </Card>
 
-      {/* Notificaciones */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Notificaciones</Title>
-          <List.Item
-            title="Notificaciones No Leídas"
-            description={`${unreadNotifications} notificaciones`}
-            left={(props) => <List.Icon {...props} icon="bell" />}
-            right={() => (
-              unreadNotifications > 0 && (
-                <Chip style={styles.badgeChip}>
-                  {unreadNotifications}
-                </Chip>
-              )
-            )}
-          />
-          <List.Item
-            title="Limpiar Notificaciones"
-            description="Eliminar todas las notificaciones"
-            left={(props) => <List.Icon {...props} icon="delete-sweep" />}
-            onPress={handleClearNotifications}
-          />
-        </Card.Content>
-      </Card>
-
-      {/* Configuración */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Configuración</Title>
-          <List.Item
-            title="Notificaciones Push"
-            description="Recibir notificaciones importantes"
-            left={(props) => <List.Icon {...props} icon="bell-ring" />}
-            right={() => <Switch value={true} onValueChange={() => {}} />}
-          />
-          <List.Item
-            title="Sincronización Automática"
-            description="Sincronizar datos automáticamente"
-            left={(props) => <List.Icon {...props} icon="sync" />}
-            right={() => <Switch value={true} onValueChange={() => {}} />}
-          />
-          <List.Item
-            title="Modo de Tema"
-            description={
-              themeMode === 'auto' ? 'Automático (según sistema)' : themeMode === 'dark' ? 'Oscuro' : 'Claro'
-            }
-            left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
-            right={() => (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Chip onPress={() => setThemeMode('light')} style={{ marginRight: 8 }} selected={themeMode === 'light'}>
-                  Claro
-                </Chip>
-                <Chip onPress={() => setThemeMode('dark')} style={{ marginRight: 8 }} selected={themeMode === 'dark'}>
-                  Oscuro
-                </Chip>
-                <Chip onPress={() => setThemeMode('auto')} selected={themeMode === 'auto'}>
-                  Auto
-                </Chip>
-              </View>
-            )}
-          />
-        </Card.Content>
-      </Card>
-
-      {/* Información de la App */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Información de la App</Title>
-          <List.Item
-            title="Versión"
-            description="1.0.0"
-            left={(props) => <List.Icon {...props} icon="information" />}
-          />
-          <List.Item
-            title="Última Sincronización"
-            description={new Date(offlineData.lastSync).toLocaleString()}
-            left={(props) => <List.Icon {...props} icon="clock" />}
-          />
-          <List.Item
-            title="Soporte Técnico"
-            description="Contactar soporte"
-            left={(props) => <List.Icon {...props} icon="help-circle" />}
-            onPress={() => Alert.alert('Soporte', 'Contacto: soporte@respicare.com')}
-          />
-        </Card.Content>
-      </Card>
-
-      {/* Botón de Cerrar Sesión */}
+      {/* Botones */}
       <Card style={styles.card}>
         <Card.Content>
           <Button
             mode="contained"
+            onPress={handleClearNotifications}
+            style={styles.logoutButton}
+          >
+            {t('notifications.clearAll')}
+          </Button>
+          <Button
+            mode="contained"
             onPress={handleLogout}
             style={styles.logoutButton}
-            contentStyle={styles.logoutButtonContent}
             buttonColor="#f44336"
           >
-            Cerrar Sesión
+            {t('auth.logout')}
           </Button>
         </Card.Content>
       </Card>
@@ -277,9 +252,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     marginTop: 8,
-  },
-  logoutButtonContent: {
-    paddingVertical: 8,
   },
 });
 

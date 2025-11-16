@@ -132,19 +132,21 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 ### 4.1 Reconocimiento de Voz (`voiceRecognitionService.ts`)
 
-- [ ] Input de síntomas por voz:
-  - [ ] Conversión speech-to-text integrada con el formulario de síntomas.
-  - [ ] Manejo de errores (ruido, cancelación, permisos).
-- [ ] Comandos básicos por voz:
-  - [ ] Navegar a secciones clave (ej.: “abrir citas”, “ver alertas”).
+- ✅ Input de síntomas por voz:
+  - ✅ Conversión speech-to-text integrada en `DataCaptureScreen` (botón “Dictar síntomas”).
+  - ✅ Manejo de errores (permiso, fallos) y cancelación.
+- ✅ Comandos básicos por voz (Home):
+  - ✅ “abrir/ver citas” → navega a `Appointments`.
+  - ✅ “ver alertas” → navega a `Alerts`.
+  - ✅ “analizar/ia” → navega a `AI`.
 
 ### 4.2 Internacionalización (`i18nService.ts`)
 
-- [ ] Infraestructura i18n mobile:
-  - [ ] Soporte mínimo para ES y EN.
-  - [ ] Carga de strings desde JSON u otra fuente centralizada.
-- [ ] Selector de idioma en ajustes.
-- [ ] Verificación de que las pantallas principales usan el sistema de i18n (sin strings hardcodeados).
+- ✅ Infraestructura i18n mobile (servicio + hook `useTranslation`).
+- ✅ Soporte mínimo para ES y EN (extensible a PT/FR/QU).
+- ✅ Carga centralizada de strings (estructura de namespaces en servicio).
+- ✅ Selector de idioma en ajustes/perfil (chips ES/EN) con persistencia.
+- ✅ Aplicar i18n en pantallas clave (`ProfileScreen`, `DataCaptureScreen`); pendiente completar `HomeScreen`.
 
 ---
 

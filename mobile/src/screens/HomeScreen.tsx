@@ -24,6 +24,8 @@ import { featureFlags } from '../config/environment';
 import type { AppointmentDTO } from '../types';
 import { predictiveAnalysisService } from '../services/predictiveAnalysisService';
 import { shallow } from 'zustand/shallow';
+import { voiceRecognitionService } from '../services/voiceRecognitionService';
+import { useTranslation } from '../services/i18nService';
 
 type QuickAction = {
   title: string;
@@ -124,6 +126,7 @@ const RecentItemCard = React.memo(
 RecentItemCard.displayName = 'RecentItemCard';
 
 const HomeScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const {
     user,
@@ -160,6 +163,7 @@ const HomeScreen: React.FC = () => {
     generatedAt: string;
   } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isVoiceCmd, setIsVoiceCmd] = useState(false);
 
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(() => {
@@ -286,6 +290,43 @@ const HomeScreen: React.FC = () => {
     [isOnline, syncData, navigation]
   );
 
+  const startVoiceCommand = useCallback(async () => {
+    try {
+      setIsVoiceCmd(true);
+      const ok = await voiceRecognitionService.startListening(
+        { language: 'es-ES', interimResults: false },
+        (result) => {
+          setIsVoiceCmd(false);
+          const text = result.text?.toLowerCase() || '';
+          if (text.includes('abrir citas') || text.includes('ver citas')) {
+            navigation.navigate('Appointments');
+            return;
+          }
+          if (text.includes('ver alertas') || text.includes('abrir alertas')) {
+            navigation.navigate('Alerts');
+            return;
+          }
+          if (text.includes('analizar') || text.includes('ia')) {
+            navigation.navigate('AI');
+            return;
+          }
+          Alert.alert('Comando no reconocido', 'Prueba con: "abrir citas" o "ver alertas"');
+        },
+        (error) => {
+          setIsVoiceCmd(false);
+          Alert.alert('Voz', error || 'No se pudo ejecutar el comando de voz');
+        }
+      );
+      if (!ok) {
+        setIsVoiceCmd(false);
+        Alert.alert('Voz', 'No se pudo iniciar el reconocimiento');
+      }
+    } catch {
+      setIsVoiceCmd(false);
+      Alert.alert('Voz', 'Error al iniciar reconocimiento');
+    }
+  }, [navigation]);
+
   const syncStatusColor = useMemo((): string => {
     if (!isOnline) return '#f44336';
     if (syncStatus.isSyncing) return '#ff9800';
@@ -294,16 +335,16 @@ const HomeScreen: React.FC = () => {
   }, [isOnline, syncStatus]);
 
   const syncStatusText = useMemo((): string => {
-    if (!isOnline) return 'Sin conexión';
-    if (syncStatus.isSyncing) return 'Sincronizando...';
-    if (syncStatus.pendingItems > 0) return `${syncStatus.pendingItems} pendientes`;
-    return 'Sincronizado';
-  }, [isOnline, syncStatus]);
+    if (!isOnline) return t('home.sync.offline');
+    if (syncStatus.isSyncing) return t('home.sync.syncing');
+    if (syncStatus.pendingItems > 0) return t('home.sync.pending', { count: String(syncStatus.pendingItems) });
+    return t('home.sync.synced');
+  }, [isOnline, syncStatus, t]);
 
   const quickActionItems: QuickAction[] = useMemo(
     () => [
       {
-        title: 'Capturar Datos',
+        title: t('home.quickActions'),
         description: 'Registrar nueva historia médica',
         icon: 'add-circle',
         color: '#4caf50',
@@ -338,7 +379,7 @@ const HomeScreen: React.FC = () => {
         action: 'history',
       },
       {
-        title: isOnline ? 'Sincronizar' : 'Sin conexión',
+        title: isOnline ? 'Sincronizar' : t('home.sync.offline'),
         description: isOnline
           ? 'Sincronizar datos pendientes con la nube'
           : 'Se sincronizará automáticamente al volver a estar en línea',
@@ -347,7 +388,7 @@ const HomeScreen: React.FC = () => {
         action: 'sync',
       },
     ],
-    [isOnline]
+    [isOnline, t]
   );
 
   return (
@@ -369,12 +410,15 @@ const HomeScreen: React.FC = () => {
               />
               <View style={styles.welcomeText}>
                 <Title style={styles.welcomeTitle}>
-                  ¡Hola, {user?.firstName || 'Usuario'}!
+                  {t('common.loading').replace('Cargando...', `¡Hola, ${user?.firstName || 'Usuario'}!`) }
                 </Title>
                 <Paragraph style={styles.welcomeSubtitle}>
-                  Bienvenido a RespiCare Mobile
+                  RespiCare Mobile
                 </Paragraph>
               </View>
+              <Button mode="text" onPress={startVoiceCommand} loading={isVoiceCmd}>
+                {isVoiceCmd ? 'Escuchando...' : '🎤 Voz'}
+              </Button>
             </View>
             
             {/* Sync Status */}
@@ -400,7 +444,7 @@ const HomeScreen: React.FC = () => {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Title style={styles.sectionTitle}>Acciones Rápidas</Title>
+          <Title style={styles.sectionTitle}>{t('home.quickActions')}</Title>
           
           {quickActionItems.map((item) => (
             <QuickActionCard key={item.action} {...item} onPress={handleQuickAction} />
@@ -410,7 +454,7 @@ const HomeScreen: React.FC = () => {
         {/* Recent Data */}
         {recentHistories.length > 0 && (
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Historiales Recientes</Title>
+            <Title style={styles.sectionTitle}>{t('home.recentHistories')}</Title>
             {recentHistories.slice(0, 3).map((history, index) => (
               <RecentItemCard key={history.id} item={history} type="history" />
             ))}
@@ -420,7 +464,7 @@ const HomeScreen: React.FC = () => {
         {/* Predictive Insights */}
         {predictiveSummary && (
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Análisis Predictivo</Title>
+            <Title style={styles.sectionTitle}>{t('home.predictiveAnalysis')}</Title>
             <Card style={styles.statsCard}>
               <Card.Content>
                 <View style={styles.recentItemHeader}>
@@ -450,7 +494,7 @@ const HomeScreen: React.FC = () => {
         {/* Recent Analyses */}
         {recentAnalyses.length > 0 && (
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Análisis Recientes</Title>
+            <Title style={styles.sectionTitle}>{t('home.recentAnalyses')}</Title>
             {recentAnalyses.slice(0, 3).map((analysis, index) => (
               <RecentItemCard key={analysis.id} item={analysis} type="analysis" />
             ))}
@@ -461,7 +505,7 @@ const HomeScreen: React.FC = () => {
         {/* Upcoming Appointments (feature-flagged) */}
         {featureFlags.enableAppointmentsCard && upcomingAppointments && (
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Próximas Citas</Title>
+            <Title style={styles.sectionTitle}>{t('home.upcomingAppointments')}</Title>
             {upcomingAppointments.length === 0 ? (
               <Paragraph style={{ color: '#666' }}>No hay citas programadas próximamente.</Paragraph>
             ) : (
@@ -485,7 +529,7 @@ const HomeScreen: React.FC = () => {
         )}
         {alerts && alerts.length > 0 && (
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Alertas</Title>
+            <Title style={styles.sectionTitle}>{t('home.alerts')}</Title>
             {alerts.slice(0, 3).map((a) => (
               <Card key={a.id} style={styles.recentCard}>
                 <Card.Content>
@@ -510,7 +554,7 @@ const HomeScreen: React.FC = () => {
 
         {/* Statistics */}
         <View style={styles.section}>
-          <Title style={styles.sectionTitle}>Estadísticas</Title>
+          <Title style={styles.sectionTitle}>{t('home.statistics')}</Title>
           <Card style={styles.statsCard}>
             <Card.Content>
               <View style={styles.statsGrid}>
@@ -544,24 +588,24 @@ const HomeScreen: React.FC = () => {
               <View style={styles.emergencyHeader}>
                 <Icon name="emergency" size={24} color="#d32f2f" />
                 <Title style={[styles.emergencyTitle, { color: '#d32f2f' }]}>
-                  Emergencia Médica
+                  {t('home.emergencyTitle')}
                 </Title>
               </View>
               <Paragraph style={styles.emergencyText}>
-                En caso de emergencia médica, llama inmediatamente al 911 o acude al servicio de urgencias más cercano.
+                {t('home.emergencyDescription')}
               </Paragraph>
               <Button 
                 mode="contained" 
                 style={styles.emergencyButton}
-                onPress={() => Alert.alert('Emergencia', '¿Necesitas llamar al 911?', [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Llamar 911', style: 'destructive', onPress: () => {
+                onPress={() => Alert.alert(t('home.emergencyTitle'), `${t('home.call911')}?`, [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  { text: t('home.call911'), style: 'destructive', onPress: () => {
                     // Implement emergency call functionality
-                    Alert.alert('Llamada de Emergencia', 'Redirigiendo a servicios de emergencia...');
+                    Alert.alert(t('home.emergencyTitle'), 'Redirigiendo a servicios de emergencia...');
                   }}
                 ])}
               >
-                Llamar 911
+                {t('home.call911')}
               </Button>
             </Card.Content>
           </Card>

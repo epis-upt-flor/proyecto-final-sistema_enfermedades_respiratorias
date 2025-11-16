@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { RootStackParamList, MainTabParamList } from '../types';
 import { shallow } from 'zustand/shallow';
 import { useTheme } from '../hooks/useTheme';
+import { i18nService } from '../services/i18nService';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -54,6 +55,12 @@ const MainTabNavigator = () => {
               break;
             case 'AI':
               iconName = focused ? 'robot' : 'robot-outline';
+              break;
+            case 'Alerts':
+              iconName = focused ? 'bell' : 'bell-outline';
+              break;
+            case 'Appointments':
+              iconName = focused ? 'calendar' : 'calendar-outline';
               break;
             case 'ChatBot':
               iconName = focused ? 'chat' : 'chat-outline';
@@ -161,6 +168,10 @@ const MainTabNavigator = () => {
 const AppNavigator = () => {
   const isAuthenticated = useAppStore((state) => Boolean(state.user), shallow);
   const { theme } = useTheme();
+
+  useEffect(() => {
+    i18nService.initialize();
+  }, []);
 
   return (
     <PaperProvider theme={theme}>

@@ -28,6 +28,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { MedicalHistory, Symptom } from '../../types';
 import { LazyImage } from '../common/LazyImage';
 import { shallow } from 'zustand/shallow';
+import { voiceRecognitionService } from '../../services/voiceRecognitionService';
+import { useTranslation } from '../../services/i18nService';
 
 const PREDEFINED_SYMPTOMS = Object.freeze([
   { id: '1', name: 'Tos seca', severity: 'mild' as const },
@@ -41,6 +43,7 @@ const PREDEFINED_SYMPTOMS = Object.freeze([
 ] as const);
 
 const DataCaptureScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { addMedicalHistory, isOnline } = useAppStore(
     useCallback(
       (state) => ({
@@ -63,6 +66,7 @@ const DataCaptureScreen: React.FC = () => {
   const [location, setLocation] = useState<{latitude: number; longitude: number; address: string} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -85,7 +89,7 @@ const DataCaptureScreen: React.FC = () => {
             setLocation({
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
-              address: 'Ubicación actual', // En una app real, usarías geocoding
+              address: 'Ubicación actual', // TODO: i18n + geocoding
             });
           },
           (error) => {
@@ -118,15 +122,15 @@ const DataCaptureScreen: React.FC = () => {
     };
 
     Alert.alert(
-      'Seleccionar Imagen',
+      t('common.save'),
       '¿Cómo deseas capturar la imagen?',
       [
         { text: 'Cámara', onPress: () => launchCamera(options, handleImageResponse) },
         { text: 'Galería', onPress: () => launchImageLibrary(options, handleImageResponse) },
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
-  }, [handleImageResponse]);
+  }, [handleImageResponse, t]);
 
   const removeImage = useCallback((index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -163,9 +167,64 @@ const DataCaptureScreen: React.FC = () => {
     }));
   }, []);
 
+  const parseSymptomsFromText = (text: string) => {
+    const lowered = text.toLowerCase();
+    const matches: Array<typeof PREDEFINED_SYMPTOMS[number]> = [];
+    PREDEFINED_SYMPTOMS.forEach((s) => {
+      const key = s.name.toLowerCase();
+      if (
+        lowered.includes(key) ||
+        (s.name === 'Tos seca' && (lowered.includes('tos seca') || lowered.includes('tos'))) ||
+        (s.name === 'Tos con flema' && (lowered.includes('flema') || lowered.includes('tos con flema')))
+      ) {
+        matches.push(s);
+      }
+    });
+    if (matches.length === 0) {
+      Alert.alert(t('common.error'), 'No se reconocieron síntomas conocidos en el audio.');
+      return;
+    }
+    matches.forEach(addSymptom);
+  };
+
+  const startVoiceInput = useCallback(async () => {
+    try {
+      setIsListening(true);
+      const ok = await voiceRecognitionService.startListening(
+        { language: 'es-ES', interimResults: false },
+        (result) => {
+          setIsListening(false);
+          if (result.isFinal && result.text) {
+            parseSymptomsFromText(result.text);
+          }
+        },
+        (error) => {
+          setIsListening(false);
+          if (error?.toLowerCase().includes('permiso')) {
+            Alert.alert(t('common.error'), 'Habilita el permiso de micrófono para usar dictado.');
+          } else {
+            Alert.alert(t('common.error'), error || 'No se pudo reconocer la voz.');
+          }
+        }
+      );
+      if (!ok) {
+        setIsListening(false);
+        Alert.alert(t('common.error'), 'No se pudo iniciar el reconocimiento.');
+      }
+    } catch (e) {
+      setIsListening(false);
+      Alert.alert(t('common.error'), 'Ocurrió un error al iniciar reconocimiento de voz.');
+    }
+  }, [parseSymptomsFromText, t]);
+
+  const cancelVoiceInput = useCallback(async () => {
+    await voiceRecognitionService.cancel();
+    setIsListening(false);
+  }, []);
+
   const handleSubmit = useCallback(async () => {
     if (!formData.patientName || !formData.age || !formData.diagnosis) {
-      Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
+      Alert.alert(t('common.error'), 'Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -174,7 +233,7 @@ const DataCaptureScreen: React.FC = () => {
     try {
       const newHistory: MedicalHistory = {
         id: Date.now().toString(),
-        patientId: 'current-user', // En una app real, esto vendría del usuario logueado
+        patientId: 'current-user',
         patientName: formData.patientName,
         age: parseInt(formData.age),
         diagnosis: formData.diagnosis,
@@ -189,7 +248,6 @@ const DataCaptureScreen: React.FC = () => {
 
       addMedicalHistory(newHistory);
 
-      // Limpiar formulario
       setFormData({
         patientName: '',
         age: '',
@@ -201,7 +259,7 @@ const DataCaptureScreen: React.FC = () => {
       setAudioNote('');
 
       Alert.alert(
-        'Éxito',
+        t('common.success'),
         isOnline 
           ? 'Historia médica guardada y sincronizada'
           : 'Historia médica guardada offline. Se sincronizará cuando haya conexión.',
@@ -209,19 +267,19 @@ const DataCaptureScreen: React.FC = () => {
       );
 
     } catch (error) {
-      Alert.alert('Error', 'No se pudo guardar la historia médica');
+      Alert.alert(t('common.error'), 'No se pudo guardar la historia médica');
       console.error('Error saving medical history:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [addMedicalHistory, formData, images, isOnline, location]);
+  }, [addMedicalHistory, formData, images, isOnline, location, t]);
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Card style={styles.card}>
           <Card.Content>
-            <Title>📝 Captura de Datos Médicos</Title>
+            <Title>📝 {t('medicalHistory.title')}</Title>
             <Paragraph>
               {isOnline ? '🟢 Conectado' : '🔴 Modo Offline'}
             </Paragraph>
@@ -231,16 +289,16 @@ const DataCaptureScreen: React.FC = () => {
         {/* Información del Paciente */}
         <Card style={styles.card}>
           <Card.Content>
-            <Title>Información del Paciente</Title>
+            <Title>{t('medicalHistory.title')}</Title>
             <TextInput
-              label="Nombre del Paciente *"
+              label={`${t('medicalHistory.patientName')} *`}
               value={formData.patientName}
               onChangeText={(text) => setFormData(prev => ({ ...prev, patientName: text }))}
               style={styles.input}
               mode="outlined"
             />
             <TextInput
-              label="Edad *"
+              label={`${t('medicalHistory.age')} *`}
               value={formData.age}
               onChangeText={(text) => setFormData(prev => ({ ...prev, age: text }))}
               keyboardType="numeric"
@@ -248,7 +306,7 @@ const DataCaptureScreen: React.FC = () => {
               mode="outlined"
             />
             <TextInput
-              label="Diagnóstico *"
+              label={`${t('medicalHistory.diagnosis')} *`}
               value={formData.diagnosis}
               onChangeText={(text) => setFormData(prev => ({ ...prev, diagnosis: text }))}
               style={styles.input}
@@ -261,8 +319,19 @@ const DataCaptureScreen: React.FC = () => {
         {/* Síntomas */}
         <Card style={styles.card}>
           <Card.Content>
-            <Title>Síntomas</Title>
-            <Paragraph>Selecciona síntomas predefinidos:</Paragraph>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Title>{t('symptoms.title')}</Title>
+              {!isListening ? (
+                <Button mode="outlined" icon="microphone" onPress={startVoiceInput}>
+                  {t('chatbot.voiceInput')}
+                </Button>
+              ) : (
+                <Button mode="outlined" icon="stop" onPress={cancelVoiceInput}>
+                  {t('common.cancel')}
+                </Button>
+              )}
+            </View>
+            <Paragraph>{t('symptoms.addSymptom')}</Paragraph>
             <View style={styles.symptomsContainer}>
               {PREDEFINED_SYMPTOMS.map((symptom) => (
                 <Chip
@@ -278,7 +347,7 @@ const DataCaptureScreen: React.FC = () => {
             
             {formData.symptoms.length > 0 && (
               <View style={styles.selectedSymptoms}>
-                <Paragraph>Síntomas seleccionados:</Paragraph>
+                <Paragraph>{t('symptoms.title')}</Paragraph>
                 {formData.symptoms.map((symptom) => (
                   <Chip
                     key={symptom.id}
@@ -334,7 +403,7 @@ const DataCaptureScreen: React.FC = () => {
         {/* Ubicación */}
         <Card style={styles.card}>
           <Card.Content>
-            <Title>Ubicación</Title>
+            <Title>{t('medicalHistory.location')}</Title>
             {location ? (
               <Paragraph>
                 📍 Lat: {location.latitude.toFixed(4)}, Lng: {location.longitude.toFixed(4)}
@@ -378,7 +447,7 @@ const DataCaptureScreen: React.FC = () => {
           style={styles.saveButton}
           contentStyle={styles.saveButtonContent}
         >
-          {isOnline ? '💾 Guardar y Sincronizar' : '💾 Guardar Offline'}
+          {t('common.save')}
         </Button>
       </ScrollView>
 
