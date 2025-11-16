@@ -14,13 +14,16 @@ import {
   Legend
 } from 'recharts';
 import './AnalyticsDashboard.css';
-import { LEGACY_API_BASE } from '../utils/apiBase';
+import { LEGACY_API_BASE, API_BASE } from '../utils/apiBase';
 
 function AnalyticsDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  const [mlMetrics, setMlMetrics] = useState(null);
+  const [mlError, setMlError] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -42,11 +45,33 @@ function AnalyticsDashboard() {
     }
   }, []);
 
+  const fetchMlMetrics = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/analytics/ml/monitoring`, {
+        params: { days: 7 },
+      });
+
+      if (response.data.success) {
+        setMlMetrics(response.data.data);
+        setMlError(null);
+      } else {
+        setMlError(response.data.message || 'Error al cargar métricas ML');
+      }
+    } catch (err) {
+      console.error('Error fetching ML monitoring metrics:', err);
+      setMlError('No se pudieron cargar las métricas ML de monitoreo.');
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    fetchMlMetrics();
+    const interval = setInterval(() => {
+      fetchDashboardData();
+      fetchMlMetrics();
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, fetchMlMetrics]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -323,6 +348,48 @@ function AnalyticsDashboard() {
             <span className="stat-label">Consultas Recientes</span>
             <span className="stat-value">
               {dashboardData.overview?.recentConversations || 0}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ML Metrics Summary */}
+      <div className="summary-section">
+        <h3>🤖 Métricas del Modelo ML</h3>
+        {mlError && (
+          <p className="ml-error-text">{mlError}</p>
+        )}
+        <div className="stats-grid">
+          <div className="stat-item">
+            <span className="stat-label">Predicciones (últimos 7 días)</span>
+            <span className="stat-value">
+              {mlMetrics?.summary?.total_predictions ?? '—'}
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Confianza promedio</span>
+            <span className="stat-value">
+              {mlMetrics?.summary
+                ? `${Math.round((mlMetrics.summary.avg_confidence || 0) * 100)}%`
+                : '—'}
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Predicciones baja confianza</span>
+            <span className="stat-value">
+              {mlMetrics?.summary?.low_confidence_predictions ?? 0}
+              {' '}
+              ({mlMetrics?.summary
+                ? `${Math.round(mlMetrics.summary.low_confidence_percentage || 0)}%`
+                : '0%'})
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Calidad (alta / media / baja)</span>
+            <span className="stat-value">
+              {mlMetrics?.quality_metrics
+                ? `${Math.round(mlMetrics.quality_metrics.high_confidence_rate || 0)}% / ${Math.round(mlMetrics.quality_metrics.medium_confidence_rate || 0)}% / ${Math.round(mlMetrics.quality_metrics.low_confidence_rate || 0)}%`
+                : '—'}
             </span>
           </div>
         </div>

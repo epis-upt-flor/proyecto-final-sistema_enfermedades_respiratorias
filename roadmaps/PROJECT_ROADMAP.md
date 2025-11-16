@@ -88,7 +88,7 @@ Esta matriz resume de forma centralizada qué capacidades ofrece el sistema seg�
 |------|----|-----|--------|---------|-------------|-------|------|--------------|
 | **1. Fundamentos** | ✅ 100 % | ✅ Base SPA | ✅ App RN base | ✅ API base / Auth | ✅ Servicio FastAPI base | ⏳ Scripts iniciales | ✅ README/Quickstart | ✅ Esquema inicial |
 | **2. Dominios Core** | ✅ 100 % | ✅ CRUD UI básicas | ✅ Historias/citas básicas | ✅ Historias/Citas/Prescripciones/Alertas | ⏳ Soporte indirecto | [ ] | ✅ Secciones en README | ✅ Modelos colecciones core |
-| **3. Analytics/ML Inicial** | ✅ ~80 % | ✅ Dashboard básico | ⏳ Consumo parcial | ✅ Servicios analytics | ✅ Modelos iniciales + endpoints | ⏳ Jobs básicos | ⏳ Docs ML parciales | ⏳ Índices/consultas optimizadas |
+| **3. Analytics/ML Inicial** | ✅ ~80 % | ✅ Dashboard + métricas ML | ⏳ Consumo parcial | ✅ Servicios analytics | ✅ Modelos iniciales + endpoints | ⏳ Jobs básicos | ⏳ Docs ML parciales | ⏳ Índices/consultas optimizadas |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | [ ] | ✅ Sección seguridad base | ✅ Config conexión segura |
 | **5. Testing y Calidad** | ✅ 100 % | ✅ Suites + CI | ✅ Unit/Integration/E2E | ✅ Unit/Integration/E2E + security/perf | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy | ⏳ Tests específicos BD |
 | **6. Optimización & Performance** | ✅ ~80 % | ✅ Code splitting, PWA, imágenes | ✅ Listas/imágenes/perf | ✅ Cache, queries, pooling, rate limit | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), monitores básicos | ⏳ Guías tuning avanzadas | ⏳ Monitoreo/repl. avanzada |
@@ -103,6 +103,128 @@ Esta matriz resume de forma centralizada qué capacidades ofrece el sistema seg�
 | **15. ML Avanzado** | ⏳ ~70 % | ⏳ UI avanzada para ML | ⏳ Consumo móvil de RL/FL | ⏳ Orquestación RL/FL | ✅ BERT/CV/Series, NLP, AutoML, RL/FL stubs | ⏳ Deploy modelos pesados | ✅ AI docs avanzados | ⏳ Esquema logs/predicciones |
 
 Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidamente en qué capas del sistema (Web, Mobile, Backend, AI, Infra, Documentación y BD) se ha avanzado o falta trabajo en cada fase.
+
+---
+
+### 📝 Backlog de Tareas por Fase (a partir de la matriz)
+
+> Sólo se listan tareas para fases con avance \<100 %. Se agrupan por capa para que sea fácil asignarlas a equipos (Web/Mobile/Backend/AI/Infra/Docs/BD).
+
+#### Fase 3: Analytics/ML Inicial (~80 %)
+- **Web**:  
+  - ✅ Completar vistas de consumo de métricas ML (tendencias, anomalías, demanda) en paneles existentes.  
+- **Mobile**:  
+  - [ ] Exponer de forma consistente las métricas de tendencia/anomalías en Home o pantallas clínicas.  
+- **Infra**:  
+  - [ ] Programar jobs recurrentes para cálculo/agregado de métricas ML históricas.  
+- **Docs**:  
+  - [ ] Completar documentación de modelos iniciales (inputs/outputs, limitaciones, ejemplos de uso).  
+- **MongoDB (BD)**:  
+  - [ ] Ajustar índices específicos para consultas de analytics (por fecha, centro médico, diagnóstico, riesgo).  
+
+#### Fase 6: Optimización & Performance (~80 %)
+- **Web**:  
+  - [ ] Documentar y terminar ajustes de code splitting avanzado y lazy loading en rutas de baja frecuencia.  
+- **Mobile**:  
+  - [ ] Añadir métricas y ajustes adicionales para consumo de batería (intervalos de polling, timers, tareas en background).  
+  - [ ] Afinar aún más FlatList (getItemLayout, windowSize, removeClippedSubviews donde aplique).  
+- **Infra**:  
+  - [ ] Completar dashboards de performance (p95/p99) centralizados para backend y AI Services.  
+- **Docs**:  
+  - [ ] Crear una guía de “Performance Playbook” para devs (mejores prácticas por capa).  
+- **MongoDB (BD)**:  
+  - [ ] Añadir monitoreo y alertas de slow queries y uso de índices.  
+
+#### Fase 8: Integraciones Externas (~30 %)
+- **Web**:  
+  - [ ] Diseñar y desarrollar UIs para consulta de datos FHIR/HL7 (por ejemplo vista de resultados de laboratorio, resumen FHIR).  
+- **Backend**:  
+  - [ ] Exponer endpoints FHIR-restful con validación de perfiles clínicos.  
+  - [ ] Completar sincronización bidireccional con al menos un sistema externo (ej. laboratorio o medicamentos).  
+  - [ ] Implementar OAuth2 + mTLS para integraciones externas que lo requieran.  
+- **AI-Services**:  
+  - [ ] Definir contrato de integraciones externas que alimenten features ML (ej. resultados lab, medicación).  
+- **Infra**:  
+  - [ ] Configurar secrets y certificados para integraciones (mTLS, endpoints externos) en K8s.  
+- **Docs**:  
+  - [ ] Documentar flujos de interoperabilidad (diagramas, contratos FHIR/HL7, ejemplos).  
+
+#### Fase 9: Analytics & BI (~90 %)
+- **Mobile**:  
+  - [ ] Añadir visualizaciones adicionales de analytics clínicos relevantes para pacientes y médicos (gráficos simples).  
+- **Infra**:  
+  - [ ] Integrar o dejar listo el conector con herramientas BI externas (ej. Power BI/Tableau) si aplica.  
+- **Docs**:  
+  - [ ] Extender documentación de dashboards (qué KPIs ver, cómo interpretar).  
+
+#### Fase 10: Seguridad Avanzada (~90 %)
+- **Web**:  
+  - [ ] Completar hardening de UI (CSP, sanitización adicional en cliente, control estricto de iframes/contenido embebido).  
+- **Mobile**:  
+  - [ ] Cerrar pendientes de UX legal y flujos de consentimiento explícito (pantallas, textos legales, logs de consentimiento).  
+- **Backend**:  
+  - [ ] Revisar y pulir reglas RBAC granulares por rol/permiso en todos los endpoints.  
+- **Infra**:  
+  - [ ] Completar pruebas de WAF/DDoS (incluyendo ZAP y otros escáneres) y documentar hallazgos.  
+- **Docs**:  
+  - [ ] Redactar una guía corta de “Seguridad para desarrolladores” con las prácticas y restricciones ya implementadas.  
+
+#### Fase 11: UX/UI (~40 %)
+- **Web**:  
+  - [ ] Finalizar rediseño de layout principal, design system unificado y temas (light/dark).  
+  - [ ] Mejorar accesibilidad (WCAG 2.1 AA: lectores de pantalla, contraste, navegación teclado, ARIA).  
+- **Mobile**:  
+  - [ ] Implementar el tutorial interactivo (tour guiado primera vez) con hints contextuales.  
+  - [ ] Añadir más microinteracciones y animaciones suaves en flujos críticos (login, citas, análisis IA).  
+- **Backend / AI-Services**:  
+  - [ ] Exponer DTOs y mensajes de error más amigables para soportar mejores UIs (mensajes localizables).  
+- **Docs**:  
+  - [ ] Crear guías de UX/UI por plataforma (Web/Mobile) con ejemplos y capturas.  
+
+#### Fase 12: DevOps & Deployment (~40 %)
+- **Backend / AI-Services**:  
+  - [ ] Definir y documentar pipelines de despliegue a staging/producción (incluyendo rollback automatizado).  
+- **Infra**:  
+  - [ ] Completar CI/CD completo (GitHub Actions/GitOps) con promoción entre entornos.  
+  - [ ] Iniciar definición de Terraform/IaC para infraestructura base (K8s, bases de datos, redes).  
+  - [ ] Configurar auto-scaling general (HPA y, si aplica, escalado horizontal de otros componentes).  
+- **Docs**:  
+  - [ ] Crear runbooks de operaciones (cómo desplegar, recuperar, rotar secretos, etc.).  
+
+#### Fase 13: Escalabilidad & Arquitectura (~20 %)
+- **Backend**:  
+  - [ ] Diseñar la descomposición a microservicios y/o módulos independientes (servicios clínicos, reporting, auth).  
+  - [ ] Diseñar/implementar API Gateway o solución de enrutamiento central (si aplica).  
+- **AI-Services**:  
+  - [ ] Planificar separación de servicios ML pesados (BERT/CV) en pods dedicados.  
+- **Infra**:  
+  - [ ] Completar base de K8s (namespaces por entorno, resource quotas, pod distr.) y planificar service mesh/colas.  
+- **MongoDB (BD)**:  
+  - [ ] Diseñar estrategia de replicación/sharding para escenarios de alta carga y disponibilidad.  
+
+#### Fase 14: Documentación & Capacitación (~40 %)
+- **Web**:  
+  - [ ] Completar manual de uso de la consola web (dashboard, reportes, administración).  
+- **Mobile**:  
+  - [ ] Completar manual rápido y guía para pacientes y médicos (casos de uso frecuentes).  
+- **Backend / AI-Services**:  
+  - [ ] Escribir runbooks técnicos: troubleshooting, escalado, recuperación de fallos.  
+- **Docs**:  
+  - [ ] Consolidar toda la documentación en un índice final (incluyendo guías de formación y onboarding).  
+
+#### Fase 15: ML Avanzado (~70 %)
+- **Backend**:  
+  - [ ] Completar orquestación de RL y Federated Learning desde backend (coordinación de sesiones, logs).  
+- **AI-Services**:  
+  - [ ] Implementar lógica real de RL (más allá de stubs) para al menos un caso de uso (p.ej. optimización de recordatorios).  
+  - [ ] Implementar lógica real de Federated Learning (coordinación rondas, agregación segura).  
+  - [ ] Completar pipelines de AutoML para un dominio específico (p.ej. riesgo respiratorio).  
+- **Web/Mobile**:  
+  - [ ] Crear UIs específicas para mostrar resultados avanzados de ML (ej. explicaciones, comparaciones de modelos, recomendaciones optimizadas).  
+- **Infra**:  
+  - [ ] Diseñar despliegue y recursos necesarios para modelos pesados (GPU, nodos dedicados, colas).  
+- **MongoDB (BD)**:  
+  - [ ] Diseñar esquema/logs de predicciones y experimentos (para auditoría y análisis histórico).  
 
 ---
 
