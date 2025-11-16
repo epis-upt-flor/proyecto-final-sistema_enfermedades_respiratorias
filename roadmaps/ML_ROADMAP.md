@@ -400,7 +400,10 @@ User receives comprehensive prediction with full explainability
    - Script: `ai-services/analyze_prediction_trends.py`
    - Workflow CI: `.github/workflows/ai-ml-trends.yml`
    - Artefactos publicados: `prediction_trends_summary_*.csv`, `prediction_trends_series_*.csv`, `prediction_trends_report_*.md`
-2. ⏳ Más factores de riesgo (alergias, medicamentos, historial familiar)
+2. ✅ Más factores de riesgo (alergias, medicamentos, historial familiar)
+   - Archivo actualizado: `ai-services/ml_models/risk_personalization.py`
+   - Factores añadidos: `allergies`, `current_medications`, `family_history_asthma`, `family_history_copd`, `family_history_tuberculosis`
+   - Recomendaciones personalizadas extendidas para nuevos factores
 
 ---
 

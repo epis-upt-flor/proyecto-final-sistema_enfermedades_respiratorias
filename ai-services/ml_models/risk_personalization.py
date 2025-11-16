@@ -104,7 +104,13 @@ class RiskPersonalizationSystem:
             'obesity': {'multiplier': 1.2, 'diseases': ['epoc', 'apnea del sueño']},
             'chronic_kidney_disease': {'multiplier': 1.3, 'diseases': ['neumonía', 'infecciones respiratorias']},
             'copd_history': {'multiplier': 1.8, 'diseases': ['epoc', 'bronquitis crónica']},
-            'previous_pneumonia': {'multiplier': 1.5, 'diseases': ['neumonía', 'neumonía grave']}
+            'previous_pneumonia': {'multiplier': 1.5, 'diseases': ['neumonía', 'neumonía grave']},
+            # Nuevos factores: alergias, medicación, historial familiar
+            'allergies': {'multiplier': 1.2, 'diseases': ['rinitis alérgica', 'asma bronquial', 'sinusitis']},
+            'current_medications': {'multiplier': 1.1, 'diseases': ['asma bronquial', 'epoc', 'neumonía']},
+            'family_history_asthma': {'multiplier': 1.2, 'diseases': ['asma bronquial']},
+            'family_history_copd': {'multiplier': 1.3, 'diseases': ['epoc', 'bronquitis crónica']},
+            'family_history_tuberculosis': {'multiplier': 1.4, 'diseases': ['tuberculosis']}
         }
     
     def get_age_group(self, age: int) -> AgeGroup:
@@ -320,6 +326,16 @@ class RiskPersonalizationSystem:
                 recommendations.append("⚠️ URGENTE: Paciente inmunocomprometido requiere evaluación médica inmediata")
             if 'heart_disease' in risk_factors:
                 recommendations.append("Enfermedades respiratorias pueden afectar el corazón, monitor cuidadoso requerido")
+            if 'allergies' in risk_factors:
+                recommendations.append("Evitar alérgenos identificados; considerar antihistamínicos según prescripción")
+            if 'current_medications' in risk_factors:
+                recommendations.append("Revisar interacciones fármaco-respiratorias con el médico tratante")
+            if 'family_history_asthma' in risk_factors:
+                recommendations.append("Historial familiar de asma: mantener plan de acción y control ambiental")
+            if 'family_history_copd' in risk_factors:
+                recommendations.append("Antecedente familiar EPOC: seguimiento de función pulmonar recomendado")
+            if 'family_history_tuberculosis' in risk_factors:
+                recommendations.append("Antecedente familiar TB: estar atento a tos persistente y pérdida de peso")
         
         # Disease-specific recommendations
         if 'neumonía' in disease.lower() or 'neumonia' in disease.lower():
