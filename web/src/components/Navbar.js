@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
 const NAV_LINKS = [
@@ -35,11 +36,13 @@ function Navbar() {
               key={link.to}
               to={link.to}
               className={`nav-link ${link.isActive ? 'active' : ''}`}
+              aria-current={link.isActive ? 'page' : undefined}
             >
-              <span className="nav-icon">{link.icon}</span>
-              {link.label}
+              <span className="nav-icon" aria-hidden="true">{link.icon}</span>
+              <span>{link.label}</span>
             </Link>
           ))}
+          <ThemeToggle className="navbar-theme-toggle" />
         </div>
       </div>
     </nav>

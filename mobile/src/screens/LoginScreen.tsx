@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import {
   TextInput,
@@ -18,6 +19,7 @@ import {
 } from 'react-native-paper';
 import { useAppStore } from '../store/useAppStore';
 import { User } from '../types';
+import { fadeIn, shake, successAnimation } from '../utils/animations';
 
 const LoginScreen: React.FC = () => {
   const { setUser } = useAppStore();
@@ -26,6 +28,26 @@ const LoginScreen: React.FC = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  
+  // Animaciones
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const successScale = useRef(new Animated.Value(1)).current;
+  const successOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Fade in al cargar
+    fadeIn(fadeAnim, 400).start();
+  }, []);
+
+  useEffect(() => {
+    if (hasError) {
+      shake(shakeAnim, 10, 300).start(() => {
+        setHasError(false);
+      });
+    }
+  }, [hasError]);
 
   const handleLogin = async () => {
     if (!formData.email || !formData.password) {
@@ -48,9 +70,13 @@ const LoginScreen: React.FC = () => {
         avatar: 'https://via.placeholder.com/100',
       };
 
-      setUser(mockUser);
+      // Animación de éxito
+      successAnimation(successScale, successOpacity).start(() => {
+        setUser(mockUser);
+      });
       
     } catch (error) {
+      setHasError(true);
       Alert.alert('Error', 'Credenciales inválidas');
     } finally {
       setIsLoading(false);
@@ -69,13 +95,27 @@ const LoginScreen: React.FC = () => {
     setUser(mockUser);
   };
 
+  const translateX = shakeAnim.interpolate({
+    inputRange: [-10, 0, 10],
+    outputRange: [-10, 0, 10],
+  });
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Surface style={styles.logoContainer}>
+      <Animated.View
+        style={[
+          styles.animatedContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateX }],
+          },
+        ]}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <Surface style={styles.logoContainer}>
           <Title style={styles.logo}>🏥</Title>
           <Title style={styles.appName}>RespiCare Mobile</Title>
           <Paragraph style={styles.subtitle}>
@@ -140,7 +180,21 @@ const LoginScreen: React.FC = () => {
             <Paragraph>🔄 Sincronización automática</Paragraph>
           </Card.Content>
         </Card>
+        
+        {/* Indicador de éxito */}
+        <Animated.View
+          style={[
+            styles.successIndicator,
+            {
+              opacity: successOpacity,
+              transform: [{ scale: successScale }],
+            },
+          ]}
+        >
+          <Paragraph style={styles.successText}>✓ Inicio de sesión exitoso</Paragraph>
+        </Animated.View>
       </ScrollView>
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 };
@@ -209,6 +263,26 @@ const styles = StyleSheet.create({
   infoTitle: {
     color: '#1976d2',
     marginBottom: 16,
+  },
+  animatedContainer: {
+    flex: 1,
+  },
+  successIndicator: {
+    position: 'absolute',
+    top: 100,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  successText: {
+    color: '#4caf50',
+    fontSize: 16,
+    fontWeight: 'bold',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 12,
+    borderRadius: 8,
+    elevation: 4,
   },
 });
 

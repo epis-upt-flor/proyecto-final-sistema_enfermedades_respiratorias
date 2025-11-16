@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import ChatBot from '../components/ChatBot';
+import ChatBotEnhanced from '../components/ChatBotEnhanced';
 import './Home.css';
 
 const HERO_IMAGE_WEBP =
@@ -39,7 +39,7 @@ function Home() {
         </div>
 
         <div className="chatbot-container">
-          <ChatBot />
+          <ChatBotEnhanced />
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './components/ThemeProvider';
+import { initAccessibility } from './utils/accessibility';
 import './App.css';
 
 const Navbar = lazy(() => import('./components/Navbar'));
@@ -16,20 +18,29 @@ const AppFallback = () => (
 );
 
 function App() {
+  useEffect(() => {
+    // Inicializar mejoras de accesibilidad
+    initAccessibility();
+  }, []);
+
   return (
-    <Router>
-      <Suspense fallback={<AppFallback />}>
-        <div className="App">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/heatmap" element={<HeatMapPage />} />
-          </Routes>
-        </div>
-      </Suspense>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Suspense fallback={<AppFallback />}>
+          <div className="App">
+            <Navbar />
+            <main role="main" id="main-content">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/heatmap" element={<HeatMapPage />} />
+              </Routes>
+            </main>
+          </div>
+        </Suspense>
+      </Router>
+    </ThemeProvider>
   );
 }
 

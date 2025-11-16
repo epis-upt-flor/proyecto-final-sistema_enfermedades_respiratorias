@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
+import { createErrorResponse } from '../dto/ErrorResponse.dto';
 import { ApiResponse } from '../types';
 
 // Handler para errores de validación de Mongoose
@@ -35,40 +36,46 @@ const handleJWTExpiredError = (): AppError => {
 };
 
 // Enviar error en desarrollo
-const sendErrorDev = (err: AppError, res: Response) => {
-  const response: ApiResponse = {
-    success: false,
-    message: err.message,
-    error: err.stack,
-    data: {
+const sendErrorDev = (err: AppError, res: Response, req: Request) => {
+  // Usar DTO de error localizado
+  const errorResponse = createErrorResponse(
+    (err as any).code || 'OPERATION_FAILED',
+    (err as any).field,
+    {
+      stack: err.stack,
       statusCode: err.statusCode,
-      isOperational: err.isOperational
-    }
-  };
+      isOperational: err.isOperational,
+    },
+    req.path
+  );
 
-  res.status(err.statusCode).json(response);
+  res.status(err.statusCode).json(errorResponse);
 };
 
 // Enviar error en producción
-const sendErrorProd = (err: AppError, res: Response) => {
+const sendErrorProd = (err: AppError, res: Response, req: Request) => {
   // Solo enviar errores operacionales al cliente
   if (err.isOperational) {
-    const response: ApiResponse = {
-      success: false,
-      message: err.message
-    };
+    const errorResponse = createErrorResponse(
+      (err as any).code || 'OPERATION_FAILED',
+      (err as any).field,
+      undefined,
+      req.path
+    );
 
-    res.status(err.statusCode).json(response);
+    res.status(err.statusCode).json(errorResponse);
   } else {
     // No enviar detalles de errores de programación
     logger.error('ERROR 💥', err);
 
-    const response: ApiResponse = {
-      success: false,
-      message: 'Algo salió mal!'
-    };
+    const errorResponse = createErrorResponse(
+      'SERVER_ERROR',
+      undefined,
+      undefined,
+      req.path
+    );
 
-    res.status(500).json(response);
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -118,9 +125,9 @@ export const errorHandler = (
 
   // Enviar respuesta de error
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(error, res);
+    sendErrorDev(error, res, req);
   } else {
-    sendErrorProd(error, res);
+    sendErrorProd(error, res, req);
   }
 };
 
