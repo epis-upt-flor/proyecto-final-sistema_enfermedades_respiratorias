@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState, useLayoutEffect } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react';
+import { View, StyleSheet, FlatList, RefreshControl, Alert, Animated, Easing } from 'react-native';
 import { Card, Title, Paragraph, Chip, Button, Snackbar } from 'react-native-paper';
 import { telemedicineService } from '../services/telemedicineService';
 import { useAppStore } from '../store/useAppStore';
@@ -17,6 +17,15 @@ const AppointmentsScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentDTO[]>([]);
   const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
+  const actionScale = useRef(new Animated.Value(1)).current;
+  const actionScale2 = useRef(new Animated.Value(1)).current;
+
+  const smallPressIn = (anim: Animated.Value) => {
+    Animated.timing(anim, { toValue: 0.96, duration: 90, useNativeDriver: true, easing: Easing.out(Easing.quad) }).start();
+  };
+  const smallPressOut = (anim: Animated.Value) => {
+    Animated.timing(anim, { toValue: 1, duration: 120, useNativeDriver: true, easing: Easing.out(Easing.quad) }).start();
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -205,8 +214,27 @@ const AppointmentsScreen: React.FC = () => {
                 </Chip>
               </View>
               <View style={styles.actions}>
-                <Button mode="outlined" onPress={() => rescheduleAppointment(item._id)}>Reprogramar</Button>
-                <Button mode="text" onPress={() => confirmCancel(item._id)} textColor="#f44336">Cancelar</Button>
+                <Animated.View style={{ transform: [{ scale: actionScale }] }}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => rescheduleAppointment(item._id)}
+                    onPressIn={() => smallPressIn(actionScale)}
+                    onPressOut={() => smallPressOut(actionScale)}
+                  >
+                    Reprogramar
+                  </Button>
+                </Animated.View>
+                <Animated.View style={{ transform: [{ scale: actionScale2 }] }}>
+                  <Button
+                    mode="text"
+                    onPress={() => confirmCancel(item._id)}
+                    onPressIn={() => smallPressIn(actionScale2)}
+                    onPressOut={() => smallPressOut(actionScale2)}
+                    textColor="#f44336"
+                  >
+                    Cancelar
+                  </Button>
+                </Animated.View>
               </View>
               {item.syncStatus === 'error' && (
                 <View style={{ marginTop: 8 }}>

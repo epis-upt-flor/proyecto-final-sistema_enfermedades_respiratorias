@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   LayoutAnimation,
   UIManager,
@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { Animated, Easing } from 'react-native';
 import {
   TextInput,
   Button,
@@ -67,6 +68,14 @@ const DataCaptureScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const saveScale = useRef(new Animated.Value(1)).current;
+
+  const pressIn = () => {
+    Animated.timing(saveScale, { toValue: 0.96, duration: 90, useNativeDriver: true, easing: Easing.out(Easing.quad) }).start();
+  };
+  const pressOut = () => {
+    Animated.timing(saveScale, { toValue: 1, duration: 120, useNativeDriver: true, easing: Easing.out(Easing.quad) }).start();
+  };
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -439,16 +448,20 @@ const DataCaptureScreen: React.FC = () => {
         </Card>
 
         {/* Botón de Guardar */}
-        <Button
-          mode="contained"
-          onPress={handleSubmit}
-          loading={isLoading}
-          disabled={isLoading}
-          style={styles.saveButton}
-          contentStyle={styles.saveButtonContent}
-        >
-          {t('common.save')}
-        </Button>
+        <Animated.View style={{ transform: [{ scale: saveScale }] }}>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            loading={isLoading}
+            disabled={isLoading}
+            style={styles.saveButton}
+            contentStyle={styles.saveButtonContent}
+          >
+            {t('common.save')}
+          </Button>
+        </Animated.View>
       </ScrollView>
 
       {/* FAB para acceso rápido */}

@@ -17,6 +17,7 @@ import {
   ThemeMode,
   SupportedLanguage,
   NetworkStatus,
+  HealthProfile,
 } from '../types';
 import { apiService } from '../services/api';
 import { localStorageService } from '../services/localStorage';
@@ -76,11 +77,18 @@ interface UiSlice {
   setLanguage: (language: SupportedLanguage) => void;
 }
 
+interface ProfileSlice {
+  healthProfile?: HealthProfile;
+  setHealthProfile: (profile: Partial<HealthProfile>) => void;
+  updatePreferences: (prefs: Partial<HealthProfile['preferences']>) => void;
+}
+
 type AppStore = UserSlice &
   NetworkSlice &
   MedicalHistorySlice &
   NotificationSlice &
-  UiSlice;
+  UiSlice &
+  ProfileSlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -107,6 +115,9 @@ export const useAppStore = create<AppStore>()(
       },
       themeMode: 'auto',
       language: 'es',
+      healthProfile: {
+        preferences: { remindersEnabled: true, notificationFrequency: 'normal' },
+      },
 
       // Actions: User
       setUser: (user) => set({ user }),
@@ -392,6 +403,27 @@ export const useAppStore = create<AppStore>()(
 
       setThemeMode: (mode) => set({ themeMode: mode }),
       setLanguage: (language) => set({ language }),
+
+      setHealthProfile: (profile) =>
+        set((state) => ({
+          healthProfile: {
+            ...state.healthProfile,
+            ...profile,
+            updatedAt: new Date().toISOString(),
+          } as HealthProfile,
+        })),
+
+      updatePreferences: (prefs) =>
+        set((state) => ({
+          healthProfile: {
+            ...(state.healthProfile || { preferences: { remindersEnabled: true, notificationFrequency: 'normal' } }),
+            preferences: {
+              ...(state.healthProfile?.preferences || { remindersEnabled: true, notificationFrequency: 'normal' }),
+              ...prefs,
+            },
+            updatedAt: new Date().toISOString(),
+          },
+        })),
     }),
     {
       name: 'respicare-storage',
@@ -402,6 +434,7 @@ export const useAppStore = create<AppStore>()(
         notifications: state.notifications,
         themeMode: state.themeMode,
         language: state.language,
+        healthProfile: state.healthProfile,
       }),
     }
   )

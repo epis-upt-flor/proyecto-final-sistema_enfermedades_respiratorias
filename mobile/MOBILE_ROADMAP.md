@@ -189,26 +189,30 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 ### 6.1 Onboarding y Microinteracciones
 
-- [ ] Onboarding interactivo:
-  - [ ] Explicar analizador de síntomas, citas, alertas y recomendaciones.
-- [ ] Microinteracciones:
-  - [ ] Animaciones sutiles en acciones clave (enviar síntomas, confirmar cita).
-  - [ ] Feedback visual claro en caso de éxito/error.
+- ✅ Onboarding interactivo:
+  - ✅ Pantalla de onboarding con 3 slides (`OnboardingScreen`): síntomas, citas, alertas/recomendaciones.
+  - ✅ Flag persistente `onboarding_completed` en `AsyncStorage` y presentación condicional en `AppNavigator`.
+  - ✅ Textos internacionalizados (ES/EN) y placeholders en PT/FR/QU.
+- ✅ Microinteracciones:
+  - ✅ Animaciones sutiles (escala) al enviar síntomas (`DataCaptureScreen`) y al reprogramar/cancelar (`AppointmentsScreen`).
+  - ✅ Feedback visual claro: `Snackbar` y `Alert` en acciones clave; banners/chips de estado para offline/sync/error en listas.
 
 ### 6.2 Personalización y Recomendaciones
 
-- [ ] Perfil de salud avanzado:
-  - [ ] Datos relevantes (edad, diagnóstico base, factores de riesgo).
-  - [ ] Preferencias (recordatorios, frecuencia de notificaciones).
-- [ ] Recomendaciones inteligentes:
-  - [ ] Ejercicios, consejos preventivos, seguimiento recomendado.
-  - [ ] Integración con analytics/ML del backend.
+- ✅ Perfil de salud avanzado:
+  - ✅ Datos relevantes (edad, diagnóstico base, factores de riesgo) editables en `ProfileScreen` y persistidos en `useAppStore.healthProfile`.
+  - ✅ Preferencias (recordatorios, frecuencia de notificaciones) conmutables y persistidas en el store.
+- ✅ Recomendaciones inteligentes:
+  - ✅ Sección “Recomendaciones personalizadas” en `HomeScreen` combinando perfil (factores y preferencias) con el riesgo del análisis predictivo.
+  - ✅ Consejos preventivos y seguimiento sugerido según riesgo (alto/medio/bajo) y factores (Asma/EPOC).
+  - ✅ Integración con analytics/ML del backend vía `predictiveAnalysisService.getPredictiveAnalysis` (con fallback local si no hay red/datos).
 
 ### 6.3 Integración con Wearables
 
-- [ ] Ampliar integración con HealthKit / Google Fit:
-  - [ ] Lectura de métricas relevantes (ej.: FC, actividad, saturación si está disponible).
-  - [ ] Visualización resumida en el dashboard móvil.
+- ✅ Ampliar integración con HealthKit / Google Fit (stub inicial):
+  - ✅ Servicio `wearablesService` con API estable y fallback/mock (FC, pasos, SpO₂, última sync, proveedor).
+  - ✅ Lectura de métricas relevantes (FC, pasos y SpO₂ si disponible) mediante `getMetricsSummary()`.
+  - ✅ Visualización resumida en el dashboard móvil (`HomeScreen` sección “Wearables”) con botón de “Actualizar”.
 
 ---
 

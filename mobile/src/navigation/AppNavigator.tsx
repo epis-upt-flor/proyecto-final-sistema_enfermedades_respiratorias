@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -25,6 +25,8 @@ import AlertDetailScreen from '../screens/AlertDetailScreen';
 import AppointmentDetailScreen from '../screens/AppointmentDetailScreen';
 import ARTrainingScreen from '../screens/ARTrainingScreen';
 import { featureFlags } from '../config/environment';
+import OnboardingScreen from '../screens/OnboardingScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -168,9 +170,22 @@ const MainTabNavigator = () => {
 const AppNavigator = () => {
   const isAuthenticated = useAppStore((state) => Boolean(state.user), shallow);
   const { theme } = useTheme();
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     i18nService.initialize();
+  }, []);
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const v = await AsyncStorage.getItem('onboarding_completed');
+        setHasSeenOnboarding(Boolean(v));
+      } catch {
+        setHasSeenOnboarding(true);
+      }
+    };
+    checkOnboarding();
   }, []);
 
   return (
@@ -188,16 +203,22 @@ const AppNavigator = () => {
           },
         }}
       >
-        {isAuthenticated ? (
+        {!isAuthenticated ? (
           <Stack.Screen
-            name="Main"
-            component={MainTabNavigator}
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+        ) : hasSeenOnboarding === false ? (
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
             options={{ headerShown: false }}
           />
         ) : (
           <Stack.Screen
-            name="Login"
-            component={LoginScreen}
+            name="Main"
+            component={MainTabNavigator}
             options={{ headerShown: false }}
           />
         )}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,6 +15,7 @@ import {
   Divider,
   Switch,
   Chip,
+  TextInput,
 } from 'react-native-paper';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../hooks/useTheme';
@@ -31,6 +32,12 @@ const ProfileScreen: React.FC = () => {
   } = useAppStore();
   const { themeMode, setThemeMode, toggleTheme } = useTheme();
   const { t, language, setLanguage } = useTranslation();
+  const { healthProfile, setHealthProfile, updatePreferences } = useAppStore();
+  const [ageInput, setAgeInput] = useState(healthProfile?.age ? String(healthProfile.age) : '');
+  const [baseDiagnosis, setBaseDiagnosis] = useState(healthProfile?.baseDiagnosis || '');
+  const [riskFactors, setRiskFactors] = useState<string[]>(healthProfile?.riskFactors || []);
+  const [remindersEnabled, setRemindersEnabled] = useState<boolean>(healthProfile?.preferences?.remindersEnabled ?? true);
+  const [notifFreq, setNotifFreq] = useState<'low' | 'normal' | 'high'>(healthProfile?.preferences?.notificationFrequency || 'normal');
 
   const handleLogout = () => {
     Alert.alert(
@@ -183,6 +190,101 @@ const ProfileScreen: React.FC = () => {
             description={`${offlineData.pendingSync} elementos`}
             left={(props) => <List.Icon {...props} icon="sync" />}
           />
+        </Card.Content>
+      </Card>
+
+      {/* Perfil de Salud */}
+      <Card style={styles.card}>
+        <Card.Content>
+          <Title>{t('profile.healthProfile')}</Title>
+          <TextInput
+            label={t('profile.age')}
+            keyboardType="numeric"
+            value={ageInput}
+            onChangeText={setAgeInput}
+            style={{ marginTop: 8 }}
+            mode="outlined"
+          />
+          <TextInput
+            label={t('profile.baseDiagnosis')}
+            value={baseDiagnosis}
+            onChangeText={setBaseDiagnosis}
+            style={{ marginTop: 8 }}
+            mode="outlined"
+          />
+          <Paragraph style={{ marginTop: 12, marginBottom: 4 }}>{t('profile.riskFactors')}</Paragraph>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {['Tabaquismo', 'Asma', 'EPOC', 'Alergias', 'Cardiopatías'].map((f) => {
+              const selected = riskFactors.includes(f);
+              return (
+                <Chip
+                  key={f}
+                  selected={selected}
+                  style={{ marginRight: 6, marginBottom: 6 }}
+                  onPress={() => {
+                    setRiskFactors((prev) =>
+                      selected ? prev.filter((x) => x !== f) : [...prev, f]
+                    );
+                  }}
+                >
+                  {f}
+                </Chip>
+              );
+            })}
+          </View>
+
+          <Divider style={{ marginVertical: 12 }} />
+
+          <Title>{t('profile.preferences')}</Title>
+          <List.Item
+            title={t('profile.reminders')}
+            description={remindersEnabled ? 'Activados' : 'Desactivados'}
+            left={(props) => <List.Icon {...props} icon="bell-ring" />}
+            right={() => (
+              <Switch
+                value={remindersEnabled}
+                onValueChange={(v) => setRemindersEnabled(v)}
+              />
+            )}
+          />
+          <List.Item
+            title={t('profile.notificationsFrequency')}
+            description={notifFreq === 'low' ? t('profile.low') : notifFreq === 'high' ? t('profile.high') : t('profile.normal')}
+            left={(props) => <List.Icon {...props} icon="tune" />}
+            right={() => (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Chip style={{ marginRight: 6 }} selected={notifFreq === 'low'} onPress={() => setNotifFreq('low')}>
+                  {t('profile.low')}
+                </Chip>
+                <Chip style={{ marginRight: 6 }} selected={notifFreq === 'normal'} onPress={() => setNotifFreq('normal')}>
+                  {t('profile.normal')}
+                </Chip>
+                <Chip selected={notifFreq === 'high'} onPress={() => setNotifFreq('high')}>
+                  {t('profile.high')}
+                </Chip>
+              </View>
+            )}
+          />
+
+          <Button
+            mode="contained"
+            style={{ marginTop: 12 }}
+            onPress={() => {
+              const age = ageInput ? parseInt(ageInput, 10) : undefined;
+              setHealthProfile({
+                age,
+                baseDiagnosis: baseDiagnosis || undefined,
+                riskFactors,
+              });
+              updatePreferences({
+                remindersEnabled,
+                notificationFrequency: notifFreq,
+              });
+              Alert.alert(t('profile.healthProfile'), t('profile.saved'));
+            }}
+          >
+            {t('profile.saveProfile')}
+          </Button>
         </Card.Content>
       </Card>
 

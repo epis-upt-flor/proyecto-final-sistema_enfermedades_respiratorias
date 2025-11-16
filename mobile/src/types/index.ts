@@ -317,6 +317,19 @@ export interface OfflineData {
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type SupportedLanguage = 'es' | 'en' | 'pt' | 'fr' | 'qu';
 
+export interface HealthPreferences {
+  remindersEnabled: boolean;
+  notificationFrequency: 'low' | 'normal' | 'high';
+}
+
+export interface HealthProfile {
+  age?: number;
+  baseDiagnosis?: string;
+  riskFactors?: string[];
+  preferences: HealthPreferences;
+  updatedAt?: string;
+}
+
 export interface AppState {
   user: User | null;
   isOnline: boolean;
@@ -328,6 +341,7 @@ export interface AppState {
   syncStatus: SyncStatus;
   themeMode?: ThemeMode;
   language?: SupportedLanguage;
+  healthProfile?: HealthProfile;
 }
 
 // Tipos para navegación

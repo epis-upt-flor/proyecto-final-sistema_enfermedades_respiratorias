@@ -26,6 +26,7 @@ import { predictiveAnalysisService } from '../services/predictiveAnalysisService
 import { shallow } from 'zustand/shallow';
 import { voiceRecognitionService } from '../services/voiceRecognitionService';
 import { useTranslation } from '../services/i18nService';
+import { wearablesService, type WearableMetrics } from '../services/wearablesService';
 
 type QuickAction = {
   title: string;
@@ -165,6 +166,29 @@ const HomeScreen: React.FC = () => {
   const [alertsView, setAlertsView] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isVoiceCmd, setIsVoiceCmd] = useState(false);
+  const healthProfile = useAppStore((s) => s.healthProfile);
+  const [wearable, setWearable] = useState<WearableMetrics | null>(null);
+
+  const personalizedRecommendations = useMemo(() => {
+    const base: string[] = [];
+    if (predictiveSummary?.risk === 'high') {
+      base.push('Contacta a tu médico para una revisión próxima');
+    } else if (predictiveSummary?.risk === 'medium') {
+      base.push('Refuerza tu rutina de respiración y evita desencadenantes');
+    } else {
+      base.push('Mantén tu rutina y monitorea síntomas semanalmente');
+    }
+    if (healthProfile?.riskFactors?.includes('Asma')) {
+      base.push('Ejercicios de respiración diafragmática 5-10 minutos diarios');
+    }
+    if (healthProfile?.riskFactors?.includes('EPOC')) {
+      base.push('Caminata ligera 15-20 minutos si es posible, con descansos');
+    }
+    if (healthProfile?.preferences?.remindersEnabled === false) {
+      base.push('Activa recordatorios para no olvidar tus controles');
+    }
+    return base.slice(0, 3);
+  }, [predictiveSummary, healthProfile]);
 
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(() => {
@@ -186,6 +210,7 @@ const HomeScreen: React.FC = () => {
       })();
       loadUpcomingAppointments().catch(() => {});
       loadPredictive().catch(() => {});
+      loadWearables().catch(() => {});
     });
 
     return () => interaction.cancel();
@@ -250,6 +275,15 @@ const HomeScreen: React.FC = () => {
       setPredictiveSummary(null);
     }
   }, [user?.id]);
+
+  const loadWearables = useCallback(async () => {
+    try {
+      const summary = await wearablesService.getMetricsSummary();
+      setWearable(summary);
+    } catch {
+      setWearable(null);
+    }
+  }, []);
 
   const loadRecentData = useCallback(async () => {
     try {
@@ -508,6 +542,53 @@ const HomeScreen: React.FC = () => {
                   {predictiveSummary.recommendations.map((rec, idx) => (
                     <Paragraph key={idx}>• {rec}</Paragraph>
                   ))}
+                </View>
+                {personalizedRecommendations.length > 0 && (
+                  <View style={{ marginTop: 12 }}>
+                    <Title style={{ fontSize: 16, marginBottom: 8 }}>{t('home.personalizedRecommendations')}</Title>
+                    {personalizedRecommendations.map((rec, idx) => (
+                      <Paragraph key={`p-${idx}`}>• {rec}</Paragraph>
+                    ))}
+                  </View>
+                )}
+              </Card.Content>
+            </Card>
+          </View>
+        )}
+
+        {/* Wearables Summary */}
+        {wearable && (
+          <View style={styles.section}>
+            <Title style={styles.sectionTitle}>{t('wearables.title')}</Title>
+            <Card style={styles.statsCard}>
+              <Card.Content>
+                <View style={styles.statsGrid}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {wearable.heartRateBpm ?? '—'}
+                    </Text>
+                    <Text style={styles.statLabel}>{t('wearables.heartRate')} (bpm)</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {wearable.stepsToday ?? '—'}
+                    </Text>
+                    <Text style={styles.statLabel}>{t('wearables.steps')}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {wearable.oxygenSaturationPct ? `${wearable.oxygenSaturationPct}%` : '—'}
+                    </Text>
+                    <Text style={styles.statLabel}>{t('wearables.oxygenSaturation')}</Text>
+                  </View>
+                </View>
+                <Paragraph style={{ marginTop: 8, color: '#666' }}>
+                  {t('common.source')}: {wearable.provider === 'healthkit' ? 'HealthKit' : wearable.provider === 'googlefit' ? 'Google Fit' : 'Mock'} · {wearable.lastSync ? new Date(wearable.lastSync).toLocaleTimeString() : ''}
+                </Paragraph>
+                <View style={{ marginTop: 8 }}>
+                  <Button mode="outlined" onPress={loadWearables} icon="refresh">
+                    {t('common.update')}
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
