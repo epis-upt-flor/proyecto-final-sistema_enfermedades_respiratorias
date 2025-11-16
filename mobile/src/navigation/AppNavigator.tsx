@@ -3,9 +3,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { useAppStore } from '../store/useAppStore';
 import { RootStackParamList, MainTabParamList } from '../types';
 import { shallow } from 'zustand/shallow';
+import { useTheme } from '../hooks/useTheme';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -17,6 +19,10 @@ import AIAnalysisScreen from '../components/AI/AIAnalysisScreen';
 import MedicalChatbot from '../components/ChatBot/MedicalChatbot';
 import MedicalHistoryScreen from '../screens/MedicalHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import AppointmentsScreen from '../screens/AppointmentsScreen';
+import AlertDetailScreen from '../screens/AlertDetailScreen';
+import AppointmentDetailScreen from '../screens/AppointmentDetailScreen';
+import { featureFlags } from '../config/environment';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -113,6 +119,24 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
+        name="Alerts"
+        component={NotificationScreen}
+        options={{
+          title: 'Alertas',
+          headerTitle: 'Alertas',
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+        }}
+      />
+      <Tab.Screen
+        name="Appointments"
+        component={AppointmentsScreen}
+        options={{
+          title: 'Citas',
+          headerTitle: 'Citas Médicas',
+          tabBarButton: featureFlags.enableAppointmentsCard ? undefined : () => null,
+        }}
+      />
+      <Tab.Screen
         name="ChatBot"
         component={MedicalChatbot}
         options={{
@@ -135,10 +159,12 @@ const MainTabNavigator = () => {
 
 const AppNavigator = () => {
   const isAuthenticated = useAppStore((state) => Boolean(state.user), shallow);
+  const { theme } = useTheme();
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
+    <PaperProvider theme={theme}>
+      <NavigationContainer>
+        <Stack.Navigator
         screenOptions={{
           headerStyle: {
             backgroundColor: '#1976d2',
@@ -163,8 +189,19 @@ const AppNavigator = () => {
             options={{ headerShown: false }}
           />
         )}
-      </Stack.Navigator>
-    </NavigationContainer>
+        <Stack.Screen
+          name="AlertDetail"
+          component={AlertDetailScreen}
+          options={{ title: 'Detalle de Alerta' }}
+        />
+        <Stack.Screen
+          name="AppointmentDetail"
+          component={AppointmentDetailScreen}
+          options={{ title: 'Detalle de Cita' }}
+        />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 };
 

@@ -17,6 +17,7 @@ import {
   Chip,
 } from 'react-native-paper';
 import { useAppStore } from '../store/useAppStore';
+import { useTheme } from '../hooks/useTheme';
 
 const ProfileScreen: React.FC = () => {
   const { 
@@ -27,6 +28,7 @@ const ProfileScreen: React.FC = () => {
     isOnline,
     clearNotifications 
   } = useAppStore();
+  const { themeMode, setThemeMode, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     Alert.alert(
@@ -170,10 +172,24 @@ const ProfileScreen: React.FC = () => {
             right={() => <Switch value={true} onValueChange={() => {}} />}
           />
           <List.Item
-            title="Modo Oscuro"
-            description="Usar tema oscuro"
+            title="Modo de Tema"
+            description={
+              themeMode === 'auto' ? 'Automático (según sistema)' : themeMode === 'dark' ? 'Oscuro' : 'Claro'
+            }
             left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
-            right={() => <Switch value={false} onValueChange={() => {}} />}
+            right={() => (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Chip onPress={() => setThemeMode('light')} style={{ marginRight: 8 }} selected={themeMode === 'light'}>
+                  Claro
+                </Chip>
+                <Chip onPress={() => setThemeMode('dark')} style={{ marginRight: 8 }} selected={themeMode === 'dark'}>
+                  Oscuro
+                </Chip>
+                <Chip onPress={() => setThemeMode('auto')} selected={themeMode === 'auto'}>
+                  Auto
+                </Chip>
+              </View>
+            )}
           />
         </Card.Content>
       </Card>

@@ -144,6 +144,7 @@ export const featureFlags = {
   enableCaching: true,
   enableAnalytics: !isDevelopment,
   enableCrashReporting: !isDevelopment,
+  enableAppointmentsCard: false, // Tarjeta "Próximas citas" en Home (telemedicina)
 };
 
 // API endpoints

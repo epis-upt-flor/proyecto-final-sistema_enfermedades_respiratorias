@@ -18,6 +18,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAppStore } from '../store/useAppStore';
 import { MedicalHistory, SymptomAnalysis, SyncStatus } from '../types';
 import { localStorageService } from '../services/localStorage';
+import { telemedicineService } from '../services/telemedicineService';
+import { featureFlags } from '../config/environment';
+import type { AppointmentDTO } from '../types';
 import { shallow } from 'zustand/shallow';
 
 type QuickAction = {
@@ -126,6 +129,8 @@ const HomeScreen: React.FC = () => {
     syncStatus,
     syncData,
     addNotification,
+    alerts,
+    fetchAlerts,
   } = useAppStore(
     useCallback(
       (state) => ({
@@ -135,6 +140,8 @@ const HomeScreen: React.FC = () => {
         syncStatus: state.syncStatus,
         syncData: state.syncData,
         addNotification: state.addNotification,
+        alerts: state.alerts,
+        fetchAlerts: state.fetchAlerts,
       }),
       []
     ),
@@ -143,15 +150,50 @@ const HomeScreen: React.FC = () => {
 
   const [recentHistories, setRecentHistories] = useState<MedicalHistory[]>([]);
   const [recentAnalyses, setRecentAnalyses] = useState<SymptomAnalysis[]>([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<Array<{ id: string; when: string; doctorId?: string }> | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(() => {
       loadRecentData();
+      fetchAlerts?.().catch(() => {});
+      loadUpcomingAppointments().catch(() => {});
     });
 
     return () => interaction.cancel();
-  }, []);
+  }, [fetchAlerts]);
+
+  const loadUpcomingAppointments = useCallback(async () => {
+    try {
+      if (!featureFlags.enableAppointmentsCard || !user?.id) {
+        setUpcomingAppointments(null);
+        return;
+      }
+      // Duck-typing: solo intentar si el servicio expone el método
+      const svc: any = telemedicineService as any;
+      if (typeof svc.getPatientCalls !== 'function') {
+        setUpcomingAppointments(null);
+        return;
+      }
+      const calls = await svc.getPatientCalls(user.id);
+      const now = Date.now();
+      const upcoming = (calls || [])
+        .filter((c: any) => c.status === 'scheduled' && c.scheduledAt)
+        .map((c: any) => ({
+          id: c.id,
+          when: c.scheduledAt,
+          doctorId: c.doctorId,
+        }))
+        .filter((c: any) => new Date(c.when).getTime() >= now)
+        .sort((a: any, b: any) => new Date(a.when).getTime() - new Date(b.when).getTime())
+        .slice(0, 2);
+
+      setUpcomingAppointments(upcoming.length > 0 ? upcoming : []);
+    } catch (e) {
+      // Silenciar errores si la API aún no está disponible
+      setUpcomingAppointments(null);
+    }
+  }, [user?.id]);
 
   const loadRecentData = useCallback(async () => {
     try {
@@ -341,6 +383,57 @@ const HomeScreen: React.FC = () => {
             <Title style={styles.sectionTitle}>Análisis Recientes</Title>
             {recentAnalyses.slice(0, 3).map((analysis, index) => (
               <RecentItemCard key={analysis.id} item={analysis} type="analysis" />
+            ))}
+          </View>
+        )}
+
+        {/* Alerts */}
+        {/* Upcoming Appointments (feature-flagged) */}
+        {featureFlags.enableAppointmentsCard && upcomingAppointments && (
+          <View style={styles.section}>
+            <Title style={styles.sectionTitle}>Próximas Citas</Title>
+            {upcomingAppointments.length === 0 ? (
+              <Paragraph style={{ color: '#666' }}>No hay citas programadas próximamente.</Paragraph>
+            ) : (
+              upcomingAppointments.map((appt) => (
+                <Card key={appt.id} style={styles.recentCard}>
+                  <Card.Content>
+                    <View style={styles.recentItemHeader}>
+                      <View style={styles.recentItemInfo}>
+                        <Title style={styles.recentItemTitle}>Cita médica</Title>
+                        <Paragraph style={styles.recentItemSubtitle}>
+                          {new Date(appt.when).toLocaleString()}
+                        </Paragraph>
+                      </View>
+                      <Chip mode="outlined" style={styles.statusChip}>Programada</Chip>
+                    </View>
+                  </Card.Content>
+                </Card>
+              ))
+            )}
+          </View>
+        )}
+        {alerts && alerts.length > 0 && (
+          <View style={styles.section}>
+            <Title style={styles.sectionTitle}>Alertas</Title>
+            {alerts.slice(0, 3).map((a) => (
+              <Card key={a.id} style={styles.recentCard}>
+                <Card.Content>
+                  <View style={styles.recentItemHeader}>
+                    <View style={styles.recentItemInfo}>
+                      <Title style={styles.recentItemTitle}>{a.title}</Title>
+                      <Paragraph style={styles.recentItemSubtitle}>{a.message}</Paragraph>
+                    </View>
+                    <Chip
+                      mode="outlined"
+                      style={styles.statusChip}
+                      textStyle={{ color: '#1976d2' }}
+                    >
+                      {a.priority?.toUpperCase?.() || 'INFO'}
+                    </Chip>
+                  </View>
+                </Card.Content>
+              </Card>
             ))}
           </View>
         )}

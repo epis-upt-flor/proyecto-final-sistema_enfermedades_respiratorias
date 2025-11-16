@@ -340,6 +340,9 @@ export type RootStackParamList = {
   ChatBot: undefined;
   Settings: undefined;
   OfflineData: undefined;
+  AppointmentDetail: { appointmentId: string } | undefined;
+  AlertDetail: { alertId: string } | undefined;
+  ReportDetail: { reportId: string } | undefined;
 };
 
 export type MainTabParamList = {
@@ -348,5 +351,7 @@ export type MainTabParamList = {
   History: undefined;
   AI: undefined;
   ChatBot: undefined;
+  Alerts: undefined;
+  Appointments: undefined;
   Profile: undefined;
 };

@@ -63,27 +63,29 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 ### 2.1 Rediseño de Pantallas Principales
 
-- [ ] Home / Dashboard del paciente:
-  - [ ] Vista rápida de síntomas recientes, citas próximas y alertas.
-- [ ] Analizador de síntomas:
-  - [ ] Flujo claro de preguntas/respuestas.
-  - [ ] Visualización simple del resultado del modelo (riesgo, próxima acción).
-- [ ] Historial médico / resultados:
-  - [ ] Listado y detalle de consultas, diagnósticos y reportes relevantes.
+- ✅ Home / Dashboard del paciente:
+  - ✅ Vista rápida de síntomas/analíticas recientes y alertas (sección “Alertas” con top 3).
+  - ✅ Citas próximas: tarjeta implementada con feature flag (`enableAppointmentsCard`) y fallback seguro.
+- ✅ Analizador de síntomas:
+  - ✅ Flujo claro de selección de síntomas y acción de análisis.
+  - ✅ Visualización del resultado (urgencia, diagnósticos, recomendaciones, progreso).
+- ✅ Historial médico / resultados:
+  - ✅ Listado con búsqueda y chips de síntomas, estado de sincronización.
+  - ✅ Detalle en modal con datos clave y acciones (cerrar/eliminar).
 
 ### 2.2 Navegación y Flujo
 
-- [ ] Definir navegación por tabs (ej.: `Síntomas`, `Citas`, `Alertas`, `Perfil`).
-- [ ] Flujo de navegación stack entre pantallas de detalle (cita, alerta, reporte).
-- [ ] Manejo consistente del back navigation (hardware + in-app).
+- ✅ Definir navegación por tabs (`Inicio`, `Capturar`, `Historial`, `IA`, `Alertas`, `Citas`, `Perfil`).
+- ✅ Flujo de navegación stack entre pantallas de detalle (`AlertDetail`, `AppointmentDetail`, `ReportDetail` placeholder).
+- ✅ Manejo consistente del back navigation (stack headers de React Navigation + tabs persistentes).
 
 ### 2.3 Theming y Modo Oscuro
 
-- [ ] Implementar sistema de temas:
-  - [ ] Tema claro por defecto.
-  - [ ] `darkTheme` definido y aplicado en todas las pantallas principales.
-- [ ] Agregar toggle de modo oscuro en ajustes/perfil.
-- [ ] Persistir la preferencia de tema en almacenamiento local.
+- ✅ Implementar sistema de temas.
+- ✅ Tema claro por defecto.
+- ✅ `darkTheme` definido y aplicado (Paper Provider + hook `useTheme`).
+- ✅ Agregar toggle de modo oscuro en ajustes/perfil (`Claro` / `Oscuro` / `Auto`).
+- ✅ Persistir la preferencia de tema en almacenamiento local (via `useAppStore` + persist).
 
 ---
 
