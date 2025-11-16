@@ -1,3 +1,47 @@
+import axios from 'axios';
+import { apiService } from '../../src/services/api';
+
+jest.mock('axios');
+
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+describe('apiService - manejo de éxito/error', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('login devuelve success=true al autenticar', async () => {
+    mockedAxios.create.mockReturnValueOnce(mockedAxios as any);
+    (mockedAxios.post as any).mockResolvedValueOnce({
+      data: { data: { accessToken: 'a', refreshToken: 'r', expiresIn: 3600, user: { id: 'u1' } } },
+    });
+
+    const resp = await apiService.login('a@b.com', 'x');
+    expect(resp.success).toBe(true);
+    expect(resp.data?.user).toBeDefined();
+  });
+
+  it('login devuelve success=false ante error de red', async () => {
+    mockedAxios.create.mockReturnValueOnce(mockedAxios as any);
+    (mockedAxios.post as any).mockRejectedValueOnce({ request: {} });
+
+    const resp = await apiService.login('a@b.com', 'x');
+    expect(resp.success).toBe(false);
+    expect(resp.error).toBeDefined();
+  });
+
+  it('getAlerts normaliza lista de alertas', async () => {
+    mockedAxios.create.mockReturnValueOnce(mockedAxios as any);
+    (mockedAxios.get as any).mockResolvedValueOnce({
+      data: { data: [{ _id: '1', userId: 'u', title: 't', message: 'm', category: 'system', priority: 'low', status: 'sent', channels: [], createdAt: '' }] },
+    });
+
+    const resp = await apiService.getAlerts();
+    expect(resp.success).toBe(true);
+    expect(resp.data?.[0].id).toBe('1');
+  });
+});
+
 /**
  * Tests unitarios para API Service
  * Cubre autenticación, CRUD de historias médicas, y manejo de errores

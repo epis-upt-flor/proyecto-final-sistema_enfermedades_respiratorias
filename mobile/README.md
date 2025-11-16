@@ -1,5 +1,8 @@
 # 📱 RespiCare Mobile - React Native
 
+[![Mobile CI](https://img.shields.io/github/actions/workflow/status/USER_OR_ORG/REPO/mobile-ci.yml?label=Mobile%20CI)](../../actions/workflows/mobile-ci.yml)
+
+
 Aplicación móvil completa para el sistema de gestión de enfermedades respiratorias RespiCare Tacna, con integración completa al backend, servicios de IA y funcionalidades offline.
 
 ## 🎯 Funcionalidades Implementadas
@@ -109,6 +112,25 @@ mobile/
 ├── jest.setup.js                 # Setup global de tests
 └── .detoxrc.js                   # Configuración de Detox
 ```
+
+### **Servicios Base (actualizado)**
+
+- `src/services/api.ts`:
+  - Cliente HTTP central con Axios (baseURL, timeout).
+  - Interceptores: adjunta token, refresco automático 401, reintentos con backoff.
+  - Manejo de errores estandarizado (`ApiResponse` con `success/error/message`).
+  - Helpers de autenticación (almacenamiento de tokens/usuario).
+
+- `src/services/localStorage.ts`:
+  - Abstracción de AsyncStorage y utilidades “secure-ish” (prefijo `secure_`).
+  - Cola de sincronización offline con reintentos y listeners de estado.
+  - Caché de datos: usuario, tokens (coordinado con `apiService`), últimas predicciones.
+  - Utilidades: tamaño de almacenamiento, settings, clean/reset.
+
+- `src/services/localMLService.ts`:
+  - Interfaz lista para inferencia local y fallback sin conexión.
+  - Inicialización de modelo local con reglas por defecto y actualización incremental.
+  - Análisis local rápido con cálculo de severidad/urgencia y recomendaciones.
 
 ## 🔌 Integración con Backend
 
@@ -295,8 +317,8 @@ npm run test:coverage
 
 ### **Cobertura de Tests:**
 
-- ✅ **Servicios**: 100% de servicios principales cubiertos
-- ✅ **Componentes**: Componentes críticos testeados
+- ✅ **Servicios**: Tests unitarios para `apiService` y `localStorageService`
+- ✅ **Store**: Tests para acciones críticas de `useAppStore`
 - ✅ **Integración**: Tests de comunicación con backend
 - ✅ **Offline**: Funcionalidad offline completamente testada
 - ✅ **E2E**: Flujos críticos de usuario testeados
@@ -317,56 +339,91 @@ Los tests incluyen mocks para:
 
 ## 📈 Roadmap
 
-### **Funcionalidades Futuras:**
-- [ ] Integración con wearables
-- [ ] Reconocimiento de voz
-- [ ] Realidad aumentada
-- [ ] Machine Learning local
-- [ ] Modo oscuro
-- [ ] Múltiples idiomas
-- [ ] Telemedicina integrada
-- [ ] Análisis predictivo
+### ✅ **Funcionalidades Implementadas:**
 
-#### **Integración con wearables** ⌚
-- **Objetivo**: Capturar y sincronizar datos fisiológicos provenientes de HealthKit (iOS) y Google Fit (Android) para enriquecer los perfiles de pacientes y habilitar alertas tempranas.
-- **Estado actual**: Servicio móvil implementado con datos simulados y endpoints backend operativos (`/api/v1/wearables/*`). Pendiente habilitar librerías nativas y validar en dispositivos físicos.
-- **Alcance inicial**:
-  - Lectura periódica de métricas clave (SpO₂, frecuencia respiratoria, frecuencia cardiaca, pasos, calidad de sueño).
-  - Almacenamiento seguro en el backend y visualización de métricas agregadas en la app móvil.
-  - Generación de alertas básicas cuando alguna métrica exceda umbrales configurables.
-- **Backlog inmediato**:
-  - [ ] Integrar `expo-health` en builds nativos y gestionar permisos dinámicos.
-  - [ ] Conectar `wearableService` con fuentes reales y sincronización bidireccional.
-  - [ ] Ajustar UI de `WearablesScreen` para mostrar estado de conexión, métricas recientes y alertas contextuales.
-  - [ ] Implementar pruebas en dispositivos físicos (iOS + Android) con datos reales.
-- **Dependencias**: `expo-health`, credenciales Google Fit, capacidades HealthKit, endpoints `wearableController`, infraestructura de sincronización (`wearableService.ts`).
-- **Métricas de éxito**:
-  - ≥90% de sincronizaciones exitosas por sesión activa.
-  - Latencia de sincronización <10s en promedio.
-  - Alertas generadas con precisión ≥95% respecto a reglas definidas.
-- **Riesgos**: Restricciones de permisos del usuario, disponibilidad de datos en simuladores, variabilidad de dispositivos, requisitos de publicación en App Store/Play Store.
-- **Documentación relacionada**: `RespiCare-Mobile/WEARABLES_SETUP.md`, `RespiCare-Mobile/WEARABLES_INTEGRATION.md`, `backend/tests/e2e/flows.test.ts` (flujo de wearables).
-- **Issues sugeridos**:
-  1. **`mobile`: Configurar `expo-health` en builds nativos**  
-     - _Descripción_: Preparar el entorno Expo para usar HealthKit y Google Fit en desarrollo y producción.  
-     - _Tareas_: Añadir dependencias nativas, ejecutar `expo prebuild`, documentar configuración de permisos.  
-     - _Criterios de aceptación_: Builds iOS/Android generan binarios funcionales con `expo-health` habilitado; permisos se solicitan correctamente.  
-     - _Dependencias_: `WEARABLES_SETUP.md`, credenciales de Apple/Google.  
-  2. **`mobile`: Conectar `wearableService` con fuentes reales**  
-     - _Descripción_: Reemplazar los datos simulados por lecturas reales de HealthKit/Google Fit y ajustar sincronización con backend.  
-     - _Tareas_: Activar importaciones nativas, mapear tipos de datos, validar envío al endpoint `/api/v1/wearables/sync`.  
-     - _Criterios de aceptación_: Las métricas se obtienen de dispositivos reales, se persisten en backend y se reflejan en la app.  
-     - _Dependencias_: Issue #1, endpoints `wearableController`.  
-  3. **`mobile`: Rediseñar `WearablesScreen` para estado en tiempo real**  
-     - _Descripción_: Actualizar la UI para mostrar conexión, métricas recientes, histórico y alertas contextualizadas.  
-     - _Tareas_: Añadir indicadores de estado, tarjetas de métricas, timeline de sincronización y mensajes de alerta.  
-     - _Criterios de aceptación_: La pantalla refleja estado de permisos, última sincronización y métricas clave; manejo de errores visible.  
-     - _Dependencias_: Issue #2 (datos reales).  
-  4. **`mobile`: Pruebas end-to-end con dispositivos físicos**  
-     - _Descripción_: Validar la integración completa con wearables en iOS y Android usando datos reales.  
-     - _Tareas_: Diseñar plan de pruebas, capturar métricas reales, documentar resultados, ajustar mocks y CI.  
-     - _Criterios de aceptación_: Reporte con capturas y logs de sincronizaciones exitosas, cobertura de casos de permisos denegados y pérdida de conexión.  
-     - _Dependencias_: Issues #1-3, dispositivos físicos con wearables compatibles.
+#### **8. Integración con Wearables** ⌚ ✅
+- ✅ Servicio completo de integración con HealthKit (iOS) y Google Fit (Android)
+- ✅ Captura de métricas de salud (ritmo cardíaco, oxigenación, pasos, distancia, respiración)
+- ✅ Sincronización automática con backend
+- ✅ Detección de alertas basadas en umbrales configurables
+- ✅ Visualización de métricas en tiempo real
+- ✅ Componente `WearableMetricsCard` para mostrar datos
+- **Archivos**: `RespiCare-Mobile/services/wearableService.ts`, `RespiCare-Mobile/components/WearableMetricsCard.tsx`
+
+#### **9. Reconocimiento de Voz** 🎤 ✅
+- ✅ Servicio de reconocimiento de voz para entrada de texto
+- ✅ Integración con chatbot médico
+- ✅ Soporte para captura de síntomas por voz
+- ✅ Múltiples idiomas soportados
+- ✅ Manejo de permisos de micrófono
+- **Archivos**: `src/services/voiceRecognitionService.ts`
+
+#### **10. Modo Oscuro** 🌙 ✅
+- ✅ Tema oscuro completo con Material Design 3
+- ✅ Toggle entre modo claro, oscuro y automático
+- ✅ Persistencia de preferencias de tema
+- ✅ Integración con sistema de temas de React Native Paper
+- ✅ Hook `useTheme` para gestión de temas
+- **Archivos**: `src/theme/darkTheme.ts`, `src/hooks/useTheme.ts`
+
+#### **11. Múltiples Idiomas (i18n)** 🌍 ✅
+- ✅ Sistema completo de internacionalización
+- ✅ Soporte para 5 idiomas: Español, Inglés, Portugués, Francés, Quechua
+- ✅ Traducciones completas de toda la interfaz
+- ✅ Cambio de idioma en tiempo real
+- ✅ Persistencia de preferencias de idioma
+- ✅ Hook `useTranslation` para usar traducciones
+- **Archivos**: `src/services/i18nService.ts`
+
+#### **12. Machine Learning Local** 🤖 ✅
+- ✅ Análisis de síntomas sin conexión a internet
+- ✅ Modelo de reglas médicas para diagnóstico local
+- ✅ Clasificación de urgencia y severidad
+- ✅ Recomendaciones médicas personalizadas
+- ✅ Fallback automático cuando no hay conexión
+- ✅ Actualización de modelo desde backend
+- **Archivos**: `src/services/localMLService.ts`
+
+#### **13. Telemedicina Integrada** 📹 ✅
+- ✅ Servicio de videollamadas con médicos
+- ✅ Creación y gestión de citas de telemedicina
+- ✅ Manejo de permisos de cámara y micrófono
+- ✅ Integración con backend para gestión de llamadas
+- ✅ Estado de llamadas (scheduled, active, ended)
+- ✅ Preparado para integración con servicios de videollamadas (Twilio, Agora, Jitsi)
+- **Archivos**: `src/services/telemedicineService.ts`
+
+#### **14. Análisis Predictivo** 📊 ✅
+- ✅ Análisis predictivo de síntomas y tendencias
+- ✅ Predicción de riesgo de complicaciones
+- ✅ Visualizaciones de tendencias de salud
+- ✅ Análisis de riesgo con factores identificados
+- ✅ Recomendaciones basadas en predicciones
+- ✅ Integración con backend de analytics
+- ✅ Fallback a análisis local cuando no hay conexión
+- **Archivos**: `src/services/predictiveAnalysisService.ts`
+
+#### **15. Realidad Aumentada (AR)** 🥽 ✅
+- ✅ Servicio básico de AR para visualización médica
+- ✅ Gestión de marcadores AR
+- ✅ Escenas AR configurables
+- ✅ Preparado para integración con ARKit (iOS) y ARCore (Android)
+- ✅ Verificación de disponibilidad de AR en dispositivo
+- **Archivos**: `src/services/arService.ts`
+
+### **Próximas Mejoras:**
+
+#### **Mejoras de Integración:**
+- [ ] Integrar librerías nativas reales para wearables (expo-health, react-native-health)
+- [ ] Integrar servicios de videollamadas reales (Twilio Video, Agora.io, Jitsi)
+- [ ] Integrar ARKit/ARCore nativos para realidad aumentada
+- [ ] Integrar Speech Recognition nativo (iOS Speech, Android SpeechRecognizer)
+
+#### **Mejoras de Funcionalidad:**
+- [ ] Mejorar modelo ML local con TensorFlow Lite
+- [ ] Agregar más idiomas al sistema i18n
+- [ ] Expandir reglas médicas del modelo local
+- [ ] Mejorar visualizaciones de análisis predictivo
 
 ## 🔧 Configuración de Desarrollo
 

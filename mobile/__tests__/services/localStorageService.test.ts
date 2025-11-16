@@ -1,3 +1,32 @@
+import { localStorageService } from '../../src/services/localStorage';
+
+describe('localStorageService - operaciones básicas', () => {
+  beforeEach(async () => {
+    await localStorageService.clearAllData();
+  });
+
+  it('guarda y recupera configuraciones', async () => {
+    await localStorageService.saveSettings({ theme: 'dark' });
+    const settings = await localStorageService.getSettings();
+    expect(settings.theme).toBe('dark');
+  });
+
+  it('set/get secure items', async () => {
+    await localStorageService.setSecureItem('token', 'abc');
+    const v = await localStorageService.getSecureItem('token');
+    expect(v).toBe('abc');
+    await localStorageService.removeSecureItem('token');
+    const v2 = await localStorageService.getSecureItem('token');
+    expect(v2).toBeNull();
+  });
+
+  it('cachea últimas predicciones', async () => {
+    await localStorageService.saveLastPredictions([{ id: 'p1', analyzedAt: new Date().toISOString() }]);
+    const preds = await localStorageService.getLastPredictions();
+    expect(preds.length).toBe(1);
+  });
+});
+
 /**
  * Tests unitarios para Local Storage Service
  * Cubre almacenamiento offline, sincronización y gestión de cola

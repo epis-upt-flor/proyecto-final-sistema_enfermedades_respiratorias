@@ -14,37 +14,73 @@ import {
   AlertStatus,
   AlertPriority,
   AlertCategory,
+  ThemeMode,
+  SupportedLanguage,
+  NetworkStatus,
 } from '../types';
 import { apiService } from '../services/api';
 import { localStorageService } from '../services/localStorage';
 import { aiService } from '../services/aiService';
 
-interface AppStore extends AppState {
-  // Actions
+// Slices por dominio para una arquitectura más clara
+interface UserSlice {
+  user: AppState['user'];
   setUser: (user: User | null) => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  register: (userData: any) => Promise<boolean>;
+}
+
+interface NetworkSlice {
+  isOnline: boolean;
+  networkStatus: NetworkStatus;
+  syncStatus: SyncStatus;
   setOnlineStatus: (isOnline: boolean) => void;
+  getSyncStatus: () => SyncStatus;
+}
+
+interface MedicalHistorySlice {
+  offlineData: OfflineData;
   addMedicalHistory: (history: MedicalHistory) => void;
   updateMedicalHistory: (id: string, updates: Partial<MedicalHistory>) => void;
   deleteMedicalHistory: (id: string) => void;
   addSymptomAnalysis: (analysis: SymptomAnalysis) => void;
+  updateOfflineData: (data: Partial<OfflineData>) => void;
+  analyzeSymptoms: (
+    symptoms: any[],
+    patientId: string,
+    context?: string
+  ) => Promise<SymptomAnalysis | null>;
+}
+
+interface NotificationSlice {
+  notifications: NotificationData[];
+  alerts: Alert[];
   addNotification: (notification: NotificationData) => void;
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
-  updateOfflineData: (data: Partial<OfflineData>) => void;
-  setLoading: (loading: boolean) => void;
-  syncData: () => Promise<void>;
   fetchAlerts: (filters?: {
     status?: AlertStatus[];
     priority?: AlertPriority[];
     category?: AlertCategory[];
   }) => Promise<void>;
   acknowledgeAlertById: (alertId: string) => Promise<boolean>;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  register: (userData: any) => Promise<boolean>;
-  analyzeSymptoms: (symptoms: any[], patientId: string, context?: string) => Promise<SymptomAnalysis | null>;
-  getSyncStatus: () => SyncStatus;
 }
+
+interface UiSlice {
+  isLoading: boolean;
+  themeMode?: ThemeMode;
+  language?: SupportedLanguage;
+  setLoading: (loading: boolean) => void;
+  setThemeMode: (mode: ThemeMode) => void;
+  setLanguage: (language: SupportedLanguage) => void;
+}
+
+type AppStore = UserSlice &
+  NetworkSlice &
+  MedicalHistorySlice &
+  NotificationSlice &
+  UiSlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -52,6 +88,7 @@ export const useAppStore = create<AppStore>()(
       // Initial state
       user: null,
       isOnline: true,
+      networkStatus: 'online',
       offlineData: {
         medicalHistories: [],
         symptomAnalyses: [],
@@ -68,11 +105,26 @@ export const useAppStore = create<AppStore>()(
         lastSyncTime: null,
         syncErrors: [],
       },
+      themeMode: 'auto',
+      language: 'es',
 
-      // Actions
+      // Actions: User
       setUser: (user) => set({ user }),
-      
-      setOnlineStatus: (isOnline) => set({ isOnline }),
+
+      // Actions: Network
+      setOnlineStatus: (isOnline) =>
+        set((state) => ({
+          isOnline,
+          networkStatus: isOnline
+            ? state.syncStatus.isSyncing
+              ? 'syncing'
+              : 'online'
+            : 'offline',
+          syncStatus: {
+            ...state.syncStatus,
+            isOnline,
+          },
+        })),
       
       addMedicalHistory: async (history) => {
         try {
@@ -160,12 +212,19 @@ export const useAppStore = create<AppStore>()(
         const { isOnline } = get();
         if (!isOnline) return;
 
-        set({ isLoading: true });
-        
+        set((state) => ({
+          isLoading: true,
+          networkStatus: 'syncing',
+          syncStatus: {
+            ...state.syncStatus,
+            isSyncing: true,
+          },
+        }));
+
         try {
           await localStorageService.syncPendingData();
           await localStorageService.syncFromServer();
-          
+
           // Update sync status
           const lastSyncTime = await localStorageService.getLastSyncTime();
           set((state) => ({
@@ -179,9 +238,11 @@ export const useAppStore = create<AppStore>()(
               isSyncing: false,
               pendingItems: 0,
               lastSyncTime,
+              isOnline: state.isOnline,
             },
+            networkStatus: state.isOnline ? 'online' : 'offline',
           }));
-          
+
           get().addNotification({
             id: Date.now().toString(),
             title: 'Sincronización Exitosa',
@@ -189,7 +250,6 @@ export const useAppStore = create<AppStore>()(
             type: 'sync',
             isRead: false,
           });
-          
         } catch (error) {
           console.error('Error en sincronización:', error);
           get().addNotification({
@@ -199,6 +259,17 @@ export const useAppStore = create<AppStore>()(
             type: 'alert',
             isRead: false,
           });
+          set((state) => ({
+            networkStatus: state.isOnline ? 'online' : 'offline',
+            syncStatus: {
+              ...state.syncStatus,
+              isSyncing: false,
+              syncErrors: [
+                ...state.syncStatus.syncErrors,
+                'Error durante la sincronización',
+              ],
+            },
+          }));
         } finally {
           set({ isLoading: false });
         }
@@ -301,6 +372,9 @@ export const useAppStore = create<AppStore>()(
           pendingItems: state.offlineData.pendingSync,
         };
       },
+
+      setThemeMode: (mode) => set({ themeMode: mode }),
+      setLanguage: (language) => set({ language }),
     }),
     {
       name: 'respicare-storage',
@@ -309,6 +383,8 @@ export const useAppStore = create<AppStore>()(
         user: state.user,
         offlineData: state.offlineData,
         notifications: state.notifications,
+        themeMode: state.themeMode,
+        language: state.language,
       }),
     }
   )

@@ -12,6 +12,44 @@ export interface User {
   updatedAt: string;
 }
 
+/**
+ * Modelo de dominio para Paciente en mobile.
+ * Representa un usuario con rol 'patient' y metadatos adicionales de salud.
+ */
+export interface Patient {
+  id: string;
+  userId: string;
+  fullName: string;
+  documentId?: string;
+  age?: number;
+  gender?: 'M' | 'F' | 'O';
+  phone?: string;
+  address?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  primaryDoctorId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Modelo de dominio para Doctor en mobile.
+ * Representa un usuario con rol 'doctor' y su información profesional básica.
+ */
+export interface Doctor {
+  id: string;
+  userId: string;
+  fullName: string;
+  specialty?: string;
+  medicalLicenseId?: string;
+  phone?: string;
+  email: string;
+  workplace?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MedicalHistory {
   id: string;
   patientId: string;
@@ -38,6 +76,60 @@ export interface MedicalHistory {
   updatedAt: string;
   isOffline?: boolean;
   syncStatus: 'pending' | 'synced' | 'error';
+}
+
+export type AppointmentStatus =
+  | 'scheduled'
+  | 'completed'
+  | 'cancelled'
+  | 'rescheduled'
+  | 'no_show';
+
+/**
+ * DTO de cita médica alineado con el backend.
+ * Las fechas se representan como string ISO en mobile.
+ */
+export interface AppointmentDTO {
+  _id: string;
+  patientId: string;
+  doctorId: string;
+  createdBy: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  status: AppointmentStatus;
+  reason?: string;
+  notes?: string;
+  location?: {
+    type: 'virtual' | 'in_person';
+    description?: string;
+    meetingLink?: string;
+    address?: string;
+  };
+  reminderMinutesBefore?: number;
+  tags?: string[];
+  rescheduledFrom?: string;
+  cancellationReason?: string;
+  metadata?: Record<string, any>;
+  reminderSentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Modelo de dominio simplificado para citas en mobile.
+ * Usar este tipo en pantallas y componentes.
+ */
+export interface Appointment {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  status: AppointmentStatus;
+  reason?: string;
+  notes?: string;
+  meetingLink?: string;
+  isVirtual: boolean;
 }
 
 export interface Symptom {
@@ -94,6 +186,71 @@ export interface AIAnalysis {
   timestamp: string;
 }
 
+export type PrescriptionStatus =
+  | 'draft'
+  | 'pending_validation'
+  | 'active'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected';
+
+export interface PrescriptionMedication {
+  name: string;
+  dosage: string;
+  form?: string;
+  frequencyPerDay: number;
+  durationDays: number;
+  startDate?: string;
+  instructions?: string;
+  notes?: string;
+  reminderTimes?: string[];
+  smartDosage?: {
+    recommended: string;
+    rationale: string;
+  };
+}
+
+export interface DrugInteraction {
+  medicationA: string;
+  medicationB: string;
+  severity: 'minor' | 'moderate' | 'major' | 'contraindicated';
+  description?: string;
+  source?: string;
+}
+
+/**
+ * DTO de prescripción alineado con el backend (fechas en string).
+ */
+export interface PrescriptionDTO {
+  _id: string;
+  patientId: string;
+  doctorId: string;
+  createdBy: string;
+  diagnosis?: string;
+  observations?: string;
+  medications: PrescriptionMedication[];
+  status: PrescriptionStatus;
+  interactions?: DrugInteraction[];
+  warnings?: string[];
+  isValid?: boolean;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Modelo de dominio simplificado para prescripciones en mobile.
+ */
+export interface Prescription {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  diagnosis?: string;
+  medications: PrescriptionMedication[];
+  status: PrescriptionStatus;
+  expiresAt?: string;
+}
+
 export interface NotificationData {
   id: string;
   title: string;
@@ -148,6 +305,8 @@ export interface SyncStatus {
   syncErrors: string[];
 }
 
+export type NetworkStatus = 'online' | 'offline' | 'syncing';
+
 export interface OfflineData {
   medicalHistories: MedicalHistory[];
   symptomAnalyses: SymptomAnalysis[];
@@ -155,14 +314,20 @@ export interface OfflineData {
   pendingSync: number;
 }
 
+export type ThemeMode = 'light' | 'dark' | 'auto';
+export type SupportedLanguage = 'es' | 'en' | 'pt' | 'fr' | 'qu';
+
 export interface AppState {
   user: User | null;
   isOnline: boolean;
+  networkStatus: NetworkStatus;
   offlineData: OfflineData;
   notifications: NotificationData[];
   alerts: Alert[];
   isLoading: boolean;
   syncStatus: SyncStatus;
+  themeMode?: ThemeMode;
+  language?: SupportedLanguage;
 }
 
 // Tipos para navegación

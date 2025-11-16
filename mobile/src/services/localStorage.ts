@@ -37,6 +37,7 @@ class LocalStorageService {
   private syncQueue: SyncQueueItem[] = [];
   private isSyncing: boolean = false;
   private syncListeners: Array<(status: SyncStatus) => void> = [];
+  private readonly SECURE_PREFIX = 'secure_';
 
   // Storage keys
   private readonly KEYS = {
@@ -46,6 +47,9 @@ class LocalStorageService {
     LAST_SYNC: 'last_sync_timestamp',
     USER_DATA: 'user_data',
     SETTINGS: 'app_settings',
+    LAST_PREDICTIONS: 'last_predictions',
+    AUTH_TOKENS: 'auth_tokens',
+    CURRENT_USER: 'current_user',
   };
 
   constructor() {
@@ -418,6 +422,61 @@ class LocalStorageService {
     } catch (error) {
       console.error('Error saving settings:', error);
       throw error;
+    }
+  }
+
+  // ---- Secure-ish storage helpers (fallback a AsyncStorage) ----
+  async setSecureItem(key: string, value: string): Promise<void> {
+    await AsyncStorage.setItem(this.SECURE_PREFIX + key, value);
+  }
+
+  async getSecureItem(key: string): Promise<string | null> {
+    return AsyncStorage.getItem(this.SECURE_PREFIX + key);
+  }
+
+  async removeSecureItem(key: string): Promise<void> {
+    await AsyncStorage.removeItem(this.SECURE_PREFIX + key);
+  }
+
+  // ---- User & Auth cache (coordinado con apiService) ----
+  async getCachedUser<T = any>(): Promise<T | null> {
+    const raw = await AsyncStorage.getItem(this.KEYS.CURRENT_USER);
+    return raw ? JSON.parse(raw) : null;
+  }
+
+  async setCachedUser(user: any): Promise<void> {
+    await AsyncStorage.setItem(this.KEYS.CURRENT_USER, JSON.stringify(user));
+  }
+
+  async getAuthTokens<T = any>(): Promise<T | null> {
+    const raw = await AsyncStorage.getItem(this.KEYS.AUTH_TOKENS);
+    return raw ? JSON.parse(raw) : null;
+  }
+
+  async setAuthTokens(tokens: any): Promise<void> {
+    await AsyncStorage.setItem(this.KEYS.AUTH_TOKENS, JSON.stringify(tokens));
+  }
+
+  async clearAuth(): Promise<void> {
+    await AsyncStorage.multiRemove([this.KEYS.AUTH_TOKENS, this.KEYS.CURRENT_USER]);
+  }
+
+  // ---- Últimas predicciones (cache útil para dashboard/home) ----
+  async saveLastPredictions(predictions: Array<{ id: string; analyzedAt: string } & Record<string, any>>): Promise<void> {
+    try {
+      await AsyncStorage.setItem(this.KEYS.LAST_PREDICTIONS, JSON.stringify(predictions.slice(0, 20)));
+    } catch (error) {
+      console.error('Error saving last predictions:', error);
+    }
+  }
+
+  async getLastPredictions<T = any>(): Promise<T[]> {
+    try {
+      const raw = await AsyncStorage.getItem(this.KEYS.LAST_PREDICTIONS);
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      console.error('Error getting last predictions:', error);
+      return [];
     }
   }
 }

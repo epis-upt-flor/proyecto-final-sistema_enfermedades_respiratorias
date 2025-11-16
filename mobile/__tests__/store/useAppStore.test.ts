@@ -1,5 +1,87 @@
 import { act } from '@testing-library/react-native';
 import { useAppStore } from '../../src/store/useAppStore';
+import { apiService } from '../../src/services/api';
+import { localStorageService } from '../../src/services/localStorage';
+
+jest.mock('../../src/services/api', () => ({
+  apiService: {
+    login: jest.fn(),
+    setCurrentUser: jest.fn(),
+    clearCurrentUser: jest.fn(),
+    getAlerts: jest.fn().mockResolvedValue({ success: true, data: [] }),
+  },
+}));
+
+jest.mock('../../src/services/localStorage', () => ({
+  localStorageService: {
+    saveMedicalHistory: jest.fn().mockResolvedValue(undefined),
+    getMedicalHistories: jest.fn().mockResolvedValue([]),
+    deleteMedicalHistory: jest.fn().mockResolvedValue(undefined),
+    saveSymptomAnalysis: jest.fn().mockResolvedValue(undefined),
+    syncPendingData: jest.fn().mockResolvedValue(undefined),
+    syncFromServer: jest.fn().mockResolvedValue(undefined),
+    getLastSyncTime: jest.fn().mockResolvedValue(new Date().toISOString()),
+  },
+}));
+
+describe('useAppStore - acciones críticas', () => {
+  beforeEach(() => {
+    const { getState, setState } = useAppStore;
+    // reset store a estado inicial
+    setState({
+      ...getState(),
+      user: null,
+      isOnline: true,
+      networkStatus: 'online',
+      notifications: [],
+      alerts: [],
+      isLoading: false,
+      offlineData: { medicalHistories: [], symptomAnalyses: [], lastSync: new Date().toISOString(), pendingSync: 0 },
+      syncStatus: { isOnline: true, isSyncing: false, pendingItems: 0, lastSyncTime: null, syncErrors: [] },
+    });
+    jest.clearAllMocks();
+  });
+
+  it('setOnlineStatus actualiza isOnline y networkStatus', () => {
+    const { setOnlineStatus, isOnline } = useAppStore.getState();
+    expect(isOnline).toBe(true);
+    act(() => setOnlineStatus(false));
+    expect(useAppStore.getState().isOnline).toBe(false);
+    expect(useAppStore.getState().networkStatus).toBe('offline');
+  });
+
+  it('addMedicalHistory guarda en local y aumenta pendingSync', async () => {
+    const history = { id: 'h1', patientId: 'p1', doctorId: 'd1', patientName: 'Juan', age: 30, gender: 'M', diagnosis: 'Dx', symptoms: [], treatment: '', notes: '', date: new Date().toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), syncStatus: 'pending' };
+    await act(async () => {
+      await useAppStore.getState().addMedicalHistory(history as any);
+    });
+    expect(localStorageService.saveMedicalHistory).toHaveBeenCalled();
+    expect(useAppStore.getState().offlineData.medicalHistories.length).toBe(1);
+    expect(useAppStore.getState().offlineData.pendingSync).toBe(1);
+  });
+
+  it('syncData cambia networkStatus a syncing y vuelve a online', async () => {
+    await act(async () => {
+      await useAppStore.getState().syncData();
+    });
+    expect(localStorageService.syncPendingData).toHaveBeenCalled();
+    expect(localStorageService.syncFromServer).toHaveBeenCalled();
+    expect(useAppStore.getState().networkStatus).toBe('online');
+  });
+
+  it('login establece user al autenticar', async () => {
+    (apiService.login as jest.Mock).mockResolvedValue({
+      success: true,
+      data: { user: { id: 'u1', email: 'a@b.com', firstName: 'A', lastName: 'B', role: 'patient', isEmailVerified: true, createdAt: '', updatedAt: '' } },
+    });
+    const ok = await useAppStore.getState().login('a@b.com', 'x');
+    expect(ok).toBe(true);
+    expect(useAppStore.getState().user?.id).toBe('u1');
+  });
+});
+
+import { act } from '@testing-library/react-native';
+import { useAppStore } from '../../src/store/useAppStore';
 import { SyncStatus } from '../../src/types';
 
 jest.mock('../../src/services/localStorage', () => ({

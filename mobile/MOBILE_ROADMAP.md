@@ -1,0 +1,252 @@
+## 🗺️ Roadmap Mobile - RespiCare Tacna
+
+### 📋 Estado Actual de la App Móvil
+
+- ✅ App móvil funcional (React Native / Expo o equivalente)
+- ✅ Análisis de síntomas con ML integrado con backend
+- ✅ Sincronización offline básica
+- ✅ Notificaciones push
+- ✅ Integración con backend y servicios de IA
+- ✅ Integración inicial con wearables (HealthKit / Google Fit)
+
+---
+
+## 🎯 Objetivo General
+
+Convertir la app móvil en el canal principal de interacción para pacientes (y en una segunda etapa médicos), con:
+
+- Experiencia **rápida, moderna y segura**, centrada en el paciente.
+- Soporte **offline-first** robusto y sincronización confiable.
+- Funcionalidades avanzadas: **telemedicina, voz, AR, análisis predictivo, recomendaciones personalizadas**.
+- Integración completa con backend, AI Services y sistemas externos.
+
+---
+
+## 🕐 Fase 1: Fundamentos Mobile y Arquitectura (0–1 mes)
+
+**Prioridad: ALTA** | **Estado: En progreso**
+
+### 1.1 Arquitectura y Estado Global
+
+- ✅ Revisar y estabilizar `useAppStore` (slices claros por dominio: usuario, síntomas, citas, configuración).
+- ✅ Unificar manejo de estado de red: `online/offline/sincronizando`.
+- ✅ Definir contratos de tipos en `mobile/src/types`:
+  - ✅ Modelos de dominio (Paciente, Doctor, Cita, Alerta, Prescripción).
+  - ✅ DTOs alineados con respuestas del backend.
+- ✅ Documentar la arquitectura de carpetas (pantallas, componentes, servicios, store).
+
+### 1.2 Servicios Base
+
+- ✅ `apiService` móvil:
+  - ✅ Cliente HTTP centralizado (baseURL, interceptores, reintentos).
+  - ✅ Manejo consistente de errores y mensajes al usuario.
+- ✅ `localStorageService`:
+  - ✅ Abstracción para AsyncStorage/secure storage.
+  - ✅ Caché de datos importantes (usuario, token, últimas predicciones).
+- ✅ `localMLService`:
+  - ✅ Interfaz definida para futuras inferencias locales (aunque inicialmente use remoto).
+
+### 1.3 Testing y Calidad Inicial
+
+- ✅ Revisar y actualizar configuración de Jest (`mobile/jest.config.js`, `mobile/jest.setup.js`).
+- ✅ Añadir tests unitarios básicos para:
+  - ✅ `useAppStore` (acciones críticas).
+  - ✅ `apiService` (manejo de éxito/error).
+  - ✅ `localStorageService`.
+- ✅ Integrar scripts mobile en CI (jobs de lint + tests).
+
+---
+
+## 🕑 Fase 2: UX/UI Base y Navegación (1–2 meses)
+
+**Prioridad: ALTA** | **Estado: En planificación**
+
+### 2.1 Rediseño de Pantallas Principales
+
+- [ ] Home / Dashboard del paciente:
+  - [ ] Vista rápida de síntomas recientes, citas próximas y alertas.
+- [ ] Analizador de síntomas:
+  - [ ] Flujo claro de preguntas/respuestas.
+  - [ ] Visualización simple del resultado del modelo (riesgo, próxima acción).
+- [ ] Historial médico / resultados:
+  - [ ] Listado y detalle de consultas, diagnósticos y reportes relevantes.
+
+### 2.2 Navegación y Flujo
+
+- [ ] Definir navegación por tabs (ej.: `Síntomas`, `Citas`, `Alertas`, `Perfil`).
+- [ ] Flujo de navegación stack entre pantallas de detalle (cita, alerta, reporte).
+- [ ] Manejo consistente del back navigation (hardware + in-app).
+
+### 2.3 Theming y Modo Oscuro
+
+- [ ] Implementar sistema de temas:
+  - [ ] Tema claro por defecto.
+  - [ ] `darkTheme` definido y aplicado en todas las pantallas principales.
+- [ ] Agregar toggle de modo oscuro en ajustes/perfil.
+- [ ] Persistir la preferencia de tema en almacenamiento local.
+
+---
+
+## 🕒 Fase 3: Funcionalidades Avanzadas (2–4 meses)
+
+**Prioridad: MEDIA** | **Estado: En planificación**
+
+### 3.1 Telemedicina (`telemedicineService.ts`)
+
+- [ ] Integrar gestión de citas médicas en mobile:
+  - [ ] Listado de citas próximas y pasadas.
+  - [ ] Creación/cancelación/reprogramación de citas.
+  - [ ] Recordatorios in-app para citas cercanas.
+- [ ] Flujo básico de teleconsulta:
+  - [ ] Pantalla de detalle de cita con botón de “iniciar consulta” (videollamada o similar).
+  - [ ] Integración inicial con proveedor de video (aunque sea mock/stub al inicio).
+
+### 3.2 Análisis Predictivo (`predictiveAnalysisService.ts`)
+
+- [ ] Consumir endpoints de analytics/ML relevantes para el usuario móvil:
+  - [ ] Riesgo personalizado (ej.: exacerbación de enfermedad respiratoria).
+  - [ ] Tendencias de síntomas a lo largo del tiempo.
+- [ ] Mostrar insights en el dashboard:
+  - [ ] Tarjetas de riesgo, recomendaciones y alertas preventivas.
+
+### 3.3 Realidad Aumentada (`arService.ts`)
+
+- [ ] Definir caso de uso inicial (MVP):
+  - [ ] Ejercicios respiratorios guiados o explicación del uso de inhaladores.
+- [ ] Prototipo AR:
+  - [ ] Pantalla dedicada con AR overlay.
+  - [ ] Guías y mensajes contextuales.
+
+---
+
+## 🕓 Fase 4: Voz e Internacionalización (3–5 meses)
+
+**Prioridad: MEDIA** | **Estado: En planificación**
+
+### 4.1 Reconocimiento de Voz (`voiceRecognitionService.ts`)
+
+- [ ] Input de síntomas por voz:
+  - [ ] Conversión speech-to-text integrada con el formulario de síntomas.
+  - [ ] Manejo de errores (ruido, cancelación, permisos).
+- [ ] Comandos básicos por voz:
+  - [ ] Navegar a secciones clave (ej.: “abrir citas”, “ver alertas”).
+
+### 4.2 Internacionalización (`i18nService.ts`)
+
+- [ ] Infraestructura i18n mobile:
+  - [ ] Soporte mínimo para ES y EN.
+  - [ ] Carga de strings desde JSON u otra fuente centralizada.
+- [ ] Selector de idioma en ajustes.
+- [ ] Verificación de que las pantallas principales usan el sistema de i18n (sin strings hardcodeados).
+
+---
+
+## 🕔 Fase 5: Offline-first y Sincronización (4–6 meses)
+
+**Prioridad: ALTA** | **Estado: En planificación**
+
+### 5.1 Estrategia Offline y Colas de Operaciones
+
+- [ ] Diseñar estrategia de almacenamiento local por dominio:
+  - [ ] Síntomas enviados, respuestas de modelos, citas, alertas.
+- [ ] Implementar colas de acciones offline:
+  - [ ] Guardar operaciones cuando no hay red (ej.: nuevas citas, respuestas de síntomas).
+  - [ ] Reintentar automáticamente al volver online.
+
+### 5.2 Manejo de Conflictos y Feedback al Usuario
+
+- [ ] Definir reglas simples de resolución de conflictos (ej.: último cambio gana, priorizar servidor).
+- [ ] Mostrar estados claros:
+  - [ ] “Pendiente de sincronización”.
+  - [ ] “Sincronizado”.
+  - [ ] “Error de sincronización” con opción de reintentar.
+
+### 5.3 Testing de Modo Offline
+
+- [ ] Tests de integración mobile para:
+  - [ ] Uso en modo offline (lectura de datos cacheados).
+  - [ ] Reconexión y sincronización automática.
+  - [ ] Manejo de errores de red recurrentes.
+
+---
+
+## 🕕 Fase 6: UX Avanzada, Personalización y Engagement (6–8 meses)
+
+**Prioridad: MEDIA** | **Estado: En planificación**
+
+### 6.1 Onboarding y Microinteracciones
+
+- [ ] Onboarding interactivo:
+  - [ ] Explicar analizador de síntomas, citas, alertas y recomendaciones.
+- [ ] Microinteracciones:
+  - [ ] Animaciones sutiles en acciones clave (enviar síntomas, confirmar cita).
+  - [ ] Feedback visual claro en caso de éxito/error.
+
+### 6.2 Personalización y Recomendaciones
+
+- [ ] Perfil de salud avanzado:
+  - [ ] Datos relevantes (edad, diagnóstico base, factores de riesgo).
+  - [ ] Preferencias (recordatorios, frecuencia de notificaciones).
+- [ ] Recomendaciones inteligentes:
+  - [ ] Ejercicios, consejos preventivos, seguimiento recomendado.
+  - [ ] Integración con analytics/ML del backend.
+
+### 6.3 Integración con Wearables
+
+- [ ] Ampliar integración con HealthKit / Google Fit:
+  - [ ] Lectura de métricas relevantes (ej.: FC, actividad, saturación si está disponible).
+  - [ ] Visualización resumida en el dashboard móvil.
+
+---
+
+## 🕖 Fase 7: Observabilidad, Métricas y Releases Mobile (8–10 meses)
+
+**Prioridad: MEDIA** | **Estado: En planificación**
+
+### 7.1 Métricas de Uso y Rendimiento
+
+- [ ] Instrumentar eventos clave:
+  - [ ] Uso del analizador de síntomas.
+  - [ ] Creación/gestión de citas.
+  - [ ] Uso de modo offline, AR, voz.
+- [ ] Analizar tiempos de carga y rendimiento en dispositivos de gama baja.
+
+### 7.2 Manejo de Errores en Producción
+
+- [ ] Integrar herramienta de tracking (Sentry u otra).
+- [ ] Definir flujo de triage de errores críticos:
+  - [ ] Clasificación por severidad y frecuencia.
+  - [ ] Alertas para crashes graves.
+
+### 7.3 Estrategia de Releases
+
+- [ ] Definir canales de distribución:
+  - [ ] Beta testers vs producción.
+- [ ] Checklist de release mobile:
+  - [ ] Tests automatizados pasando.
+  - [ ] Validación manual mínima de flujos críticos.
+
+---
+
+## 📊 Métricas de Éxito Mobile
+
+- [ ] Tiempo de arranque inicial < 3 s en dispositivos promedio.
+- [ ] Tasa de crash < 1 %.
+- [ ] Uso offline en al menos 30 % de las sesiones sin pérdida de datos.
+- [ ] Tiempo promedio de flujo de síntomas (inicio → resultado) < 2 min.
+- [ ] Satisfacción de usuarios móviles > 4.5/5 (encuestas o ratings).
+
+---
+
+## 🔄 Notas y Coordinación con Roadmap General
+
+1. Las fases mobile deben alinearse con:
+   - Fase 7 (Alertas, Citas, Prescripciones) del roadmap general.
+   - Fase 8 (Integraciones externas) para telemedicina y datos clínicos.
+   - Fase 11 (UX/UI) para mantener consistencia visual con la web.
+2. Algunas fases pueden ejecutarse en paralelo con backend/AI Services (ej.: telemedicina, analytics).
+3. Cualquier nueva funcionalidad mobile debe:
+   - Mantener el enfoque en experiencia del paciente.
+   - Respetar requisitos de seguridad y privacidad definidos en Fase 10 (Seguridad Avanzada).
+
+
