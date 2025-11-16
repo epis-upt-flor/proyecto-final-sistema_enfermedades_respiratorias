@@ -1,0 +1,66 @@
+name: AI Services - Tests
+
+on:
+  push:
+    paths:
+      - 'ai-services/**'
+      - '.github/workflows/ai-services-tests.yml'
+  pull_request:
+    paths:
+      - 'ai-services/**'
+      - '.github/workflows/ai-services-tests.yml'
+
+jobs:
+  ai-services-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd ai-services
+          if [ -f "requirements-test.txt" ]; then
+            pip install -r requirements-test.txt
+          elif [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          else
+            pip install fastapi uvicorn pydantic structlog pytest
+          fi
+          pip install pytest-cov
+
+      - name: Run tests (pytest with coverage)
+        env:
+          PYTHONPATH: ai-services
+        run: |
+          cd ai-services
+          pytest -q \
+            --junitxml=junit.xml \
+            --cov=./ \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-services-test-reports
+          path: |
+            ai-services/junit.xml
+            ai-services/coverage.xml
+          retention-days: 14
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ai-services/coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+

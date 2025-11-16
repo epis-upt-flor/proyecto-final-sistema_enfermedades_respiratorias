@@ -1,5 +1,8 @@
 # RespiCare AI Services
 
+[![AI Services CI](https://img.shields.io/github/actions/workflow/status/USER_OR_ORG/REPO/ai-services-tests.yml?label=AI%20Services%20CI)](../../actions/workflows/ai-services-tests.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/USER_OR_ORG/REPO?label=Coverage)](https://codecov.io/gh/USER_OR_ORG/REPO)
+
 Servicios de inteligencia artificial para el procesamiento de historias médicas y análisis de síntomas en el sistema RespiCare, implementando patrones de arquitectura robustos y escalables.
 
 ## 🏗️ Arquitectura con Patrones de Software

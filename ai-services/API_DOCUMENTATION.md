@@ -5,9 +5,485 @@
 http://localhost:8000
 ```
 
+## 📑 Índice Rápido
+
+- Advanced ML
+  - [Texto (BERT)](#01-texto-transformerbert)
+  - [Imagen (Visión por Computador)](#02-imagen-visión-por-computador)
+  - [Series Temporales (Pronóstico)](#03-series-temporales-pronóstico)
+- Advanced NLP
+  - [Procesamiento General](#0bis1-procesamiento-general)
+  - [NER (Entidades Médicas)](#0bis2-ner-entidades-médicas)
+  - [Resumen Automático](#0bis3-resumen-automático)
+  - [Traducción de Términos](#0bis4-traducción-de-términos)
+  - [Análisis de Sentimiento](#0bis5-análisis-de-sentimiento)
+- Reinforcement Learning
+  - [Configurar](#rl-configurar)
+  - [Entrenar](#rl-entrenar)
+  - [Actuar](#rl-actuar)
+- Federated Learning
+  - [Registrar Clientes](#fl-registrar-clientes)
+  - [Ejecutar Ronda](#fl-ejecutar-ronda)
+  - [Modelo Global](#fl-modelo-global)
+- Endpoints Core
+  - [Health Check](#1-health-check)
+  - [Analyze Medical Query](#2-analyze-medical-query-principal)
+  - [Get Supported Diseases](#3-get-supported-diseases)
+  - [Get Symptom Categories](#4-get-symptom-categories)
+
 ---
 
+### RL - Configurar
+**POST** `/api/v1/rl/configure`
+
+```bash
+curl -X POST http://localhost:8000/api/v1/rl/configure \
+  -H "Content-Type: application/json" \
+  -d '{"env_name":"clinical-optimizer","config":{"gamma":0.99}}'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "ok",
+  "config": {
+    "gamma": 0.99
+  }
+}
+```
+
+### RL - Entrenar
+**POST** `/api/v1/rl/train`
+
+```bash
+curl -X POST http://localhost:8000/api/v1/rl/train \
+  -H "Content-Type: application/json" \
+  -d '{"env_name":"clinical-optimizer","episodes":5}'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "ok",
+  "episodes": 5,
+  "avg_reward": 0.742
+}
+```
+
+### RL - Actuar
+**POST** `/api/v1/rl/act`
+
+```bash
+curl -X POST http://localhost:8000/api/v1/rl/act \
+  -H "Content-Type: application/json" \
+  -d '{"env_name":"clinical-optimizer","state":{"patient_age":45,"severity":2}}'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "ok",
+  "action": "monitor",
+  "state_summary": ["patient_age", "severity"]
+}
+```
+
+---
+
+### FL - Registrar Clientes
+**POST** `/api/v1/federated/register_clients`
+
+```bash
+curl -X POST http://localhost:8000/api/v1/federated/register_clients \
+  -H "Content-Type: application/json" \
+  -d '{"clients":["c1","c2","c3"]}'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "ok",
+  "clients": ["c1", "c2", "c3"],
+  "count": 3
+}
+```
+
+### FL - Ejecutar Ronda
+**POST** `/api/v1/federated/run_round`
+
+```bash
+curl -X POST http://localhost:8000/api/v1/federated/run_round \
+  -H "Content-Type: application/json" \
+  -d '{"client_updates":[{"acc":0.83},{"acc":0.88}]}'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "ok",
+  "round": 1,
+  "global_acc": 0.855
+}
+```
+
+### FL - Modelo Global
+**GET** `/api/v1/federated/global_model`
+
+```bash
+curl http://localhost:8000/api/v1/federated/global_model
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "success",
+  "model": {
+    "model_name": "baseline-model",
+    "version": 0
+  }
+}
+```
+
+---
+
+## 🔐 Notas de Seguridad/Privacidad (Federated Learning)
+
+- No se comparten datos crudos de pacientes entre clientes y servidor coordinador.
+- Los clientes envían únicamente actualizaciones/gradientes o métricas agregadas (p. ej., `acc`, `loss`).
+- Se recomienda aplicar técnicas de privacidad:
+  - Differential Privacy (ruido en gradientes/updates).
+  - Secure Aggregation (agregación cifrada de updates de clientes).
+  - Encripción en tránsito (TLS) y opcionalmente en reposo.
+- Control de acceso y auditoría:
+  - Autenticar y autorizar clientes participantes por ronda.
+  - Registrar rondas, modelos globales y fuentes de updates.
+- Gestión de fallos y calidad:
+  - Filtrar updates anómalos o maliciosos (defensa contra poisoning).
+  - Validar métricas y coherencia de dimensiones antes de agregar.
+
 ## 📋 Endpoints
+
+### 0. Advanced ML (Texto, Imagen, Series Temporales)
+
+Endpoints para capacidades avanzadas de ML (stubs funcionales con contratos definidos).
+
+#### 0.1 Texto (Transformer/BERT)
+
+**POST** `/api/v1/ml/advanced/text`
+
+Request:
+```json
+{
+  "texts": [
+    "Paciente con tos seca y disnea desde hace 3 días.",
+    "Dolor torácico y fiebre alta, sospecha de neumonía."
+  ],
+  "model_name": "bert-base-uncased"
+}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "count": 2,
+  "predictions": [
+    {
+      "text": "Paciente con tos seca y disnea desde hace 3 días.",
+      "labels": ["asthma", "copd", "flu"],
+      "scores": [0.12, 0.78, 0.10],
+      "top_label": "copd"
+    }
+  ]
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/ml/advanced/text \
+  -H "Content-Type: application/json" \
+  -d '{
+    "texts": ["Paciente con tos seca y disnea desde hace 3 días."],
+    "model_name": "bert-base-uncased"
+  }'
+```
+
+---
+
+### 0bis. Advanced NLP (Procesamiento, NER, Resumen, Traducción, Sentimiento)
+
+Endpoints para capacidades avanzadas de NLP médico (stubs con contratos claros).
+
+#### 0bis.1 Procesamiento General
+
+**POST** `/api/v1/nlp/advanced/process`
+
+Request:
+```json
+{
+  "text": "Paciente con tos y fiebre.",
+  "language": "es"
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/nlp/advanced/process \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Paciente con tos y fiebre.",
+    "language": "es"
+  }'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "success",
+  "result": {
+    "text": "Paciente con tos y fiebre.",
+    "tokens": ["paciente", "con", "tos", "y", "fiebre"],
+    "language": "es"
+  }
+}
+```
+
+---
+
+#### 0bis.2 NER (Entidades Médicas)
+
+**POST** `/api/v1/nlp/advanced/ner`
+
+Request:
+```json
+{
+  "text": "Diagnóstico: neumonía. Tratamiento con paracetamol.",
+  "language": "es"
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/nlp/advanced/ner \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Diagnóstico: neumonía. Tratamiento con paracetamol.",
+    "language": "es"
+  }'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "success",
+  "result": {
+    "text": "Diagnóstico: neumonía. Tratamiento con paracetamol.",
+    "entities": [
+      { "text": "neumonía", "label": "DISEASE" },
+      { "text": "paracetamol", "label": "DRUG" }
+    ]
+  }
+}
+```
+
+---
+
+#### 0bis.3 Resumen Automático
+
+**POST** `/api/v1/nlp/advanced/summarize`
+
+Request:
+```json
+{
+  "text": "Primera oración. Segunda oración. Tercera oración.",
+  "language": "es"
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/nlp/advanced/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Primera oración. Segunda oración. Tercera oración.",
+    "language": "es"
+  }'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "success",
+  "result": {
+    "text": "Primera oración. Segunda oración. Tercera oración.",
+    "summary": "Primera oración. Segunda oración."
+  }
+}
+```
+
+---
+
+#### 0bis.4 Traducción de Términos
+
+**POST** `/api/v1/nlp/advanced/translate`
+
+Request:
+```json
+{
+  "term": "asma",
+  "source_language": "es",
+  "target_language": "en"
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/nlp/advanced/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "term": "asma",
+    "source_language": "es",
+    "target_language": "en"
+  }'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "success",
+  "result": {
+    "term": "asma",
+    "translated": "asthma",
+    "from": "es",
+    "to": "en"
+  }
+}
+```
+
+---
+
+#### 0bis.5 Análisis de Sentimiento
+
+**POST** `/api/v1/nlp/advanced/sentiment`
+
+Request:
+```json
+{
+  "text": "El paciente se encuentra mejor y estable.",
+  "language": "es"
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/nlp/advanced/sentiment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "El paciente se encuentra mejor y estable.",
+    "language": "es"
+  }'
+```
+
+Respuesta (ejemplo):
+```json
+{
+  "status": "success",
+  "result": {
+    "text": "El paciente se encuentra mejor y estable.",
+    "score": 2,
+    "label": "positive"
+  }
+}
+```
+
+---
+
+#### 0.2 Imagen (Visión por Computador)
+
+**POST** `/api/v1/ml/advanced/image`
+
+Request:
+```json
+{
+  "images": [
+    "s3://bucket/imagenes/rx_001.png",
+    "/data/studies/ct_abc123.jpg"
+  ],
+  "model_name": "resnet50"
+}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "count": 2,
+  "predictions": [
+    {
+      "image": "/data/studies/ct_abc123.jpg",
+      "labels": ["normal", "anomaly"],
+      "scores": [0.85, 0.15],
+      "top_label": "normal"
+    }
+  ]
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/ml/advanced/image \
+  -H "Content-Type: application/json" \
+  -d '{
+    "images": ["/data/studies/ct_abc123.jpg"],
+    "model_name": "resnet50"
+  }'
+```
+
+---
+
+#### 0.3 Series Temporales (Pronóstico)
+
+**POST** `/api/v1/ml/advanced/timeseries`
+
+Request:
+```json
+{
+  "series": [
+    {"date": "2025-11-01T00:00:00Z", "value": 2.1},
+    {"date": "2025-11-02T00:00:00Z", "value": 2.4},
+    {"date": "2025-11-03T00:00:00Z", "value": 2.3}
+  ],
+  "model_type": "simple-linear",
+  "horizon_days": 7
+}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "horizon_days": 7,
+  "forecast": [
+    {"date": "2025-11-04T00:00:00.000Z", "predicted": 2.25, "confidence": 0.7}
+  ]
+}
+```
+
+Ejemplo cURL:
+```bash
+curl -X POST http://localhost:8000/api/v1/ml/advanced/timeseries \
+  -H "Content-Type: application/json" \
+  -d '{
+    "series": [
+      {"date": "2025-11-01T00:00:00Z", "value": 2.1},
+      {"date": "2025-11-02T00:00:00Z", "value": 2.4}
+    ],
+    "model_type": "simple-linear",
+    "horizon_days": 7
+  }'
+```
+
+---
 
 ### 1. Health Check
 **GET** `/api/v1/health`

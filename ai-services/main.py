@@ -57,6 +57,54 @@ try:
 except ImportError as e:
     logger.warning("ml_monitoring_routes_not_available", error=str(e))
 
+# Import and register Advanced ML routes
+try:
+    from api.routes.advanced_ml import router as advanced_ml_router
+    app.include_router(advanced_ml_router, prefix="/api", tags=["Advanced ML"])
+    logger.info("advanced_ml_routes_registered")
+except ImportError as e:
+    logger.warning("advanced_ml_routes_not_available", error=str(e))
+
+# Import and register Advanced NLP routes
+try:
+    from api.routes.advanced_nlp import router as advanced_nlp_router
+    app.include_router(advanced_nlp_router, prefix="/api", tags=["Advanced NLP"])
+    logger.info("advanced_nlp_routes_registered")
+except ImportError as e:
+    logger.warning("advanced_nlp_routes_not_available", error=str(e))
+
+# Import and register AutoML routes
+try:
+    from api.routes.automl import router as automl_router
+    app.include_router(automl_router, prefix="/api", tags=["AutoML"])
+    logger.info("automl_routes_registered")
+except ImportError as e:
+    logger.warning("automl_routes_not_available", error=str(e))
+
+# Import and register Reinforcement Learning routes
+try:
+    from api.routes.advanced_rl import router as rl_router
+    app.include_router(rl_router, prefix="/api", tags=["Reinforcement Learning"])
+    logger.info("rl_routes_registered")
+except ImportError as e:
+    logger.warning("rl_routes_not_available", error=str(e))
+
+# Import and register Federated Learning routes
+try:
+    from api.routes.federated import router as fl_router
+    app.include_router(fl_router, prefix="/api", tags=["Federated Learning"])
+    logger.info("federated_routes_registered")
+except ImportError as e:
+    logger.warning("federated_routes_not_available", error=str(e))
+
+# Import and register Advanced NLP routes
+try:
+    from api.routes.advanced_nlp import router as advanced_nlp_router
+    app.include_router(advanced_nlp_router, prefix="/api", tags=["Advanced NLP"])
+    logger.info("advanced_nlp_routes_registered")
+except ImportError as e:
+    logger.warning("advanced_nlp_routes_not_available", error=str(e))
+
 # Import and register ML retraining routes
 try:
     from api.routes.model_retraining import router as retraining_router

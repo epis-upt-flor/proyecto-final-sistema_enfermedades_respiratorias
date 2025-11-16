@@ -23,6 +23,8 @@ Sistema completo de gestión y análisis de enfermedades respiratorias con intel
 ![Tests](https://img.shields.io/badge/Tests-98.0%25%20Passing-brightgreen.svg)
 ![Code Quality](https://img.shields.io/badge/Code%20Quality-A%20(9.1%2F10)-brightgreen.svg)
 ![Static Analysis](https://img.shields.io/badge/Static%20Analysis-Passing-brightgreen.svg)
+[![AI Services Tests](https://img.shields.io/github/actions/workflow/status/USER_OR_ORG/REPO/ai-services-tests.yml?label=AI%20Services%20CI)](../../actions/workflows/ai-services-tests.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/USER_OR_ORG/REPO?label=Coverage)](https://codecov.io/gh/USER_OR_ORG/REPO)
 
 ### 🚀 Funcionalidades
 
