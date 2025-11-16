@@ -8,10 +8,74 @@
 - [roadmaps/AI_SERVICES_ROADMAP.md](AI_SERVICES_ROADMAP.md) — AI Services
 - [roadmaps/WORKFLOWS_ROADMAP.md](WORKFLOWS_ROADMAP.md) — Workflows (CI/CD)
 - [roadmaps/TESTS_ROADMAP.md](TESTS_ROADMAP.md) — Pruebas y Cobertura
-- [roadmaps/MEJORA_ROADMAPS.md](MEJORA_ROADMAPS.md) — Matriz por Roles/Plataformas
 
 > Nota de sincronización: cuando se marque un punto como completado en cualquiera de los roadmaps por función, este Roadmap General debe ser actualizado inmediatamente para reflejar el mismo estado (y viceversa). Mantener consistencia 1:1 entre los estados (✅/⏳/[ ]) y los hitos.
 
+---
+
+### 👥 Matriz de Funcionalidades por Rol y Plataforma
+
+| Funcionalidad | Paciente (Mobile) | Médico (Mobile) | Médico (Web) | Admin DIRESA (Web) | Admin Principal (Web) |
+|--------------|-------------------|-----------------|--------------|--------------------|-----------------------|
+| **Perfil y Autenticación** |||||
+| Login/Registro | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Recuperar contraseña | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Actualizar perfil | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cambiar foto | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Historia Médica** |||||
+| Ver mi historia | ✅ | ❌ | ❌ | ❌ | ✅ (todas) |
+| Ver historias pacientes | ❌ | ✅ | ✅ | ✅ (readonly) | ✅ |
+| Crear historia | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Editar historia | ❌ | ✅ | ✅ | ❌ | ✅ |
+| **Análisis de Síntomas con IA** |||||
+| Chatbot síntomas | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Ver predicción ML | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Explicabilidad SHAP | 📊 simple | ✅ completo | ✅ completo | ❌ | ✅ |
+| Enviar análisis | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **Citas Médicas** |||||
+| Solicitar cita | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Ver mis citas | ✅ | ✅ | ✅ | ❌ | ✅ (todas) |
+| Cancelar/Reprogramar | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Calendario disponibilidad | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Gestionar todas las citas | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Prescripciones** |||||
+| Ver mis prescripciones | ✅ | ❌ | ❌ | ❌ | ✅ (todas) |
+| Crear prescripción | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Recordatorios medicamentos | ✅ 🔔 | ❌ | ❌ | ❌ | ❌ |
+| Verificar interacciones | ❌ | ✅ | ✅ | ❌ | ✅ |
+| **Alertas y Notificaciones** |||||
+| Ver mis alertas | ✅ | ✅ | ✅ | ❌ | ✅ (todas) |
+| Alertas críticas push | ✅ 🔔 | ✅ 🔔 | ✅ | ❌ | ✅ |
+| Consola de alertas | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Gestionar alertas sistema | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Reportes Médicos** |||||
+| Ver mis reportes | ✅ 📄 | ❌ | ❌ | ❌ | ✅ |
+| Generar reporte paciente | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Compartir reportes | ❌ | ✅ | ✅ | ❌ | ✅ |
+| **Wearables** |||||
+| Integración wearables | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Ver datos wearables | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **Modo Offline** |||||
+| Sincronización offline | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Cola de sync | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Analytics y Reportes** |||||
+| Dashboard ejecutivo | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Dashboard SHAP | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Reportes automáticos | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Detección anomalías | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Predicción brotes | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Tendencias temporales | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Mapas geográficos | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Exportar datos (CSV/PDF) | ❌ | ❌ | ✅ | ✅ | ✅ |
+| **Administración** |||||
+| Gestión usuarios | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Gestión médicos | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Configuración sistema | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Logs y auditoría | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Monitoreo ML | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Retraining ML | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+Esta matriz resume de forma centralizada qué capacidades ofrece el sistema según rol y plataforma, tomando como fuente los roadmaps específicos (Mobile/Web/Backend/AI Services) ya integrados en este documento.
 
 ### ✅ **COMPLETADO** (Fases 1-6)
 
@@ -70,6 +134,11 @@
  - ✅ Feedback háptico opcional (si disponible)
  - ✅ Privacidad: overlay al background y bloqueo de captura en pantallas sensibles (FLAG_SECURE/expo-screen-capture)
  - ✅ E2E (Detox) smoke para accesibilidad/UX y scripts npm dedicados
+ - ✅ Panel médico móvil (`DoctorDashboardScreen`): lista de pacientes optimizada, vista rápida de historias, acceso a prescripciones y reportes firmados, búsqueda rápida
+ - ✅ Telemedicina básica: botón “Iniciar consulta” en detalle de cita que abre videollamada (Jitsi) usando token del backend
+ - ✅ Chat directo médico‑paciente (`DirectChatScreen`), accesible desde el panel médico
+ - ✅ Captura y adjunto de fotos de síntomas desde mobile (`DataCaptureScreen`)
+ - ✅ Compartir reportes desde mobile (share sheet con enlace a reportes PDF firmados)
 
 ---
 
@@ -276,11 +345,11 @@
 - Lighthouse score >90
 
 #### **6.4 Optimización Mobile** ✅
-- ✅ Optimización de bundle size
-- ✅ Lazy loading de imágenes
-- ✅ Optimización de animaciones
-- ✅ Reducción de re-renders
-- ✅ Offline-first optimization
+- ✅ Optimización de listas largas (afinado de `FlatList` en historiales y citas: windowing, `getItemLayout`, `removeClippedSubviews`)
+- ✅ Optimización básica de imágenes (uso de `LazyImage` y reducción de calidad/tamaño al capturar fotos desde mobile)
+- ✅ Optimización de animaciones y microinteracciones (pequeñas escalas en botones críticos, feedback visual claro)
+- ✅ Offline-first optimization (colas, reintentos, banners y tests de integración offline/sync)
+- ⏳ Trabajo adicional de optimización de bundle size y consumo de batería (análisis de dependencias, configuración avanzada de bundler y mediciones reales en dispositivos)
 
 **Archivos creados/mejorados:**
 - `backend/src/services/cacheService.ts`, `backend/src/jobs/alertJobs.ts`, `backend/src/jobs/appointmentJobs.ts`
@@ -605,15 +674,15 @@
 ---
 
 ### **Fase 11: Experiencia de Usuario (UX/UI)** 🎨
-**Prioridad: MEDIA** | **Duración estimada: 3-4 semanas**
+**Prioridad: MEDIA** | **Estado: En progreso (Web pendiente, Mobile casi completo)** | **Duración estimada: 3-4 semanas**
 
 #### **11.1 Mejoras de UI Web**
-- [ ] Rediseño de componentes principales
-- [ ] Sistema de temas (dark mode)
-- [ ] Animaciones y transiciones suaves
-- [ ] Mejora de accesibilidad (WCAG 2.1 AA)
-- [ ] Responsive design mejorado
-- [ ] Internacionalización (i18n) - Múltiples idiomas
+- [ ] Rediseño de componentes principales *(solo Web; Mobile ya cuenta con pantallas principales rediseñadas)*
+- [ ] Sistema de temas (dark mode) *(solo Web; Mobile ya soporta light/dark/auto)*
+- [ ] Animaciones y transiciones suaves *(solo Web; Mobile ya tiene microinteracciones clave)*
+- [ ] Mejora de accesibilidad (WCAG 2.1 AA) *(principalmente Web; Mobile ya tiene labels/roles/testIDs E2E)*
+- [ ] Responsive design mejorado *(solo Web; Mobile ya es responsive por naturaleza nativa)*
+- [ ] Internacionalización (i18n) - Múltiples idiomas *(Web pendiente; Mobile ya soporta ES/EN y estructura para más idiomas)*
 
 **Archivos a crear:**
 - `web/src/theme/theme.js`
