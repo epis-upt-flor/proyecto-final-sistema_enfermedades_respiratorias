@@ -39,6 +39,11 @@
 - ✅ Dataset extendido (307k casos)
 - ✅ Endpoints REST de monitoreo (métricas, fairness, SHAP) integrados con analytics
 - ✅ Dashboard SHAP web consumiendo métricas de equidad/confianza
+ - ✅ Avances ML/NLP/AutoML (stubs + endpoints): BERT texto, Visión, Series; NLP avanzado; AutoML completo
+ - ✅ RL/FL (stubs + endpoints) con documentación y smoke tests
+ - ✅ Calidad y rendimiento A4: CI con cobertura/artefactos (JUnit, Codecov), profiling p95/p99, benchmarks on-demand
+ - ✅ Integración condicional con modelos reales (transformers/torch/timm) vía flag `AI_USE_REAL_MODELS`
+ - ✅ Escalado y seguridad: headers de seguridad, rate limiting, límites de payload y manifiestos K8s (HPA, probes)
 
 #### **Frontend Web (React)**
 - ✅ Chatbot médico integrado con ML
@@ -56,6 +61,15 @@
 - ✅ Notificaciones push
 - ✅ Integración completa con backend
 - ✅ Integración con wearables (HealthKit/Google Fit)
+ - ✅ Onboarding i18n (ES/EN) con flag persistente
+ - ✅ Indicadores “Offline” en headers de pantallas críticas
+ - ✅ Análisis predictivo en Home (riesgo + recomendaciones) y tendencias simples
+ - ✅ Historial de análisis con visualización SHAP simple
+ - ✅ Citas: DateTimePicker nativo (fallback modal), reintento, snackbars y recordatorios
+ - ✅ Accesibilidad: labels/roles para VoiceOver/TalkBack; testIDs para E2E
+ - ✅ Feedback háptico opcional (si disponible)
+ - ✅ Privacidad: overlay al background y bloqueo de captura en pantallas sensibles (FLAG_SECURE/expo-screen-capture)
+ - ✅ E2E (Detox) smoke para accesibilidad/UX y scripts npm dedicados
 
 ---
 

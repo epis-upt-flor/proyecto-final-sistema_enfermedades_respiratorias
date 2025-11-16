@@ -15,6 +15,7 @@
     "test:sync": "jest __tests__/sync/",
     "test:e2e": "detox test",
     "test:e2e:build": "detox build",
+    "test:e2e:ui": "detox test -f ui-accessibility.e2e.ts",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {

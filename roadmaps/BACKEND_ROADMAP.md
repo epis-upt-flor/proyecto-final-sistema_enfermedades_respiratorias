@@ -23,6 +23,7 @@
 
 ## Calidad
 - Cobertura >90%, tests de seguridad/performance, contratos OpenAPI estrictos
+- ✅ Contratos OpenAPI definidos (archivo `backend/openapi/openapi.yaml`) y rutas alineadas
 
 # 🧰 Roadmap Backend - RespiCare Tacna
 
