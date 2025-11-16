@@ -1,24 +1,42 @@
 # 🤖 Roadmap AI Services (FastAPI) - RespiCare Tacna
 
 ## Fase A1: Infra y Core
-- FastAPI, CORS, logging estructurado, cache Redis
-- Rutas base: health, analyzer, monitoring
+- ✅ FastAPI, CORS, logging estructurado, cache Redis
+- ✅ Rutas base: health, analyzer, monitoring
 
 ## Fase A2: Modelos y Analítica
-- Analizador de síntomas (rules/local/remote)
-- SHAP/fairness/drift (monitoring)
-- Tendencias y recomendaciones
+- ✅ Analizador de síntomas (rules/local/remote)
+  - Estrategias: `strategies/rule_based_strategy.py`, `strategies/local_model_strategy.py`, `strategies/openai_strategy.py`
+  - Rutas: `api/routes/symptom_ml_analyzer.py`, `api/routes/symptom_analyzer.py`
+- ✅ SHAP/fairness/drift (monitoring)
+  - Rutas: `api/routes/ml_monitoring.py`, logs en `monitoring/`
+  - Tests: `ml_tests/test_fairness_and_drift.py`
+- ✅ Tendencias y recomendaciones
+  - Modelos: `ml_models/trend_predictor.py`, `ml_models/risk_personalization.py`
+  - Servicio: `services/enhanced_chatbot_service.py` (recomendaciones y personalización)
 
 ## Fase A3: Avances ML/NLP/AutoML
-- Advanced ML: BERT (texto), Visión, Series (stubs + endpoints)
-- Advanced NLP: procesamiento, NER, resumen, traducción, sentimiento (stubs + endpoints)
-- AutoML: selección, tuning, features, drift, auto-retraining (stubs + endpoints)
-- RL/FL: agentes y coordinador federado (stubs + endpoints)
+- ✅ Advanced ML: BERT (texto), Visión, Series (stubs + endpoints)
+  - Modelos: `ml_models/medical_bert.py`, `ml_models/image_classifier.py`, `ml_models/time_series_predictor.py`
+  - Rutas: `api/routes/advanced_ml.py` (`/api/v1/ml/advanced/text|image|timeseries`)
+- ✅ Advanced NLP: procesamiento, NER, resumen, traducción, sentimiento (stubs + endpoints)
+  - Modelo/servicio: `ml_models/nlp_advanced.py`
+  - Rutas: `api/routes/advanced_nlp.py` (`/api/v1/nlp/advanced/*`)
+- ✅ AutoML: selección, tuning, features, drift, auto-retraining (stubs + endpoints)
+  - Servicio: `ml_models/automl_manager.py`
+  - Rutas: `api/routes/automl.py` (`/api/v1/automl/*`)
+- ✅ RL/FL: agentes y coordinador federado (stubs + endpoints)
+  - Modelos: `ml_models/reinforcement_learning.py`, `ml_models/federated_learning.py`
+  - Rutas: `api/routes/advanced_rl.py`, `api/routes/federated.py`
 
 ## Fase A4: Calidad y Rendimiento
-- Tests smoke (Advanced ML/NLP/AutoML/RL/FL), integración
-- CI con cobertura (Codecov) y artefactos
-- Optimización p95/p99, profiling
+- ✅ Tests smoke (Advanced ML/NLP/AutoML/RL/FL), integración
+  - Tests: `tests/test_advanced_ml_endpoints.py`, `tests/test_advanced_nlp_endpoints.py`, `tests/test_automl_endpoints.py`, `tests/test_rl_and_federated_endpoints.py`
+- ✅ CI con cobertura (Codecov) y artefactos
+  - Workflow: `.github/workflows/ai-services-tests.yml` (junit.xml, coverage.xml, upload a Codecov)
+- ✅ Optimización p95/p99, profiling
+  - Middleware de rendimiento en `main.py` → logs JSONL en `monitoring/performance/`
+  - Script de análisis: `analyze_performance.py` (genera reporte p50/p95/p99 por ruta)
 
 ## Hitos
 - AI v1: Analyzer + Monitoring listos

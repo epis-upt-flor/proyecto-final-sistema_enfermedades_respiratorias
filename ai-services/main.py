@@ -11,6 +11,8 @@ import structlog
 import re
 from datetime import datetime
 import time
+import os
+import json
 
 # Core services
 from core.cache import init_cache, close_cache, get_cache_client
@@ -122,6 +124,28 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Performance logging middleware (profiling p95/p99 offline)
+@app.middleware("http")
+async def performance_logging_middleware(request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = round((time.perf_counter() - start) * 1000, 3)
+    try:
+        os.makedirs("monitoring/performance", exist_ok=True)
+        log_path = os.path.join("monitoring", "performance", f"perf_{datetime.utcnow().strftime('%Y%m%d')}.jsonl")
+        record = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms
+        }
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception as err:
+        logger.warning("perf_log_write_failed", error=str(err))
+    return response
 
 # Pydantic models
 class AnalysisRequest(BaseModel):
