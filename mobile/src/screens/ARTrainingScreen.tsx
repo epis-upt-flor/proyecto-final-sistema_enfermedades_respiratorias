@@ -4,6 +4,9 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, Chip, ProgressBar } from 'react-native-paper';
 import { RootStackParamList } from '../types';
 import { arService, ARMarker, ARScene } from '../services/arService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const AR_MODE_KEY = 'ar_last_mode';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'ARTraining'>;
@@ -24,12 +27,39 @@ const stepsInhaler = [
 
 const ARTrainingScreen: React.FC<Props> = () => {
   const { params } = useRoute<Props['route']>();
-  const mode = params?.mode ?? 'breathing';
+  const [mode, setMode] = useState<'breathing' | 'inhaler'>(params?.mode ?? 'breathing');
+  const [restoredNote, setRestoredNote] = useState<string | null>(null);
   const steps = useMemo(() => (mode === 'inhaler' ? stepsInhaler : stepsBreathing), [mode]);
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Cargar último modo si no viene por params
+  useEffect(() => {
+    (async () => {
+      if (params?.mode) return;
+      try {
+        const saved = await AsyncStorage.getItem(AR_MODE_KEY);
+        if (saved === 'breathing' || saved === 'inhaler') {
+          setMode(saved);
+          setRestoredNote(`Usando modo anterior: ${saved === 'inhaler' ? 'Inhalador' : 'Respiración'}`);
+          // Ocultar la nota después de unos segundos
+          setTimeout(() => setRestoredNote(null), 3500);
+        }
+      } catch {}
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Guardar último modo seleccionado
+  useEffect(() => {
+    (async () => {
+      try {
+        await AsyncStorage.setItem(AR_MODE_KEY, mode);
+      } catch {}
+    })();
+  }, [mode]);
 
   const startAR = useCallback(async () => {
     const ok = await arService.startARSession();
@@ -60,6 +90,20 @@ const ARTrainingScreen: React.FC<Props> = () => {
     setCurrentStepIndex(0);
     setProgress(0);
   }, []);
+
+  // Si cambia el modo, reiniciar progreso/estado
+  useEffect(() => {
+    setCurrentStepIndex(0);
+    setProgress(0);
+    if (running) {
+      // Reiniciar la sesión para refrescar la escena
+      (async () => {
+        await arService.stopARSession();
+        await startAR();
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   useEffect(() => {
     let raf: any;
@@ -112,6 +156,30 @@ const ARTrainingScreen: React.FC<Props> = () => {
             <Title>{mode === 'inhaler' ? 'Uso de inhalador (AR)' : 'Ejercicio respiratorio (AR)'}</Title>
             <Chip mode="outlined">{running ? 'En progreso' : 'Listo'}</Chip>
           </View>
+
+          {/* Nota de modo restaurado */}
+          {restoredNote && (
+            <Paragraph style={styles.restoreNote}>{restoredNote}</Paragraph>
+          )}
+
+          {/* Switch de modo */}
+          <View style={styles.modeSwitchRow}>
+            <Chip
+              style={[styles.modeChip, mode === 'breathing' && styles.modeChipSelected]}
+              selected={mode === 'breathing'}
+              onPress={() => setMode('breathing')}
+            >
+              Respiración
+            </Chip>
+            <Chip
+              style={[styles.modeChip, mode === 'inhaler' && styles.modeChipSelected]}
+              selected={mode === 'inhaler'}
+              onPress={() => setMode('inhaler')}
+            >
+              Inhalador
+            </Chip>
+          </View>
+
           <Paragraph style={{ marginTop: 4 }}>
             {mode === 'inhaler'
               ? 'Sigue las instrucciones paso a paso para usar correctamente el inhalador.'
@@ -155,6 +223,10 @@ const styles = StyleSheet.create({
   },
   card: { elevation: 2 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  restoreNote: { marginTop: 8, color: '#666' },
+  modeSwitchRow: { flexDirection: 'row', marginTop: 12 },
+  modeChip: { marginRight: 8 },
+  modeChipSelected: { backgroundColor: '#e3f2fd' },
   stepBox: { marginTop: 16, paddingVertical: 8 },
   stepTitle: { fontSize: 18 },
   stepDesc: { color: '#666', marginTop: 4 },
