@@ -95,29 +95,34 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 ### 3.1 Telemedicina (`telemedicineService.ts`)
 
-- [ ] Integrar gestión de citas médicas en mobile:
-  - [ ] Listado de citas próximas y pasadas.
-  - [ ] Creación/cancelación/reprogramación de citas.
-  - [ ] Recordatorios in-app para citas cercanas.
-- [ ] Flujo básico de teleconsulta:
-  - [ ] Pantalla de detalle de cita con botón de “iniciar consulta” (videollamada o similar).
-  - [ ] Integración inicial con proveedor de video (aunque sea mock/stub al inicio).
+- ✅ Integrar gestión de citas médicas en mobile:
+  - ✅ Listado de citas próximas y pasadas (`AppointmentsScreen`).
+  - ✅ Creación/cancelación/reprogramación de citas (acciones básicas y demo).
+  - ✅ Recordatorios in-app para citas próximas (< 60 min) vía notificaciones internas.
+- ✅ Flujo básico de teleconsulta:
+  - ✅ Pantalla de detalle de cita con botón “Iniciar consulta” (mock de videollamada).
+  - ✅ Integración inicial (stub) con proveedor de video vía `telemedicineService` (`startCall`/`getCallToken`).
+
+🔼 Mejoras Futuras (Telemedicina)
+- [ ] Integrar selector de fecha/hora (DateTimePicker) para reprogramación precisa de citas.
 
 ### 3.2 Análisis Predictivo (`predictiveAnalysisService.ts`)
 
-- [ ] Consumir endpoints de analytics/ML relevantes para el usuario móvil:
-  - [ ] Riesgo personalizado (ej.: exacerbación de enfermedad respiratoria).
-  - [ ] Tendencias de síntomas a lo largo del tiempo.
-- [ ] Mostrar insights en el dashboard:
-  - [ ] Tarjetas de riesgo, recomendaciones y alertas preventivas.
+- ✅ Consumir endpoints de analytics/ML relevantes para el usuario móvil.
+- ✅ Riesgo personalizado (overallRisk) con recomendaciones principales.
+- ⏳ Tendencias de síntomas a lo largo del tiempo (endpoint listo; pendiente UI específica).
+- ✅ Mostrar insights en el dashboard:
+  - ✅ Tarjeta de riesgo con chip (Low/Medium/High) y recomendaciones.
+  - ✅ Mensaje con fecha/hora de generación (contexto temporal).
 
 ### 3.3 Realidad Aumentada (`arService.ts`)
 
-- [ ] Definir caso de uso inicial (MVP):
-  - [ ] Ejercicios respiratorios guiados o explicación del uso de inhaladores.
-- [ ] Prototipo AR:
-  - [ ] Pantalla dedicada con AR overlay.
-  - [ ] Guías y mensajes contextuales.
+- ✅ Definir caso de uso inicial (MVP):
+  - ✅ Ejercicios respiratorios guiados y uso de inhaladores (selección por modo).
+- ✅ Prototipo AR:
+  - ✅ Pantalla `ARTrainingScreen` con overlay simulado (placeholder AR).
+  - ✅ Guías paso a paso con progreso y estados (Iniciar/Detener).
+  - ✅ Integrado con `arService` (start/stop session, loadScene, markers básicos).
 
 ---
 

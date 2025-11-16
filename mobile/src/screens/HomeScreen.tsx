@@ -14,6 +14,7 @@ import {
   Alert,
 } from 'react-native';
 import { Card, Title, Paragraph, Button, Chip, Avatar, FAB } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAppStore } from '../store/useAppStore';
 import { MedicalHistory, SymptomAnalysis, SyncStatus } from '../types';
@@ -21,6 +22,7 @@ import { localStorageService } from '../services/localStorage';
 import { telemedicineService } from '../services/telemedicineService';
 import { featureFlags } from '../config/environment';
 import type { AppointmentDTO } from '../types';
+import { predictiveAnalysisService } from '../services/predictiveAnalysisService';
 import { shallow } from 'zustand/shallow';
 
 type QuickAction = {
@@ -122,6 +124,7 @@ const RecentItemCard = React.memo(
 RecentItemCard.displayName = 'RecentItemCard';
 
 const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const {
     user,
     isOnline,
@@ -151,6 +154,11 @@ const HomeScreen: React.FC = () => {
   const [recentHistories, setRecentHistories] = useState<MedicalHistory[]>([]);
   const [recentAnalyses, setRecentAnalyses] = useState<SymptomAnalysis[]>([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState<Array<{ id: string; when: string; doctorId?: string }> | null>(null);
+  const [predictiveSummary, setPredictiveSummary] = useState<{
+    risk: 'low' | 'medium' | 'high';
+    recommendations: string[];
+    generatedAt: string;
+  } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -158,6 +166,7 @@ const HomeScreen: React.FC = () => {
       loadRecentData();
       fetchAlerts?.().catch(() => {});
       loadUpcomingAppointments().catch(() => {});
+      loadPredictive().catch(() => {});
     });
 
     return () => interaction.cancel();
@@ -192,6 +201,27 @@ const HomeScreen: React.FC = () => {
     } catch (e) {
       // Silenciar errores si la API aún no está disponible
       setUpcomingAppointments(null);
+    }
+  }, [user?.id]);
+
+  const loadPredictive = useCallback(async () => {
+    try {
+      if (!user?.id) {
+        setPredictiveSummary(null);
+        return;
+      }
+      const analysis = await predictiveAnalysisService.getPredictiveAnalysis(user.id, '30d');
+      if (analysis) {
+        setPredictiveSummary({
+          risk: analysis.riskAssessment.overallRisk,
+          recommendations: analysis.recommendations.slice(0, 3),
+          generatedAt: analysis.generatedAt,
+        });
+      } else {
+        setPredictiveSummary(null);
+      }
+    } catch {
+      setPredictiveSummary(null);
     }
   }, [user?.id]);
 
@@ -231,6 +261,9 @@ const HomeScreen: React.FC = () => {
       case 'analyze':
         // Navigate to AI analysis
         break;
+      case 'ar_training':
+        navigation.navigate('ARTraining', { mode: 'breathing' });
+        break;
       case 'chat':
         // Navigate to chatbot
         break;
@@ -250,7 +283,7 @@ const HomeScreen: React.FC = () => {
         break;
     }
   },
-    [isOnline, syncData]
+    [isOnline, syncData, navigation]
   );
 
   const syncStatusColor = useMemo((): string => {
@@ -282,6 +315,13 @@ const HomeScreen: React.FC = () => {
         icon: 'psychology',
         color: '#9c27b0',
         action: 'analyze',
+      },
+      {
+        title: 'Ejercicios AR',
+        description: 'Respiración guiada o uso de inhalador',
+        icon: 'view-in-ar',
+        color: '#607d8b',
+        action: 'ar_training',
       },
       {
         title: 'Chat Médico',
@@ -377,6 +417,36 @@ const HomeScreen: React.FC = () => {
           </View>
         )}
 
+        {/* Predictive Insights */}
+        {predictiveSummary && (
+          <View style={styles.section}>
+            <Title style={styles.sectionTitle}>Análisis Predictivo</Title>
+            <Card style={styles.statsCard}>
+              <Card.Content>
+                <View style={styles.recentItemHeader}>
+                  <View style={styles.recentItemInfo}>
+                    <Title style={styles.recentItemTitle}>Riesgo general</Title>
+                    <Paragraph style={styles.recentItemSubtitle}>
+                      Generado: {new Date(predictiveSummary.generatedAt).toLocaleString()}
+                    </Paragraph>
+                  </View>
+                  <Chip
+                    mode="outlined"
+                    style={styles.statusChip}
+                    textStyle={{ color: predictiveSummary.risk === 'high' ? '#d32f2f' : predictiveSummary.risk === 'medium' ? '#f57c00' : '#388e3c' }}
+                  >
+                    {predictiveSummary.risk.toUpperCase()}
+                  </Chip>
+                </View>
+                <View style={{ marginTop: 8 }}>
+                  {predictiveSummary.recommendations.map((rec, idx) => (
+                    <Paragraph key={idx}>• {rec}</Paragraph>
+                  ))}
+                </View>
+              </Card.Content>
+            </Card>
+          </View>
+        )}
         {/* Recent Analyses */}
         {recentAnalyses.length > 0 && (
           <View style={styles.section}>
@@ -396,7 +466,7 @@ const HomeScreen: React.FC = () => {
               <Paragraph style={{ color: '#666' }}>No hay citas programadas próximamente.</Paragraph>
             ) : (
               upcomingAppointments.map((appt) => (
-                <Card key={appt.id} style={styles.recentCard}>
+                <Card key={appt.id} style={styles.recentCard} onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: appt.id })}>
                   <Card.Content>
                     <View style={styles.recentItemHeader}>
                       <View style={styles.recentItemInfo}>

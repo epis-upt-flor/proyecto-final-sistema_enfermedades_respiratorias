@@ -605,6 +605,43 @@ class ApiService {
   clearCurrentUser(): Promise<void> {
     return AsyncStorage.removeItem('current_user');
   }
+
+  // ---- Generic HTTP helpers ----
+  async get<T = any>(path: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const res = await this.client.get(path, config);
+      return { success: true, data: res.data?.data ?? res.data };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async post<T = any>(path: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const res = await this.client.post(path, data, config);
+      return { success: true, data: res.data?.data ?? res.data };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async put<T = any>(path: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const res = await this.client.put(path, data, config);
+      return { success: true, data: res.data?.data ?? res.data };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async delete<T = any>(path: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const res = await this.client.delete(path, config);
+      return { success: true, data: res.data?.data ?? res.data };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
 }
 
 // Export singleton instance

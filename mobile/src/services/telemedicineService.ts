@@ -7,6 +7,7 @@
 import { Platform } from 'react-native';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { apiService } from './api';
+import { AppointmentDTO } from '../types';
 
 export interface TelemedicineCall {
   id: string;
@@ -29,6 +30,7 @@ export interface TelemedicineCallOptions {
 class TelemedicineService {
   private currentCall: TelemedicineCall | null = null;
   private isInitialized = false;
+  private readonly base = '/telemedicine';
 
   /**
    * Inicializa el servicio de telemedicina
@@ -96,9 +98,9 @@ class TelemedicineService {
       }
 
       // Crear llamada en el backend
-      const response = await apiService.post('/telemedicine/calls', options);
+      const response = await apiService.post(`${this.base}/calls`, options);
       if (response.success && response.data) {
-        this.currentCall = response.data;
+        this.currentCall = response.data as TelemedicineCall;
         return this.currentCall;
       }
 
@@ -114,9 +116,9 @@ class TelemedicineService {
    */
   async startCall(callId: string): Promise<boolean> {
     try {
-      const response = await apiService.post(`/telemedicine/calls/${callId}/start`);
+      const response = await apiService.post(`${this.base}/calls/${callId}/start`);
       if (response.success && response.data) {
-        this.currentCall = response.data;
+        this.currentCall = response.data as TelemedicineCall;
         return true;
       }
       return false;
@@ -131,7 +133,7 @@ class TelemedicineService {
    */
   async endCall(callId: string): Promise<boolean> {
     try {
-      const response = await apiService.post(`/telemedicine/calls/${callId}/end`);
+      const response = await apiService.post(`${this.base}/calls/${callId}/end`);
       if (response.success) {
         if (this.currentCall?.id === callId) {
           this.currentCall = null;
@@ -150,9 +152,9 @@ class TelemedicineService {
    */
   async getCallToken(callId: string): Promise<string | null> {
     try {
-      const response = await apiService.get(`/telemedicine/calls/${callId}/token`);
-      if (response.success && response.data?.token) {
-        return response.data.token;
+      const response = await apiService.get(`${this.base}/calls/${callId}/token`);
+      if (response.success && (response.data as any)?.token) {
+        return (response.data as any).token as string;
       }
       return null;
     } catch (error) {
@@ -166,9 +168,9 @@ class TelemedicineService {
    */
   async getPatientCalls(patientId: string): Promise<TelemedicineCall[]> {
     try {
-      const response = await apiService.get(`/telemedicine/calls?patientId=${patientId}`);
+      const response = await apiService.get(`${this.base}/calls?patientId=${patientId}`);
       if (response.success && response.data) {
-        return response.data;
+        return response.data as TelemedicineCall[];
       }
       return [];
     } catch (error) {
@@ -191,15 +193,46 @@ class TelemedicineService {
     return this.currentCall !== null && this.currentCall.status === 'active';
   }
 
-  /**
-   * Nota: En producción, aquí se integraría con servicios de videollamadas como:
-   * - Twilio Video
-   * - Agora.io
-   * - Zoom SDK
-   * - Jitsi Meet
-   * 
-   * Por ahora, el servicio proporciona la estructura básica para la integración.
-   */
+  // ---- Appointments management ----
+  async getAppointments(patientId: string): Promise<AppointmentDTO[]> {
+    try {
+      const res = await apiService.get(`${this.base}/appointments?patientId=${patientId}`);
+      return res.success && res.data ? (res.data as AppointmentDTO[]) : [];
+    } catch (e) {
+      console.error('Error getting appointments:', e);
+      return [];
+    }
+  }
+
+  async createAppointment(payload: Partial<AppointmentDTO>): Promise<AppointmentDTO | null> {
+    try {
+      const res = await apiService.post(`${this.base}/appointments`, payload);
+      return res.success && res.data ? (res.data as AppointmentDTO) : null;
+    } catch (e) {
+      console.error('Error creating appointment:', e);
+      return null;
+    }
+  }
+
+  async cancelAppointment(appointmentId: string, reason?: string): Promise<boolean> {
+    try {
+      const res = await apiService.post(`${this.base}/appointments/${appointmentId}/cancel`, { reason });
+      return !!res.success;
+    } catch (e) {
+      console.error('Error cancelling appointment:', e);
+      return false;
+    }
+  }
+
+  async rescheduleAppointment(appointmentId: string, newDateISO: string): Promise<boolean> {
+    try {
+      const res = await apiService.post(`${this.base}/appointments/${appointmentId}/reschedule`, { scheduledAt: newDateISO });
+      return !!res.success;
+    } catch (e) {
+      console.error('Error rescheduling appointment:', e);
+      return false;
+    }
+  }
 }
 
 // Instancia singleton

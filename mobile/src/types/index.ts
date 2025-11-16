@@ -343,6 +343,7 @@ export type RootStackParamList = {
   AppointmentDetail: { appointmentId: string } | undefined;
   AlertDetail: { alertId: string } | undefined;
   ReportDetail: { reportId: string } | undefined;
+  ARTraining: { mode: 'breathing' | 'inhaler' } | undefined;
 };
 
 export type MainTabParamList = {

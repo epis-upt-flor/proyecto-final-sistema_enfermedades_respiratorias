@@ -22,6 +22,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import AppointmentsScreen from '../screens/AppointmentsScreen';
 import AlertDetailScreen from '../screens/AlertDetailScreen';
 import AppointmentDetailScreen from '../screens/AppointmentDetailScreen';
+import ARTrainingScreen from '../screens/ARTrainingScreen';
 import { featureFlags } from '../config/environment';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -198,6 +199,11 @@ const AppNavigator = () => {
           name="AppointmentDetail"
           component={AppointmentDetailScreen}
           options={{ title: 'Detalle de Cita' }}
+        />
+        <Stack.Screen
+          name="ARTraining"
+          component={ARTrainingScreen}
+          options={{ title: 'Entrenamiento AR' }}
         />
         </Stack.Navigator>
       </NavigationContainer>
