@@ -6,6 +6,7 @@ import {
   AlertPriority,
   AlertStatus,
 } from '../types';
+import { applyFieldEncryption } from '../utils/encryption';
 
 const ALERT_CHANNELS: AlertChannel[] = ['in_app', 'push', 'email', 'sms'];
 const ALERT_PRIORITIES: AlertPriority[] = ['low', 'medium', 'high', 'critical'];
@@ -173,6 +174,13 @@ const AlertSchema = new Schema<AlertDocument, AlertModel>(
     timestamps: true,
   }
 );
+
+// Cifrado en reposo para contenidos de alerta
+applyFieldEncryption(AlertSchema, [
+  'title',
+  'message',
+  'lastError'
+]);
 
 AlertSchema.index({ status: 1, scheduledAt: 1, priorityWeight: -1 });
 AlertSchema.index({ category: 1, status: 1 });

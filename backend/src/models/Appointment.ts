@@ -1,5 +1,6 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 import { Appointment as AppointmentDTO, AppointmentStatus } from '../types';
+import { applyFieldEncryption } from '../utils/encryption';
 
 const APPOINTMENT_STATUSES: AppointmentStatus[] = [
   'scheduled',
@@ -129,6 +130,15 @@ const AppointmentSchema = new Schema<AppointmentDocument, AppointmentModel>(
     timestamps: true,
   }
 );
+
+// Cifrado en reposo para notas y dirección/sala
+applyFieldEncryption(AppointmentSchema, [
+  'reason',
+  'notes',
+  'location.address',
+  'location.meetingLink',
+  'cancellationReason'
+]);
 
 AppointmentSchema.index({ doctorId: 1, scheduledAt: 1 });
 AppointmentSchema.index({ patientId: 1, scheduledAt: 1 });

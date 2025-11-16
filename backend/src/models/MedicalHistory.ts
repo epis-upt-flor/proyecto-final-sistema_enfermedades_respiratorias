@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import { MedicalHistory as IMedicalHistory, Symptom } from '../types';
+import { applyFieldEncryption } from '../utils/encryption';
 
 export interface MedicalHistoryDocument extends Omit<IMedicalHistory, '_id'>, Document {
   toJSON(): any;
@@ -139,6 +140,15 @@ const MedicalHistorySchema = new Schema<MedicalHistoryDocument>({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+// Cifrado en reposo para campos sensibles
+applyFieldEncryption(MedicalHistorySchema, [
+  'patientName',
+  'diagnosis',
+  'description',
+  'audioNotes',
+  'location.address'
+]);
 
 MedicalHistorySchema.add({
   geoLocation: {

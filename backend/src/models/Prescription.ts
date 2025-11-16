@@ -5,6 +5,7 @@ import {
   PrescriptionMedication,
   PrescriptionStatus,
 } from '../types';
+import { applyFieldEncryption } from '../utils/encryption';
 
 const PRESCRIPTION_STATUSES: PrescriptionStatus[] = [
   'draft',
@@ -181,6 +182,13 @@ const PrescriptionSchema = new Schema<PrescriptionDocument, PrescriptionModel>(
     timestamps: true,
   }
 );
+
+// Cifrado en reposo para textos clínicos sensibles
+applyFieldEncryption(PrescriptionSchema, [
+  'diagnosis',
+  'observations',
+  'validationNotes'
+]);
 
 PrescriptionSchema.index({ patientId: 1, createdAt: -1 });
 PrescriptionSchema.index({ doctorId: 1, createdAt: -1 });

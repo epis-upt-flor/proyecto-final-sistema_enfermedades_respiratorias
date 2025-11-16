@@ -260,6 +260,7 @@ RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
 INTERNAL_SERVICE_TOKENS=service-token-1,service-token-2
 CRITICAL_ALERT_ROLES=doctor,admin
+FIELD_ENCRYPTION_KEY=BASE64_32_BYTES_KEY_HERE
 PUSH_PROVIDER=expo
 PUSH_API_KEY=your_push_api_key
 PUSH_PROJECT_ID=your_push_project_id
@@ -278,6 +279,85 @@ ALERTS_PENDING_INTERVAL_MS=45000
 # CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+### 🔐 TLS extremo a extremo
+- Kubernetes Ingress con TLS administrado por cert-manager (Let's Encrypt):
+  - Manifiestos: `infrastructure/k8s/backend-deployment.yaml`, `infrastructure/k8s/backend-ingress.yaml`
+  - Anotaciones para `nginx` y `force-ssl-redirect`, HSTS activo
+- Backend fuerza HTTPS en producción y habilita HSTS (`helmet`) con `trust proxy`
+- Asegurar que el tráfico interno sea solo mTLS o red privada (Service Mesh/NetworkPolicies)
+  - ClusterIssuer: `infrastructure/k8s/cert-issuer.yaml`
+  - Ejemplo de secretos: `infrastructure/k8s/backend-secrets.example.yaml`
+
+### 🗄️ Retención y acceso a logs de auditoría
+- Modelo `AuditLog` con PII redactada y hash del payload
+- Retención recomendada: 180 días (configurable por entorno y regulaciones locales)
+- Acceso restringido: solo roles `admin` y `security` en entornos productivos
+- Exportación para auditorías: acceso bajo solicitud y registro de acceso
+- Borrado seguro al vencer el periodo: job programado para purga (pendiente de automatizar)
+  - CronJob K8s: `infrastructure/k8s/backend-auditlog-cronjob.yaml`
+
+### 🌐 Network Policies
+- Denegar todo por defecto y permitir solo desde Ingress/Ns autorizados:
+  - `infrastructure/k8s/backend-networkpolicies.yaml`
+
+### 📈 Observabilidad
+- Métricas Prometheus:
+  - Middleware y endpoint `/metrics` con token opcional (`METRICS_AUTH_TOKEN`)
+  - Archivo: `backend/src/metrics/metrics.ts`
+- Logs estructurados (JSON) vía logger central (stdout) y auditoría activada
+- Tracing OpenTelemetry (opcional por entorno):
+  - Activación: `OTEL_ENABLED=true`
+  - Exportador: `OTEL_EXPORTER=otlp|jaeger`
+  - Variables comunes:
+    - `OTEL_SERVICE_NAME=respicare-backend`
+    - OTLP: `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces`
+    - Jaeger: `OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger-collector:14268/api/traces`
+  - Archivo: `backend/src/telemetry/tracing.ts`
+  - Infra de referencia:
+    - OpenTelemetry Collector: `infrastructure/k8s/otel-collector.yaml`
+    - Jaeger (all-in-one): `infrastructure/k8s/jaeger.yaml`
+
+### 🛡️ Hardening APIs
+- Rate limiting inteligente (Redis + fallback) por ruta/rol (`backend/src/middleware/rateLimiter.ts`)
+- Headers de seguridad vía `helmet`, sanitización (xss-clean, mongo-sanitize, hpp)
+- WAF recomendado en capa Ingress (Nginx + ModSecurity) [pendiente de despliegue]
+  - Anotaciones agregadas en `infrastructure/k8s/backend-ingress.yaml` (ModSecurity + OWASP CRS + limit RPS)
+
+### 🔒 RBAC granular avanzado
+- Middleware de roles/permisos: `backend/src/middleware/rbac.ts`
+- Ejemplo aplicado en rutas de reportes automáticos (lectura, estadísticas, generación, exportación)
+
+### 🔐 Backups encriptados
+- CronJob con Restic a S3/compatible: `infrastructure/k8s/mongo-backup-restic.yaml`
+- Retención: daily 7, weekly 4, monthly 6 (ajustable)
+
+### 👮 Cumplimiento GDPR/HIPAA (lineamientos)
+- Minimización de datos y cifrado en reposo/en tránsito
+- Anonimización/pseudonimización para analytics/export
+- Auditoría de accesos y retención limitada (180 días por defecto)
+- DSR (Data Subject Rights): endpoints de exportación/borrado bajo flujo supervisado
+- Endpoints DSR (admin + doble confirmación):
+  - `GET /api/v1/dsr/export/:userId?includeRaw=false`
+  - `DELETE /api/v1/dsr/delete/:userId` (requiere header `X-Confirm-Action: yes` y `confirm=true` o `?confirm=yes`)
+  - Permisos: `dsr:export`, `dsr:delete`
+  - Código: `backend/src/routes/dsrRoutes.ts`, `backend/src/controllers/dsrController.ts`
+- Política detallada para desarrolladores: `backend/GDPR_HIPAA_POLICY.md`
+- Copias de seguridad cifradas y acceso restringido
+- WAF/Rate limiting/DoS mitigation y monitoreo continuo
+
+### 🧪 Anonimización y Pseudonimización (export/analytics)
+- Utilidad: `backend/src/utils/anonymization.ts`:
+  - `pseudonymize(value)`: HMAC con `ANONYMIZATION_SALT`
+  - `redactPII(obj, fields)`: Redacción de campos sensibles
+  - `anonymizeForAnalytics(obj)`: Hash de IDs y redacción de PII común
+- Variables de entorno:
+  - `ANONYMIZATION_SALT` (requerida para pseudonimización)
+- Cifrado adicional aplicado a entidades:
+  - `User` (name, avatar), `Prescription` (diagnosis, observations, validationNotes),
+    `Appointment` (reason, notes, location.address/meetingLink, cancellationReason),
+    `MedicalHistory` (patientName, diagnosis, description, audioNotes, location.address),
+    `Alert` (title, message, lastError)
 
 ### **Scripts de Seeding**
 

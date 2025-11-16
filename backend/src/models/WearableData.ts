@@ -4,6 +4,7 @@
  */
 
 import mongoose, { Schema, Document } from 'mongoose';
+import { applyFieldEncryption } from '../utils/encryption';
 
 export interface IWearableData extends Document {
   patientId: mongoose.Types.ObjectId;
@@ -79,6 +80,11 @@ const WearableDataSchema: Schema = new Schema(
 // Índices para consultas eficientes
 WearableDataSchema.index({ patientId: 1, timestamp: -1 });
 WearableDataSchema.index({ timestamp: -1 });
+
+// Cifrado en reposo para posibles metadatos sensibles en futuro y protección básica
+applyFieldEncryption(WearableDataSchema, [
+  // No ciframos métricas numéricas para analítica; solo si se agregan notas/campos libres
+]);
 
 const WearableData = mongoose.model<IWearableData>('WearableData', WearableDataSchema);
 

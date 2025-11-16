@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { User as IUser } from '../types';
+import { applyFieldEncryption } from '../utils/encryption';
 
 export interface UserDocument extends Omit<IUser, '_id'>, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -63,6 +64,12 @@ const UserSchema = new Schema<UserDocument>({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+// Cifrado en reposo para datos de perfil no indexados
+applyFieldEncryption(UserSchema, [
+  'name',
+  'avatar'
+]);
 
 // Índices para optimizar consultas
 UserSchema.index({ email: 1 });

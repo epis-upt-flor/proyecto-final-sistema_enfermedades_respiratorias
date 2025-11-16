@@ -23,9 +23,12 @@ import appointmentsRoutes from './routes/appointmentsRoutes';
 import prescriptionRoutes from './routes/prescriptionRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import automaticReportRoutes from './routes/automaticReportRoutes';
+import dsrRoutes from './routes/dsrRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { enforceHttps } from './middleware/enforceHttps';
+import { auditLogger } from './middleware/auditLogger';
 import { logger } from './utils/logger';
 
 // Importar configuración
@@ -37,11 +40,15 @@ import { smartRateLimiter } from './middleware/rateLimiter';
 import { startAlertJobs, stopAlertJobs } from './jobs/alertJobs';
 import { startAppointmentJobs, stopAppointmentJobs } from './jobs/appointmentJobs';
 import { startReportJobs, stopReportJobs } from './jobs/reportJobs';
+import { metricsMiddleware, metricsHandler } from './metrics/metrics';
+import { initTelemetry, shutdownTelemetry } from './telemetry/tracing';
 
 class App {
   public app: express.Application;
 
   constructor() {
+    // Iniciar Telemetría (no bloqueante si falla)
+    initTelemetry().catch(() => {});
     this.app = express();
     this.initializeMiddlewares();
     this.initializeRoutes();
@@ -52,8 +59,17 @@ class App {
   }
 
   private initializeMiddlewares(): void {
+    // Trust proxy para HSTS/HTTPS detrás de balanceadores
+    this.app.set('trust proxy', 1);
+
+    // Forzar HTTPS en producción
+    this.app.use(enforceHttps);
+
     // Security middleware
-    this.app.use(helmet());
+    this.app.use(helmet({
+      hsts: process.env.NODE_ENV === 'production' ? { maxAge: 15552000, includeSubDomains: true, preload: true } : false,
+      contentSecurityPolicy: false // ajustar CSP si hay UI estática
+    }));
     this.app.use(cors({
       origin: config.cors.origins,
       credentials: true
@@ -90,6 +106,12 @@ class App {
     } else {
       this.app.use(morgan('combined'));
     }
+
+    // Audit logs (HIPAA-like) con redacción de PII
+    this.app.use(auditLogger);
+
+    // Metrics (Prometheus)
+    this.app.use(metricsMiddleware);
 
     // Swagger documentation
     this.app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -140,6 +162,9 @@ class App {
         }
       });
     });
+
+    // Metrics endpoint (protegible por token)
+    this.app.get('/metrics', metricsHandler);
   }
 
   private initializeRoutes(): void {
@@ -156,6 +181,7 @@ class App {
     this.app.use('/api/v1/appointments', appointmentsRoutes);
     this.app.use('/api/v1/prescriptions', prescriptionRoutes);
     this.app.use('/api/v1/reports/automatic', automaticReportRoutes);
+    this.app.use('/api/v1/dsr', dsrRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {
@@ -275,7 +301,7 @@ process.on('SIGTERM', () => {
   stopAlertJobs();
   stopAppointmentJobs();
   stopReportJobs();
-  disconnectRedis().finally(() => process.exit(0));
+  Promise.all([shutdownTelemetry(), disconnectRedis()]).finally(() => process.exit(0));
 });
 
 process.on('SIGINT', () => {
@@ -283,7 +309,7 @@ process.on('SIGINT', () => {
   stopAlertJobs();
   stopAppointmentJobs();
   stopReportJobs();
-  disconnectRedis().finally(() => process.exit(0));
+  Promise.all([shutdownTelemetry(), disconnectRedis()]).finally(() => process.exit(0));
 });
 
 // Iniciar servidor solo si no estamos en modo test

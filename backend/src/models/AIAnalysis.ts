@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { AIAnalysis as IAIAnalysis, Symptom } from '../types';
+import { applyFieldEncryption, getEncryptionKey, encryptString, decryptString } from '../utils/encryption';
 
 export interface AIAnalysisDocument extends Omit<IAIAnalysis, '_id'>, Document {
   toJSON(): any;
@@ -102,6 +103,90 @@ const AIAnalysisSchema = new Schema<AIAnalysisDocument>({
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
+});
+
+// Cifrado en reposo para recomendaciones/textos potencialmente sensibles
+applyFieldEncryption(AIAnalysisSchema, [
+  // Campos con texto libre: symptoms.description ya cifrada en MedicalHistory; protegemos recomendaciones si contienen PII
+  // Estructura nested: encrypt no se aplica fácilmente a arrays de subdocs; se mantiene sin cambios por ahora
+]);
+
+// Cifrado específico para arrays/subdocumentos: possibleDiagnoses[].recommendations[]
+function encryptNestedRecommendations(doc: any) {
+  if (!doc?.possibleDiagnoses) return;
+  const key = getEncryptionKey();
+  for (const diag of doc.possibleDiagnoses) {
+    if (!diag?.recommendations) continue;
+    for (let i = 0; i < diag.recommendations.length; i++) {
+      const rec = diag.recommendations[i];
+      if (rec && typeof rec === 'string' && !rec.startsWith('enc:')) {
+        diag.recommendations[i] = `enc:${encryptString(rec, key)}`;
+      }
+    }
+  }
+}
+
+function decryptNestedRecommendations(doc: any) {
+  if (!doc?.possibleDiagnoses) return;
+  const key = getEncryptionKey();
+  for (const diag of doc.possibleDiagnoses) {
+    if (!diag?.recommendations) continue;
+    for (let i = 0; i < diag.recommendations.length; i++) {
+      const rec = diag.recommendations[i];
+      if (rec && typeof rec === 'string' && rec.startsWith('enc:')) {
+        const raw = rec.slice(4);
+        diag.recommendations[i] = decryptString(raw, key);
+      }
+    }
+  }
+}
+
+AIAnalysisSchema.pre('save', function(next) {
+  try {
+    encryptNestedRecommendations(this);
+    next();
+  } catch (e) {
+    next(e as Error);
+  }
+});
+
+AIAnalysisSchema.pre('findOneAndUpdate', function(next) {
+  try {
+    const update: any = this.getUpdate() || {};
+    // Manejo de $set con ruta completa si viene el array
+    const set = update.$set || update;
+    if (set?.possibleDiagnoses) {
+      encryptNestedRecommendations(set);
+      if (update.$set) update.$set = set;
+    }
+    next();
+  } catch (e) {
+    next(e as Error);
+  }
+});
+
+AIAnalysisSchema.post('find', function(docs: any[]) {
+  try {
+    for (const doc of docs) decryptNestedRecommendations(doc);
+  } catch {
+    // no-op
+  }
+});
+
+AIAnalysisSchema.post('findOne', function(doc: any) {
+  try {
+    decryptNestedRecommendations(doc);
+  } catch {
+    // no-op
+  }
+});
+
+AIAnalysisSchema.post('save', function(doc: any) {
+  try {
+    decryptNestedRecommendations(doc);
+  } catch {
+    // no-op
+  }
 });
 
 // Índices para optimizar consultas
