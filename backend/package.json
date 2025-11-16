@@ -50,6 +50,8 @@
   "author": "RespiCare Team",
   "license": "MIT",
   "dependencies": {
+    "@sentry/node": "^7.91.0",
+    "@sentry/profiling-node": "^7.91.0",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",

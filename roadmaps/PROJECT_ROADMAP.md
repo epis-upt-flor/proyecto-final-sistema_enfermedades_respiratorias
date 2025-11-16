@@ -97,7 +97,7 @@ Esta matriz resume de forma centralizada qué capacidades ofrece el sistema seg�
 | **9. Analytics & BI** | ✅ 100 % | ✅ Dashboards ejecutivos/SHAP | ✅ Visualizaciones mobile (gráficos pacientes/médicos) | ✅ Servicios analytics y reportes automáticos | ✅ Modelos analytics + fairness | ✅ Conector BI (Power BI/Tableau) | ✅ Docs Analytics/BI + Dashboards Guide | ✅ Índices para métricas |
 | **10. Seguridad Avanzada** | ✅ 100 % | ✅ Hardening UI (CSP, sanitización, iframes) | ✅ UX legal/consentimiento completo | ✅ Cifrado, audit logs, RBAC granular, WAF, DSR | ✅ Headers/rate limits, flags seguridad | ✅ Ingress TLS, WAF, backups, OTEL/Jaeger | ✅ GDPR/HIPAA + Guía Seguridad Devs | ✅ Cifrado campos y backups |
 | **11. UX/UI** | ✅ 100 % | ✅ Rediseño, design system, temas light/dark, a11y WCAG 2.1 AA, Chatbot mejorado (SHAP, voz, historial) | ✅ Tutorial interactivo, microinteracciones, animaciones | ✅ DTOs y mensajes de error localizables | ✅ Errores amigables con sugerencias | [ ] | ✅ Guías UX/UI Web/Mobile | [ ] |
-| **12. DevOps & Deployment** | ⏳ ~40 % | [ ] | [ ] | ⏳ Esquema básico despliegue | ⏳ Scripts ejecución ML | ⏳ CI/CD completo, Terraform, autoscaling general | [ ] | [ ] |
+| **12. DevOps & Deployment** | ✅ ~85 % | [ ] | [ ] | ✅ Pipelines staging/prod con rollback, blue-green | ✅ Scripts ejecución ML | ✅ CI/CD completo, Terraform básico, HPA mejorado | ✅ Runbooks operaciones | [ ] |
 | **13. Escalabilidad & Arquitectura** | ⏳ ~20 % | [ ] | [ ] | [ ] Microservicios, gateway | [ ] | ⏳ K8s base, falta mesh/queues | [ ] | [ ] Replicación/sharding |
 | **14. Documentación & Capacitación** | ⏳ ~40 % | ⏳ Docs UI/uso | ⏳ Manual mobile | ⏳ Runbooks, guías backend | ⏳ Guías ML | [ ] | [ ] Manuales finales | [ ] |
 | **15. ML Avanzado** | ⏳ ~70 % | ⏳ UI avanzada para ML | ⏳ Consumo móvil de RL/FL | ⏳ Orquestación RL/FL | ✅ BERT/CV/Series, NLP, AutoML, RL/FL stubs | ⏳ Deploy modelos pesados | ✅ AI docs avanzados | ⏳ Esquema logs/predicciones |
@@ -181,15 +181,15 @@ Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidam
 - **Docs**:  
   - ✅ Crear guías de UX/UI por plataforma (Web/Mobile) con ejemplos y capturas.  
 
-#### Fase 12: DevOps & Deployment (~40 %)
+#### Fase 12: DevOps & Deployment (~85 %) ✅
 - **Backend / AI-Services**:  
-  - [ ] Definir y documentar pipelines de despliegue a staging/producción (incluyendo rollback automatizado).  
+  - ✅ Definir y documentar pipelines de despliegue a staging/producción (incluyendo rollback automatizado).  
 - **Infra**:  
-  - [ ] Completar CI/CD completo (GitHub Actions/GitOps) con promoción entre entornos.  
-  - [ ] Iniciar definición de Terraform/IaC para infraestructura base (K8s, bases de datos, redes).  
-  - [ ] Configurar auto-scaling general (HPA y, si aplica, escalado horizontal de otros componentes).  
+  - ✅ Completar CI/CD completo (GitHub Actions) con promoción entre entornos (staging → producción).  
+  - ✅ Iniciar definición de Terraform/IaC para infraestructura base (K8s, namespaces, configmaps, secrets, network policies).  
+  - ✅ Configurar auto-scaling general (HPA mejorado con CPU, memoria y políticas de escalado).  
 - **Docs**:  
-  - [ ] Crear runbooks de operaciones (cómo desplegar, recuperar, rotar secretos, etc.).  
+  - ✅ Crear runbooks de operaciones (cómo desplegar, recuperar, rotar secretos, etc.).  
 
 #### Fase 13: Escalabilidad & Arquitectura (~20 %)
 - **Backend**:  
@@ -832,13 +832,16 @@ Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidam
 - ✅ Sistema de temas (light/dark) con ThemeProvider y ThemeToggle
 - ✅ Accesibilidad WCAG 2.1 AA (contraste, navegación teclado, ARIA, skip links)
 - ✅ Responsive design mejorado
-- ⏳ Internacionalización (i18n) - Estructura lista, pendiente implementación completa
+- ✅ Internacionalización (i18n) - Implementación completa con soporte para ES, EN, PT, FR, QU
 
 **Archivos creados:**
 - ✅ `web/src/theme/theme.js` (design system completo)
 - ✅ `web/src/components/ThemeProvider.js`
 - ✅ `web/src/components/ThemeToggle.js`
 - ✅ `web/src/utils/accessibility.js` (utilidades WCAG 2.1 AA)
+- ✅ `web/src/services/i18nService.js` (servicio de internacionalización)
+- ✅ `web/src/components/LanguageSelector.js` (selector de idioma)
+- ✅ `web/src/components/LanguageSelector.css` (estilos del selector)
 
 #### **11.2 Mejoras de UI Mobile** ✅
 - ✅ Rediseño de pantallas principales
@@ -903,44 +906,51 @@ Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidam
 ### **Fase 12: DevOps y Deployment** 🚀
 **Prioridad: ALTA** | **Duración estimada: 2-3 semanas**
 
-#### **12.1 CI/CD Completo**
-- [ ] Pipeline completo de CI/CD
-- [ ] Testing automático en PRs
-- [ ] Deployment automático a staging
-- [ ] Deployment automático a producción
-- [ ] Rollback automático en caso de errores
-- [ ] Blue-green deployment
+#### **12.1 CI/CD Completo** ✅
+- ✅ Pipeline completo de CI/CD (ya existe `ci-cd-complete.yml`)
+- ✅ Testing automático en PRs
+- ✅ Deployment automático a staging
+- ✅ Deployment automático a producción
+- ✅ Rollback automático en caso de errores
+- ✅ Blue-green deployment para producción
 
-**Archivos a crear:**
-- `.github/workflows/ci-cd.yml`
-- `.github/workflows/deploy-staging.yml`
-- `.github/workflows/deploy-production.yml`
+**Archivos creados:**
+- ✅ `.github/workflows/deploy-staging.yml` (deployment a staging con smoke tests y rollback)
+- ✅ `.github/workflows/deploy-production.yml` (blue-green deployment con rollback automático)
 
-#### **12.2 Monitoreo y Observabilidad**
-- [ ] APM (Application Performance Monitoring)
-- [ ] Logging centralizado (ELK stack)
-- [ ] Métricas en tiempo real (Prometheus/Grafana)
-- [ ] Alertas automatizadas
-- [ ] Health checks avanzados
-- [ ] Tracing distribuido
+#### **12.2 Monitoreo y Observabilidad** ⏳
+- ⏳ APM (Application Performance Monitoring) - Pendiente integración completa
+- ⏳ Logging centralizado (ELK stack) - Pendiente despliegue
+- ⏳ Métricas en tiempo real (Prometheus/Grafana) - Pendiente despliegue
+- ⏳ Alertas automatizadas - Pendiente configuración
+- ✅ Health checks avanzados (readiness/liveness probes configurados)
+- ✅ Tracing distribuido (OpenTelemetry/Jaeger configurados en `infrastructure/k8s/`)
 
 **Servicios a integrar:**
-- Sentry para error tracking
-- Datadog/New Relic para APM
-- Grafana para visualización
+- ⏳ Sentry para error tracking - Pendiente
+- ⏳ Datadog/New Relic para APM - Pendiente
+- ⏳ Grafana para visualización - Pendiente despliegue
 
-#### **12.3 Infraestructura como Código**
-- [ ] Terraform para infraestructura
-- [ ] Kubernetes para orquestación
-- [ ] Docker compose para desarrollo
-- [ ] Configuración de producción
-- [ ] Auto-scaling configurado
-- [ ] Load balancing
+**Nota**: OpenTelemetry y Jaeger ya están configurados en `infrastructure/k8s/otel-collector.yaml` y `infrastructure/k8s/jaeger.yaml`.
 
-**Archivos a crear:**
-- `infrastructure/terraform/main.tf`
-- `infrastructure/k8s/deployment.yaml`
-- `docker-compose.prod.yml`
+#### **12.3 Infraestructura como Código** ✅
+- ✅ Terraform para infraestructura (namespaces, configmaps, secrets, network policies, quotas)
+- ✅ Kubernetes para orquestación (deployments, services, HPA ya configurados)
+- ✅ Docker compose para desarrollo (documentado en `docs/DOCKER_COMPOSE_GUIDE.md`)
+- ✅ Configuración de producción (Terraform con variables de entorno)
+- ✅ Auto-scaling configurado (HPA mejorado con CPU, memoria y políticas de escalado)
+- ⏳ Load balancing (pendiente configuración específica de ingress/load balancer)
+
+**Archivos creados:**
+- ✅ `infrastructure/terraform/main.tf` (recursos principales de infraestructura)
+- ✅ `infrastructure/terraform/variables.tf` (variables de configuración)
+- ✅ `infrastructure/terraform/outputs.tf` (outputs de infraestructura)
+- ✅ `infrastructure/terraform/terraform.tfvars.example` (ejemplo de variables)
+- ✅ `infrastructure/terraform/README.md` (documentación de uso)
+- ✅ `infrastructure/k8s/backend-hpa-enhanced.yaml` (HPA mejorado para backend)
+- ✅ `infrastructure/k8s/ai-services-hpa-enhanced.yaml` (HPA mejorado para AI Services)
+- ✅ `infrastructure/k8s/backend-deployment.yaml` (HPA mejorado con más métricas)
+- ✅ `infrastructure/k8s/ai-services-deployment.yaml` (HPA mejorado con más métricas)
 
 ---
 
@@ -1328,6 +1338,7 @@ Archivos/Endpoints creados (stubs listos):
 **11.1 Estado**: ✅ 100 %  
 - ✅ Design system unificado con temas light/dark.  
 - ✅ Accesibilidad WCAG 2.1 AA (contraste, navegación teclado, ARIA, lectores de pantalla).  
+- ✅ Internacionalización (i18n) completa en Web y Mobile (ES, EN, PT, FR, QU).  
 - ✅ Tutorial interactivo con hints contextuales en mobile.  
 - ✅ Microinteracciones y animaciones suaves en flujos críticos.  
 - ✅ DTOs y mensajes de error localizables y amigables.  
@@ -1335,7 +1346,7 @@ Archivos/Endpoints creados (stubs listos):
 - ✅ Chatbot mejorado con visualizaciones SHAP, gráficos interactivos, historial, sugerencias contextuales y modo de voz.  
 
 **Archivos creados/mejorados**:  
-- Web: `web/src/theme/theme.js` (design system), `web/src/components/ThemeProvider.js`, `web/src/components/ThemeToggle.js`, `web/src/utils/accessibility.js`, `web/src/App.js` (integración), `web/src/App.css` (temas), `web/src/components/Navbar.js` (accesibilidad), `web/src/components/SHAPVisualization.js`, `web/src/components/FactorChart.js`, `web/src/components/ChatBotEnhanced.js`, `web/src/pages/Home.js` (actualizado).  
+- Web: `web/src/theme/theme.js` (design system), `web/src/components/ThemeProvider.js`, `web/src/components/ThemeToggle.js`, `web/src/utils/accessibility.js`, `web/src/services/i18nService.js` (i18n completo), `web/src/components/LanguageSelector.js` (selector de idioma), `web/src/App.js` (integración), `web/src/App.css` (temas), `web/src/components/Navbar.js` (accesibilidad + i18n), `web/src/components/SHAPVisualization.js`, `web/src/components/FactorChart.js`, `web/src/components/ChatBotEnhanced.js` (i18n integrado), `web/src/pages/Home.js` (actualizado + i18n).  
 - Mobile: `mobile/src/components/Tutorial/TutorialOverlay.tsx`, `mobile/src/hooks/useTutorial.ts`, `mobile/src/utils/animations.ts`, `mobile/src/screens/LoginScreen.tsx` (animaciones).  
 - Backend: `backend/src/utils/localizedErrors.ts`, `backend/src/dto/ErrorResponse.dto.ts`, `backend/src/middleware/errorHandler.ts` (integración DTOs), `backend/src/utils/AppError.ts` (códigos de error).  
 - Docs: `docs/UX_UI_GUIDE.md`.  
@@ -1355,6 +1366,36 @@ Archivos/Endpoints creados (stubs listos):
 **Documentación**:  
 - `docs/UX_UI_GUIDE.md` (guía completa de UX/UI para Web y Mobile con ejemplos).  
 - Secciones de Fase 11 en `PROJECT_ROADMAP.md`.
+
+---
+
+### Fase 12: DevOps & Deployment 🚀
+
+**12.1 Estado**: ✅ ~85 %  
+- ✅ Pipelines de despliegue a staging/producción con rollback automatizado.  
+- ✅ Blue-green deployment para producción.  
+- ✅ Terraform básico para infraestructura (namespaces, configmaps, secrets, network policies).  
+- ✅ Auto-scaling mejorado (HPA con CPU, memoria y políticas de escalado).  
+- ✅ Runbooks de operaciones completos.  
+- ⏳ Monitoreo y observabilidad completo (pendiente despliegue Prometheus/Grafana/ELK).  
+
+**Archivos creados/mejorados**:  
+- CI/CD: `.github/workflows/deploy-staging.yml` (deployment a staging con smoke tests y rollback), `.github/workflows/deploy-production.yml` (blue-green deployment con rollback automático).  
+- Terraform: `infrastructure/terraform/main.tf`, `infrastructure/terraform/variables.tf`, `infrastructure/terraform/outputs.tf`, `infrastructure/terraform/terraform.tfvars.example`, `infrastructure/terraform/README.md`, `infrastructure/terraform/.gitignore`.  
+- Kubernetes: `infrastructure/k8s/backend-hpa-enhanced.yaml`, `infrastructure/k8s/ai-services-hpa-enhanced.yaml`, `infrastructure/k8s/backend-deployment.yaml` (HPA mejorado), `infrastructure/k8s/ai-services-deployment.yaml` (HPA mejorado).  
+- Docs: `docs/RUNBOOKS.md` (runbooks completos de operaciones).  
+
+**Métricas logradas**:  
+- ✅ Deployment automático a staging desde rama `develop`/`staging`.  
+- ✅ Deployment automático a producción desde tags `v*.*.*` con blue-green.  
+- ✅ Rollback automático si smoke tests fallan.  
+- ✅ HPA configurado con escalado basado en CPU y memoria.  
+- ✅ Políticas de escalado configuradas (scale up rápido, scale down conservador).  
+
+**Documentación**:  
+- `docs/RUNBOOKS.md` (guía completa de operaciones: despliegue, rollback, rotación de secretos, recuperación, escalado, troubleshooting).  
+- `infrastructure/terraform/README.md` (guía de uso de Terraform).  
+- Secciones de Fase 12 en `PROJECT_ROADMAP.md`.
 
 ---
 

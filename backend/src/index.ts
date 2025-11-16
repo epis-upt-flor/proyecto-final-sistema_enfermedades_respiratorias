@@ -47,11 +47,15 @@ import { metricsMiddleware, metricsHandler } from './metrics/metrics';
 import { percentileMetricsMiddleware } from './metrics/percentileMetrics';
 import { initMongoDBMonitoring } from './monitoring/mongodbMonitoring';
 import { initTelemetry, shutdownTelemetry } from './telemetry/tracing';
+import { initSentry } from './utils/sentry';
 
 class App {
   public app: express.Application;
 
   constructor() {
+    // Iniciar Sentry (no bloqueante si falla)
+    initSentry();
+    
     // Iniciar Telemetría (no bloqueante si falla)
     initTelemetry().catch(() => {});
     this.app = express();
@@ -66,6 +70,13 @@ class App {
   private initializeMiddlewares(): void {
     // Trust proxy para HSTS/HTTPS detrás de balanceadores
     this.app.set('trust proxy', 1);
+
+    // Sentry request handler (debe ir antes de otros middlewares)
+    if (process.env.SENTRY_ENABLED === 'true') {
+      const Sentry = require('./utils/sentry').Sentry;
+      this.app.use(Sentry.Handlers.requestHandler());
+      this.app.use(Sentry.Handlers.tracingHandler());
+    }
 
     // Forzar HTTPS en producción
     this.app.use(enforceHttps);

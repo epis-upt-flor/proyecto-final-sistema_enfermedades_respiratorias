@@ -13,16 +13,18 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import SHAPVisualization from './SHAPVisualization';
 import FactorChart from './FactorChart';
+import { t, getCurrentLanguage } from '../services/i18nService';
 import './ChatBot.css';
 import './ChatBotEnhanced.css';
 import { API_BASE, AI_BASE_URL, LEGACY_API_BASE } from '../utils/apiBase';
 
 function ChatBotEnhanced() {
   const [sessionId, setSessionId] = useState(null);
+  const [language, setLanguage] = useState(getCurrentLanguage());
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: '¡Hola! 👋\n\nSoy tu asistente médico de Respicare. Estoy aquí para ayudarte con información sobre salud respiratoria, síntomas y orientación médica.\n\n**¿Cuál es tu consulta o problema?** Puedes:\n\n• Describirme tus síntomas\n• Preguntar sobre enfermedades respiratorias\n• Pedir orientación médica general',
+      text: t('chatbot.greeting'),
       timestamp: new Date()
     }
   ]);
@@ -40,6 +42,31 @@ function ChatBotEnhanced() {
     initializeSession();
     loadConversationHistory();
     initializeVoiceRecognition();
+  }, []);
+
+  // Update greeting message when language changes
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+      // Update initial greeting message
+      setMessages(prev => {
+        if (prev.length > 0 && prev[0].type === 'bot') {
+          const newMessages = [...prev];
+          newMessages[0] = {
+            ...newMessages[0],
+            text: t('chatbot.greeting')
+          };
+          return newMessages;
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange);
+
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+    };
   }, []);
 
   // Initialize voice recognition
@@ -473,21 +500,21 @@ function ChatBotEnhanced() {
         <div className="header-content">
           <span className="header-icon">🤖</span>
           <div>
-            <h3>Asistente Respicare</h3>
-            <p className="header-subtitle">Tu asistente médico inteligente</p>
+            <h3>{t('home.chatbotTitle')}</h3>
+            <p className="header-subtitle">{t('home.chatbotSubtitle')}</p>
           </div>
         </div>
         <div className="header-actions">
           <button
             className="history-button"
             onClick={() => setShowHistory(!showHistory)}
-            title="Ver historial"
+            title={t('home.chatbotHistory')}
           >
             📜
           </button>
           <div className="status-indicator online">
             <span className="status-dot"></span>
-            En línea
+            {t('common.online') || 'En línea'}
           </div>
         </div>
       </div>
@@ -495,8 +522,8 @@ function ChatBotEnhanced() {
       {showHistory && conversationHistory.length > 0 && (
         <div className="conversation-history">
           <div className="history-header">
-            <h4>Historial de Conversaciones</h4>
-            <button onClick={() => setShowHistory(false)}>✕</button>
+            <h4>{t('home.chatbotHistory')}</h4>
+            <button onClick={() => setShowHistory(false)} aria-label={t('common.close')}>✕</button>
           </div>
           <div className="history-list">
             {conversationHistory.slice(-10).reverse().map((conv, idx) => (
@@ -570,7 +597,7 @@ function ChatBotEnhanced() {
       {/* Contextual Suggestions */}
       {suggestions.length > 0 && messages.length > 1 && (
         <div className="contextual-suggestions">
-          <p className="suggestions-title">💡 Sugerencias:</p>
+          <p className="suggestions-title">💡 {t('home.chatbotSuggestions')}:</p>
           <div className="suggestions-list">
             {suggestions.slice(0, 4).map((suggestion, idx) => (
               <button
@@ -589,8 +616,9 @@ function ChatBotEnhanced() {
         <button
           className={`voice-button ${isListening ? 'listening' : ''}`}
           onClick={isListening ? stopListening : startListening}
-          title={isListening ? 'Detener grabación' : 'Iniciar grabación de voz'}
+          title={isListening ? t('chatbot.stopListening') : t('home.chatbotVoice')}
           disabled={!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)}
+          aria-label={isListening ? t('chatbot.stopListening') : t('home.chatbotVoice')}
         >
           {isListening ? '⏹️' : '🎤'}
         </button>
@@ -598,7 +626,7 @@ function ChatBotEnhanced() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder={isListening ? "Escuchando..." : "Describe tus síntomas o haz una pregunta..."}
+          placeholder={isListening ? t('chatbot.listening') : t('home.chatbotPlaceholder')}
           rows="2"
           disabled={isLoading || isListening}
         />

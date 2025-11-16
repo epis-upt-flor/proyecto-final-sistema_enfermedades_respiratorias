@@ -6,6 +6,7 @@ import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse, Authenticated
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
+import { setSentryUser } from '../utils/sentry';
 
 // Generar JWT token
 const generateToken = (userId: string): string => {
@@ -55,6 +56,13 @@ export const register = asyncHandler(async (req: Request<{}, ApiResponse<AuthRes
   user.lastLogin = new Date();
   await user.save();
 
+  // Establecer usuario en Sentry
+  setSentryUser({
+    id: (user._id as mongoose.Types.ObjectId).toString(),
+    email: user.email,
+    role: user.role,
+  });
+
   logger.info(`Usuario registrado: ${email}`, { userId: (user._id as mongoose.Types.ObjectId).toString(), role });
 
   const response: ApiResponse<AuthResponse> = {
@@ -101,6 +109,13 @@ export const login = asyncHandler(async (req: Request<{}, ApiResponse<AuthRespon
   // Actualizar lastLogin
   user.lastLogin = new Date();
   await user.save();
+
+  // Establecer usuario en Sentry
+  setSentryUser({
+    id: (user._id as mongoose.Types.ObjectId).toString(),
+    email: user.email,
+    role: user.role,
+  });
 
   logger.info(`Usuario logueado: ${email}`, { userId: (user._id as mongoose.Types.ObjectId).toString(), role: user.role });
 

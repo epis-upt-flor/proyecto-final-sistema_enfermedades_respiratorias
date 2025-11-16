@@ -34,3 +34,4 @@ pydantic-settings==2.1.0
 
 # Logging and monitoring
 structlog==23.2.0
+sentry-sdk[fastapi]==1.38.0

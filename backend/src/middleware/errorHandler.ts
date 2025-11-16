@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { createErrorResponse } from '../dto/ErrorResponse.dto';
 import { ApiResponse } from '../types';
+import { captureException } from '../utils/sentry';
 
 // Handler para errores de validación de Mongoose
 const handleValidationError = (err: any): AppError => {
@@ -98,6 +99,17 @@ export const errorHandler = (
     ip: req.ip,
     userAgent: req.get('User-Agent')
   });
+
+  // Capturar en Sentry (solo errores operacionales o críticos)
+  if (err.isOperational === false || err.statusCode >= 500) {
+    captureException(err, {
+      url: req.url,
+      method: req.method,
+      statusCode: err.statusCode,
+      userAgent: req.get('User-Agent'),
+      ip: req.ip,
+    });
+  }
 
   let error = { ...err };
   error.message = err.message;

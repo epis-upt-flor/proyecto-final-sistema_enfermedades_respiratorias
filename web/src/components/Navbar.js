@@ -1,34 +1,53 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import LanguageSelector from './LanguageSelector';
+import { t, getCurrentLanguage } from '../services/i18nService';
 import './Navbar.css';
-
-const NAV_LINKS = [
-  { to: '/', label: 'Inicio', icon: '🏠' },
-  { to: '/dashboard', label: 'Estado del Sistema', icon: '⚙️' },
-  { to: '/analytics', label: 'Análisis', icon: '📊' },
-  { to: '/heatmap', label: 'Mapa', icon: '🗺️' }
-];
 
 function Navbar() {
   const location = useLocation();
+  const [language, setLanguage] = useState(getCurrentLanguage());
+
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange);
+
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+    };
+  }, []);
+
+  const NAV_LINKS = useMemo(
+    () => [
+      { to: '/', labelKey: 'nav.home', icon: '🏠' },
+      { to: '/dashboard', labelKey: 'nav.dashboard', icon: '⚙️' },
+      { to: '/analytics', labelKey: 'nav.analytics', icon: '📊' },
+      { to: '/heatmap', labelKey: 'nav.map', icon: '🗺️' }
+    ],
+    []
+  );
 
   const links = useMemo(
     () =>
       NAV_LINKS.map(link => ({
         ...link,
+        label: t(link.labelKey),
         isActive: location.pathname === link.to
       })),
-    [location.pathname]
+    [location.pathname, language, NAV_LINKS]
   );
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" role="navigation" aria-label="Main navigation">
       <div className="navbar-container">
         <div className="navbar-brand">
-          <span className="brand-icon">🏥</span>
-          <span className="brand-name">RespiCare</span>
-          <span className="brand-subtitle">Sistema de Enfermedades Respiratorias</span>
+          <span className="brand-icon" aria-hidden="true">🏥</span>
+          <span className="brand-name">{t('nav.brandName')}</span>
+          <span className="brand-subtitle">{t('nav.brandSubtitle')}</span>
         </div>
         <div className="navbar-menu">
           {links.map(link => (
@@ -42,6 +61,7 @@ function Navbar() {
               <span>{link.label}</span>
             </Link>
           ))}
+          <LanguageSelector className="navbar-language-selector" />
           <ThemeToggle className="navbar-theme-toggle" />
         </div>
       </div>

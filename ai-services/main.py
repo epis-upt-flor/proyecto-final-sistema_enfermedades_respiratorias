@@ -3,7 +3,8 @@ RespiCare AI Services
 Medical analysis and prediction service
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -19,6 +20,10 @@ from collections import defaultdict
 # Core services
 from core.cache import init_cache, close_cache, get_cache_client
 from data.medical_data import MedicalDataProcessor
+from utils.sentry_integration import init_sentry
+
+# Initialize Sentry (non-blocking)
+init_sentry()
 
 # Configure logging
 structlog.configure(
