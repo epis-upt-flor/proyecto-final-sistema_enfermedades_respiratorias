@@ -1,6 +1,17 @@
 # 🗺️ RespiCare Tacna - Roadmap Completo del Proyecto
 
 ## 📋 Estado Actual del Proyecto
+### 📌 Roadmaps por Función
+- [roadmaps/WEB_ROADMAP.md](WEB_ROADMAP.md) — Web
+- [roadmaps/MOBILE_ROADMAP.md](MOBILE_ROADMAP.md) — Mobile
+- [roadmaps/BACKEND_ROADMAP.md](BACKEND_ROADMAP.md) — Backend
+- [roadmaps/AI_SERVICES_ROADMAP.md](AI_SERVICES_ROADMAP.md) — AI Services
+- [roadmaps/WORKFLOWS_ROADMAP.md](WORKFLOWS_ROADMAP.md) — Workflows (CI/CD)
+- [roadmaps/TESTS_ROADMAP.md](TESTS_ROADMAP.md) — Pruebas y Cobertura
+- [roadmaps/MEJORA_ROADMAPS.md](MEJORA_ROADMAPS.md) — Matriz por Roles/Plataformas
+
+> Nota de sincronización: cuando se marque un punto como completado en cualquiera de los roadmaps por función, este Roadmap General debe ser actualizado inmediatamente para reflejar el mismo estado (y viceversa). Mantener consistencia 1:1 entre los estados (✅/⏳/[ ]) y los hitos.
+
 
 ### ✅ **COMPLETADO** (Fases 1-6)
 

@@ -91,10 +91,19 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 ### 📖 Documentación Principal
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Guía de inicio rápido
-- **[PROJECT_ROADMAP.md](PROJECT_ROADMAP.md)** - Roadmap completo del proyecto
+- **[roadmaps/INDEX.md](roadmaps/INDEX.md)** - Índice de roadmaps por función
+- **[roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md)** - Roadmap completo del proyecto
 - **[ML_ROADMAP.md](ML_ROADMAP.md)** - Roadmap del sistema ML
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Guía de deployment
 - **[SECURITY.md](SECURITY.md)** - Políticas de seguridad
+
+Accesos directos a roadmaps por función:
+- **Web**: [roadmaps/WEB_ROADMAP.md](roadmaps/WEB_ROADMAP.md)
+- **Mobile**: [roadmaps/MOBILE_ROADMAP.md](roadmaps/MOBILE_ROADMAP.md)
+- **Backend**: [roadmaps/BACKEND_ROADMAP.md](roadmaps/BACKEND_ROADMAP.md)
+- **AI Services**: [roadmaps/AI_SERVICES_ROADMAP.md](roadmaps/AI_SERVICES_ROADMAP.md)
+- **Workflows (CI/CD)**: [roadmaps/WORKFLOWS_ROADMAP.md](roadmaps/WORKFLOWS_ROADMAP.md)
+- **Pruebas**: [roadmaps/TESTS_ROADMAP.md](roadmaps/TESTS_ROADMAP.md)
 
 ### 🏗️ Arquitectura y Diseño
 

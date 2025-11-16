@@ -1,3 +1,45 @@
+# 📱 Roadmap Mobile (React Native) - RespiCare Tacna
+
+## Visión
+Aplicación móvil offline-first para pacientes y médicos, con IA, telemedicina, alertas y sincronización confiable.
+
+## Fase M1: Fundamentos y UX
+- ✅ Arquitectura y estado global (Zustand por slices)
+- ✅ Servicios base (api, localStorage, i18n, telemedicina, predictivo, AR, voz)
+- ✅ Navegación (tabs + stack), theming (light/dark/auto)
+- ✅ Onboarding i18n (ES/EN) con flag persistente
+- ✅ Microinteracciones y feedback visual (snackbars, banners, chips)
+
+## Fase M2: Funcionalidad Clínica
+- ✅ Historias médicas (listado, detalle, estados de sync)
+- ✅ Citas médicas (crear/reprogramar/cancelar, detalle, reintento, recordatorios)
+- ✅ Alertas (ACK offline, caché, fallback sin red)
+- ✅ Análisis predictivo (riesgo + recomendaciones) con fallback local
+- ✅ Wearables (FC, pasos, SpO₂) vía stub seguro
+
+## Fase M3: Offline/Sync y Calidad
+- ✅ Cola de operaciones (historias/citas/alertas) con reintento y estados (pending/synced/error)
+- ✅ Indicadores “Offline” en headers de pantallas críticas
+- ✅ Tests de integración offline/sync (historias, citas)
+- ✅ CI móvil con cobertura mínima (70%) y artefactos
+
+## Fase M4: Experiencia y Funciones Avanzadas
+- ⏳ Tutoriales interactivos primera vez (tour guiado)
+- ⏳ Calendario de citas mejorado (selector nativo/DateTimePicker)
+- ⏳ Historial de análisis de síntomas y visualización SHAP simple
+- ⏳ Compartir reportes PDF desde mobile
+- ⏳ AR ejercicios asistidos (modos ampliados)
+
+## Calidad y Métricas
+- Unit/Integration/E2E (Detox) orientados a offline/sync
+- Cobertura objetivo ≥70% (CI falla si <70%)
+- Performance: arranque <2s, consumo batería optimizado
+
+## Hitos
+- Mobile v1: Fundamentos + Citas/Alertas/Análisis + Offline
+- Mobile v2: UX avanzada (tutoriales, calendario, historial análisis) + compartir PDF
+- Mobile v3: AR extendido + optimizaciones performance/batería
+
 ## 🗺️ Roadmap Mobile - RespiCare Tacna
 
 ### 📋 Estado Actual de la App Móvil
