@@ -388,10 +388,19 @@ User receives comprehensive prediction with full explainability
 6. ✅ Visualizaciones ejecutivas y métricas predictivas conectadas al dashboard web.
 7. ✅ Dashboard SHAP en web con métricas de confianza, contribuciones e indicadores de fairness alimentado por endpoints ML.
 
+### **Mejoras Adicionales Implementadas (Automatización)** ✅:
+1. ✅ Validación comparativa automática de modelos
+   - Script: `ai-services/validate_models_comparison_v2.py`
+   - Workflow CI: `.github/workflows/ai-ml-model-comparison.yml`
+   - Artefactos publicados: `model_comparison_*.txt` y `model_comparison_*.md`
+   - Métricas: Accuracy, Precision, Recall, F1-Score por modelo y resumen
+
 ### **Sugerencias Futuras** (Opcional):
-1. ⏳ Análisis de tendencias temporales de predicciones
+1. ✅ Análisis de tendencias temporales de predicciones
+   - Script: `ai-services/analyze_prediction_trends.py`
+   - Workflow CI: `.github/workflows/ai-ml-trends.yml`
+   - Artefactos publicados: `prediction_trends_summary_*.csv`, `prediction_trends_series_*.csv`, `prediction_trends_report_*.md`
 2. ⏳ Más factores de riesgo (alergias, medicamentos, historial familiar)
-3. ⏳ Validación comparativa automática de modelos
 
 ---
 

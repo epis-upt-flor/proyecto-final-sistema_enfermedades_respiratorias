@@ -49,8 +49,8 @@
 - ⏳ Benchmarks y profiling (p95/p99 objetivos)
 
 ## Hitos
-- [ ] AI v1 (servicios core + analizador + monitoring)
-- [ ] AI v2 (Advanced ML/NLP/AutoML integrados a pipelines reales)
+- [x] AI v1 (servicios core + analizador + monitoring)
+- [x] AI v2 (Advanced ML/NLP/AutoML integrados a pipelines reales)
 - [ ] AI v3 (optimización rendimiento + escalado + seguridad avanzada)
 
 

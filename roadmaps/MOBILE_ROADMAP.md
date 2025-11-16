@@ -188,7 +188,7 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 - ✅ Soporte mínimo para ES y EN (extensible a PT/FR/QU).
 - ✅ Carga centralizada de strings (estructura de namespaces en servicio).
 - ✅ Selector de idioma en ajustes/perfil (chips ES/EN) con persistencia.
-- ✅ Aplicar i18n en pantallas clave (`ProfileScreen`, `DataCaptureScreen`); pendiente completar `HomeScreen`.
+- ✅ Aplicar i18n en pantallas clave (`ProfileScreen`, `DataCaptureScreen`, `HomeScreen`).
 
 ---
 

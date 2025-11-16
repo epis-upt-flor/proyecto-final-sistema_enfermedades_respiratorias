@@ -21,11 +21,13 @@
 ## Fase 1: CI Básico
 - ✅ Lint + tests por componente (backend, web, mobile, ai-services)
 - ✅ Artefactos de cobertura (mobile/AI Services), umbrales mínimos
+- ✅ AI Services CI con junit.xml y coverage.xml (fail under 70%) + badge
 
 ## Fase 2: Artefactos y Releases
 - ✅ Mobile Beta (tags `beta-*` → ZIP artefacto)
-- ⏳ Backend/Web build artefact (Docker image) por tag
-- ⏳ Versionado semántico y changelog automatizado
+- ✅ Backend/Web build artefact (Docker image) por tag
+- ✅ Versionado semántico y changelog automatizado
+- ✅ AI Services: artefactos de comparación de modelos y tendencias (TXT/MD/CSV)
 
 ## Fase 3: CD/Staging
 - ⏳ Deploy automático a staging (backend/web/ai-services)

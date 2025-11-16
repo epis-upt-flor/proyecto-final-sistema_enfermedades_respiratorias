@@ -65,11 +65,11 @@ Plataforma para gestión clínica, analítica avanzada y administración multi-r
 - ⏳ Gráficos avanzados de tendencias y fairness
 
 ## Fase 5: Calidad
-- ⏳ Suite completa de tests (unit, integration, E2E con Cypress)
-- ⏳ Performance budgets y Lighthouse > 90
+- ✅ Suite completa de tests (unit, integration, E2E con Cypress)
+- ✅ Performance budgets y Lighthouse > 90
 
 ## Hitos
-- [ ] Web v1 (Chatbot + Dashboard básico + Login)
+- [x] Web v1 (Chatbot + Dashboard básico + Login)
 - [ ] Web v2 (SHAP + Executive Dashboard completo + i18n + a11y)
 - [ ] Web v3 (Integraciones HL7/FHIR, performance optimizada)
 

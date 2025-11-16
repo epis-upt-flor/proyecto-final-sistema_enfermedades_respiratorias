@@ -39,7 +39,7 @@
 
 ## Fase 3: Analytics/ML
 - ✅ Integración con AI Services (endpoints ML/analytics)
-- ⏳ Métricas operativas y endpoints de monitoreo
+- ✅ Métricas operativas y endpoints de monitoreo
 
 ## Fase 4: Seguridad
 - ⏳ Encriptación en reposo/Tránsito end-to-end
@@ -51,7 +51,7 @@
 - ⏳ Observabilidad (tracing, métricas, logs centralizados)
 
 ## Hitos
-- [ ] Backend v1 (APIs core + Auth + Historias + Citas + Alertas)
+- [x] Backend v1 (APIs core + Auth + Historias + Citas + Alertas)
 - [ ] Backend v2 (Prescripciones + Analytics + Seguridad avanzada)
 - [ ] Backend v3 (Escalabilidad + Observabilidad completa)
 

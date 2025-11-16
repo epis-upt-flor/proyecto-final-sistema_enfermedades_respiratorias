@@ -29,8 +29,8 @@
 - ✅ Unit tests: servicios/utilidades/lógica de negocio
 - ✅ Integration tests: endpoints (backend, ai-services), pantallas (web/mobile)
 - ✅ E2E: Cypress (web), Detox (mobile)
-- ⏳ Performance: load/stress/spike/endurance (backend)
-- ⏳ Security: OWASP Top 10 (backend), mock auth flows (web)
+- ✅ Performance: load/stress/spike/endurance (backend)
+- ✅ Security: OWASP Top 10 (backend), mock auth flows (web)
 
 ## Fase 3: Offline/Sync (Mobile) y Analítica
 - ✅ Offline/Sync: colas, reintentos, estados (mobile)
@@ -40,6 +40,6 @@
 ## Umbrales y Política
 - ⏳ Cobertura mínima global: 80% (CI fallará si <80%)
 - ✅ Umbral AI Services: 70% (config actual)
-- ⏳ Reportes JUnit y cobertura publicados por workflow en todos los módulos
+- ✅ Reportes JUnit y cobertura publicados por workflow en todos los módulos
 
 
