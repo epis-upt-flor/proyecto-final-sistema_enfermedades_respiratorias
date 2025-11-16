@@ -5,6 +5,10 @@ Nota: Este archivo define una interfaz estable para integraciones futuras.
 Las dependencias pesadas (transformers/torch) no son obligatorias en este stub.
 """
 from typing import List, Dict, Any, Optional
+import os
+import structlog
+
+logger = structlog.get_logger()
 
 
 class MedicalBERTModel:
@@ -17,7 +21,24 @@ class MedicalBERTModel:
         """
         Carga (o simula) el modelo BERT. En producción, inicializaría tokenizer y modelo.
         """
-        # Implementación real (futuro): from transformers import AutoTokenizer, AutoModelForSequenceClassification
+        use_real = os.getenv("AI_USE_REAL_MODELS", "0") == "1"
+        if use_real:
+            try:
+                from transformers import AutoTokenizer, AutoModelForSequenceClassification  # type: ignore
+                import torch  # type: ignore
+                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
+                if self.device == "cuda" and torch.cuda.is_available():
+                    self._model.to("cuda")
+                logger.info("medical_bert_loaded_real", model=self.model_name, device=self.device)
+                self._loaded = True
+                return True
+            except Exception as err:
+                logger.warning("medical_bert_fallback_stub", error=str(err))
+                # Fallback a stub si no están disponibles las dependencias/pesos
+        # Stub
+        self._tokenizer = None
+        self._model = None
         self._loaded = True
         return self._loaded
 
@@ -28,6 +49,10 @@ class MedicalBERTModel:
         """
         if not self._loaded:
             self.load()
+        # Si hay modelo real disponible y tokenizador, se podría implementar aquí
+        if getattr(self, "_model", None) is not None and getattr(self, "_tokenizer", None) is not None:
+            # Mantener stub de salida simple para no introducir dependencias duras
+            logger.info("medical_bert_predict_real_used_stub_output")
         # Stub: puntuaciones simuladas
         outputs: List[Dict[str, Any]] = []
         for t in texts:

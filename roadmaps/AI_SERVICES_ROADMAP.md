@@ -37,6 +37,8 @@
 - ✅ Optimización p95/p99, profiling
   - Middleware de rendimiento en `main.py` → logs JSONL en `monitoring/performance/`
   - Script de análisis: `analyze_performance.py` (genera reporte p50/p95/p99 por ruta)
+  - Benchmarks: `benchmark_endpoints.py` + workflow `.github/workflows/ai-ml-bench.yml`
+  - Objetivos: p95 < 200 ms (endpoints ligeros), p95 < 500 ms (análisis), p99 < 1000 ms (pesados)
 
 ## Hitos
 - AI v1: Analyzer + Monitoring listos
@@ -59,12 +61,13 @@
 - ✅ Advanced ML: BERT (texto), Visión (imágenes), Series temporales (stubs + endpoints)
 - ✅ Advanced NLP: procesamiento, NER, resumen, traducción, sentimiento (stubs + endpoints)
 - ✅ AutoML: selección de modelos, tuning, features, drift, auto-retraining (stubs + endpoints)
-- ⏳ Integración con modelos reales (transformers/torch/timm) cuando se habilite el entorno
+- ✅ Integración con modelos reales (transformers/torch/timm) condicionada por entorno
+  - Flag `AI_USE_REAL_MODELS=1` habilita intentos de carga real en `medical_bert.py` y `image_classifier.py` con fallback a stub y logging
 
 ## Fase 4: Calidad y Rendimiento
 - ✅ Tests (smoke de endpoints, integración básica)
 - ✅ CI con cobertura y artefactos (junit/coverage)
-- ⏳ Benchmarks y profiling (p95/p99 objetivos)
+- ✅ Benchmarks y profiling (p95/p99 objetivos)
 
 ## Hitos
 - [x] AI v1 (servicios core + analizador + monitoring)

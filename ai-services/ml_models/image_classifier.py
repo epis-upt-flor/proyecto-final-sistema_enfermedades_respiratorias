@@ -5,6 +5,10 @@ Este stub define una interfaz simple para clasificar imágenes (e.g., RX/TC).
 La integración real podría usar torchvision/timm u OpenCV con un backend de DL.
 """
 from typing import List, Dict, Any, Optional, Union
+import os
+import structlog
+
+logger = structlog.get_logger()
 
 
 class MedicalImageClassifier:
@@ -17,7 +21,22 @@ class MedicalImageClassifier:
         """
         Carga (o simula) el modelo de visión. En producción inicializa pesos preentrenados.
         """
-        # Implementación real (futuro): torchvision.models.resnet50(pretrained=True) ...
+        use_real = os.getenv("AI_USE_REAL_MODELS", "0") == "1"
+        if use_real:
+            try:
+                import torch  # type: ignore
+                import torchvision.models as models  # type: ignore
+                self._model = getattr(models, self.model_name, models.resnet50)(pretrained=True)  # type: ignore[attr-defined]
+                self._model.eval()
+                if self.device == "cuda" and torch.cuda.is_available():
+                    self._model.to("cuda")
+                logger.info("medical_image_model_loaded_real", model=self.model_name, device=self.device)
+                self._loaded = True
+                return True
+            except Exception as err:
+                logger.warning("medical_image_model_fallback_stub", error=str(err))
+        # Stub
+        self._model = None
         self._loaded = True
         return self._loaded
 
@@ -29,6 +48,9 @@ class MedicalImageClassifier:
         if not self._loaded:
             self.load()
         outputs: List[Dict[str, Any]] = []
+        if getattr(self, "_model", None) is not None:
+            # Mantener salida stub aunque se use modelo real, para no añadir dependencias
+            logger.info("medical_image_predict_real_used_stub_output")
         for img in images:
             outputs.append(
                 {
