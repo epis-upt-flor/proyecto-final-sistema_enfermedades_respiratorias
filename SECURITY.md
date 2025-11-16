@@ -102,5 +102,5 @@ Si encuentras una vulnerabilidad de seguridad:
 
 ---
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Noviembre 2025
 **Responsable:** Equipo de Desarrollo RespiCare Tacna

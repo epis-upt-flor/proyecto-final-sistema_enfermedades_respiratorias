@@ -458,4 +458,4 @@ Con estos compromisos, RespiCare estará alineado con los estándares de softwar
 
 ---
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Noviembre 2025
