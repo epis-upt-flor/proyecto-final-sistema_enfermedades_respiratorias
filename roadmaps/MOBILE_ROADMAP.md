@@ -16,24 +16,31 @@ Aplicación móvil offline-first para pacientes y médicos, con IA, telemedicina
 - ✅ Alertas (ACK offline, caché, fallback sin red)
 - ✅ Análisis predictivo (riesgo + recomendaciones) con fallback local
 - ✅ Wearables (FC, pasos, SpO₂) vía stub seguro
+ - ✅ Vista médico: lista de pacientes resumida, búsqueda rápida y acceso a prescripciones/reportes desde móvil
 
 ## Fase M3: Offline/Sync y Calidad
 - ✅ Cola de operaciones (historias/citas/alertas) con reintento y estados (pending/synced/error)
 - ✅ Indicadores “Offline” en headers de pantallas críticas
 - ✅ Tests de integración offline/sync (historias, citas)
 - ✅ CI móvil con cobertura mínima (70%) y artefactos
+ - ✅ Optimización básica de rendimiento: listas largas afinadas (`FlatList` con windowing) y reducción de tamaño de imágenes capturadas
 
 ## Fase M4: Experiencia y Funciones Avanzadas
 - ⏳ Tutoriales interactivos primera vez (tour guiado)
 - ✅ Calendario de citas mejorado (selector nativo/DateTimePicker)
 - ✅ Historial de análisis de síntomas y visualización SHAP simple
-- ⏳ Compartir reportes PDF desde mobile
-- ⏳ AR ejercicios asistidos (modos ampliados)
+- ✅ Compartir reportes desde mobile (share sheet con enlaces a reportes firmados para WhatsApp/Email, accesible desde vista de médicos)
+- ✅ AR ejercicios asistidos (pantalla `ARTrainingScreen` con modos respiración/inhalador y rutina guiada; ampliaciones futuras pendientes)
+
+## Fase M5: Funcionalidades Adicionales Médico-Paciente
+- ✅ Telemedicina básica: botón “Iniciar consulta” en detalle de cita que abre sala de videollamada (Jitsi) usando token del backend
+- ✅ Chat directo médico-paciente (pantalla `DirectChatScreen`, accesible desde panel médico)
+- ✅ Captura y adjunto de fotos de síntomas en `DataCaptureScreen` (cámara/galería, guardado en historias médicas)
 
 ## Calidad y Métricas
 - Unit/Integration/E2E (Detox) orientados a offline/sync
 - Cobertura objetivo ≥70% (CI falla si <70%)
-- Performance: arranque <2s, consumo batería optimizado
+- Performance: arranque <2s, consumo batería optimizado (en progreso); pruebas de rendimiento básicas (`npm run test:performance`)
 
 ## Hitos
 - Mobile v1: Fundamentos + Citas/Alertas/Análisis + Offline

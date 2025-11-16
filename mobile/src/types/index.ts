@@ -358,6 +358,7 @@ export type RootStackParamList = {
   AlertDetail: { alertId: string } | undefined;
   ReportDetail: { reportId: string } | undefined;
   ARTraining: { mode: 'breathing' | 'inhaler' } | undefined;
+  DirectChat: { patientId: string; patientName: string };
 };
 
 export type MainTabParamList = {
@@ -369,4 +370,5 @@ export type MainTabParamList = {
   Alerts: undefined;
   Appointments: undefined;
   Profile: undefined;
+  DoctorDashboard?: undefined;
 };

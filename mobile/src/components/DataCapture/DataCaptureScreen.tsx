@@ -126,9 +126,9 @@ const DataCaptureScreen: React.FC = () => {
   const handleImagePicker = useCallback(() => {
     const options = {
       mediaType: 'photo' as const,
-      quality: 0.8,
-      maxWidth: 1000,
-      maxHeight: 1000,
+      quality: 0.6,
+      maxWidth: 900,
+      maxHeight: 900,
     };
 
     Alert.alert(

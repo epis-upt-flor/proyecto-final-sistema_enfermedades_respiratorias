@@ -13,6 +13,7 @@
     "test:integration": "jest __tests__/integration/",
     "test:offline": "jest __tests__/offline/",
     "test:sync": "jest __tests__/sync/",
+    "test:performance": "jest __tests__/performance/",
     "test:e2e": "detox test",
     "test:e2e:build": "detox build",
     "test:e2e:ui": "detox test -f ui-accessibility.e2e.ts",

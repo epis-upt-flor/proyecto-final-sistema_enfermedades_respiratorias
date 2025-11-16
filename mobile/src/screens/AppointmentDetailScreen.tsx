@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Linking } from 'react-native';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { Card, Title, Paragraph, Chip, Button, Snackbar } from 'react-native-paper';
 import { RootStackParamList } from '../types';
@@ -23,7 +23,18 @@ const AppointmentDetailScreen: React.FC<Props> = ({ route }) => {
       const started = await telemedicineService.startCall(appointmentId);
       if (started) {
         const token = await telemedicineService.getCallToken(appointmentId);
-        Alert.alert('Teleconsulta', token ? 'Conexión iniciada (mock de video)' : 'Conexión iniciada');
+        if (token) {
+          const room = `RespiCare-${appointmentId}`;
+          const url = `https://meet.jit.si/${encodeURIComponent(room)}#config.token=${encodeURIComponent(token)}`;
+          const supported = await Linking.canOpenURL(url);
+          if (supported) {
+            await Linking.openURL(url);
+          } else {
+            Alert.alert('Teleconsulta', 'Conexión iniciada, pero no se pudo abrir el proveedor de video.');
+          }
+        } else {
+          Alert.alert('Teleconsulta', 'Conexión iniciada (sin token de video disponible)');
+        }
       } else {
         Alert.alert('Error', 'No se pudo iniciar la consulta');
       }

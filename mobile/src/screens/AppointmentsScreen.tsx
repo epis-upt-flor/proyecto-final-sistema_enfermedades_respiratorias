@@ -210,6 +210,15 @@ const AppointmentsScreen: React.FC = () => {
         keyExtractor={(item) => item._id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.list}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews
+        getItemLayout={(_, index) => ({
+          length: 130,
+          offset: 130 * index,
+          index,
+        })}
         ListHeaderComponent={
           <View style={{ paddingHorizontal: 4, paddingBottom: 8 }}>
             <Title>Próximas citas</Title>

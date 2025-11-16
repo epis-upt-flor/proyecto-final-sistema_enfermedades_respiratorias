@@ -90,41 +90,27 @@
 - ✅ Modo offline con sincronización
 - ✅ Onboarding i18n (ES/EN)
 - ✅ 50+ tests unitarios y E2E
+- ✅ Mejoras UX Mobile M1 (pacientes): historial de análisis con SHAP simple, calendario mejorado, recordatorios visuales, microinteracciones y feedback visual
+- ✅ Mejoras UX Mobile M1 (médicos): panel `DoctorDashboardScreen` con lista de pacientes optimizada, vista rápida de historias, prescripción rápida, acceso a reportes firmados y búsqueda rápida
+- ✅ Funcionalidades adicionales M2: telemedicina básica (videollamadas), chat directo médico‑paciente, compartir reportes desde mobile, fotos de síntomas, voz mejorada y AR ejercicios respiratorios
+- ✅ Optimización Mobile (parcial M3): listas largas afinadas (`FlatList` tunado), optimización básica de imágenes y tests de performance mobile
 
 ### 🚧 **PENDIENTE - Mobile**
 
 #### **Fase M1: Mejoras UX Mobile** (2-3 semanas)
-**Pacientes:**
-- [ ] Mejorar visualización SHAP (gráficos simples)
-- [ ] Historial de análisis de síntomas
-- [ ] Calendario de citas mejorado
-- [ ] Recordatorios visuales de medicamentos
-- [ ] Tutorial interactivo primera vez
-- [ ] Feedback visual mejorado (animaciones)
-
-**Médicos:**
-- [ ] Lista de pacientes optimizada
-- [ ] Vista rápida de historias médicas
-- [ ] Generación rápida de prescripciones
-- [ ] Dashboard médico móvil (casos del día)
-- [ ] Firma digital de reportes
-- [ ] Búsqueda rápida de pacientes
+**Pacientes/Médicos (pendiente):**
+- [ ] Tutorial interactivo primera vez (tour guiado sobre pantallas clave y micro‑tips in‑app)
 
 #### **Fase M2: Funcionalidades Adicionales** (2-3 semanas)
-- [ ] Telemedicina (videollamadas para citas)
-- [ ] Chat directo médico-paciente
-- [ ] Compartir reportes PDF vía WhatsApp/Email
-- [ ] Fotos de síntomas (para análisis)
-- [ ] Reconocimiento de voz mejorado
-- [ ] AR para ejercicios respiratorios
+*(Fase completada, ver sección “COMPLETADO - Mobile” para detalles)*
 
 #### **Fase M3: Optimización Mobile** (1-2 semanas)
-- [ ] Reducir tamaño del bundle
-- [ ] Optimizar imágenes y assets
-- [ ] Mejorar performance de listas largas
-- [ ] Optimizar consumo de batería
-- [ ] Mejorar sincronización offline
-- [ ] Tests de performance mobile
+- [ ] Reducir tamaño del bundle *(parcial: se redujo calidad/tamaño de imágenes capturadas; pendiente análisis/limpieza de dependencias y configuración avanzada de bundler)*
+- ✅ Optimizar imágenes y assets *(uso de `LazyImage` y reducción de calidad/tamaño al capturar fotos en `DataCaptureScreen` para minimizar peso de assets)*
+- ✅ Mejorar performance de listas largas *(tuning de `FlatList` en `MedicalHistoryScreen` y `AppointmentsScreen` con `initialNumToRender`, `maxToRenderPerBatch`, `windowSize`, `getItemLayout`, `removeClippedSubviews`)*
+- [ ] Optimizar consumo de batería *(pendiente; aún sin métricas específicas ni ajustes de polling/background)*
+- ✅ Mejorar sincronización offline *(cola de operaciones, reintentos, banners de estado, tests de integración offline/sync ya implementados en `MOBILE_ROADMAP.md` Fase M3)*
+- ✅ Tests de performance mobile *(suite de smoke tests en `mobile/__tests__/performance/app-performance.test.ts` y script `test:performance`)*
 
 ---
 
@@ -307,15 +293,15 @@
   - [ ] GPS para emergencias
 
 #### **Fase B2: Seguridad Avanzada** (2-3 semanas)
-- [ ] Encriptación end-to-end
-- [ ] Audit logs HIPAA
-- [ ] RBAC granular avanzado
-- [ ] Anonimización de datos
-- [ ] Backup automático encriptado
-- [ ] WAF (Web Application Firewall)
-- [ ] DDoS protection
-- [ ] Penetration testing
-- [ ] Cumplimiento GDPR/HIPAA
+- [x] Encriptación end-to-end (TLS + cifrado de campos y backups)
+- [x] Audit logs HIPAA-like (PII redactada + hash de payload)
+- [x] RBAC granular avanzado (roles/permisos + DSR protegido)
+- [x] Anonimización/pseudonimización de datos para analytics/investigación
+- [x] Backup automático encriptado (CronJob Restic a S3/compatible)
+- [x] WAF (Web Application Firewall) activo en Ingress (ModSecurity + OWASP CRS)
+- [x] DDoS protection (rate limiting avanzado + límites RPS en Nginx)
+- [x] Pentesting baseline (OWASP ZAP en CI + soporte para pruebas manuales)
+- [x] Cumplimiento GDPR/HIPAA técnico (ver `BACKEND_ROADMAP.md` y `GDPR_HIPAA_POLICY.md`)
 
 #### **Fase B3: DevOps y Escalabilidad** (3-4 semanas)
 - [ ] **CI/CD completo**
@@ -339,23 +325,23 @@
   - [ ] CDN para assets
 
 #### **Fase B4: ML Avanzado** (4-6 semanas)
-- [ ] **Modelos avanzados**
-  - [ ] BERT médico (NLP)
-  - [ ] Computer Vision (imágenes)
-  - [ ] Time series LSTM
-  - [ ] Reinforcement learning
+- [x] **Modelos avanzados** (implementados en `ai-services`, orquestados desde backend)
+  - [x] BERT médico (NLP texto clínico)
+  - [x] Computer Vision (imágenes médicas)
+  - [x] Time series (tendencias y series temporales)
+  - [x] Reinforcement learning / Federated (stubs + endpoints listos en AI Services; backend preparado para consumir)
   
-- [ ] **AutoML**
-  - [ ] Selección automática de modelos
-  - [ ] Auto-tuning hiperparámetros
-  - [ ] Feature selection automática
-  - [ ] Detección de drift automática
+- [x] **AutoML**
+  - [x] Selección automática de modelos
+  - [x] Auto-tuning hiperparámetros
+  - [x] Feature selection automática
+  - [x] Detección de drift automática
   
-- [ ] **NLP Avanzado**
-  - [ ] Extracción de entidades médicas (NER)
-  - [ ] Resumen automático historias
-  - [ ] Traducción términos médicos
-  - [ ] Análisis de sentimiento
+- [x] **NLP Avanzado**
+  - [x] Extracción de entidades médicas (NER)
+  - [x] Resumen automático historias
+  - [x] Traducción términos médicos
+  - [x] Análisis de sentimiento
 
 ---
 
@@ -363,13 +349,13 @@
 
 ### **CORTO PLAZO (1-3 meses)**
 1. **Fase W1**: Administración Completa Web (DIRESA + Admin Principal)
-2. **Fase M1**: Mejoras UX Mobile (Pacientes y Médicos)
-3. **Fase B2**: Seguridad Avanzada
+2. **Fase M1**: Mejoras UX Mobile (solo tutorial interactivo pendiente)
+3. ✅ **Fase B2**: Seguridad Avanzada (backend completado)
 4. **Fase B1.1**: Completar FHIR/HL7
 
 ### **MEDIANO PLAZO (3-6 meses)**
 1. **Fase W2**: Analytics Avanzado
-2. **Fase M2**: Funcionalidades Adicionales Mobile
+2. ✅ **Fase M2**: Funcionalidades Adicionales Mobile (completada)
 3. **Fase B1.2-B1.4**: Integraciones Externas completas
 4. **Fase W4**: Funcionalidades Médicas Web
 
@@ -377,7 +363,7 @@
 1. **Fase W3**: Mejoras UX/UI Web
 2. **Fase B3**: DevOps y Escalabilidad
 3. **Fase M3**: Optimización Mobile
-4. **Fase B4**: ML Avanzado
+4. **Fase B4**: ML Avanzado (modelos y endpoints en AI Services; backend ya orquesta)
 
 ---
 
@@ -435,5 +421,5 @@
 
 ---
 
-**Última actualización:** Diciembre 2024
-**Próxima revisión:** Enero 2025
+**Última actualización:** Noviembre 2025
+**Próxima revisión:** Enero 2026

@@ -26,6 +26,8 @@ import AlertDetailScreen from '../screens/AlertDetailScreen';
 import AppointmentDetailScreen from '../screens/AppointmentDetailScreen';
 import ARTrainingScreen from '../screens/ARTrainingScreen';
 import SymptomAnalysesScreen from '../screens/SymptomAnalysesScreen';
+import DoctorDashboardScreen from '../screens/DoctorDashboardScreen';
+import DirectChatScreen from '../screens/DirectChatScreen';
 import { featureFlags } from '../config/environment';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,6 +42,7 @@ const MainTabNavigator = () => {
     (state) => state.notifications.filter((n) => !n.isRead).length,
     (a, b) => a === b
   );
+  const role = useAppStore((state) => state.user?.role, shallow);
 
   return (
     <Tab.Navigator
@@ -52,6 +55,9 @@ const MainTabNavigator = () => {
           switch (route.name) {
             case 'Home':
               iconName = focused ? 'home' : 'home-outline';
+              break;
+            case 'DoctorDashboard':
+              iconName = focused ? 'stethoscope' : 'stethoscope';
               break;
             case 'Capture':
               iconName = focused ? 'plus-circle' : 'plus-circle-outline';
@@ -108,6 +114,16 @@ const MainTabNavigator = () => {
           headerTitle: 'RespiCare Mobile',
         }}
       />
+      {role === 'doctor' && (
+        <Tab.Screen
+          name="DoctorDashboard"
+          component={DoctorDashboardScreen}
+          options={{
+            title: 'Médico',
+            headerTitle: 'Panel Médico',
+          }}
+        />
+      )}
       <Tab.Screen
         name="Capture"
         component={DataCaptureScreen}
@@ -295,6 +311,15 @@ const AppNavigator = () => {
           name="SymptomAnalyses"
           component={SymptomAnalysesScreen}
           options={{ title: 'Historial de Análisis' }}
+        />
+        <Stack.Screen
+          name="DirectChat"
+          component={DirectChatScreen}
+          options={({ route }) => ({
+            title: route.params?.patientName
+              ? `Chat con ${route.params.patientName}`
+              : 'Chat médico',
+          })}
         />
         </Stack.Navigator>
         {privacyVisible && (
