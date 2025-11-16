@@ -125,7 +125,7 @@ export const useAppStore = create<AppStore>()(
             isOnline,
           },
         })),
-      
+
       addMedicalHistory: async (history) => {
         try {
           await localStorageService.saveMedicalHistory(history);
@@ -140,7 +140,7 @@ export const useAppStore = create<AppStore>()(
           console.error('Error adding medical history:', error);
         }
       },
-      
+
       updateMedicalHistory: async (id, updates) => {
         try {
           const histories = await localStorageService.getMedicalHistories();
@@ -161,7 +161,7 @@ export const useAppStore = create<AppStore>()(
           console.error('Error updating medical history:', error);
         }
       },
-      
+
       deleteMedicalHistory: async (id) => {
         try {
           await localStorageService.deleteMedicalHistory(id);
@@ -189,25 +189,25 @@ export const useAppStore = create<AppStore>()(
           console.error('Error adding symptom analysis:', error);
         }
       },
-      
+
       addNotification: (notification) => set((state) => ({
         notifications: [...state.notifications, notification],
       })),
-      
+
       markNotificationAsRead: (id) => set((state) => ({
         notifications: state.notifications.map(notification =>
           notification.id === id ? { ...notification, isRead: true } : notification
         ),
       })),
-      
+
       clearNotifications: () => set({ notifications: [] }),
-      
+
       updateOfflineData: (data) => set((state) => ({
         offlineData: { ...state.offlineData, ...data },
       })),
-      
+
       setLoading: (isLoading) => set({ isLoading }),
-      
+
       syncData: async () => {
         const { isOnline } = get();
         if (!isOnline) return;
@@ -264,10 +264,7 @@ export const useAppStore = create<AppStore>()(
             syncStatus: {
               ...state.syncStatus,
               isSyncing: false,
-              syncErrors: [
-                ...state.syncStatus.syncErrors,
-                'Error durante la sincronización',
-              ],
+              syncErrors: [...state.syncStatus.syncErrors, 'Error durante la sincronización'],
             },
           }));
         } finally {
@@ -280,6 +277,7 @@ export const useAppStore = create<AppStore>()(
           const response = await apiService.getAlerts(filters);
           if (response.success && response.data) {
             set({ alerts: response.data });
+            try { await localStorageService.cacheAlerts(response.data as any[]); } catch {}
           }
         } catch (error) {
           console.error('Error fetching alerts:', error);
@@ -296,10 +294,29 @@ export const useAppStore = create<AppStore>()(
                 alert.id === alertId ? updatedAlert : alert
               ),
             }));
+            try {
+              const cache = await localStorageService.getCachedAlerts<any>();
+              const updatedCache = Array.isArray(cache)
+                ? cache.map((a: any) => (a.id === alertId || a._id === alertId ? { ...a, status: 'acknowledged' } : a))
+                : [];
+              await localStorageService.cacheAlerts(updatedCache);
+            } catch {}
             return true;
           }
         } catch (error) {
-          console.error('Error acknowledging alert:', error);
+          console.error('Error acknowledging alert, enqueueing offline ACK:', error);
+          // Fallback: enqueue ACK and update cache
+          try {
+            await localStorageService.ackAlert(alertId);
+            set((state) => ({
+              alerts: state.alerts.map((alert) =>
+                alert.id === alertId ? { ...alert, status: 'acknowledged' } : alert
+              ),
+            }));
+            return true;
+          } catch (e) {
+            console.error('Error enqueueing ACK offline:', e);
+          }
         }
         return false;
       },

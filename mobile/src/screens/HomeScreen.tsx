@@ -162,19 +162,41 @@ const HomeScreen: React.FC = () => {
     recommendations: string[];
     generatedAt: string;
   } | null>(null);
+  const [alertsView, setAlertsView] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isVoiceCmd, setIsVoiceCmd] = useState(false);
 
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(() => {
       loadRecentData();
-      fetchAlerts?.().catch(() => {});
+      (async () => {
+        try {
+          await fetchAlerts?.();
+          if (alerts && alerts.length > 0) {
+            await localStorageService.cacheAlerts(alerts);
+            setAlertsView(alerts);
+          } else {
+            const cached = await localStorageService.getCachedAlerts();
+            setAlertsView(cached);
+          }
+        } catch {
+          const cached = await localStorageService.getCachedAlerts();
+          setAlertsView(cached);
+        }
+      })();
       loadUpcomingAppointments().catch(() => {});
       loadPredictive().catch(() => {});
     });
 
     return () => interaction.cancel();
   }, [fetchAlerts]);
+
+  useEffect(() => {
+    // keep alertsView in sync when alerts store updates
+    if (alerts && alerts.length > 0) {
+      setAlertsView(alerts);
+    }
+  }, [alerts]);
 
   const loadUpcomingAppointments = useCallback(async () => {
     try {
@@ -527,23 +549,19 @@ const HomeScreen: React.FC = () => {
             )}
           </View>
         )}
-        {alerts && alerts.length > 0 && (
+        {alertsView && alertsView.length > 0 && (
           <View style={styles.section}>
             <Title style={styles.sectionTitle}>{t('home.alerts')}</Title>
-            {alerts.slice(0, 3).map((a) => (
-              <Card key={a.id} style={styles.recentCard}>
+            {alertsView.slice(0, 3).map((a: any) => (
+              <Card key={a.id || a._id} style={styles.recentCard}>
                 <Card.Content>
                   <View style={styles.recentItemHeader}>
                     <View style={styles.recentItemInfo}>
                       <Title style={styles.recentItemTitle}>{a.title}</Title>
                       <Paragraph style={styles.recentItemSubtitle}>{a.message}</Paragraph>
                     </View>
-                    <Chip
-                      mode="outlined"
-                      style={styles.statusChip}
-                      textStyle={{ color: '#1976d2' }}
-                    >
-                      {a.priority?.toUpperCase?.() || 'INFO'}
+                    <Chip mode="outlined" style={styles.statusChip} textStyle={{ color: '#1976d2' }}>
+                      {(a.priority || 'info').toUpperCase?.() || 'INFO'}
                     </Chip>
                   </View>
                 </Card.Content>

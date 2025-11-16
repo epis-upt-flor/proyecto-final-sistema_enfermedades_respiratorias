@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -18,8 +18,12 @@ import {
 } from 'react-native-paper';
 import { useAppStore } from '../../store/useAppStore';
 import { Symptom, AIAnalysis } from '../../types';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const AIAnalysisScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const isOnline = useAppStore((s) => s.isOnline);
   const { offlineData } = useAppStore();
   const [selectedSymptoms, setSelectedSymptoms] = useState<Symptom[]>([]);
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
@@ -27,6 +31,19 @@ const AIAnalysisScreen: React.FC = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        !isOnline ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+            <Icon name="wifi-off" size={16} color="#f44336" />
+            <Paragraph style={{ color: '#f44336', marginLeft: 6, marginBottom: 0 }}>Offline</Paragraph>
+          </View>
+        ) : null
+      ),
+    });
+  }, [isOnline, navigation]);
 
   const clearProgressInterval = () => {
     if (progressIntervalRef.current) {

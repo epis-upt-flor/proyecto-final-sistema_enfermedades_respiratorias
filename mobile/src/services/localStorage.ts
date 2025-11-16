@@ -7,15 +7,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { apiService } from './api';
 import { MedicalHistory, SymptomAnalysis } from './api';
+import { telemedicineService } from './telemedicineService';
 
 // Types
 export interface SyncQueueItem {
   id: string;
   type: 'CREATE' | 'UPDATE' | 'DELETE';
-  entity: 'medical_history' | 'symptom_analysis' | 'user_profile';
+  entity: 'medical_history' | 'symptom_analysis' | 'user_profile' | 'appointment' | 'alert';
   data: any;
   timestamp: number;
   retryCount: number;
+  operation?: 'RESCHEDULE' | 'CANCEL' | 'ACK';
 }
 
 export interface OfflineData {
@@ -50,6 +52,8 @@ class LocalStorageService {
     LAST_PREDICTIONS: 'last_predictions',
     AUTH_TOKENS: 'auth_tokens',
     CURRENT_USER: 'current_user',
+    APPOINTMENTS: 'appointments_cache',
+    ALERTS_CACHE: 'alerts_cache',
   };
 
   constructor() {
@@ -132,12 +136,11 @@ class LocalStorageService {
       if (isOnline) {
         try {
           if (existingIndex >= 0) {
-            await apiService.updateMedicalHistory(history.id, history);
+            await apiService.put(`/medical-histories/${history.id}`, history);
           } else {
-            await apiService.createMedicalHistory(history);
+            await apiService.post('/medical-histories', history);
           }
         } catch (error) {
-          // If sync fails, add to queue
           await this.addToSyncQueue({
             type: existingIndex >= 0 ? 'UPDATE' : 'CREATE',
             entity: 'medical_history',
@@ -168,7 +171,7 @@ class LocalStorageService {
       const isOnline = (await NetInfo.fetch()).isConnected ?? false;
       if (isOnline) {
         try {
-          await apiService.deleteMedicalHistory(id);
+          await apiService.delete(`/medical-histories/${id}`);
         } catch (error) {
           await this.addToSyncQueue({
             type: 'DELETE',
@@ -206,13 +209,105 @@ class LocalStorageService {
       analyses.push(analysis);
       
       await AsyncStorage.setItem(this.KEYS.SYMPTOM_ANALYSES, JSON.stringify(analyses));
-      
-      // Note: Symptom analyses are typically read-only after creation
-      // They don't need to be synced back to server
+      // Analyses are typically read-only after creation; no server sync mandatory here
     } catch (error) {
       console.error('Error saving symptom analysis:', error);
       throw error;
     }
+  }
+
+  // Appointments cache & offline operations
+  async getCachedAppointments<T = any>(): Promise<T[]> {
+    try {
+      const data = await AsyncStorage.getItem(this.KEYS.APPOINTMENTS);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('Error getting appointments cache:', e);
+      return [];
+    }
+  }
+
+  private async setCachedAppointments(list: any[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(this.KEYS.APPOINTMENTS, JSON.stringify(list));
+    } catch (e) {
+      console.error('Error setting appointments cache:', e);
+    }
+  }
+
+  async createAppointment(payload: any): Promise<boolean> {
+    const isOnline = (await NetInfo.fetch()).isConnected ?? false;
+    if (isOnline) {
+      const created = await telemedicineService.createAppointment(payload);
+      if (created) {
+        const list = await this.getCachedAppointments();
+        await this.setCachedAppointments([created, ...list]);
+        return true;
+      }
+    }
+    // queue for later
+    await this.addToSyncQueue({ type: 'CREATE', entity: 'appointment', data: payload });
+    const list = await this.getCachedAppointments();
+    await this.setCachedAppointments([{ ...payload, _id: `local_${Date.now()}`, status: 'scheduled', syncStatus: 'pending' }, ...list]);
+    return true;
+  }
+
+  async rescheduleAppointment(appointmentId: string, scheduledAt: string): Promise<boolean> {
+    const isOnline = (await NetInfo.fetch()).isConnected ?? false;
+    if (isOnline) {
+      const ok = await telemedicineService.rescheduleAppointment(appointmentId, scheduledAt);
+      if (ok) return true;
+    }
+    await this.addToSyncQueue({ type: 'UPDATE', entity: 'appointment', operation: 'RESCHEDULE', data: { appointmentId, scheduledAt } });
+    const list = await this.getCachedAppointments();
+    const updated = list.map((a: any) => (a._id === appointmentId ? { ...a, scheduledAt, syncStatus: 'pending' } : a));
+    await this.setCachedAppointments(updated);
+    return true;
+  }
+
+  async cancelAppointment(appointmentId: string, reason?: string): Promise<boolean> {
+    const isOnline = (await NetInfo.fetch()).isConnected ?? false;
+    if (isOnline) {
+      const ok = await telemedicineService.cancelAppointment(appointmentId, reason);
+      if (ok) return true;
+    }
+    await this.addToSyncQueue({ type: 'UPDATE', entity: 'appointment', operation: 'CANCEL', data: { appointmentId, reason } });
+    const list = await this.getCachedAppointments();
+    const updated = list.map((a: any) => (a._id === appointmentId ? { ...a, status: 'cancelled', syncStatus: 'pending' } : a));
+    await this.setCachedAppointments(updated);
+    return true;
+  }
+
+  // Alerts cache & offline ack
+  async cacheAlerts(alerts: any[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(this.KEYS.ALERTS_CACHE, JSON.stringify(alerts));
+    } catch (e) {
+      console.error('Error caching alerts:', e);
+    }
+  }
+
+  async getCachedAlerts<T = any>(): Promise<T[]> {
+    try {
+      const raw = await AsyncStorage.getItem(this.KEYS.ALERTS_CACHE);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.error('Error reading alerts cache:', e);
+      return [];
+    }
+  }
+
+  async ackAlert(alertId: string): Promise<boolean> {
+    const isOnline = (await NetInfo.fetch()).isConnected ?? false;
+    if (isOnline) {
+      const res = await apiService.post(`/alerts/${alertId}/acknowledge`);
+      return !!res.success;
+    }
+    await this.addToSyncQueue({ type: 'UPDATE', entity: 'alert', operation: 'ACK', data: { alertId } });
+    const list = await this.getCachedAlerts();
+    const updated = list.map((a: any) => (a.id === alertId ? { ...a, status: 'acknowledged' } : a));
+    await this.cacheAlerts(updated);
+    return true;
   }
 
   // Sync methods
@@ -245,9 +340,26 @@ class LocalStorageService {
           // Increment retry count
           item.retryCount++;
           
-          // If max retries reached, remove from queue
+          // If max retries reached, mark error and remove from queue
           if (item.retryCount >= 3) {
             console.warn('Max retries reached for sync item:', item.id);
+            if (item.entity === 'medical_history') {
+              try {
+                const raw = await AsyncStorage.getItem(this.KEYS.MEDICAL_HISTORIES);
+                const list = raw ? JSON.parse(raw) : [];
+                const updated = list.map((h: any) => (h.id === item.data.id ? { ...h, syncStatus: 'error' } : h));
+                await AsyncStorage.setItem(this.KEYS.MEDICAL_HISTORIES, JSON.stringify(updated));
+              } catch {}
+            }
+            if (item.entity === 'appointment') {
+              try {
+                const raw = await AsyncStorage.getItem(this.KEYS.APPOINTMENTS);
+                const list = raw ? JSON.parse(raw) : [];
+                const apptId = item.data?.appointmentId || item.data?._id;
+                const updated = list.map((a: any) => (a._id === apptId ? { ...a, syncStatus: 'error' } : a));
+                await this.setCachedAppointments(updated);
+              } catch {}
+            }
           } else {
             failedItems.push(item);
           }
@@ -271,34 +383,59 @@ class LocalStorageService {
 
   private async processSyncItem(item: SyncQueueItem): Promise<void> {
     switch (item.entity) {
-      case 'medical_history':
-        await this.processMedicalHistorySync(item);
+      case 'medical_history': {
+        switch (item.type) {
+          case 'CREATE':
+            await apiService.post('/medical-histories', item.data);
+            break;
+          case 'UPDATE':
+            await apiService.put(`/medical-histories/${item.data.id}`, item.data);
+            break;
+          case 'DELETE':
+            await apiService.delete(`/medical-histories/${item.data.id}`);
+            break;
+        }
+        // mark as synced in local cache
+        try {
+          const historiesRaw = await AsyncStorage.getItem(this.KEYS.MEDICAL_HISTORIES);
+          const histories = historiesRaw ? JSON.parse(historiesRaw) : [];
+          const updated = histories.map((h: any) => (h.id === item.data.id ? { ...h, syncStatus: 'synced' } : h));
+          await AsyncStorage.setItem(this.KEYS.MEDICAL_HISTORIES, JSON.stringify(updated));
+        } catch {}
         break;
-      case 'user_profile':
-        await this.processUserProfileSync(item);
+      }
+      case 'user_profile': {
+        // Implement as needed
         break;
+      }
+      case 'appointment': {
+        if (item.type === 'CREATE') {
+          await telemedicineService.createAppointment(item.data);
+        } else if (item.operation === 'RESCHEDULE') {
+          await telemedicineService.rescheduleAppointment(item.data.appointmentId, item.data.scheduledAt);
+        } else if (item.operation === 'CANCEL') {
+          await telemedicineService.cancelAppointment(item.data.appointmentId, item.data.reason);
+        }
+        // mark appointment as synced in cache when we have an id
+        try {
+          if (item.data?.appointmentId) {
+            const raw = await AsyncStorage.getItem(this.KEYS.APPOINTMENTS);
+            const list = raw ? JSON.parse(raw) : [];
+            const updated = list.map((a: any) => (a._id === item.data.appointmentId ? { ...a, syncStatus: 'synced' } : a));
+            await this.setCachedAppointments(updated);
+          }
+        } catch {}
+        break;
+      }
+      case 'alert': {
+        if (item.operation === 'ACK') {
+          await apiService.post(`/alerts/${item.data.alertId}/acknowledge`);
+        }
+        break;
+      }
       default:
         console.warn('Unknown sync entity:', item.entity);
     }
-  }
-
-  private async processMedicalHistorySync(item: SyncQueueItem): Promise<void> {
-    switch (item.type) {
-      case 'CREATE':
-        await apiService.createMedicalHistory(item.data);
-        break;
-      case 'UPDATE':
-        await apiService.updateMedicalHistory(item.data.id, item.data);
-        break;
-      case 'DELETE':
-        await apiService.deleteMedicalHistory(item.data.id);
-        break;
-    }
-  }
-
-  private async processUserProfileSync(item: SyncQueueItem): Promise<void> {
-    // Implement user profile sync if needed
-    console.log('User profile sync not implemented yet');
   }
 
   // Data synchronization from server
@@ -310,15 +447,15 @@ class LocalStorageService {
       }
 
       // Sync medical histories
-      const historiesResponse = await apiService.getMedicalHistories();
+      const historiesResponse = await apiService.get('/medical-histories');
       if (historiesResponse.success && historiesResponse.data) {
         await AsyncStorage.setItem(
           this.KEYS.MEDICAL_HISTORIES,
-          JSON.stringify(historiesResponse.data.histories)
+          JSON.stringify(historiesResponse.data.histories || historiesResponse.data)
         );
       }
 
-      // Update last sync timestamp
+      // update last sync timestamp
       await AsyncStorage.setItem(this.KEYS.LAST_SYNC, Date.now().toString());
       
     } catch (error) {
@@ -373,6 +510,8 @@ class LocalStorageService {
         this.KEYS.SYNC_QUEUE,
         this.KEYS.LAST_SYNC,
         this.KEYS.USER_DATA,
+        this.KEYS.APPOINTMENTS,
+        this.KEYS.ALERTS_CACHE,
       ]);
       
       this.syncQueue = [];
@@ -478,6 +617,11 @@ class LocalStorageService {
       console.error('Error getting last predictions:', error);
       return [];
     }
+  }
+
+  // Public manual retry
+  async retrySyncNow(): Promise<void> {
+    await this.syncPendingData();
   }
 }
 

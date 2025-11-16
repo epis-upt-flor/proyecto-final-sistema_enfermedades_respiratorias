@@ -1,31 +1,50 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useLayoutEffect } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
-import { Card, Title, Paragraph, Chip, Button } from 'react-native-paper';
+import { Card, Title, Paragraph, Chip, Button, Snackbar } from 'react-native-paper';
 import { telemedicineService } from '../services/telemedicineService';
 import { useAppStore } from '../store/useAppStore';
 import { AppointmentDTO } from '../types';
 import { useNavigation } from '@react-navigation/native';
+import { localStorageService } from '../services/localStorage';
+import NetInfo from '@react-native-community/netinfo';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const AppointmentsScreen: React.FC = () => {
   const user = useAppStore((s) => s.user);
+  const isOnline = useAppStore((s) => s.isOnline);
   const addNotification = useAppStore((s) => s.addNotification);
   const navigation = useNavigation<any>();
   const [refreshing, setRefreshing] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentDTO[]>([]);
+  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        !isOnline ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+            <Icon name="wifi-off" size={16} color="#f44336" />
+            <Paragraph style={{ color: '#f44336', marginLeft: 6, marginBottom: 0 }}>Offline</Paragraph>
+          </View>
+        ) : null
+      ),
+    });
+  }, [isOnline, navigation]);
 
   const load = useCallback(async () => {
     try {
       if (!user?.id) return;
       const list = await telemedicineService.getAppointments(user.id);
-      setAppointments(list);
+      const cache = await localStorageService.getCachedAppointments<AppointmentDTO>();
+      setAppointments(list && list.length ? list : cache);
     } catch {
-      setAppointments([]);
+      const cache = await localStorageService.getCachedAppointments<AppointmentDTO>();
+      setAppointments(cache);
     }
   }, [user?.id]);
 
   useEffect(() => {
     load();
-    // Recordatorios in-app: notificar citas en <60 minutos
     const now = Date.now();
     (appointments || [])
       .filter((a) => a.scheduledAt)
@@ -50,6 +69,9 @@ const AppointmentsScreen: React.FC = () => {
     setRefreshing(false);
   }, [load]);
 
+  const pendingCount = useMemo(() => appointments.filter((a: any) => a.syncStatus === 'pending' || (a._id || '').startsWith('local_')).length, [appointments]);
+  const errorCount = useMemo(() => appointments.filter((a: any) => a.syncStatus === 'error').length, [appointments]);
+
   const upcoming = useMemo(
     () => appointments.filter((a) => a.scheduledAt && new Date(a.scheduledAt as any).getTime() >= Date.now())
       .sort((a, b) => new Date(a.scheduledAt as any).getTime() - new Date(b.scheduledAt as any).getTime()),
@@ -64,7 +86,7 @@ const AppointmentsScreen: React.FC = () => {
   const createMockAppointment = async () => {
     if (!user) return;
     const inTwoHours = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-    const appt = await telemedicineService.createAppointment({
+    const ok = await localStorageService.createAppointment({
       patientId: user.id,
       doctorId: 'doctor_demo',
       createdBy: user.id,
@@ -75,7 +97,7 @@ const AppointmentsScreen: React.FC = () => {
       createdAt: new Date().toISOString() as any,
       updatedAt: new Date().toISOString() as any,
     } as any);
-    if (appt) {
+    if (ok) {
       await load();
       Alert.alert('Cita creada', 'Se creó una cita de demostración en 2 horas');
     } else {
@@ -84,39 +106,77 @@ const AppointmentsScreen: React.FC = () => {
   };
 
   const confirmCancel = async (id: string) => {
+    const isOnline = (await NetInfo.fetch()).isConnected ?? false;
     Alert.alert('Cancelar cita', '¿Deseas cancelar esta cita?', [
       { text: 'No', style: 'cancel' },
       { text: 'Sí, cancelar', style: 'destructive', onPress: async () => {
-        const ok = await telemedicineService.cancelAppointment(id, 'cancel by user');
-        ok ? (await load(), Alert.alert('Cita cancelada')) : Alert.alert('Error', 'No se pudo cancelar');
+        const ok = await localStorageService.cancelAppointment(id, 'cancel by user');
+        if (ok) {
+          await load();
+          if (!isOnline) setSnackbar({ visible: true, message: 'Se encoló la cancelación; se sincronizará al volver online.' });
+        } else {
+          Alert.alert('Error', 'No se pudo cancelar');
+        }
       } },
     ]);
   };
 
   const rescheduleAppointment = async (id: string) => {
+    const isOnline = (await NetInfo.fetch()).isConnected ?? false;
     Alert.alert(
       'Reprogramar cita',
       'Selecciona una nueva hora',
       [
         { text: '+1 hora', onPress: async () => {
-          const ok = await telemedicineService.rescheduleAppointment(id, new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString());
-          ok ? (await load(), Alert.alert('Cita reprogramada', 'Movida +1 hora')) : Alert.alert('Error', 'No se pudo reprogramar');
+          const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString());
+          ok ? (await load(), !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' })) : Alert.alert('Error', 'No se pudo reprogramar');
         }},
         { text: '+4 horas', onPress: async () => {
-          const ok = await telemedicineService.rescheduleAppointment(id, new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString());
-          ok ? (await load(), Alert.alert('Cita reprogramada', 'Movida +4 horas')) : Alert.alert('Error', 'No se pudo reprogramar');
+          const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString());
+          ok ? (await load(), !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' })) : Alert.alert('Error', 'No se pudo reprogramar');
         }},
         { text: 'Mañana', onPress: async () => {
-          const ok = await telemedicineService.rescheduleAppointment(id, new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
-          ok ? (await load(), Alert.alert('Cita reprogramada', 'Movida a mañana')) : Alert.alert('Error', 'No se pudo reprogramar');
+          const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
+          ok ? (await load(), !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' })) : Alert.alert('Error', 'No se pudo reprogramar');
         }},
         { text: 'Cancelar', style: 'cancel' },
       ]
     );
   };
 
+  const retrySync = useCallback(async () => {
+    await localStorageService.retrySyncNow();
+    setSnackbar({ visible: true, message: 'Reintento lanzado en segundo plano.' });
+    await load();
+  }, [load]);
+
+  const getChipColor = (a: any) => {
+    if (a.syncStatus === 'error') return '#f44336';
+    if (a.syncStatus === 'pending' || (a._id || '').startsWith('local_')) return '#ff9800';
+    return a.status === 'cancelled' ? '#f44336' : '#1976d2';
+  };
+
+  const getChipText = (a: any) => {
+    if (a.syncStatus === 'error') return 'Error';
+    if (a.syncStatus === 'pending' || (a._id || '').startsWith('local_')) return 'Pendiente';
+    if (a.status === 'cancelled') return 'Cancelada';
+    return 'Programada';
+  };
+
   return (
     <View style={styles.container}>
+      {(pendingCount > 0 || errorCount > 0) && (
+        <Card style={styles.banner}>
+          <Card.Content>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Paragraph>
+                {pendingCount} pendientes · {errorCount} con error
+              </Paragraph>
+              <Button mode="outlined" onPress={retrySync} icon="refresh">Reintentar</Button>
+            </View>
+          </Card.Content>
+        </Card>
+      )}
       <FlatList
         data={upcoming}
         keyExtractor={(item) => item._id}
@@ -131,7 +191,7 @@ const AppointmentsScreen: React.FC = () => {
           </View>
         }
         renderItem={({ item }) => (
-          <Card style={styles.card} onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: item._id })}>
+          <Card style={styles.card} onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: item._id, fromError: (item as any).syncStatus === 'error' })}>
             <Card.Content>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
@@ -140,12 +200,24 @@ const AppointmentsScreen: React.FC = () => {
                     {item.scheduledAt ? new Date(item.scheduledAt as any).toLocaleString() : 'Por programar'}
                   </Paragraph>
                 </View>
-                <Chip mode="outlined">{item.status}</Chip>
+                <Chip mode="outlined" style={{ borderColor: getChipColor(item) }} textStyle={{ color: getChipColor(item) }}>
+                  {getChipText(item)}
+                </Chip>
               </View>
               <View style={styles.actions}>
                 <Button mode="outlined" onPress={() => rescheduleAppointment(item._id)}>Reprogramar</Button>
                 <Button mode="text" onPress={() => confirmCancel(item._id)} textColor="#f44336">Cancelar</Button>
               </View>
+              {item.syncStatus === 'error' && (
+                <View style={{ marginTop: 8 }}>
+                  <Paragraph style={{ color: '#f44336', marginBottom: 8 }}>
+                    No se pudo sincronizar esta cita. Toca “Reintentar” para volver a intentar o edita la cita para corregirla.
+                  </Paragraph>
+                  <Button mode="outlined" onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: item._id, fromError: true })}>
+                    Editar
+                  </Button>
+                </View>
+              )}
             </Card.Content>
           </Card>
         )}
@@ -162,20 +234,41 @@ const AppointmentsScreen: React.FC = () => {
                         {item.scheduledAt ? new Date(item.scheduledAt as any).toLocaleString() : 'Sin fecha'}
                       </Paragraph>
                     </View>
-                    <Chip mode="outlined">{item.status}</Chip>
+                    <Chip mode="outlined" style={{ borderColor: getChipColor(item) }} textStyle={{ color: getChipColor(item) }}>
+                      {getChipText(item)}
+                    </Chip>
                   </View>
+                  {item.syncStatus === 'error' && (
+                    <View style={{ marginTop: 8 }}>
+                      <Paragraph style={{ color: '#f44336', marginBottom: 8 }}>
+                        No se pudo sincronizar esta cita. Usa “Reintentar” o edítala para corregirla.
+                      </Paragraph>
+                      <Button mode="outlined" onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: item._id, fromError: true })}>
+                        Editar
+                      </Button>
+                    </View>
+                  )}
                 </Card.Content>
               </Card>
             ))}
           </View>
         }
       />
+
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={() => setSnackbar({ visible: false, message: '' })}
+        duration={2500}
+      >
+        {snackbar.message}
+      </Snackbar>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
+  banner: { marginHorizontal: 16, marginBottom: 8, borderLeftWidth: 4, borderLeftColor: '#ff9800' },
   list: { padding: 16 },
   card: { marginBottom: 12, elevation: 2 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useLayoutEffect } from 'react';
 import {
   LayoutAnimation,
   Platform,
@@ -25,8 +25,13 @@ import { useAppStore } from '../../store/useAppStore';
 import { MedicalHistory } from '../../types';
 import { LazyImage } from '../components/common/LazyImage';
 import { shallow } from 'zustand/shallow';
+import { localStorageService } from '../../services/localStorage';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const MedicalHistoryScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const isOnline = useAppStore((s) => s.isOnline);
   const { histories, removeHistory } = useAppStore(
     useCallback(
       (state) => ({
@@ -41,6 +46,19 @@ const MedicalHistoryScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<MedicalHistory | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        !isOnline ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+            <Icon name="wifi-off" size={16} color="#f44336" />
+            <Paragraph style={{ color: '#f44336', marginLeft: 6, marginBottom: 0 }}>Offline</Paragraph>
+          </View>
+        ) : null
+      ),
+    });
+  }, [isOnline, navigation]);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -64,7 +82,6 @@ const MedicalHistoryScreen: React.FC = () => {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    // Simular refresh
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
@@ -74,8 +91,8 @@ const MedicalHistoryScreen: React.FC = () => {
     (historyId: string) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       removeHistory(historyId);
-    setShowDetailModal(false);
-  },
+      setShowDetailModal(false);
+    },
     [removeHistory]
   );
 
@@ -107,87 +124,95 @@ const MedicalHistoryScreen: React.FC = () => {
 
   const renderHistoryItem = useCallback(
     ({ item }: { item: MedicalHistory }) => (
-    <Card 
-      style={styles.historyCard}
-      onPress={() => {
-        setSelectedHistory(item);
-        setShowDetailModal(true);
-      }}
-    >
-      <Card.Content>
-        <View style={styles.historyHeader}>
-          <View style={styles.historyInfo}>
-            <Title style={styles.patientName}>{item.patientName}</Title>
-            <Paragraph style={styles.diagnosis}>{item.diagnosis}</Paragraph>
-            <Text style={styles.date}>
-              📅 {new Date(item.date).toLocaleDateString()}
-            </Text>
-          </View>
-          <View style={styles.historyActions}>
-            <Chip
-              mode="outlined"
-              compact
-              style={[styles.statusChip, { borderColor: getSyncStatusColor(item.syncStatus) }]}
-              textStyle={{ color: getSyncStatusColor(item.syncStatus) }}
-              icon={getSyncStatusIcon(item.syncStatus)}
-            >
-              {item.syncStatus === 'synced' ? 'Sincronizado' : 'Pendiente'}
-            </Chip>
-          </View>
-        </View>
-
-        {item.symptoms && item.symptoms.length > 0 && (
-          <View style={styles.symptomsContainer}>
-            <Text style={styles.symptomsTitle}>Síntomas:</Text>
-            <View style={styles.symptomsList}>
-              {item.symptoms.slice(0, 3).map((symptom, index) => (
-                <Chip
-                  key={index}
-                  compact
-                  style={styles.symptomChip}
-                >
-                  {symptom.name}
-                </Chip>
-              ))}
-              {item.symptoms.length > 3 && (
-                <Chip compact style={styles.moreChip}>
-                  +{item.symptoms.length - 3} más
-                </Chip>
-              )}
+      <Card 
+        style={styles.historyCard}
+        onPress={() => {
+          setSelectedHistory(item);
+          setShowDetailModal(true);
+        }}
+      >
+        <Card.Content>
+          <View style={styles.historyHeader}>
+            <View style={styles.historyInfo}>
+              <Title style={styles.patientName}>{item.patientName}</Title>
+              <Paragraph style={styles.diagnosis}>{item.diagnosis}</Paragraph>
+              <Text style={styles.date}>
+                📅 {new Date(item.date).toLocaleDateString()}
+              </Text>
+            </View>
+            <View style={styles.historyActions}>
+              <Chip
+                mode="outlined"
+                compact
+                style={[styles.statusChip, { borderColor: getSyncStatusColor(item.syncStatus) }]}
+                textStyle={{ color: getSyncStatusColor(item.syncStatus) }}
+                icon={getSyncStatusIcon(item.syncStatus)}
+              >
+                {item.syncStatus === 'synced' ? 'Sincronizado' : item.syncStatus === 'error' ? 'Error' : 'Pendiente'}
+              </Chip>
             </View>
           </View>
-        )}
 
-        {item.location && (
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>
-              📍 {item.location.address || 'Ubicación registrada'}
-            </Text>
-          </View>
-        )}
+          {item.symptoms && item.symptoms.length > 0 && (
+            <View style={styles.symptomsContainer}>
+              <Text style={styles.symptomsTitle}>Síntomas:</Text>
+              <View style={styles.symptomsList}>
+                {item.symptoms.slice(0, 3).map((symptom, index) => (
+                  <Chip
+                    key={index}
+                    compact
+                    style={styles.symptomChip}
+                  >
+                    {symptom.name}
+                  </Chip>
+                ))}
+                {item.symptoms.length > 3 && (
+                  <Chip compact style={styles.moreChip}>
+                    +{item.symptoms.length - 3} más
+                  </Chip>
+                )}
+              </View>
+            </View>
+          )}
 
-        {item.images && item.images.length > 0 && (
-          <View style={styles.imagesContainer}>
-            <LazyImage
-              source={{ uri: item.images[0] }}
-              style={styles.imagePreview}
-              containerStyle={styles.imagePreviewContainer}
-              accessibilityLabel={`Imagen asociada a ${item.patientName}`}
-            />
-            <Text style={styles.imagesText}>
-              📷 {item.images.length} imagen(es)
-            </Text>
-          </View>
-        )}
-      </Card.Content>
-    </Card>
+          {item.location && (
+            <View style={styles.locationContainer}>
+              <Text style={styles.locationText}>
+                📍 {item.location.address || 'Ubicación registrada'}
+              </Text>
+            </View>
+          )}
+
+          {item.images && item.images.length > 0 && (
+            <View style={styles.imagesContainer}>
+              <LazyImage
+                source={{ uri: item.images[0] }}
+                style={styles.imagePreview}
+                containerStyle={styles.imagePreviewContainer}
+                accessibilityLabel={`Imagen asociada a ${item.patientName}`}
+              />
+              <Text style={styles.imagesText}>
+                📷 {item.images.length} imagen(es)
+              </Text>
+            </View>
+          )}
+        </Card.Content>
+      </Card>
     ),
     [getSyncStatusColor, getSyncStatusIcon]
   );
 
+  const hasPendingOrError = useMemo(
+    () => histories.some(h => h.syncStatus === 'pending' || h.syncStatus === 'error'),
+    [histories]
+  );
+
+  const retrySync = useCallback(async () => {
+    await localStorageService.retrySyncNow();
+  }, []);
+
   return (
     <View style={styles.container}>
-      {/* Search Bar */}
       <Searchbar
         placeholder="Buscar por nombre o diagnóstico..."
         onChangeText={setSearchQuery}
@@ -195,7 +220,19 @@ const MedicalHistoryScreen: React.FC = () => {
         style={styles.searchBar}
       />
 
-      {/* Lista de historias */}
+      {hasPendingOrError && (
+        <Card style={styles.banner}>
+          <Card.Content>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Paragraph>
+                {histories.filter(h => h.syncStatus === 'pending').length} pendientes · {histories.filter(h => h.syncStatus === 'error').length} con error
+              </Paragraph>
+              <Button mode="outlined" onPress={retrySync} icon="refresh">Reintentar</Button>
+            </View>
+          </Card.Content>
+        </Card>
+      )}
+
       {filteredHistories.length === 0 ? (
         <Card style={styles.emptyCard}>
           <Card.Content style={styles.emptyContent}>
@@ -220,7 +257,7 @@ const MedicalHistoryScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#1976d2']}
+              colors={["#1976d2"]}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -228,7 +265,6 @@ const MedicalHistoryScreen: React.FC = () => {
         />
       )}
 
-      {/* FAB para agregar nueva historia */}
       <FAB
         icon="plus"
         style={styles.fab}
@@ -237,7 +273,6 @@ const MedicalHistoryScreen: React.FC = () => {
         }}
       />
 
-      {/* Modal de detalles */}
       <Portal>
         <Modal
           visible={showDetailModal}
@@ -338,6 +373,12 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+  },
+  banner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff9800',
   },
   historyCard: {
     marginBottom: 12,

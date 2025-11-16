@@ -156,26 +156,30 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 ### 5.1 Estrategia Offline y Colas de Operaciones
 
-- [ ] Diseñar estrategia de almacenamiento local por dominio:
-  - [ ] Síntomas enviados, respuestas de modelos, citas, alertas.
-- [ ] Implementar colas de acciones offline:
-  - [ ] Guardar operaciones cuando no hay red (ej.: nuevas citas, respuestas de síntomas).
-  - [ ] Reintentar automáticamente al volver online.
+- ✅ Diseñar estrategia de almacenamiento local por dominio:
+  - ✅ Síntomas enviados (cache de `symptomAnalyses`), respuestas de modelos.
+  - ✅ Citas (cache local `appointments_cache`) y alertas (`alerts_cache`).
+- ✅ Implementar colas de acciones offline (en `localStorageService`):
+  - ✅ Guardar operaciones sin red:
+    - ✅ Crear/Reprogramar/Cancelar citas (cola `appointment` con operaciones `CREATE/RESCHEDULE/CANCEL`).
+    - ✅ Acknowledge de alertas (cola `alert` con operación `ACK`).
+  - ✅ Reintentar automáticamente al volver online (listener NetInfo + `syncPendingData`).
 
 ### 5.2 Manejo de Conflictos y Feedback al Usuario
 
-- [ ] Definir reglas simples de resolución de conflictos (ej.: último cambio gana, priorizar servidor).
-- [ ] Mostrar estados claros:
-  - [ ] “Pendiente de sincronización”.
-  - [ ] “Sincronizado”.
-  - [ ] “Error de sincronización” con opción de reintentar.
+- ✅ Reglas de resolución de conflictos:
+  - ✅ Último cambio gana a nivel local; al sincronizar desde servidor se prioriza servidor para cachear estados.
+  - ✅ Si un item agota reintentos, se marca como `error` en cache.
+- ✅ Estados visibles en UI (`MedicalHistoryScreen`):
+  - ✅ Chips por historia: “Pendiente” / “Sincronizado” / “Error” con iconos y colores.
+  - ✅ Banner con conteo de pendientes/errores y botón “Reintentar” (llama a `retrySyncNow`).
 
 ### 5.3 Testing de Modo Offline
 
-- [ ] Tests de integración mobile para:
-  - [ ] Uso en modo offline (lectura de datos cacheados).
-  - [ ] Reconexión y sincronización automática.
-  - [ ] Manejo de errores de red recurrentes.
+- ✅ Tests de integración mobile para:
+  - ✅ Uso en modo offline (lectura de datos cacheados).
+  - ✅ Reconexión y sincronización automática.
+  - ✅ Manejo de errores de red recurrentes (marca `error` tras reintentos).
 
 ---
 
