@@ -64,6 +64,15 @@ const SymptomAnalysesScreen: React.FC = () => {
         keyExtractor={(item, idx) => (item as any).id || `${idx}`}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ padding: 16 }}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews
+        getItemLayout={(_, index) => ({
+          length: 200, // Altura aproximada de cada card
+          offset: 200 * index,
+          index,
+        })}
         renderItem={({ item }) => {
           const chip = getChip((item as any).urgencyLevel || 'low');
           const generatedAt = (item as any).analyzedAt || (item as any).createdAt || new Date().toISOString();

@@ -28,6 +28,9 @@ import ARTrainingScreen from '../screens/ARTrainingScreen';
 import SymptomAnalysesScreen from '../screens/SymptomAnalysesScreen';
 import DoctorDashboardScreen from '../screens/DoctorDashboardScreen';
 import DirectChatScreen from '../screens/DirectChatScreen';
+import PatientAnalyticsScreen from '../screens/PatientAnalyticsScreen';
+import DoctorAnalyticsScreen from '../screens/DoctorAnalyticsScreen';
+import ConsentScreen from '../screens/ConsentScreen';
 import { featureFlags } from '../config/environment';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -320,6 +323,21 @@ const AppNavigator = () => {
               ? `Chat con ${route.params.patientName}`
               : 'Chat médico',
           })}
+        />
+        <Stack.Screen
+          name="PatientAnalytics"
+          component={PatientAnalyticsScreen}
+          options={{ title: 'Analytics Clínicos' }}
+        />
+        <Stack.Screen
+          name="DoctorAnalytics"
+          component={DoctorAnalyticsScreen}
+          options={{ title: 'Analytics Médicos' }}
+        />
+        <Stack.Screen
+          name="Consent"
+          component={ConsentScreen}
+          options={{ title: 'Consentimiento Informado' }}
         />
         </Stack.Navigator>
         {privacyVisible && (

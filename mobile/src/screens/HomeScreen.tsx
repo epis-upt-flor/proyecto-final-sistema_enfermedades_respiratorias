@@ -172,6 +172,7 @@ const HomeScreen: React.FC = () => {
     risk: 'low' | 'medium' | 'high';
     recommendations: string[];
     generatedAt: string;
+    trends?: HealthTrend[];
   } | null>(null);
   const [alertsView, setAlertsView] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -285,6 +286,7 @@ const HomeScreen: React.FC = () => {
           risk: analysis.riskAssessment.overallRisk,
           recommendations: analysis.recommendations.slice(0, 3),
           generatedAt: analysis.generatedAt,
+          trends: analysis.trends,
         });
       } else {
         setPredictiveSummary(null);

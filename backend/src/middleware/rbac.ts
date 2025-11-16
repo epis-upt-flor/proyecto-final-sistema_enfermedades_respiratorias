@@ -35,14 +35,50 @@ const permissionsByRole: Record<Role, Set<string>> = {
     'users:manage',
     'alerts:manage',
     'prescriptions:validate',
+    'prescriptions:create',
+    'prescriptions:read',
+    'prescriptions:update',
+    'prescriptions:delete',
+    'appointments:manage',
+    'appointments:read',
+    'appointments:create',
+    'appointments:update',
+    'appointments:delete',
+    'medical-histories:read',
+    'medical-histories:create',
+    'medical-histories:update',
+    'medical-histories:delete',
+    'analytics:read',
+    'analytics:admin',
+    'bi:export',
+    'uploads:manage',
+    'uploads:read',
+    'uploads:delete',
   ]),
   doctor: new Set([
     'reports:read',
     'reports:export',
     'prescriptions:validate',
+    'prescriptions:create',
+    'prescriptions:read',
+    'appointments:manage',
+    'appointments:read',
+    'appointments:create',
+    'appointments:update',
+    'medical-histories:read',
+    'medical-histories:create',
+    'medical-histories:update',
+    'analytics:read',
+    'bi:export',
+    'uploads:read',
   ]),
   patient: new Set([
-    // permisos de lectura propios se validan adicionalmente en controladores
+    'prescriptions:read', // Solo sus propias prescripciones
+    'appointments:read', // Solo sus propias citas
+    'appointments:create', // Crear sus propias citas
+    'medical-histories:read', // Solo sus propias historias
+    'medical-histories:create', // Crear sus propias historias
+    'uploads:read', // Solo sus propios archivos
   ])
 };
 

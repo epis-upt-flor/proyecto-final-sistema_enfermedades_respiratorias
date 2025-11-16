@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { auth, authorize } from '../middleware/auth';
+import { requireRole, requirePermission } from '../middleware/rbac';
 import { validate } from '../middleware/validation';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
@@ -46,7 +47,7 @@ const patientContextValidation = [
 
 router.post(
   '/',
-  authorize('doctor', 'admin'),
+  requireRole('doctor'), // Solo doctores pueden crear prescripciones
   [
     body('patientId').isString().notEmpty().withMessage('El paciente es obligatorio'),
     body('doctorId').isString().notEmpty().withMessage('El doctor es obligatorio'),

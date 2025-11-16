@@ -3,11 +3,17 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { analyticsService } from '../services/analyticsService';
 import { epidemiologicalService } from '../services/epidemiologicalService';
 import { aiIntegrationService } from '../services/aiIntegration';
+import { requireAuth } from '../middleware/auth';
+import { requireRole, requirePermission } from '../middleware/rbac';
 
 const router = Router();
 
+// Todas las rutas requieren autenticación
+router.use(requireAuth);
+
 router.get(
   '/executive-dashboard',
+  requireRole('admin'),
   asyncHandler(async (req: Request, res: Response) => {
     const periodInDays = req.query.periodInDays
       ? parseInt(req.query.periodInDays as string, 10)
@@ -29,6 +35,7 @@ router.get(
 
 router.get(
   '/epidemiology/district-trends',
+  requireRole('doctor'),
   asyncHandler(async (req: Request, res: Response) => {
     const periodInDays = req.query.periodInDays
       ? parseInt(req.query.periodInDays as string, 10)
@@ -47,6 +54,7 @@ router.get(
 
 router.get(
   '/epidemiology/outbreaks',
+  requireRole('doctor'),
   asyncHandler(async (req: Request, res: Response) => {
     const recentWindowDays = req.query.recentWindowDays
       ? parseInt(req.query.recentWindowDays as string, 10)

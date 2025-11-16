@@ -359,6 +359,9 @@ export type RootStackParamList = {
   ReportDetail: { reportId: string } | undefined;
   ARTraining: { mode: 'breathing' | 'inhaler' } | undefined;
   DirectChat: { patientId: string; patientName: string };
+  PatientAnalytics: undefined;
+  DoctorAnalytics: undefined;
+  Consent: undefined;
 };
 
 export type MainTabParamList = {

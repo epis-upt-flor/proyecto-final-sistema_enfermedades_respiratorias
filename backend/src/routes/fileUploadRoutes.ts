@@ -14,6 +14,7 @@ import {
 } from '../controllers/fileUploadController';
 import { uploadFiles } from '../services/fileUploadService';
 import { auth } from '../middleware/auth';
+import { requireRole } from '../middleware/rbac';
 import { validate } from '../middleware/validation';
 
 const router = Router();
@@ -51,6 +52,13 @@ router.post('/medical-files', uploadFiles, uploadMedicalFiles);
  * @access  Private (Patient, Doctor, Admin)
  */
 router.get('/file-info/:filePath', filePathValidation, validate, getFileInfo);
+
+/**
+ * @route   GET /api/v1/upload/stats
+ * @desc    Get upload statistics
+ * @access  Private (Admin only)
+ */
+router.get('/stats', requireRole('admin'), getUploadStats);
 
 /**
  * @route   DELETE /api/v1/upload/file/:filePath

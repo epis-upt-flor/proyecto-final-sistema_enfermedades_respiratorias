@@ -20,8 +20,10 @@ import {
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../services/i18nService';
+import { useNavigation } from '@react-navigation/native';
 
 const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const { 
     user, 
     setUser, 
@@ -285,6 +287,20 @@ const ProfileScreen: React.FC = () => {
           >
             {t('profile.saveProfile')}
           </Button>
+        </Card.Content>
+      </Card>
+
+      {/* Privacidad y Consentimiento */}
+      <Card style={styles.card}>
+        <Card.Content>
+          <Title>Privacidad y Consentimiento</Title>
+          <List.Item
+            title="Consentimiento Informado"
+            description="Gestionar tu consentimiento para el procesamiento de datos"
+            left={(props) => <List.Icon {...props} icon="shield-check" />}
+            onPress={() => navigation.navigate('Consent')}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          />
         </Card.Content>
       </Card>
 

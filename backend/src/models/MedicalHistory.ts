@@ -199,6 +199,12 @@ MedicalHistorySchema.index({
   date: -1
 });
 
+// Índices específicos para analytics (Fase 3)
+MedicalHistorySchema.index({ date: -1, diagnosis: 1 }); // Por fecha y diagnóstico
+MedicalHistorySchema.index({ date: -1, 'symptoms.severity': 1 }); // Por fecha y severidad de síntomas
+MedicalHistorySchema.index({ date: -1, age: 1 }); // Por fecha y edad (para análisis de riesgo)
+MedicalHistorySchema.index({ 'location.address': 'text', diagnosis: 'text' }); // Búsqueda de texto para analytics geográficos
+
 MedicalHistorySchema.index({
   doctorId: 1,
   patientId: 1,

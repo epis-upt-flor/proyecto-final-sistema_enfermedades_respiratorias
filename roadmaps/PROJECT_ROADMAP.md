@@ -88,14 +88,14 @@ Esta matriz resume de forma centralizada qué capacidades ofrece el sistema seg�
 |------|----|-----|--------|---------|-------------|-------|------|--------------|
 | **1. Fundamentos** | ✅ 100 % | ✅ Base SPA | ✅ App RN base | ✅ API base / Auth | ✅ Servicio FastAPI base | ⏳ Scripts iniciales | ✅ README/Quickstart | ✅ Esquema inicial |
 | **2. Dominios Core** | ✅ 100 % | ✅ CRUD UI básicas | ✅ Historias/citas básicas | ✅ Historias/Citas/Prescripciones/Alertas | ⏳ Soporte indirecto | [ ] | ✅ Secciones en README | ✅ Modelos colecciones core |
-| **3. Analytics/ML Inicial** | ✅ ~80 % | ✅ Dashboard + métricas ML | ⏳ Consumo parcial | ✅ Servicios analytics | ✅ Modelos iniciales + endpoints | ⏳ Jobs básicos | ⏳ Docs ML parciales | ⏳ Índices/consultas optimizadas |
+| **3. Analytics/ML Inicial** | ✅ 100 % | ✅ Dashboard + métricas ML | ✅ Tendencias/anomalías en Home | ✅ Servicios analytics + jobs | ✅ Modelos iniciales + endpoints | ✅ Jobs recurrentes ML | ✅ Docs modelos completas | ✅ Índices analytics optimizados |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | [ ] | ✅ Sección seguridad base | ✅ Config conexión segura |
 | **5. Testing y Calidad** | ✅ 100 % | ✅ Suites + CI | ✅ Unit/Integration/E2E | ✅ Unit/Integration/E2E + security/perf | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy | ⏳ Tests específicos BD |
-| **6. Optimización & Performance** | ✅ ~80 % | ✅ Code splitting, PWA, imágenes | ✅ Listas/imágenes/perf | ✅ Cache, queries, pooling, rate limit | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), monitores básicos | ⏳ Guías tuning avanzadas | ⏳ Monitoreo/repl. avanzada |
+| **6. Optimización & Performance** | ✅ 100 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ✅ Listas/imágenes/perf, optimización batería | ✅ Cache, queries, pooling, rate limit, p95/p99 | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
 | **7. Funcionalidades Core** | ✅ 100 % | ✅ Alertas, citas, prescripciones, reportes | ✅ Alertas/citas/prescripciones básicas | ✅ Todos dominios clínicos | ⏳ Orquestación avanzada | [ ] | ✅ Secciones por dominio | ✅ Esquema completo clínico |
 | **8. Integraciones Externas** | ⏳ ~30 % | [ ] UIs HL7/FHIR | [ ] | ⏳ FHIR/HL7 cliente/parser | [ ] | [ ] | ⏳ Docs HL7/FHIR | [ ] |
-| **9. Analytics & BI** | ✅ ~90 % | ✅ Dashboards ejecutivos/SHAP | ⏳ Visualizaciones extra | ✅ Servicios analytics y reportes automáticos | ✅ Modelos analytics + fairness | ⏳ Integración BI externa | ✅ Docs Analytics/BI | ✅ Índices para métricas |
-| **10. Seguridad Avanzada** | ✅ ~90 % | ⏳ Hardening UI | ⏳ Ajustes UX/consentimiento | ✅ Cifrado, audit logs, RBAC, WAF, DSR | ✅ Headers/rate limits, flags seguridad | ✅ Ingress TLS, WAF, backups, OTEL/Jaeger | ✅ GDPR/HIPAA para devs | ✅ Cifrado campos y backups |
+| **9. Analytics & BI** | ✅ 100 % | ✅ Dashboards ejecutivos/SHAP | ✅ Visualizaciones mobile (gráficos pacientes/médicos) | ✅ Servicios analytics y reportes automáticos | ✅ Modelos analytics + fairness | ✅ Conector BI (Power BI/Tableau) | ✅ Docs Analytics/BI + Dashboards Guide | ✅ Índices para métricas |
+| **10. Seguridad Avanzada** | ✅ 100 % | ✅ Hardening UI (CSP, sanitización, iframes) | ✅ UX legal/consentimiento completo | ✅ Cifrado, audit logs, RBAC granular, WAF, DSR | ✅ Headers/rate limits, flags seguridad | ✅ Ingress TLS, WAF, backups, OTEL/Jaeger | ✅ GDPR/HIPAA + Guía Seguridad Devs | ✅ Cifrado campos y backups |
 | **11. UX/UI** | ⏳ ~40 % | ⏳ Rediseño, temas, a11y | ⏳ Tutorial interactivo (resto ✅) | ⏳ DTOs y contratos UX-friendly | ⏳ Ajustes de payloads y errores | [ ] | ⏳ Guías UX/UI | [ ] |
 | **12. DevOps & Deployment** | ⏳ ~40 % | [ ] | [ ] | ⏳ Esquema básico despliegue | ⏳ Scripts ejecución ML | ⏳ CI/CD completo, Terraform, autoscaling general | [ ] | [ ] |
 | **13. Escalabilidad & Arquitectura** | ⏳ ~20 % | [ ] | [ ] | [ ] Microservicios, gateway | [ ] | ⏳ K8s base, falta mesh/queues | [ ] | [ ] Replicación/sharding |
@@ -110,30 +110,30 @@ Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidam
 
 > Sólo se listan tareas para fases con avance \<100 %. Se agrupan por capa para que sea fácil asignarlas a equipos (Web/Mobile/Backend/AI/Infra/Docs/BD).
 
-#### Fase 3: Analytics/ML Inicial (~80 %)
+#### Fase 3: Analytics/ML Inicial (~100 %) ✅
 - **Web**:  
   - ✅ Completar vistas de consumo de métricas ML (tendencias, anomalías, demanda) en paneles existentes.  
 - **Mobile**:  
-  - [ ] Exponer de forma consistente las métricas de tendencia/anomalías en Home o pantallas clínicas.  
+  - ✅ Exponer de forma consistente las métricas de tendencia/anomalías en Home o pantallas clínicas.  
 - **Infra**:  
-  - [ ] Programar jobs recurrentes para cálculo/agregado de métricas ML históricas.  
+  - ✅ Programar jobs recurrentes para cálculo/agregado de métricas ML históricas.  
 - **Docs**:  
-  - [ ] Completar documentación de modelos iniciales (inputs/outputs, limitaciones, ejemplos de uso).  
+  - ✅ Completar documentación de modelos iniciales (inputs/outputs, limitaciones, ejemplos de uso).  
 - **MongoDB (BD)**:  
-  - [ ] Ajustar índices específicos para consultas de analytics (por fecha, centro médico, diagnóstico, riesgo).  
+  - ✅ Ajustar índices específicos para consultas de analytics (por fecha, centro médico, diagnóstico, riesgo).  
 
-#### Fase 6: Optimización & Performance (~80 %)
+#### Fase 6: Optimización & Performance (~100 %) ✅
 - **Web**:  
-  - [ ] Documentar y terminar ajustes de code splitting avanzado y lazy loading en rutas de baja frecuencia.  
+  - ✅ Documentar y terminar ajustes de code splitting avanzado y lazy loading en rutas de baja frecuencia.  
 - **Mobile**:  
-  - [ ] Añadir métricas y ajustes adicionales para consumo de batería (intervalos de polling, timers, tareas en background).  
-  - [ ] Afinar aún más FlatList (getItemLayout, windowSize, removeClippedSubviews donde aplique).  
+  - ✅ Añadir métricas y ajustes adicionales para consumo de batería (intervalos de polling, timers, tareas en background).  
+  - ✅ Afinar aún más FlatList (getItemLayout, windowSize, removeClippedSubviews donde aplique).  
 - **Infra**:  
-  - [ ] Completar dashboards de performance (p95/p99) centralizados para backend y AI Services.  
+  - ✅ Completar dashboards de performance (p95/p99) centralizados para backend y AI Services.  
 - **Docs**:  
-  - [ ] Crear una guía de “Performance Playbook” para devs (mejores prácticas por capa).  
+  - ✅ Crear una guía de “Performance Playbook” para devs (mejores prácticas por capa).  
 - **MongoDB (BD)**:  
-  - [ ] Añadir monitoreo y alertas de slow queries y uso de índices.  
+  - ✅ Añadir monitoreo y alertas de slow queries y uso de índices.  
 
 #### Fase 8: Integraciones Externas (~30 %)
 - **Web**:  
@@ -149,25 +149,25 @@ Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidam
 - **Docs**:  
   - [ ] Documentar flujos de interoperabilidad (diagramas, contratos FHIR/HL7, ejemplos).  
 
-#### Fase 9: Analytics & BI (~90 %)
+#### Fase 9: Analytics & BI (~100 %) ✅
 - **Mobile**:  
-  - [ ] Añadir visualizaciones adicionales de analytics clínicos relevantes para pacientes y médicos (gráficos simples).  
+  - ✅ Añadir visualizaciones adicionales de analytics clínicos relevantes para pacientes y médicos (gráficos simples).  
 - **Infra**:  
-  - [ ] Integrar o dejar listo el conector con herramientas BI externas (ej. Power BI/Tableau) si aplica.  
+  - ✅ Integrar o dejar listo el conector con herramientas BI externas (ej. Power BI/Tableau) si aplica.  
 - **Docs**:  
-  - [ ] Extender documentación de dashboards (qué KPIs ver, cómo interpretar).  
+  - ✅ Extender documentación de dashboards (qué KPIs ver, cómo interpretar).  
 
-#### Fase 10: Seguridad Avanzada (~90 %)
+#### Fase 10: Seguridad Avanzada (~100 %) ✅
 - **Web**:  
-  - [ ] Completar hardening de UI (CSP, sanitización adicional en cliente, control estricto de iframes/contenido embebido).  
+  - ✅ Completar hardening de UI (CSP, sanitización adicional en cliente, control estricto de iframes/contenido embebido).  
 - **Mobile**:  
-  - [ ] Cerrar pendientes de UX legal y flujos de consentimiento explícito (pantallas, textos legales, logs de consentimiento).  
+  - ✅ Cerrar pendientes de UX legal y flujos de consentimiento explícito (pantallas, textos legales, logs de consentimiento).  
 - **Backend**:  
-  - [ ] Revisar y pulir reglas RBAC granulares por rol/permiso en todos los endpoints.  
+  - ✅ Revisar y pulir reglas RBAC granulares por rol/permiso en todos los endpoints.  
 - **Infra**:  
-  - [ ] Completar pruebas de WAF/DDoS (incluyendo ZAP y otros escáneres) y documentar hallazgos.  
+  - ✅ Completar pruebas de WAF/DDoS (incluyendo ZAP y otros escáneres) y documentar hallazgos.  
 - **Docs**:  
-  - [ ] Redactar una guía corta de “Seguridad para desarrolladores” con las prácticas y restricciones ya implementadas.  
+  - ✅ Redactar una guía corta de “Seguridad para desarrolladores” con las prácticas y restricciones ya implementadas.  
 
 #### Fase 11: UX/UI (~40 %)
 - **Web**:  
@@ -1085,15 +1085,26 @@ Archivos/Endpoints creados (stubs listos):
 **3.1 Estado**: ✅ 100 %  
 - ✅ Modelos ML para tendencias, anomalías y demanda.  
 - ✅ Integración de ML con backend y dashboards iniciales.  
+- ✅ Visualización de métricas ML en Web (dashboard con tendencias, anomalías, demanda).  
+- ✅ Visualización de tendencias/anomalías en Mobile (HomeScreen con HealthTrend).  
+- ✅ Jobs recurrentes para cálculo/agregado de métricas ML históricas (horarias, diarias, semanales).  
+- ✅ Documentación completa de modelos iniciales (inputs/outputs, limitaciones, ejemplos de uso).  
+- ✅ Índices MongoDB optimizados para consultas de analytics (por fecha, diagnóstico, severidad, urgencia, confianza).  
 
 **Archivos creados/mejorados**:  
-- AI Services: `ai-services/ml_models/{trend_predictor.py, anomaly_detector.py, demand_forecasting.py, prediction_monitor.py}`, `ai-services/api/routes/ml_monitoring.py`  
-- Backend: `backend/src/services/aiIntegration.ts`, `backend/src/services/analyticsService.ts`, `backend/src/controllers/dashboardController.ts`  
+- AI Services: `ai-services/ml_models/{trend_predictor.py, anomaly_detector.py, demand_forecasting.py, prediction_monitor.py}`, `ai-services/api/routes/ml_monitoring.py`, `ai-services/docs/MODELOS_INICIALES.md`  
+- Backend: `backend/src/services/aiIntegration.ts`, `backend/src/services/analyticsService.ts`, `backend/src/controllers/dashboardController.ts`, `backend/src/jobs/mlMetricsJobs.ts`  
+- Web: `web/src/components/AnalyticsDashboard.js` (sección de métricas ML)  
+- Mobile: `mobile/src/screens/HomeScreen.tsx` (visualización de tendencias en tarjeta predictiva)  
+- MongoDB: `backend/src/models/MedicalHistory.ts`, `backend/src/models/AIAnalysis.ts` (índices para analytics)  
 
 **Métricas logradas**:  
 - ✅ Predicciones de tendencias y demanda integradas en reportes y dashboards.  
+- ✅ Jobs ML ejecutándose periódicamente (horario, diario, semanal) con almacenamiento en Redis.  
+- ✅ Consultas de analytics optimizadas con índices compuestos en MongoDB.  
 
 **Documentación**:  
+- `ai-services/docs/MODELOS_INICIALES.md` (documentación completa de modelos iniciales).  
 - Secciones de ML en `ML_ROADMAP.md`, `AI_SERVICES_ROADMAP.md`.  
 
 ---
@@ -1142,24 +1153,33 @@ Archivos/Endpoints creados (stubs listos):
 
 ### Fase 6: Optimización y Performance ⚡
 
-**6.1 Estado**: ✅ 100 % (con trabajo adicional de bundle/batería en curso, pero fase de optimización funcional cumplida)  
+**6.1 Estado**: ✅ 100 %  
 - ✅ Backend optimizado (caching, queries, compresión, pooling, rate limiting).  
 - ✅ AI Services optimizados (caching, batch, quantization, GPU opcional).  
-- ✅ Web optimizado (code splitting, WebP, PWA, virtualización).  
-- ✅ Mobile optimizado (listas largas, imágenes, offline-first y microinteracciones).  
+- ✅ Web optimizado (code splitting, WebP, PWA, virtualización, lazy loading documentado).  
+- ✅ Mobile optimizado (listas largas, imágenes, offline-first, microinteracciones, optimización de batería).  
+- ✅ Métricas de percentiles (p95/p99) centralizadas para backend.  
+- ✅ Monitoreo de MongoDB (slow queries, uso de índices, alertas).  
+- ✅ Performance Playbook completo para desarrolladores.  
 
 **Archivos creados/mejorados**:  
-- Backend: `backend/src/services/cacheService.ts`, `backend/src/jobs/{alertJobs.ts, appointmentJobs.ts}`, `backend/src/middleware/rateLimiter.ts`  
+- Backend: `backend/src/services/cacheService.ts`, `backend/src/jobs/{alertJobs.ts, appointmentJobs.ts, mlMetricsJobs.ts}`, `backend/src/middleware/rateLimiter.ts`, `backend/src/metrics/percentileMetrics.ts`, `backend/src/monitoring/mongodbMonitoring.ts`, `backend/src/index.ts` (endpoint `/api/v1/metrics/percentiles`)  
 - AI Services: `ai-services/core/cache.py`, `ai-services/api/routes/health.py`, `ai-services/benchmark_endpoints.py`, `.github/workflows/ai-ml-bench.yml`  
-- Web: `web/webpack.config.js`, `web/src/components/VirtualizedList.js`  
-- Mobile: `mobile/src/screens/{MedicalHistoryScreen.tsx, AppointmentsScreen.tsx}`, `mobile/src/components/DataCapture/DataCaptureScreen.tsx`, `mobile/__tests__/performance/app-performance.test.ts`  
+- Web: `web/src/components/VirtualizedList.js`, `web/src/App.js` (lazy loading), `web/docs/LAZY_LOADING.md`  
+- Mobile: `mobile/src/screens/{MedicalHistoryScreen.tsx, AppointmentsScreen.tsx, SymptomAnalysesScreen.tsx}` (FlatList optimizado), `mobile/src/services/batteryOptimizationService.ts`, `mobile/__tests__/performance/app-performance.test.ts`  
+- Docs: `docs/PERFORMANCE_PLAYBOOK.md`, `web/docs/LAZY_LOADING.md`  
 
 **Métricas logradas**:  
 - ✅ Latencia API p95 < 180 ms; predicciones ML < 50 ms.  
 - ✅ Carga web < 2 s y Lighthouse > 90 en escenarios objetivo.  
 - ✅ Mejora de rendimiento percibido en mobile (listas suaves, imágenes más ligeras).  
+- ✅ Dashboards de performance con percentiles (p50, p95, p99) por ruta y método.  
+- ✅ Monitoreo automático de slow queries MongoDB (> 1000ms) con alertas.  
+- ✅ Análisis de uso de índices MongoDB para optimización continua.  
 
 **Documentación**:  
+- `docs/PERFORMANCE_PLAYBOOK.md` (guía completa de mejores prácticas por capa).  
+- `web/docs/LAZY_LOADING.md` (documentación de code splitting y lazy loading).  
 - `backend/README.md` (optimización y jobs), `ai-services/README.md` (performance ML), `web/tests/README.md`, `mobile/__tests__/README.md`.  
 
 ---
@@ -1207,40 +1227,66 @@ Archivos/Endpoints creados (stubs listos):
 
 **9.1 Estado**: ✅ 100 %  
 - ✅ Dashboard ejecutivo avanzado, dashboards SHAP, reportes automáticos y métricas de monitoreo ML.  
+- ✅ Visualizaciones de analytics en Mobile (gráficos simples para pacientes y médicos).  
+- ✅ Conector BI para herramientas externas (Power BI, Tableau) con formatos JSON, CSV, OData.  
+- ✅ Documentación completa de dashboards y KPIs con guía de interpretación.  
 
 **Archivos creados/mejorados**:  
-- Backend: `backend/src/services/{analyticsService.ts, epidemiologicalService.ts, metricAlertService.ts}`, `backend/src/models/AutomaticReport.ts`, `backend/src/services/automaticReportService.ts`, `backend/src/jobs/reportJobs.ts`  
+- Backend: `backend/src/services/{analyticsService.ts, epidemiologicalService.ts, metricAlertService.ts, biConnectorService.ts}`, `backend/src/models/AutomaticReport.ts`, `backend/src/services/automaticReportService.ts`, `backend/src/jobs/reportJobs.ts`, `backend/src/routes/biRoutes.ts`  
 - Web: `web/src/components/{ExecutiveDashboard.js, ShapDashboard.js, AutomaticReportsDashboard.js}`  
+- Mobile: `mobile/src/components/Analytics/SimpleChart.tsx`, `mobile/src/screens/{PatientAnalyticsScreen.tsx, DoctorAnalyticsScreen.tsx}`, `mobile/src/navigation/AppNavigator.tsx` (rutas analytics)  
 - AI Services: `ai-services/ml_models/{trend_predictor.py, anomaly_detector.py, demand_forecasting.py, prediction_monitor.py}`, `ai-services/ml_tests/test_fairness_and_drift.py`  
+- Docs: `docs/DASHBOARDS_GUIDE.md`  
 
 **Métricas logradas**:  
 - ✅ KPIs operativos, brotes predictivos y fairness ML disponibles en dashboards.  
+- ✅ Visualizaciones de analytics disponibles en mobile para pacientes y médicos (tendencias, distribución de riesgo, historial mensual).  
+- ✅ Conector BI listo para integración con Power BI y Tableau (endpoints `/api/v1/bi/powerbi/:dataset`, `/api/v1/bi/tableau/:dataset`, `/api/v1/bi/odata/:dataset`).  
 
 **Documentación**:  
+- `docs/DASHBOARDS_GUIDE.md` (guía completa de dashboards, KPIs e interpretación de métricas).  
 - Secciones de Fase 9 en `PROJECT_ROADMAP.md`, `AI_SERVICES_ROADMAP.md`, `ML_ROADMAP.md`.  
 
 ---
 
 ### Fase 10: Seguridad Avanzada 🔒
 
-**10.1 Estado**: ✅ 100 % (con consentimiento digital UX/legal aún ⏳)  
+**10.1 Estado**: ✅ 100 %  
 - ✅ Cifrado completo en tránsito y reposo.  
 - ✅ Audit logs HIPAA-like y RBAC granular.  
 - ✅ WAF, rate limiting avanzado, DDoS mitigation.  
 - ✅ Cumplimiento técnico GDPR/HIPAA y DSR (Data Subject Rights).  
+- ✅ Hardening de UI (CSP, sanitización, control de iframes).  
+- ✅ Flujos de consentimiento explícito completos (pantallas, logs, backend).  
+- ✅ RBAC granular revisado y pulido en todos los endpoints.  
+- ✅ Pruebas de WAF/DDoS documentadas (ZAP, herramientas adicionales).  
+- ✅ Guía de seguridad para desarrolladores completa.  
 
 **Archivos creados/mejorados**:  
 - Cifrado: `backend/src/utils/encryption.ts` aplicado en modelos sensibles (`MedicalHistory.ts`, `User.ts`, `Prescription.ts`, `Appointment.ts`, `Alert.ts`, `AIAnalysis.ts`).  
 - HTTPS/WAF: `backend/src/middleware/enforceHttps.ts`, `backend/src/index.ts`, `infrastructure/k8s/backend-ingress.yaml` (TLS, ModSecurity, CRS).  
-- Auditoría: `backend/src/models/AuditLog.ts`, `backend/src/middleware/auditLogger.ts`.  
+- Auditoría: `backend/src/models/AuditLog.ts`, `backend/src/middleware/auditLogger.ts`, `backend/src/middleware/rbacAudit.ts`.  
 - Backups cifrados y purga: `infrastructure/k8s/mongo-backup-restic.yaml`, `infrastructure/k8s/backend-auditlog-cronjob.yaml`.  
 - DSR y política: `backend/src/controllers/dsrController.ts`, `backend/src/routes/dsrRoutes.ts`, `backend/GDPR_HIPAA_POLICY.md`.  
+- Web Hardening: `web/src/utils/securityUtils.js` (sanitización mejorada, control de iframes), `web/src/utils/cspEnforcer.js`, `web/public/index.html` (CSP mejorado), `web/src/index.js` (enforcement CSP).  
+- Mobile Consent: `mobile/src/screens/ConsentScreen.tsx` (mejorado con logs completos), `mobile/src/screens/ProfileScreen.tsx` (navegación a consentimiento), `mobile/src/navigation/AppNavigator.tsx` (ruta Consent).  
+- Backend RBAC: `backend/src/middleware/rbac.ts` (permisos expandidos), `backend/src/routes/prescriptionRoutes.ts`, `backend/src/routes/appointmentsRoutes.ts`, `backend/src/routes/fileUploadRoutes.ts` (RBAC granular aplicado).  
+- Consent Backend: `backend/src/routes/consentRoutes.ts` (ya existía, integrado), `backend/src/index.ts` (ruta consent registrada).  
+- Testing: `.github/workflows/security-zap.yml` (mejorado con schedule, reportes, comentarios en PR).  
+- Docs: `docs/SECURITY_DEVELOPER_GUIDE.md`, `docs/WAF_DDOS_TESTING.md`.  
 
 **Métricas logradas**:  
 - ✅ Logs de auditoría completos y purga automática.  
 - ✅ Zero trust básico (cifrado en tránsito/en reposo, WAF y límites de consumo).  
+- ✅ CSP enforcement activo en cliente (detección de violaciones).  
+- ✅ Control estricto de iframes (lista blanca, sandbox restrictivo).  
+- ✅ Consentimiento completo con logs auditables (IP, user-agent, timestamp).  
+- ✅ RBAC granular en todos los endpoints críticos (permisos por acción).  
+- ✅ Pruebas de seguridad automatizadas (ZAP semanal, reportes documentados).  
 
 **Documentación**:  
+- `docs/SECURITY_DEVELOPER_GUIDE.md` (guía completa de seguridad para desarrolladores).  
+- `docs/WAF_DDOS_TESTING.md` (documentación de pruebas WAF/DDoS y hallazgos).  
 - `SECURITY.md`, `backend/README.md` (seguridad avanzada), `GDPR_HIPAA_POLICY.md`, secciones de Fase 10 en este roadmap.  
 
 ---

@@ -11,6 +11,7 @@ import {
   getSystemHealth
 } from '../controllers/dashboardController';
 import { auth } from '../middleware/auth';
+import { requireRole } from '../middleware/rbac';
 
 const router = Router();
 
@@ -22,14 +23,14 @@ router.use(auth);
  * @desc    Get admin dashboard overview
  * @access  Private (Admin only)
  */
-router.get('/admin', getAdminDashboard);
+router.get('/admin', requireRole('admin'), getAdminDashboard);
 
 /**
  * @route   GET /api/v1/dashboard/doctor
  * @desc    Get doctor dashboard overview
  * @access  Private (Doctor, Admin)
  */
-router.get('/doctor', getDoctorDashboard);
+router.get('/doctor', requireRole('doctor'), getDoctorDashboard);
 
 /**
  * @route   GET /api/v1/dashboard/patient
@@ -43,6 +44,6 @@ router.get('/patient', getPatientDashboard);
  * @desc    Get system health status
  * @access  Private (Admin only)
  */
-router.get('/health', getSystemHealth);
+router.get('/health', requireRole('admin'), getSystemHealth);
 
 export default router;

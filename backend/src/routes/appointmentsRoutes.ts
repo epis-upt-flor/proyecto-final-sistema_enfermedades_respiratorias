@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { auth, authorize } from '../middleware/auth';
+import { requireRole, requirePermission } from '../middleware/rbac';
 import { validate } from '../middleware/validation';
 import { asyncHandler } from '../utils/asyncHandler';
 import appointmentService from '../services/appointmentService';

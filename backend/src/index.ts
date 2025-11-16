@@ -24,6 +24,8 @@ import prescriptionRoutes from './routes/prescriptionRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import automaticReportRoutes from './routes/automaticReportRoutes';
 import dsrRoutes from './routes/dsrRoutes';
+import biRoutes from './routes/biRoutes';
+import consentRoutes from './routes/consentRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -40,7 +42,10 @@ import { smartRateLimiter } from './middleware/rateLimiter';
 import { startAlertJobs, stopAlertJobs } from './jobs/alertJobs';
 import { startAppointmentJobs, stopAppointmentJobs } from './jobs/appointmentJobs';
 import { startReportJobs, stopReportJobs } from './jobs/reportJobs';
+import { startMlMetricsJobs, stopMlMetricsJobs } from './jobs/mlMetricsJobs';
 import { metricsMiddleware, metricsHandler } from './metrics/metrics';
+import { percentileMetricsMiddleware } from './metrics/percentileMetrics';
+import { initMongoDBMonitoring } from './monitoring/mongodbMonitoring';
 import { initTelemetry, shutdownTelemetry } from './telemetry/tracing';
 
 class App {
@@ -77,6 +82,9 @@ class App {
 
     // Rate limiting (Redis + fallback)
     this.app.use('/api/', smartRateLimiter);
+
+    // Percentile metrics middleware (para p95/p99)
+    this.app.use('/api/', percentileMetricsMiddleware);
 
     // Body parsing middleware
     this.app.use(express.json({ limit: '10mb' }));
@@ -165,6 +173,15 @@ class App {
 
     // Metrics endpoint (protegible por token)
     this.app.get('/metrics', metricsHandler);
+
+    // Percentiles endpoint (p95/p99)
+    this.app.get('/api/v1/metrics/percentiles', async (req, res) => {
+      const { getPercentileMetrics } = await import('./metrics/percentileMetrics');
+      const route = req.query.route as string | undefined;
+      const method = req.query.method as string | undefined;
+      const metrics = getPercentileMetrics(route, method);
+      res.json({ success: true, data: metrics });
+    });
   }
 
   private initializeRoutes(): void {
@@ -182,6 +199,8 @@ class App {
     this.app.use('/api/v1/prescriptions', prescriptionRoutes);
     this.app.use('/api/v1/reports/automatic', automaticReportRoutes);
     this.app.use('/api/v1/dsr', dsrRoutes);
+    this.app.use('/api/v1/bi', biRoutes);
+    this.app.use('/api/v1/consent', consentRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {
@@ -217,6 +236,9 @@ class App {
   }
 
   private async initializeDatabase(): Promise<void> {
+    // Inicializar monitoreo de MongoDB (slow queries, índices)
+    initMongoDBMonitoring();
+
     // Skip database connection in test environment
     if (process.env.NODE_ENV === 'test') {
       // In test environment, connection is handled by test setup
@@ -266,6 +288,7 @@ class App {
     startAlertJobs();
     startAppointmentJobs();
     startReportJobs();
+    startMlMetricsJobs();
   }
 
   public listen(): void {
@@ -301,6 +324,7 @@ process.on('SIGTERM', () => {
   stopAlertJobs();
   stopAppointmentJobs();
   stopReportJobs();
+  stopMlMetricsJobs();
   Promise.all([shutdownTelemetry(), disconnectRedis()]).finally(() => process.exit(0));
 });
 
@@ -309,6 +333,7 @@ process.on('SIGINT', () => {
   stopAlertJobs();
   stopAppointmentJobs();
   stopReportJobs();
+  stopMlMetricsJobs();
   Promise.all([shutdownTelemetry(), disconnectRedis()]).finally(() => process.exit(0));
 });
 

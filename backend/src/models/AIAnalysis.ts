@@ -202,6 +202,11 @@ AIAnalysisSchema.index({
   confidence: -1 
 });
 
+// Índices específicos para analytics (Fase 3)
+AIAnalysisSchema.index({ timestamp: -1, urgency: 1 }); // Por fecha y urgencia
+AIAnalysisSchema.index({ timestamp: -1, confidence: -1 }); // Por fecha y confianza (para análisis de riesgo)
+AIAnalysisSchema.index({ createdAt: -1, urgency: 1, confidence: -1 }); // Compuesto para dashboards de analytics
+
 // Virtual para obtener la urgencia en español
 AIAnalysisSchema.virtual('urgencyText').get(function() {
   const urgencyMap = {

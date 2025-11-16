@@ -14,6 +14,7 @@ import {
   exportMedicalHistories
 } from '../controllers/medicalHistoryController';
 import { authenticate, authorize } from '../middleware/auth';
+import { requireRole, requirePermission } from '../middleware/rbac';
 import { validateRequest } from '../middleware/validation';
 import { 
   createMedicalHistorySchema,
@@ -33,17 +34,18 @@ router.post('/',
   createMedicalHistory
 );
 
+// GET: Pacientes solo ven sus propias historias, médicos y admins ven todas
 router.get('/', getMedicalHistories);
-router.get('/stats', getMedicalHistoryStats);
-router.get('/top-diagnoses', getTopDiagnoses);
-router.get('/age-stats', getAgeStats);
-router.get('/export', exportMedicalHistories);
+router.get('/stats', requireRole('doctor'), getMedicalHistoryStats);
+router.get('/top-diagnoses', requireRole('doctor'), getTopDiagnoses);
+router.get('/age-stats', requireRole('doctor'), getAgeStats);
+router.get('/export', requirePermission('reports:export'), exportMedicalHistories);
 
-// Rutas de búsqueda
-router.get('/location', getMedicalHistoriesByLocation);
-router.get('/date-range', getMedicalHistoriesByDateRange);
+// Rutas de búsqueda (solo médicos y admins)
+router.get('/location', requireRole('doctor'), getMedicalHistoriesByLocation);
+router.get('/date-range', requireRole('doctor'), getMedicalHistoriesByDateRange);
 
-// Rutas por ID
+// Rutas por ID: Pacientes solo ven sus propias historias (validado en controller)
 router.get('/:id', getMedicalHistoryById);
 router.put('/:id', 
   authorize('doctor', 'admin'), 
