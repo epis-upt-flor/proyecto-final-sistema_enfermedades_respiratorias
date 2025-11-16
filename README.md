@@ -117,7 +117,8 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 
 #### Mobile
 - **[mobile/README.md](mobile/README.md)** - Documentación de la app móvil
-- **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - Guía completa de tests móviles
+- **[mobile/MOBILE_ROADMAP.md](mobile/MOBILE_ROADMAP.md)** - Roadmap móvil
+- Analíticas y errores: `analyticsService` (eventos/timings con persistencia) y `errorTrackingService` (handler global).
 
 ### 🧪 Testing
 
@@ -180,10 +181,15 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 
 ### 📱 Mobile
 - ✅ App completa React Native
-- ✅ Modo offline
-- ✅ Sincronización automática
-- ✅ Notificaciones push
-- ✅ **Suite completa de tests** (50+ tests: unitarios, integración, E2E, offline, sincronización) - Ver [mobile/__tests__/README.md](mobile/__tests__/README.md)
+- ✅ Offline-first con colas de sync (citas, alertas, historias)
+- ✅ Sincronización automática y estados visibles (pending/synced/error)
+- ✅ Notificaciones in-app y push (según plataforma)
+- ✅ Onboarding con i18n (ES/EN) y placeholders PT/FR/QU
+- ✅ Voz (dictado + comandos), AR (ejercicios guiados), Telemedicina (citas)
+- ✅ Análisis predictivo con fallback local
+- ✅ Wearables (resumen FC, pasos, SpO₂ con stub seguro)
+- ✅ Analíticas y manejo de errores en producción
+- ✅ **Tests mobile**: unitarios, integración (offline, citas), cobertura en CI
 
 ## ✅ Módulos Clínicos Avanzados (Fase 7 Completada)
 
@@ -333,5 +339,5 @@ Para más detalles sobre licencias específicas, consulta los archivos `LICENSE`
 
 ---
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Noviembre 2025
 

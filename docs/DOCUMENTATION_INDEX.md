@@ -8,7 +8,7 @@
 |---------|-------------|--------|
 | [README.md](../README.md) | Documentación principal del proyecto | ✅ Actualizado |
 | [QUICKSTART.md](../QUICKSTART.md) | Guía de inicio rápido | ✅ |
-| [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md) | Roadmap completo del proyecto | ✅ Nuevo |
+| [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md) | Roadmap completo del proyecto | ✅ |
 | [ML_ROADMAP.md](../ML_ROADMAP.md) | Roadmap específico del sistema ML | ✅ |
 | [DEPLOYMENT.md](../DEPLOYMENT.md) | Guía de deployment | ✅ |
 | [SECURITY.md](../SECURITY.md) | Políticas y medidas de seguridad | ✅ |
@@ -38,7 +38,18 @@
 
 #### Mobile
 - [mobile/README.md](../mobile/README.md) - Documentación principal de la app móvil
-- [mobile/RespiCare-Mobile/README.md](../mobile/RespiCare-Mobile/README.md) - Documentación técnica
+- [mobile/MOBILE_ROADMAP.md](../mobile/MOBILE_ROADMAP.md) - Roadmap móvil
+
+Resumen de capacidades recientes (mobile):
+- Offline-first con cola de sync (citas, alertas, historias), banners/chips de estado, snackbars.
+- Onboarding con i18n (ES/EN) y placeholders PT/FR/QU.
+- Voz: dictado en captura y comandos en Home.
+- AR: ejercicios guiados (Respiración/Inhalador) con estado persistente.
+- Telemedicina: gestión de citas (crear/reprogramar/cancelar) con retry.
+- Análisis predictivo (riesgo + recomendaciones) con fallback local.
+- Wearables: resumen (FC, pasos, SpO₂) vía servicio stub.
+- Analíticas y rendimiento: `analyticsService` (eventos y timings) con persistencia/auto-flush.
+- Errores en producción: `errorTrackingService` y handler global.
 
 #### Web
 - Documentación en desarrollo (ver código fuente)
@@ -107,5 +118,5 @@ Archivos temporales o con timestamps que ya no son necesarios:
 
 ---
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Noviembre 2025
 

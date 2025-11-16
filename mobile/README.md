@@ -35,8 +35,8 @@ Aplicación móvil completa para el sistema de gestión de enfermedades respirat
 #### 4. **Funcionalidades de Base de Datos** 💾
 - Almacenamiento local con AsyncStorage
 - Sincronización bidireccional con el backend
-- Cola de sincronización para modo offline
-- Gestión de conflictos de datos
+- Cola de sincronización para modo offline (historias, citas, alertas)
+- Gestión de conflictos de datos (last-write-wins local, prioridad servidor al cachear)
 - Backup y recuperación automática
 
 #### 5. **Captura de Datos** 📝
@@ -81,9 +81,16 @@ Aplicación móvil completa para el sistema de gestión de enfermedades respirat
 mobile/
 ├── src/
 │   ├── services/
-│   │   ├── api.ts                 # Cliente API centralizado
-│   │   ├── localStorage.ts        # Servicio de almacenamiento local
-│   │   └── aiService.ts          # Servicio de IA
+│   │   ├── api.ts                       # Cliente API centralizado
+│   │   ├── localStorage.ts              # Almacenamiento local (colas de sync)
+│   │   ├── aiService.ts                 # Servicio de IA
+│   │   ├── i18nService.ts               # Internacionalización
+│   │   ├── telemedicineService.ts       # Telemedicina (citas y llamadas)
+│   │   ├── predictiveAnalysisService.ts # Analytics/ML
+│   │   ├── arService.ts                 # Realidad aumentada (stub)
+│   │   ├── wearablesService.ts          # Wearables (stub seguro)
+│   │   ├── analyticsService.ts          # Analíticas (eventos/timings + persistencia)
+│   │   └── errorTrackingService.ts      # Errores en producción (handler global)
 │   ├── components/
 │   │   ├── ChatBot/              # Chatbot médico
 │   │   ├── DataCapture/          # Captura de datos
