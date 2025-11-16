@@ -25,8 +25,8 @@ Aplicación móvil offline-first para pacientes y médicos, con IA, telemedicina
 
 ## Fase M4: Experiencia y Funciones Avanzadas
 - ⏳ Tutoriales interactivos primera vez (tour guiado)
-- ⏳ Calendario de citas mejorado (selector nativo/DateTimePicker)
-- ⏳ Historial de análisis de síntomas y visualización SHAP simple
+- ✅ Calendario de citas mejorado (selector nativo/DateTimePicker)
+- ✅ Historial de análisis de síntomas y visualización SHAP simple
 - ⏳ Compartir reportes PDF desde mobile
 - ⏳ AR ejercicios asistidos (modos ampliados)
 
@@ -152,7 +152,7 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 - ✅ Consumir endpoints de analytics/ML relevantes para el usuario móvil.
 - ✅ Riesgo personalizado (overallRisk) con recomendaciones principales.
-- ⏳ Tendencias de síntomas a lo largo del tiempo (endpoint listo; pendiente UI específica).
+- ✅ Tendencias de síntomas a lo largo del tiempo (UI básica en Home: lista de tendencias)
 - ✅ Mostrar insights en el dashboard:
   - ✅ Tarjeta de riesgo con chip (Low/Medium/High) y recomendaciones.
   - ✅ Mensaje con fecha/hora de generación (contexto temporal).

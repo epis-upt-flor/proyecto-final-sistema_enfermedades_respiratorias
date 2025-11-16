@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { AppState, View, Text, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -24,6 +25,7 @@ import AppointmentsScreen from '../screens/AppointmentsScreen';
 import AlertDetailScreen from '../screens/AlertDetailScreen';
 import AppointmentDetailScreen from '../screens/AppointmentDetailScreen';
 import ARTrainingScreen from '../screens/ARTrainingScreen';
+import SymptomAnalysesScreen from '../screens/SymptomAnalysesScreen';
 import { featureFlags } from '../config/environment';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -173,6 +175,20 @@ const AppNavigator = () => {
   const isAuthenticated = useAppStore((state) => Boolean(state.user), shallow);
   const { theme } = useTheme();
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
+  const navRef = React.useRef(createNavigationContainerRef<any>());
+
+  const setScreenCapture = React.useCallback(async (block: boolean) => {
+    try {
+      // @ts-ignore dependencia opcional
+      const ScreenCapture = require('expo-screen-capture');
+      if (block && ScreenCapture?.preventScreenCaptureAsync) {
+        await ScreenCapture.preventScreenCaptureAsync();
+      } else if (!block && ScreenCapture?.allowScreenCaptureAsync) {
+        await ScreenCapture.allowScreenCaptureAsync();
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     i18nService.initialize();
@@ -183,8 +199,10 @@ const AppNavigator = () => {
     errorTrackingService.setGlobalHandler();
     return () => {
       analyticsService.stopAutoFlush();
+      // Revertir bloqueo de capturas al salir
+      setScreenCapture(false);
     };
-  }, []);
+  }, [setScreenCapture]);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -198,9 +216,35 @@ const AppNavigator = () => {
     checkOnboarding();
   }, []);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      // Mostrar overlay cuando la app no está activa para ocultar contenido en multitarea
+      setPrivacyVisible(state !== 'active');
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <PaperProvider theme={theme}>
-      <NavigationContainer>
+      <NavigationContainer
+        ref={navRef}
+        onReady={() => {
+          try {
+            const route = navRef.current?.getCurrentRoute();
+            const name = route?.name || '';
+            const sensitive = ['History', 'AI', 'Appointments', 'AppointmentDetail', 'AlertDetail'].includes(name);
+            void setScreenCapture(Boolean(isAuthenticated && sensitive));
+          } catch {}
+        }}
+        onStateChange={() => {
+          try {
+            const route = navRef.current?.getCurrentRoute();
+            const name = route?.name || '';
+            const sensitive = ['History', 'AI', 'Appointments', 'AppointmentDetail', 'AlertDetail'].includes(name);
+            void setScreenCapture(Boolean(isAuthenticated && sensitive));
+          } catch {}
+        }}
+      >
         <Stack.Navigator
         screenOptions={{
           headerStyle: {
@@ -247,10 +291,38 @@ const AppNavigator = () => {
           component={ARTrainingScreen}
           options={{ title: 'Entrenamiento AR' }}
         />
+        <Stack.Screen
+          name="SymptomAnalyses"
+          component={SymptomAnalysesScreen}
+          options={{ title: 'Historial de Análisis' }}
+        />
         </Stack.Navigator>
+        {privacyVisible && (
+          <View style={styles.privacyOverlay}>
+            <Text style={styles.privacyText}>RespiCare</Text>
+          </View>
+        )}
       </NavigationContainer>
     </PaperProvider>
   );
 };
 
 export default AppNavigator;
+
+const styles = StyleSheet.create({
+  privacyOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0a0a0a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  privacyText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+});

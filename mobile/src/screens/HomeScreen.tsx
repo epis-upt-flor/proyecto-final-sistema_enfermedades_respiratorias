@@ -45,14 +45,24 @@ const QuickActionCard = React.memo(
     action,
     onPress,
   }: QuickAction & { onPress: (action: string) => void }) => (
-    <TouchableOpacity onPress={() => onPress(action)} style={styles.quickActionCard}>
+    <TouchableOpacity
+      onPress={async () => {
+        try { (await import('../services/hapticsService')).hapticsService.selection(); } catch {}
+        onPress(action);
+      }}
+      style={styles.quickActionCard}
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${description}`}
+      testID={`quick-action-${action}`}
+    >
       <Card style={[styles.card, { borderLeftColor: color, borderLeftWidth: 4 }]}>
         <Card.Content style={styles.cardContent}>
           <View style={styles.cardHeader}>
-            <Avatar.Icon size={40} icon={icon} style={{ backgroundColor: color }} />
+            <Avatar.Icon size={40} icon={icon} style={{ backgroundColor: color }} testID={`quick-action-icon-${action}`} />
             <View style={styles.cardText}>
-              <Title style={styles.cardTitle}>{title}</Title>
-              <Paragraph style={styles.cardDescription}>{description}</Paragraph>
+              <Title style={styles.cardTitle} testID={`quick-action-title-${action}`}>{title}</Title>
+              <Paragraph style={styles.cardDescription} testID={`quick-action-desc-${action}`}>{description}</Paragraph>
             </View>
           </View>
         </Card.Content>
@@ -559,6 +569,29 @@ const HomeScreen: React.FC = () => {
                     ))}
                   </View>
                 )}
+
+                {/* Symptom Trends (simple list UI) */}
+                {Array.isArray((predictiveSummary as any)?.trends) && (predictiveSummary as any).trends.length > 0 && (
+                  <View style={{ marginTop: 16 }}>
+                    <Title style={{ fontSize: 16, marginBottom: 8 }}>Tendencias de síntomas</Title>
+                    {((predictiveSummary as any).trends as any[]).slice(0, 3).map((tr, idx) => {
+                      const arrow =
+                        tr.trend === 'increasing' ? '▲' : tr.trend === 'decreasing' ? '▼' : '■';
+                      const color =
+                        tr.trend === 'increasing' ? '#d32f2f' : tr.trend === 'decreasing' ? '#388e3c' : '#757575';
+                      return (
+                        <View key={`tr-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                          <Text style={{ fontWeight: '600', flex: 1 }}>{tr.metric}</Text>
+                          <Text style={{ color, marginRight: 8 }}>{arrow}</Text>
+                          <Text style={{ color: '#555' }}>{tr.changePercent}%</Text>
+                        </View>
+                      );
+                    })}
+                    <Paragraph style={{ color: '#757575', marginTop: 4 }}>
+                      Datos estimados para el periodo seleccionado.
+                    </Paragraph>
+                  </View>
+                )}
               </Card.Content>
             </Card>
           </View>
@@ -609,6 +642,9 @@ const HomeScreen: React.FC = () => {
             {recentAnalyses.slice(0, 3).map((analysis, index) => (
               <RecentItemCard key={analysis.id} item={analysis} type="analysis" />
             ))}
+            <Button mode="text" onPress={() => navigation.navigate('SymptomAnalyses')} style={{ alignSelf: 'flex-start', marginTop: 8 }}>
+              Ver historial de análisis
+            </Button>
           </View>
         )}
 
@@ -723,8 +759,14 @@ const HomeScreen: React.FC = () => {
       <FAB
         style={styles.fab}
         icon="add"
-        onPress={() => handleQuickAction('capture')}
+        onPress={async () => {
+          try { (await import('../services/hapticsService')).hapticsService.impact('soft'); } catch {}
+          handleQuickAction('capture');
+        }}
+        accessibilityLabel="Nueva historia médica"
+        accessibilityRole="button"
         label="Nueva Historia"
+        testID="fab-new-history"
       />
     </View>
   );

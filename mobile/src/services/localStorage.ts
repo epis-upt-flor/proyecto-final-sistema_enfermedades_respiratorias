@@ -566,14 +566,37 @@ class LocalStorageService {
 
   // ---- Secure-ish storage helpers (fallback a AsyncStorage) ----
   async setSecureItem(key: string, value: string): Promise<void> {
+    try {
+      // @ts-ignore optional dependency
+      const SecureStore = require('expo-secure-store');
+      if (SecureStore?.setItemAsync) {
+        await SecureStore.setItemAsync(this.SECURE_PREFIX + key, value, { keychainAccessible: 'whenUnlocked' });
+        return;
+      }
+    } catch {}
     await AsyncStorage.setItem(this.SECURE_PREFIX + key, value);
   }
 
   async getSecureItem(key: string): Promise<string | null> {
+    try {
+      // @ts-ignore optional dependency
+      const SecureStore = require('expo-secure-store');
+      if (SecureStore?.getItemAsync) {
+        return await SecureStore.getItemAsync(this.SECURE_PREFIX + key);
+      }
+    } catch {}
     return AsyncStorage.getItem(this.SECURE_PREFIX + key);
   }
 
   async removeSecureItem(key: string): Promise<void> {
+    try {
+      // @ts-ignore optional dependency
+      const SecureStore = require('expo-secure-store');
+      if (SecureStore?.deleteItemAsync) {
+        await SecureStore.deleteItemAsync(this.SECURE_PREFIX + key);
+        return;
+      }
+    } catch {}
     await AsyncStorage.removeItem(this.SECURE_PREFIX + key);
   }
 
@@ -584,7 +607,10 @@ class LocalStorageService {
   }
 
   async setCachedUser(user: any): Promise<void> {
-    await AsyncStorage.setItem(this.KEYS.CURRENT_USER, JSON.stringify(user));
+    const json = JSON.stringify(user);
+    await AsyncStorage.setItem(this.KEYS.CURRENT_USER, json);
+    // Guardar copia mínima en almacenamiento seguro
+    try { await this.setSecureItem(this.KEYS.CURRENT_USER, json); } catch {}
   }
 
   async getAuthTokens<T = any>(): Promise<T | null> {
@@ -593,11 +619,15 @@ class LocalStorageService {
   }
 
   async setAuthTokens(tokens: any): Promise<void> {
-    await AsyncStorage.setItem(this.KEYS.AUTH_TOKENS, JSON.stringify(tokens));
+    const json = JSON.stringify(tokens);
+    await AsyncStorage.setItem(this.KEYS.AUTH_TOKENS, json);
+    try { await this.setSecureItem(this.KEYS.AUTH_TOKENS, json); } catch {}
   }
 
   async clearAuth(): Promise<void> {
-    await AsyncStorage.multiRemove([this.KEYS.AUTH_TOKENS, this.KEYS.CURRENT_USER]);
+    await AsyncStorage.multiRemove([this.KEYS.AUTH_TOKENS, this.KEYS.CURRENT_USER, this.SECURE_PREFIX + this.KEYS.AUTH_TOKENS, this.SECURE_PREFIX + this.KEYS.CURRENT_USER]);
+    try { await this.removeSecureItem(this.KEYS.AUTH_TOKENS); } catch {}
+    try { await this.removeSecureItem(this.KEYS.CURRENT_USER); } catch {}
   }
 
   // ---- Últimas predicciones (cache útil para dashboard/home) ----

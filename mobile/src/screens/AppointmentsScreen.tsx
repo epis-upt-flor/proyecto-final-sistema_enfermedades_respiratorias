@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, Alert, Animated, Easing } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert, Animated, Easing, Modal, Text, Platform } from 'react-native';
 import { Card, Title, Paragraph, Chip, Button, Snackbar } from 'react-native-paper';
 import { telemedicineService } from '../services/telemedicineService';
 import { useAppStore } from '../store/useAppStore';
@@ -20,6 +20,9 @@ const AppointmentsScreen: React.FC = () => {
   const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
   const actionScale = useRef(new Animated.Value(1)).current;
   const actionScale2 = useRef(new Animated.Value(1)).current;
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pickerApptId, setPickerApptId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date(Date.now() + 60 * 60 * 1000));
 
   const smallPressIn = (anim: Animated.Value) => {
     Animated.timing(anim, { toValue: 0.96, duration: 90, useNativeDriver: true, easing: Easing.out(Easing.quad) }).start();
@@ -137,43 +140,34 @@ const AppointmentsScreen: React.FC = () => {
 
   const rescheduleAppointment = async (id: string) => {
     const isOnline = (await NetInfo.fetch()).isConnected ?? false;
-    Alert.alert(
-      'Reprogramar cita',
-      'Selecciona una nueva hora',
-      [
-        { text: '+1 hora', onPress: async () => {
-          const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString());
-          if (ok) {
-            analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: '+1h', offline: !isOnline });
-            await load();
-            !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
-          } else {
-            Alert.alert('Error', 'No se pudo reprogramar');
-          }
-        }},
-        { text: '+4 horas', onPress: async () => {
-          const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString());
-          if (ok) {
-            analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: '+4h', offline: !isOnline });
-            await load();
-            !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
-          } else {
-            Alert.alert('Error', 'No se pudo reprogramar');
-          }
-        }},
-        { text: 'Mañana', onPress: async () => {
-          const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
-          if (ok) {
-            analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: 'tomorrow', offline: !isOnline });
-            await load();
-            !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
-          } else {
-            Alert.alert('Error', 'No se pudo reprogramar');
-          }
-        }},
-        { text: 'Cancelar', style: 'cancel' },
-      ]
-    );
+    try {
+      // Intentar DateTimePicker nativo si está disponible (instalación opcional)
+      // @ts-ignore - dynamic require opcional
+      const dt = require('@react-native-community/datetimepicker');
+      if (dt?.DateTimePickerAndroid && Platform.OS === 'android') {
+        dt.DateTimePickerAndroid.open({
+          value: new Date(Date.now() + 60 * 60 * 1000),
+          onChange: async (_: any, date?: Date) => {
+            if (!date) return;
+            const ok = await localStorageService.rescheduleAppointment(id, date.toISOString());
+            if (ok) {
+              analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: 'native_picker', offline: !isOnline });
+              await load();
+              !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
+            } else {
+              Alert.alert('Error', 'No se pudo reprogramar');
+            }
+          },
+          mode: 'datetime',
+          is24Hour: true,
+        });
+        return;
+      }
+    } catch {}
+    // Fallback: modal selector simple
+    setPickerApptId(id);
+    setSelectedDate(new Date(Date.now() + 60 * 60 * 1000));
+    setPickerVisible(true);
   };
 
   const retrySync = useCallback(async () => {
@@ -239,20 +233,20 @@ const AppointmentsScreen: React.FC = () => {
                 </Chip>
               </View>
               <View style={styles.actions}>
-                <Animated.View style={{ transform: [{ scale: actionScale }] }}>
+                <Animated.View style={{ transform: [{ scale: actionScale }] }} accessible accessibilityRole="button" accessibilityLabel="Reprogramar cita" testID={`btn-reschedule-${item._id}`}>
                   <Button
                     mode="outlined"
-                    onPress={() => rescheduleAppointment(item._id)}
+                    onPress={async () => { try { (await import('../services/hapticsService')).hapticsService.selection(); } catch {} ; rescheduleAppointment(item._id); }}
                     onPressIn={() => smallPressIn(actionScale)}
                     onPressOut={() => smallPressOut(actionScale)}
                   >
                     Reprogramar
                   </Button>
                 </Animated.View>
-                <Animated.View style={{ transform: [{ scale: actionScale2 }] }}>
+                <Animated.View style={{ transform: [{ scale: actionScale2 }] }} accessible accessibilityRole="button" accessibilityLabel="Cancelar cita" testID={`btn-cancel-${item._id}`}>
                   <Button
                     mode="text"
-                    onPress={() => confirmCancel(item._id)}
+                    onPress={async () => { try { (await import('../services/hapticsService')).hapticsService.impact('light'); } catch {} ; confirmCancel(item._id); }}
                     onPressIn={() => smallPressIn(actionScale2)}
                     onPressOut={() => smallPressOut(actionScale2)}
                     textColor="#f44336"
@@ -307,6 +301,50 @@ const AppointmentsScreen: React.FC = () => {
           </View>
         }
       />
+
+      {/* Modal selector de fecha/hora (fallback si no hay nativo) */}
+      <Modal
+        visible={pickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPickerVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }}>
+            <Title>Seleccionar fecha y hora</Title>
+            <Paragraph style={{ marginBottom: 12 }}>
+              {selectedDate.toLocaleString()}
+            </Paragraph>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Button mode="outlined" onPress={() => setSelectedDate(new Date(selectedDate.getTime() - 60 * 60 * 1000))}>-1h</Button>
+              <Button mode="outlined" onPress={() => setSelectedDate(new Date(selectedDate.getTime() + 60 * 60 * 1000))}>+1h</Button>
+              <Button mode="outlined" onPress={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))}>Mañana</Button>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <Button onPress={() => setPickerVisible(false)}>Cancelar</Button>
+              <Button
+                mode="contained"
+                onPress={async () => {
+                  if (!pickerApptId) return;
+                  const isOnlineNow = (await NetInfo.fetch()).isConnected ?? false;
+                  const ok = await localStorageService.rescheduleAppointment(pickerApptId, selectedDate.toISOString());
+                  setPickerVisible(false);
+                  if (ok) {
+                    analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: 'modal_picker', offline: !isOnlineNow });
+                    await load();
+                    !isOnlineNow && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
+                  } else {
+                    Alert.alert('Error', 'No se pudo reprogramar');
+                  }
+                }}
+                style={{ marginLeft: 8 }}
+              >
+                Confirmar
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Snackbar
         visible={snackbar.visible}

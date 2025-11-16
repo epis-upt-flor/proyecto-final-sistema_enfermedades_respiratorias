@@ -364,7 +364,20 @@ export const useAppStore = create<AppStore>()(
         try {
           await apiService.logout();
           await apiService.clearCurrentUser();
-          set({ user: null });
+          // Secure wipe local data
+          try {
+            await localStorageService.clearAuth();
+            await localStorageService.clearAllData();
+          } catch {}
+          try {
+            const { analyticsService } = require('../services/analyticsService');
+            await analyticsService.clearStorage();
+          } catch {}
+          try {
+            // Clear persisted Zustand store
+            await AsyncStorage.removeItem('respicare-storage');
+          } catch {}
+          set({ user: null, offlineData: { medicalHistories: [], symptomAnalyses: [], lastSync: new Date().toISOString(), pendingSync: 0 }, notifications: [], alerts: [] });
           errorTrackingService.setUser(null);
         } catch (error) {
           console.error('Logout error:', error);
