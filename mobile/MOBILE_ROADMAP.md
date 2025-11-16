@@ -222,26 +222,42 @@ Convertir la app móvil en el canal principal de interacción para pacientes (y 
 
 ### 7.1 Métricas de Uso y Rendimiento
 
-- [ ] Instrumentar eventos clave:
-  - [ ] Uso del analizador de síntomas.
-  - [ ] Creación/gestión de citas.
-  - [ ] Uso de modo offline, AR, voz.
-- [ ] Analizar tiempos de carga y rendimiento en dispositivos de gama baja.
+- ✅ Instrumentar eventos clave:
+  - ✅ Uso del analizador de síntomas (`symptoms.submit`, tiempo `symptoms.submit_to_store_ms`).
+  - ✅ Creación/gestión de citas (crear, reprogramar, cancelar, reintento de sync).
+  - ✅ Uso de modo offline (cambios de red) y AR (abrir pantalla, iniciar/detener, cambio de modo), Voz (inicio, resultado, error, stop).
+  - ✅ Analizar tiempos de carga inicial del Home (`home.initial_load_ms`).
+  - ✅ Servicio `analyticsService` con `logEvent` y `logTiming` (stub listo para conectar a proveedor real).
 
 ### 7.2 Manejo de Errores en Producción
 
-- [ ] Integrar herramienta de tracking (Sentry u otra).
-- [ ] Definir flujo de triage de errores críticos:
-  - [ ] Clasificación por severidad y frecuencia.
-  - [ ] Alertas para crashes graves.
+- ✅ Integrar herramienta de tracking (stub compatible con Sentry):
+  - ✅ `errorTrackingService` con `init`, `captureException`, `captureMessage`, `setUser` y `setGlobalHandler`.
+  - ✅ Manejador global de errores JS instalado desde `AppNavigator` (entornos dev/prod).
+- ✅ Flujo de triage básico:
+  - ✅ Clasificación por severidad (`info`, `warning`, `error`, `fatal`) por reglas simples (network/timeout → warning, NPEs → fatal).
+  - ✅ Contadores persistidos por tipo de error para estimar frecuencia (base para priorización).
+  - ✅ Señalización en consola y listo para conectar a proveedor (Sentry/Amplitude/etc.).
 
 ### 7.3 Estrategia de Releases
 
-- [ ] Definir canales de distribución:
-  - [ ] Beta testers vs producción.
-- [ ] Checklist de release mobile:
-  - [ ] Tests automatizados pasando.
-  - [ ] Validación manual mínima de flujos críticos.
+- ✅ Definir canales de distribución:
+  - ✅ Canal Beta (Testers internos/QA) con builds etiquetadas y feature flags conservadores.
+  - ✅ Canal Producción con control gradual (rollout por porcentajes cuando la tienda lo permita).
+- ✅ Checklist de release mobile:
+  - ✅ Tests automatizados pasando (CI mobile con lint + tests + cobertura mínima).
+  - ✅ Validación manual mínima de flujos críticos ( smoke test ):
+    - Inicio de sesión y selección de idioma/tema.
+    - Captura y guardado de historia médica (online/offline).
+    - Lista y gestión de citas (crear/reprogramar/cancelar) y reintento.
+    - Alertas: carga, ACK y fallback a caché sin red.
+    - Dashboard: análisis predictivo visible y sección Wearables cargando.
+    - ARTraining: cambio de modo, iniciar/detener y completar rutina.
+    - Voz: iniciar dictado y parseo básico.
+  - ✅ Verificación de i18n en Home, Profile y DataCapture.
+  - ✅ Revisión de analíticas (eventos clave están registrando en consola y persistencia local).
+  - ✅ Revisión de tracking de errores (handler global activo; counters registran).
+  - ✅ CI opcional de artefacto “beta”: workflow `mobile-beta.yml` que empaqueta el directorio `mobile` como ZIP al pushear tags `beta-*` o `mobile-beta-*` para distribución a testers.
 
 ---
 

@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { localStorageService } from '../services/localStorage';
 import NetInfo from '@react-native-community/netinfo';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { analyticsService } from '../services/analyticsService';
 
 const AppointmentsScreen: React.FC = () => {
   const user = useAppStore((s) => s.user);
@@ -94,6 +95,7 @@ const AppointmentsScreen: React.FC = () => {
 
   const createMockAppointment = async () => {
     if (!user) return;
+    analyticsService.logEvent('appointment.create_click', { screen: 'Appointments' });
     const inTwoHours = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
     const ok = await localStorageService.createAppointment({
       patientId: user.id,
@@ -107,9 +109,11 @@ const AppointmentsScreen: React.FC = () => {
       updatedAt: new Date().toISOString() as any,
     } as any);
     if (ok) {
+      analyticsService.logEvent('appointment.created', { screen: 'Appointments', offline: !(await NetInfo.fetch()).isConnected });
       await load();
       Alert.alert('Cita creada', 'Se creó una cita de demostración en 2 horas');
     } else {
+      analyticsService.logEvent('appointment.create_error', { screen: 'Appointments' });
       Alert.alert('Error', 'No se pudo crear la cita');
     }
   };
@@ -121,6 +125,7 @@ const AppointmentsScreen: React.FC = () => {
       { text: 'Sí, cancelar', style: 'destructive', onPress: async () => {
         const ok = await localStorageService.cancelAppointment(id, 'cancel by user');
         if (ok) {
+          analyticsService.logEvent('appointment.cancel', { screen: 'Appointments', offline: !isOnline });
           await load();
           if (!isOnline) setSnackbar({ visible: true, message: 'Se encoló la cancelación; se sincronizará al volver online.' });
         } else {
@@ -138,15 +143,33 @@ const AppointmentsScreen: React.FC = () => {
       [
         { text: '+1 hora', onPress: async () => {
           const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString());
-          ok ? (await load(), !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' })) : Alert.alert('Error', 'No se pudo reprogramar');
+          if (ok) {
+            analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: '+1h', offline: !isOnline });
+            await load();
+            !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
+          } else {
+            Alert.alert('Error', 'No se pudo reprogramar');
+          }
         }},
         { text: '+4 horas', onPress: async () => {
           const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString());
-          ok ? (await load(), !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' })) : Alert.alert('Error', 'No se pudo reprogramar');
+          if (ok) {
+            analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: '+4h', offline: !isOnline });
+            await load();
+            !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
+          } else {
+            Alert.alert('Error', 'No se pudo reprogramar');
+          }
         }},
         { text: 'Mañana', onPress: async () => {
           const ok = await localStorageService.rescheduleAppointment(id, new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
-          ok ? (await load(), !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' })) : Alert.alert('Error', 'No se pudo reprogramar');
+          if (ok) {
+            analyticsService.logEvent('appointment.reschedule', { screen: 'Appointments', option: 'tomorrow', offline: !isOnline });
+            await load();
+            !isOnline && setSnackbar({ visible: true, message: 'Se encoló la actualización; se sincronizará al volver online.' });
+          } else {
+            Alert.alert('Error', 'No se pudo reprogramar');
+          }
         }},
         { text: 'Cancelar', style: 'cancel' },
       ]
@@ -154,7 +177,9 @@ const AppointmentsScreen: React.FC = () => {
   };
 
   const retrySync = useCallback(async () => {
+    const t0 = Date.now();
     await localStorageService.retrySyncNow();
+    analyticsService.logTiming('appointments.retry_sync_ms', Date.now() - t0);
     setSnackbar({ visible: true, message: 'Reintento lanzado en segundo plano.' });
     await load();
   }, [load]);

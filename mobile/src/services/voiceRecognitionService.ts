@@ -8,6 +8,7 @@
  */
 
 import { Platform } from 'react-native';
+import { analyticsService } from './analyticsService';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 // Tipos para reconocimiento de voz
@@ -93,6 +94,7 @@ class VoiceRecognitionService {
     onError?: (error: string) => void
   ): Promise<boolean> {
     try {
+      analyticsService.logEvent('voice.start', { options });
       if (!this.isInitialized) {
         const initialized = await this.initialize();
         if (!initialized) {
@@ -115,6 +117,7 @@ class VoiceRecognitionService {
         // Simular resultado después de 2 segundos
         setTimeout(() => {
           if (this.onResultCallback) {
+            analyticsService.logEvent('voice.result', { simulated: true });
             this.onResultCallback({
               text: 'Tengo tos seca y dificultad para respirar',
               confidence: 0.95,
@@ -127,6 +130,7 @@ class VoiceRecognitionService {
       return true;
     } catch (error) {
       console.error('Error starting voice recognition:', error);
+      analyticsService.logEvent('voice.error', { message: String(error) });
       if (this.onErrorCallback) {
         this.onErrorCallback('Error al iniciar reconocimiento de voz');
       }
@@ -151,8 +155,10 @@ class VoiceRecognitionService {
       if (__DEV__) {
         console.log('Voice recognition stopped');
       }
+      analyticsService.logEvent('voice.stop');
     } catch (error) {
       console.error('Error stopping voice recognition:', error);
+      analyticsService.logEvent('voice.error', { message: String(error) });
     }
   }
 

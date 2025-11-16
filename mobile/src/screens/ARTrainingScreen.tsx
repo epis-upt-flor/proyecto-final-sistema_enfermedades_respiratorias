@@ -5,6 +5,7 @@ import { Card, Title, Paragraph, Button, Chip, ProgressBar } from 'react-native-
 import { RootStackParamList } from '../types';
 import { arService, ARMarker, ARScene } from '../services/arService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { analyticsService } from '../services/analyticsService';
 
 const AR_MODE_KEY = 'ar_last_mode';
 
@@ -38,6 +39,7 @@ const ARTrainingScreen: React.FC<Props> = () => {
   // Cargar último modo si no viene por params
   useEffect(() => {
     (async () => {
+      analyticsService.logEvent('ar.screen_open');
       if (params?.mode) return;
       try {
         const saved = await AsyncStorage.getItem(AR_MODE_KEY);
@@ -62,6 +64,7 @@ const ARTrainingScreen: React.FC<Props> = () => {
   }, [mode]);
 
   const startAR = useCallback(async () => {
+    analyticsService.logEvent('ar.start', { mode });
     const ok = await arService.startARSession();
     if (!ok) {
       Alert.alert('AR no disponible', 'No se pudo iniciar la sesión AR en este dispositivo.');
@@ -85,6 +88,7 @@ const ARTrainingScreen: React.FC<Props> = () => {
   }, [mode]);
 
   const stopAR = useCallback(async () => {
+    analyticsService.logEvent('ar.stop', { mode });
     await arService.stopARSession();
     setRunning(false);
     setCurrentStepIndex(0);
@@ -167,14 +171,14 @@ const ARTrainingScreen: React.FC<Props> = () => {
             <Chip
               style={[styles.modeChip, mode === 'breathing' && styles.modeChipSelected]}
               selected={mode === 'breathing'}
-              onPress={() => setMode('breathing')}
+              onPress={() => { analyticsService.logEvent('ar.mode_change', { to: 'breathing' }); setMode('breathing'); }}
             >
               Respiración
             </Chip>
             <Chip
               style={[styles.modeChip, mode === 'inhaler' && styles.modeChipSelected]}
               selected={mode === 'inhaler'}
-              onPress={() => setMode('inhaler')}
+              onPress={() => { analyticsService.logEvent('ar.mode_change', { to: 'inhaler' }); setMode('inhaler'); }}
             >
               Inhalador
             </Chip>

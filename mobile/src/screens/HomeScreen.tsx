@@ -190,6 +190,8 @@ const HomeScreen: React.FC = () => {
     return base.slice(0, 3);
   }, [predictiveSummary, healthProfile]);
 
+  const loadStartTs = useMemo(() => Date.now(), []);
+
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(() => {
       loadRecentData();
@@ -211,10 +213,16 @@ const HomeScreen: React.FC = () => {
       loadUpcomingAppointments().catch(() => {});
       loadPredictive().catch(() => {});
       loadWearables().catch(() => {});
+      // Medición simple de carga inicial del dashboard
+      const elapsed = Date.now() - loadStartTs;
+      try {
+        const { analyticsService } = require('../services/analyticsService');
+        analyticsService.logTiming('home.initial_load_ms', elapsed);
+      } catch {}
     });
 
     return () => interaction.cancel();
-  }, [fetchAlerts]);
+  }, [fetchAlerts, loadStartTs]);
 
   useEffect(() => {
     // keep alertsView in sync when alerts store updates

@@ -31,6 +31,7 @@ import { LazyImage } from '../common/LazyImage';
 import { shallow } from 'zustand/shallow';
 import { voiceRecognitionService } from '../../services/voiceRecognitionService';
 import { useTranslation } from '../../services/i18nService';
+import { analyticsService } from '../../services/analyticsService';
 
 const PREDEFINED_SYMPTOMS = Object.freeze([
   { id: '1', name: 'Tos seca', severity: 'mild' as const },
@@ -198,17 +199,20 @@ const DataCaptureScreen: React.FC = () => {
 
   const startVoiceInput = useCallback(async () => {
     try {
+      analyticsService.logEvent('voice.start', { screen: 'DataCapture' });
       setIsListening(true);
       const ok = await voiceRecognitionService.startListening(
         { language: 'es-ES', interimResults: false },
         (result) => {
           setIsListening(false);
           if (result.isFinal && result.text) {
+            analyticsService.logEvent('voice.result', { screen: 'DataCapture', isFinal: true });
             parseSymptomsFromText(result.text);
           }
         },
         (error) => {
           setIsListening(false);
+          analyticsService.logEvent('voice.error', { screen: 'DataCapture', error });
           if (error?.toLowerCase().includes('permiso')) {
             Alert.alert(t('common.error'), 'Habilita el permiso de micrófono para usar dictado.');
           } else {
@@ -240,6 +244,7 @@ const DataCaptureScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
+      const t0 = Date.now();
       const newHistory: MedicalHistory = {
         id: Date.now().toString(),
         patientId: 'current-user',
@@ -256,6 +261,8 @@ const DataCaptureScreen: React.FC = () => {
       };
 
       addMedicalHistory(newHistory);
+      analyticsService.logEvent('symptoms.submit', { screen: 'DataCapture', offline: !isOnline });
+      analyticsService.logTiming('symptoms.submit_to_store_ms', Date.now() - t0);
 
       setFormData({
         patientName: '',
@@ -276,6 +283,7 @@ const DataCaptureScreen: React.FC = () => {
       );
 
     } catch (error) {
+      analyticsService.logEvent('symptoms.submit_error', { screen: 'DataCapture' });
       Alert.alert(t('common.error'), 'No se pudo guardar la historia médica');
       console.error('Error saving medical history:', error);
     } finally {

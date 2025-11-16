@@ -22,6 +22,8 @@ import {
 import { apiService } from '../services/api';
 import { localStorageService } from '../services/localStorage';
 import { aiService } from '../services/aiService';
+import { analyticsService } from '../services/analyticsService';
+import { errorTrackingService } from '../services/errorTrackingService';
 
 // Slices por dominio para una arquitectura más clara
 interface UserSlice {
@@ -120,22 +122,28 @@ export const useAppStore = create<AppStore>()(
       },
 
       // Actions: User
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        errorTrackingService.setUser(user ? { id: user.id, email: (user as any).email } : null);
+        set({ user });
+      },
 
       // Actions: Network
       setOnlineStatus: (isOnline) =>
-        set((state) => ({
-          isOnline,
-          networkStatus: isOnline
-            ? state.syncStatus.isSyncing
-              ? 'syncing'
-              : 'online'
-            : 'offline',
-          syncStatus: {
-            ...state.syncStatus,
+        set((state) => {
+          analyticsService.logEvent('network.status_change', { to: isOnline ? 'online' : 'offline' });
+          return {
             isOnline,
-          },
-        })),
+            networkStatus: isOnline
+              ? state.syncStatus.isSyncing
+                ? 'syncing'
+                : 'online'
+              : 'offline',
+            syncStatus: {
+              ...state.syncStatus,
+              isOnline,
+            },
+          };
+        }),
 
       addMedicalHistory: async (history) => {
         try {
@@ -339,6 +347,7 @@ export const useAppStore = create<AppStore>()(
           if (response.success && response.data) {
             set({ user: response.data.user });
             await apiService.setCurrentUser(response.data.user);
+            errorTrackingService.setUser({ id: response.data.user.id, email: response.data.user.email });
             return true;
           }
           return false;
@@ -356,6 +365,7 @@ export const useAppStore = create<AppStore>()(
           await apiService.logout();
           await apiService.clearCurrentUser();
           set({ user: null });
+          errorTrackingService.setUser(null);
         } catch (error) {
           console.error('Logout error:', error);
         } finally {
@@ -370,6 +380,7 @@ export const useAppStore = create<AppStore>()(
           if (response.success && response.data) {
             set({ user: response.data.user });
             await apiService.setCurrentUser(response.data.user);
+            errorTrackingService.setUser({ id: response.data.user.id, email: response.data.user.email });
             return true;
           }
           return false;
@@ -436,6 +447,16 @@ export const useAppStore = create<AppStore>()(
         language: state.language,
         healthProfile: state.healthProfile,
       }),
+      onRehydrateStorage: () => (state) => {
+        try {
+          const user = state?.user as User | null | undefined;
+          if (user) {
+            errorTrackingService.setUser({ id: user.id, email: (user as any).email });
+          } else {
+            errorTrackingService.setUser(null);
+          }
+        } catch {}
+      },
     }
   )
 );

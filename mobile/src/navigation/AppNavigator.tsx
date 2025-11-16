@@ -27,6 +27,8 @@ import ARTrainingScreen from '../screens/ARTrainingScreen';
 import { featureFlags } from '../config/environment';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { analyticsService } from '../services/analyticsService';
+import { errorTrackingService } from '../services/errorTrackingService';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -174,6 +176,14 @@ const AppNavigator = () => {
 
   useEffect(() => {
     i18nService.initialize();
+    // Iniciar auto-flush de analytics con persistencia periódica
+    analyticsService.startAutoFlush(30000);
+    // Inicializar tracking de errores y handler global
+    errorTrackingService.init({ enabled: true, environment: __DEV__ ? 'dev' : 'prod' });
+    errorTrackingService.setGlobalHandler();
+    return () => {
+      analyticsService.stopAutoFlush();
+    };
   }, []);
 
   useEffect(() => {
