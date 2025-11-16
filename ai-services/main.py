@@ -13,6 +13,8 @@ from datetime import datetime
 import time
 import os
 import json
+import asyncio
+from collections import defaultdict
 
 # Core services
 from core.cache import init_cache, close_cache, get_cache_client
@@ -124,6 +126,67 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Security headers middleware (CSP, HSTS, X-Frame-Options, etc.)
+@app.middleware("http")
+async def security_headers_middleware(request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # CSP minimal; ajustar listas en producción
+    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+    return response
+
+# Simple rate limiting (token bucket por IP) - configurable por env
+_rate_buckets = defaultdict(lambda: {"tokens": 0, "last_refill": time.time()})
+_rate_capacity = int(os.getenv("AI_RATE_LIMIT_CAPACITY", "100"))  # tokens
+_rate_refill_per_sec = float(os.getenv("AI_RATE_LIMIT_REFILL_PER_SEC", "1.0"))  # tokens/s
+_rate_enabled = os.getenv("AI_RATE_LIMIT_ENABLED", "1") == "1"
+
+def _allow_request(ip: str) -> bool:
+    bucket = _rate_buckets[ip]
+    now = time.time()
+    # refill
+    elapsed = now - bucket["last_refill"]
+    bucket["last_refill"] = now
+    bucket["tokens"] = min(_rate_capacity, bucket["tokens"] + elapsed * _rate_refill_per_sec)
+    if bucket["tokens"] >= 1.0:
+        bucket["tokens"] -= 1.0
+        return True
+    return False
+
+@app.middleware("http")
+async def rate_limit_middleware(request, call_next):
+    if not _rate_enabled:
+        return await call_next(request)
+    client_ip = request.client.host if request.client else "unknown"
+    if not _allow_request(client_ip):
+        logger.warning("rate_limited", ip=client_ip, path=str(request.url.path))
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=429,
+            content={"status": "error", "message": "Too Many Requests"},
+        )
+    return await call_next(request)
+
+# Request size guard (Content-Length) - 2MB por defecto
+_max_body_bytes = int(os.getenv("AI_MAX_BODY_BYTES", str(2 * 1024 * 1024)))
+@app.middleware("http")
+async def body_size_limit_middleware(request, call_next):
+    cl = request.headers.get("content-length")
+    try:
+        if cl is not None and int(cl) > _max_body_bytes:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=413,
+                content={"status": "error", "message": "Payload Too Large"},
+            )
+    except Exception:
+        pass
+    return await call_next(request)
 
 # Performance logging middleware (profiling p95/p99 offline)
 @app.middleware("http")

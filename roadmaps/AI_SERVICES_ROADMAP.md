@@ -4,6 +4,12 @@
 - ✅ FastAPI, CORS, logging estructurado, cache Redis
 - ✅ Rutas base: health, analyzer, monitoring
 
+Archivos creados/mejorados:
+- `main.py` (CORS, logging, routers, health, middleware perf)
+- `core/cache.py` (init/close Redis)
+- `api/routes/ml_monitoring.py`, `api/routes/symptom_analyzer.py`
+- `data/medical_data.py`
+
 ## Fase A2: Modelos y Analítica
 - ✅ Analizador de síntomas (rules/local/remote)
   - Estrategias: `strategies/rule_based_strategy.py`, `strategies/local_model_strategy.py`, `strategies/openai_strategy.py`
@@ -14,6 +20,13 @@
 - ✅ Tendencias y recomendaciones
   - Modelos: `ml_models/trend_predictor.py`, `ml_models/risk_personalization.py`
   - Servicio: `services/enhanced_chatbot_service.py` (recomendaciones y personalización)
+
+Archivos creados/mejorados:
+- `strategies/analysis_strategy.py`, `strategies/rule_based_strategy.py`, `strategies/local_model_strategy.py`, `strategies/openai_strategy.py`
+- `api/routes/symptom_ml_analyzer.py`, `api/routes/symptom_analyzer.py`, `api/routes/ml_monitoring.py`
+- `ml_models/trend_predictor.py`, `ml_models/risk_personalization.py`
+- `services/enhanced_chatbot_service.py`, `services/patient_friendly_explainer.py`
+- `monitoring/predictions/*.jsonl` (logs de predicciones)
 
 ## Fase A3: Avances ML/NLP/AutoML
 - ✅ Advanced ML: BERT (texto), Visión, Series (stubs + endpoints)
@@ -29,6 +42,14 @@
   - Modelos: `ml_models/reinforcement_learning.py`, `ml_models/federated_learning.py`
   - Rutas: `api/routes/advanced_rl.py`, `api/routes/federated.py`
 
+Archivos creados/mejorados:
+- `ml_models/medical_bert.py`, `ml_models/image_classifier.py`, `ml_models/time_series_predictor.py`
+- `api/routes/advanced_ml.py`
+- `ml_models/nlp_advanced.py`, `api/routes/advanced_nlp.py`
+- `ml_models/automl_manager.py`, `api/routes/automl.py`
+- `ml_models/reinforcement_learning.py`, `ml_models/federated_learning.py`
+- `api/routes/advanced_rl.py`, `api/routes/federated.py`
+
 ## Fase A4: Calidad y Rendimiento
 - ✅ Tests smoke (Advanced ML/NLP/AutoML/RL/FL), integración
   - Tests: `tests/test_advanced_ml_endpoints.py`, `tests/test_advanced_nlp_endpoints.py`, `tests/test_automl_endpoints.py`, `tests/test_rl_and_federated_endpoints.py`
@@ -40,10 +61,23 @@
   - Benchmarks: `benchmark_endpoints.py` + workflow `.github/workflows/ai-ml-bench.yml`
   - Objetivos: p95 < 200 ms (endpoints ligeros), p95 < 500 ms (análisis), p99 < 1000 ms (pesados)
 
+Archivos creados/mejorados:
+- `.github/workflows/ai-services-tests.yml` (CI con coverage y Codecov)
+- `tests/test_advanced_ml_endpoints.py`, `tests/test_advanced_nlp_endpoints.py`, `tests/test_automl_endpoints.py`, `tests/test_rl_and_federated_endpoints.py`
+- `ml_tests/test_fairness_and_drift.py`
+- `analyze_performance.py`, `benchmark_endpoints.py`
+- `.github/workflows/ai-ml-bench.yml`
+- `monitoring/performance/perf_*.jsonl`, `monitoring/performance/perf_report_*.md`
+
 ## Hitos
-- AI v1: Analyzer + Monitoring listos
-- AI v2: Advanced ML/NLP/AutoML expuestos y documentados
-- AI v3: Rendimiento y modelos reales (transformers/torch) en producción
+- ✅ AI v1 (servicios core + analizador + monitoring)
+- ✅ AI v2 (Advanced ML/NLP/AutoML integrados a pipelines reales)
+- ✅ AI v3 (optimización rendimiento + escalado + seguridad avanzada)
+
+Archivos creados/mejorados (AI v3):
+- `main.py` (rate limiting, security headers, body size limit, perf logs)
+- `analyze_performance.py`, `benchmark_endpoints.py` (profiling/benchmarks)
+- `infrastructure/k8s/ai-services-deployment.yaml` (readiness/liveness, recursos, HPA)
 
 # 🤖 Roadmap AI Services - RespiCare Tacna
 
@@ -70,8 +104,8 @@
 - ✅ Benchmarks y profiling (p95/p99 objetivos)
 
 ## Hitos
-- [x] AI v1 (servicios core + analizador + monitoring)
-- [x] AI v2 (Advanced ML/NLP/AutoML integrados a pipelines reales)
+- ✅ AI v1 (servicios core + analizador + monitoring)
+- ✅ AI v2 (Advanced ML/NLP/AutoML integrados a pipelines reales)
 - [ ] AI v3 (optimización rendimiento + escalado + seguridad avanzada)
 
 
