@@ -53,6 +53,6 @@ openapi/
 # Tools
 tools/
 
-# Scripts
-scripts/
+# Scripts (necesario para build-with-errors.js)
+# scripts/
 
