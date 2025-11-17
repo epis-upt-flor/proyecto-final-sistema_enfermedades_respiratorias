@@ -21,7 +21,7 @@ module.exports = {
   // Coverage configuration
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html', 'json'],
+  coverageReporters: ['text', 'lcov', 'html', 'json', 'cobertura'],
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
@@ -56,6 +56,23 @@ module.exports = {
   
   // Verbose output
   verbose: true,
+  
+  // JUnit XML reporter for CI/CD
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'coverage',
+        outputName: 'junit.xml',
+        suiteName: 'Web Tests',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+        ancestorSeparator: ' › ',
+        usePathForSuiteName: 'true'
+      }
+    ]
+  ],
   
   // Error handling
   errorOnDeprecated: true,

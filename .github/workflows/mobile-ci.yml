@@ -49,12 +49,33 @@ jobs:
             echo "No se encontró script test; saltando."
           fi
 
-      - name: Upload coverage report (artifacts)
+      - name: Upload test reports (JUnit XML)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-coverage
-          path: mobile/coverage
+          name: mobile-test-reports
+          path: |
+            mobile/coverage/junit.xml
+          retention-days: 14
           if-no-files-found: ignore
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage-reports
+          path: |
+            mobile/coverage/coverage-final.json
+            mobile/coverage/lcov.info
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./mobile/coverage/lcov.info
+          flags: mobile
+          name: mobile-coverage
+          fail_ci_if_error: false
 
 

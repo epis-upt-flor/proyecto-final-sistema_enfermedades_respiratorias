@@ -15,7 +15,7 @@ module.exports = {
     'src/components/AI/AIAnalysisScreen.tsx',
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'lcov', 'html', 'json', 'cobertura'],
   modulePathIgnorePatterns: ['<rootDir>/RespiCare-Mobile'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -28,5 +28,22 @@ module.exports = {
       lines: 70,
     },
   },
+  
+  // JUnit XML reporter for CI/CD
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'coverage',
+        outputName: 'junit.xml',
+        suiteName: 'Mobile Tests',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+        ancestorSeparator: ' › ',
+        usePathForSuiteName: 'true'
+      }
+    ]
+  ],
 };
 

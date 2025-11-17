@@ -53,12 +53,22 @@ jobs:
       working-directory: ./backend
       run: npm run test:coverage -- tests/unit
       
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+    - name: Upload test reports (JUnit XML)
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
-        file: ./backend/coverage/lcov.info
+        name: backend-unit-test-reports
+        path: |
+          backend/coverage/junit.xml
+        retention-days: 14
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./backend/coverage/lcov.info
         flags: unit
         name: unit-tests
+        fail_ci_if_error: false
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -102,6 +112,15 @@ jobs:
         MONGODB_URI: ${{ env.MONGODB_URI }}
         JWT_SECRET: ${{ env.JWT_SECRET }}
         JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
+    
+    - name: Upload test reports (JUnit XML)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-integration-test-reports
+        path: |
+          backend/coverage/junit.xml
+        retention-days: 14
 
   performance-tests:
     runs-on: ubuntu-latest
@@ -265,10 +284,29 @@ jobs:
         JWT_SECRET: ${{ env.JWT_SECRET }}
         JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
       
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+    - name: Upload test reports (JUnit XML)
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
-        file: ./backend/coverage/lcov.info
+        name: backend-coverage-test-reports
+        path: |
+          backend/coverage/junit.xml
+        retention-days: 14
+    
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-coverage-reports
+        path: |
+          backend/coverage/coverage-final.json
+          backend/coverage/lcov.info
+        retention-days: 14
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./backend/coverage/lcov.info
         flags: backend
         name: backend-coverage
         fail_ci_if_error: false

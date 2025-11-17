@@ -37,12 +37,32 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit -- --watchAll=false --coverage
       
+      - name: Upload test reports (JUnit XML)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-test-reports
+          path: |
+            web/coverage/junit.xml
+          retention-days: 14
+      
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-coverage-reports
+          path: |
+            web/coverage/coverage-final.json
+            web/coverage/lcov.info
+          retention-days: 14
+      
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./web/coverage/lcov.info
           flags: frontend-web
           name: frontend-web-coverage
+          fail_ci_if_error: false
 
   e2e-tests:
     runs-on: ubuntu-latest
