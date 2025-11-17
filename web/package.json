@@ -10,6 +10,8 @@
     "test:unit": "react-scripts test --testPathPattern=__tests__ --coverage",
     "test:watch": "react-scripts test --watch",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
     "eject": "react-scripts eject"
   },
   "dependencies": {

@@ -125,18 +125,43 @@
 
 ### E2E Tests (Pruebas End-to-End)
 
-- ✅ **Web**: Completo (Cypress)
-  - Chatbot, navegación, reporte de síntomas
+- ✅ **Web**: Completo - 6 archivos (Cypress)
+  - ✅ Chatbot (conversación, respuestas, múltiples mensajes)
+  - ✅ Navegación (dashboard, analytics, heatmap, active routes)
+  - ✅ Reporte de síntomas (formulario, validación, envío)
+  - ✅ Autenticación (login, registro, logout, errores)
+  - ✅ Dashboard (overview, estadísticas, navegación, actividades)
+  - ✅ Analytics (dashboard, gráficos, filtros, exportación, distribución)
+  - **Total**: 28 casos de prueba
   - Ubicación: `web/cypress/e2e/`
-  - Scripts: `npm run test:e2e`
+  - Scripts: `npm run test:e2e`, `npm run test:e2e:open`
 
-- ✅ **Mobile**: Completo (Detox)
-  - UI accesibilidad, sincronización offline
+- ✅ **Mobile**: Completo - 5 archivos (Detox)
+  - ✅ UI Accesibilidad (FAB, quick actions, botones)
+  - ✅ Sincronización Offline (guardado local, sync automático, manejo de errores)
+  - ✅ Autenticación (login, registro, logout, validación)
+  - ✅ Análisis de Síntomas (texto, voz, selección, historial)
+  - ✅ Citas (ver, crear, editar, cancelar, recordatorios)
+  - **Total**: 35 casos de prueba
   - Ubicación: `mobile/e2e/`
-  - Scripts: `npm run test:e2e`
+  - Scripts: `npm run test:e2e`, `npm run test:e2e:build`, `npm run test:e2e:ui`
 
-- ✅ **Backend**: Completo
-  - Flujos completos E2E
+- ✅ **Backend**: Completo - 1 archivo (Supertest)
+  - ✅ Flujos completos de usuario (Registro → Login → Dashboard)
+  - ✅ Análisis de síntomas con IA
+  - ✅ Gestión administrativa
+  - ✅ Sincronización offline
+  - ✅ Exportación de datos
+  - ✅ Autenticación y tokens
+  - ✅ Búsqueda y filtrado
+  - ✅ Gestión de perfil
+  - ✅ Recuperación de contraseña
+  - ✅ Desactivación de cuenta
+  - ✅ Gestión de usuarios (admin)
+  - ✅ Integración con wearables
+  - ✅ Multi-dispositivo y sesiones
+  - ✅ Manejo de errores y recuperación
+  - **Total**: 14 flujos completos
   - Ubicación: `backend/tests/e2e/`
 
 ### Performance Tests (Pruebas de Rendimiento)
@@ -153,15 +178,24 @@
   - ✅ Tests de listas virtualizadas
   - Ubicación: `web/src/tests/performance/`
 
-- ⏳ **Mobile**: Pendiente
-  - Tests de performance de pantallas
-  - Tests de uso de memoria
-  - Herramientas sugeridas: React Native Performance Monitor
+- ✅ **Mobile**: Completo - 6 archivos
+  - ✅ Tests de performance de pantallas (HomeScreen, MedicalHistoryScreen, AppointmentsScreen, ProfileScreen, LoginScreen)
+  - ✅ Tests de uso de memoria (memory leaks, listas grandes, liberación de memoria)
+  - ✅ Tests de performance de listas largas (FlatList optimization, virtualization, scroll performance)
+  - ✅ Tests de performance de animaciones (frame rate, múltiples animaciones, native driver)
+  - ✅ Tests de performance de sincronización (single item, batch sync, network performance)
+  - ✅ Tests de performance de carga de datos (API loading, localStorage loading, cached data, pagination)
+  - Ubicación: `mobile/__tests__/performance/`
 
-- ⏳ **AI Services**: Pendiente
-  - Tests de performance de modelos ML
-  - Tests de latencia de predicciones
-  - Herramientas sugeridas: pytest-benchmark, Locust, k6
+- ✅ **AI Services**: Completo - 5 archivos
+  - ✅ Tests de performance de modelos ML (ensemble, BERT, image classifier, time series)
+  - ✅ Tests de latencia de predicciones (p50, p95, p99, distribución de latencia)
+  - ✅ Tests de benchmark usando pytest-benchmark (comparación de modelos, batch processing)
+  - ✅ Tests de carga y stress (load testing, stress testing, endurance testing)
+  - ✅ Tests de performance de endpoints (latencia, throughput, uso de recursos)
+  - ✅ Métricas: p50, p95, p99, throughput, memoria, CPU
+  - Herramientas: pytest-benchmark, psutil
+  - Ubicación: `ai-services/tests/performance/`
 
 ### Security Tests (Pruebas de Seguridad)
 

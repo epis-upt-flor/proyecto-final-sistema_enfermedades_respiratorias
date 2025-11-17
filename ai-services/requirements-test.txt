@@ -23,6 +23,7 @@ pytest-html==4.1.1
 
 # Performance testing
 pytest-benchmark==4.0.0
+psutil==5.9.6
 
 # AI/ML testing utilities
 scikit-learn==1.3.2
