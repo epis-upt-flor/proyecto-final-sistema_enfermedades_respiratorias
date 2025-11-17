@@ -205,24 +205,39 @@
   - Ubicación: `backend/tests/security/`
   - Herramientas: Jest + Supertest, OWASP ZAP (CI/CD)
 
-- ✅ **Web**: Completo (Accesibilidad)
+- ✅ **Web**: Completo
   - ✅ Tests de accesibilidad avanzados (WCAG 2.1 AA)
   - ✅ Tests con axe-core
   - ✅ Tests de navegación por teclado
   - ✅ Tests de lectores de pantalla
   - ✅ Tests de contraste y semántica
-  - Ubicación: `web/src/tests/accessibility/`
-  - Nota: Tests de seguridad (XSS, CSRF) pendientes
+  - ✅ Tests de seguridad XSS (sanitización, DOM injection, CSP, URL validation)
+  - ✅ Tests de seguridad CSRF (tokens, same-origin, double submit cookie)
+  - ✅ Tests de validación de entrada (SQL injection, NoSQL injection, command injection)
+  - ✅ Tests de headers de seguridad (X-Content-Type-Options, X-Frame-Options, etc.)
+  - Ubicación: `web/src/tests/accessibility/`, `web/src/tests/security/`
+  - Herramientas: jest, jest-axe, DOMPurify
 
-- ⏳ **Mobile**: Pendiente
-  - Tests de seguridad de almacenamiento local
-  - Tests de encriptación de datos
-  - Herramientas sugeridas: OWASP Mobile Security Testing Guide, MobSF
+- ✅ **Mobile**: Completo - 2 archivos
+  - ✅ Tests de seguridad de almacenamiento local (tokens, datos sensibles, datos médicos)
+  - ✅ Tests de encriptación de datos (AES, key management, data at rest/in transit)
+  - ✅ Tests de integración con Keychain/Keystore
+  - ✅ Tests de borrado seguro de datos
+  - ✅ Tests de control de acceso a almacenamiento
+  - ✅ Tests de integridad de datos
+  - ✅ Tests de hashing de contraseñas
+  - Ubicación: `mobile/__tests__/security/`
+  - Herramientas: jest, expo-secure-store, crypto-js
 
-- ⏳ **AI Services**: Pendiente
-  - Tests de seguridad de modelos ML
-  - Tests de adversarial attacks
-  - Herramientas sugeridas: OWASP ZAP, Adversarial ML Testing
+- ✅ **AI Services**: Completo - 1 archivo
+  - ✅ Tests de detección de ataques adversariales (input manipulation, model poisoning, evasion attacks)
+  - ✅ Tests de detección de extracción de modelos
+  - ✅ Tests de detección de membership inference
+  - ✅ Tests de sanitización de entrada y salida
+  - ✅ Tests de seguridad de modelos (integridad, versionado, rate limiting, logging)
+  - ✅ Tests de privacidad de datos (differential privacy, anonimización, almacenamiento seguro)
+  - Ubicación: `ai-services/tests/security/`
+  - Herramientas: pytest, numpy
 
 ### Documentación
 
