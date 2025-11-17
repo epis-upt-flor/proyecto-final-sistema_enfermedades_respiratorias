@@ -63,6 +63,8 @@ jobs:
         file: ./ai-services/coverage.xml
         flags: ai-services
         name: ai-services-coverage
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
         
     - name: Upload test results
       uses: actions/upload-artifact@v3
@@ -138,8 +140,10 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ./backend/coverage/lcov.info
-        flags: backend-api
-        name: backend-api-coverage
+        flags: backend
+        name: backend-coverage
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
         
     - name: Upload test results
       uses: actions/upload-artifact@v3
@@ -191,8 +195,10 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ./web/coverage/lcov.info
-        flags: web-frontend
-        name: web-frontend-coverage
+        flags: frontend-web
+        name: web-coverage
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
         
     - name: Upload test results
       uses: actions/upload-artifact@v3
@@ -240,8 +246,10 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ./mobile/RespiCare-Mobile/coverage/lcov.info
-        flags: mobile-app
-        name: mobile-app-coverage
+        flags: mobile
+        name: mobile-coverage
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
         
     - name: Upload test results
       uses: actions/upload-artifact@v3

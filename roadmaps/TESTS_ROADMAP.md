@@ -253,9 +253,19 @@
   - Estadísticas de cobertura
   - Guía de ejecución
 
-## Fase T3: Casos Especiales
-- Offline/Sync (mobile): colas, estados, reintentos
-- ML endpoints (AI): Advanced ML/NLP/AutoML/RL/FL (smoke)
+## Fase T3: Casos Especiales ✅ COMPLETADO
+
+- ✅ **Offline/Sync (mobile)**: colas, estados, reintentos, edge cases
+  - Tests de cola de sincronización
+  - Tests de estados de sincronización
+  - Tests de sincronización bidireccional
+  - Tests de casos especiales (errores, conflictos, concurrencia)
+  - **Total**: 57+ casos de prueba
+
+- ✅ **ML endpoints (AI)**: Advanced ML/NLP/AutoML/RL/FL (smoke + edge cases)
+  - Smoke tests para todos los servicios ML avanzados
+  - Tests de casos especiales (errores, validación, concurrencia)
+  - **Total**: 55+ casos de prueba
 
 ## Umbrales
 - Cobertura mínima global: 80% (target)
@@ -272,14 +282,138 @@
 - ✅ Performance: load/stress/spike/endurance (backend)
 - ✅ Security: OWASP Top 10 (backend), mock auth flows (web)
 
-## Fase 3: Offline/Sync (Mobile) y Analítica
-- ✅ Offline/Sync: colas, reintentos, estados (mobile)
-- ✅ Smoke ML/Advanced (AI Services): Advanced ML/NLP/AutoML/RL/FL
-- ⏳ Analítica de cobertura por módulo y reportes de Codecov
+## Fase 3: Offline/Sync (Mobile) y Analítica ✅ COMPLETADO
 
-## Umbrales y Política
-- ⏳ Cobertura mínima global: 80% (CI fallará si <80%)
-- ✅ Umbral AI Services: 70% (config actual)
-- ✅ Reportes JUnit y cobertura publicados por workflow en todos los módulos
+### Offline/Sync (Mobile)
+
+- ✅ **Tests de Cola de Sincronización**: `mobile/__tests__/sync/offline-sync-queue.test.ts`
+  - Gestión de cola (agregar items, orden FIFO, procesamiento completo)
+  - Reintentos (incremento de retryCount, máximo de reintentos, marcado de errores)
+  - Operaciones específicas (CREATE/UPDATE/DELETE de appointments, alerts)
+  - Listeners de sincronización
+  - **Total**: 15+ casos de prueba
+
+- ✅ **Tests de Estados de Sincronización**: `mobile/__tests__/sync/offline-sync-states.test.ts`
+  - Estados básicos (idle, pending, syncing)
+  - Transiciones de estado
+  - Estados de error
+  - Timestamp de última sincronización
+  - Integración con store
+  - Estados de conexión (online/offline)
+  - Notificaciones de estado
+  - **Total**: 12+ casos de prueba
+
+- ✅ **Tests de Sincronización Bidireccional**: `mobile/__tests__/sync/synchronization.test.ts` (mejorado)
+  - Sincronización desde servidor
+  - Sincronización hacia servidor
+  - Resolución de conflictos
+  - Listeners de sincronización
+  - Estado de sincronización
+  - **Total**: 10+ casos de prueba
+
+- ✅ **Tests de Casos Especiales Offline/Sync**: `mobile/__tests__/sync/offline-sync-edge-cases.test.ts`
+  - Manejo de errores de red (timeouts, 500, 401, conexión intermitente)
+  - Conflictos de datos (versiones obsoletas, resolución por timestamp)
+  - Cola llena y límites (100+ items, priorización)
+  - Persistencia y recuperación (después de reinicio, estado después de error)
+  - Operaciones concurrentes (prevención de sincronización concurrente, agregar mientras sincroniza)
+  - Datos inválidos (datos corruptos, JSON inválido)
+  - Recuperación después de fallos (reintentos, marcado de errores)
+  - **Total**: 20+ casos de prueba especiales
+
+### Smoke ML/Advanced (AI Services)
+
+- ✅ **Smoke Tests ML Avanzado**: `ai-services/tests/test_advanced_ml_smoke.py`
+  - ✅ **NLP Avanzado** (5 tests):
+    - Procesamiento de texto
+    - Extracción de entidades médicas (NER)
+    - Resumen de texto médico
+    - Traducción de términos médicos
+    - Análisis de sentimiento
+  - ✅ **AutoML** (5 tests):
+    - Selección automática de modelo
+    - Ajuste de hiperparámetros
+    - Selección de características
+    - Detección de drift de datos
+    - Reentrenamiento automático
+  - ✅ **Reinforcement Learning** (4 tests):
+    - Configuración de agente RL
+    - Entrenamiento de agente RL
+    - Acción del agente RL
+    - Optimizador de recordatorios
+  - ✅ **Federated Learning** (5 tests):
+    - Registro de clientes FL
+    - Ronda FL con FedAvg
+    - Ronda FL con FedProx
+    - FL con privacidad diferencial
+    - Obtención del modelo global
+  - ✅ **Integración entre Servicios** (3 tests):
+    - Pipeline NLP -> AutoML
+    - Pipeline AutoML -> RL
+    - FL con modelos de AutoML
+  - **Total**: 22 casos de prueba smoke
+
+- ✅ **Tests de Casos Especiales ML Avanzado**: `ai-services/tests/test_advanced_ml_edge_cases.py`
+  - ✅ **NLP Edge Cases** (6 tests):
+    - Texto vacío, texto muy largo, idioma inválido
+    - Caracteres especiales, campos faltantes, NER sin entidades
+  - ✅ **AutoML Edge Cases** (5 tests):
+    - Candidatos vacíos, tipo de tarea inválido, grid grande
+    - k mayor que features, estadísticas faltantes
+  - ✅ **RL Edge Cases** (5 tests):
+    - Entorno inválido, 0/negativos episodios, acción sin entrenar
+    - Estado inválido
+  - ✅ **FL Edge Cases** (7 tests):
+    - Clientes vacíos, duplicados, updates vacíos
+    - Clientes desajustados, método de agregación inválido
+    - Epsilon inválido, modelo sin rondas
+  - ✅ **Manejo de Errores y Timeouts** (4 tests):
+    - Timeouts, rate limiting, circuit breaker, fallback
+  - ✅ **Validación de Datos** (4 tests):
+    - JSON malformado, tipo de contenido incorrecto
+    - Autenticación faltante, payload muy grande
+  - ✅ **Requests Concurrentes** (2 tests):
+    - Requests NLP concurrentes, requests AutoML concurrentes
+  - **Total**: 33 casos de prueba edge cases
+
+### Analítica de Cobertura y Codecov
+
+- ✅ **Configuración Codecov**: `.codecov.yml`
+  - Flags por módulo (backend, frontend-web, mobile, ai-services)
+  - Umbrales de cobertura por módulo
+  - Configuración de comentarios en PRs
+  - Ignorar archivos de configuración y tests
+  - Reportes en múltiples formatos (lcov, cobertura, html, json)
+
+- ✅ **Workflows GitHub Actions**: `.github/workflows/testing.yml` (actualizado)
+  - Upload de cobertura a Codecov con flags correctos
+  - Token de Codecov configurado
+  - Flags: `backend`, `frontend-web`, `mobile`, `ai-services`
+
+- ✅ **Scripts de Reporte de Cobertura**:
+  - `scripts/generate-coverage-report.sh` (Bash)
+  - `scripts/generate-coverage-report.js` (Node.js)
+  - Genera reportes por módulo con colores
+  - Calcula promedio global
+  - Muestra rutas a reportes HTML
+
+- ✅ **Umbrales Configurados**:
+  - Backend: 80% (target)
+  - Web Frontend: 70% (target)
+  - Mobile: 70% (target)
+  - AI Services: 70% (target)
+  - Global: 80% (target)
+
+## Umbrales y Política ✅ COMPLETADO
+
+- ✅ **Cobertura mínima global**: 80% (CI fallará si <80%)
+- ✅ **Umbral por módulo**:
+  - Backend: 80%
+  - Web Frontend: 70%
+  - Mobile: 70%
+  - AI Services: 70%
+- ✅ **Reportes JUnit y cobertura** publicados por workflow en todos los módulos
+- ✅ **Codecov Integration**: Configurado con flags por módulo
+- ✅ **Scripts de reporte**: Disponibles para generar reportes locales
 
 
