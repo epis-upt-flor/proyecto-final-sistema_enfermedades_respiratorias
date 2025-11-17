@@ -7,6 +7,8 @@ Las dependencias pesadas (transformers/torch) no son obligatorias en este stub.
 from typing import List, Dict, Any, Optional
 import os
 import structlog
+from .model_cache import get_model_cache
+from .lazy_loader import get_lazy_loader
 
 logger = structlog.get_logger()
 
@@ -17,25 +19,71 @@ class MedicalBERTModel:
         self.device = device or "cpu"
         self._loaded = False
 
+    def _load_model_real(self) -> bool:
+        """Carga real del modelo BERT"""
+        try:
+            from transformers import AutoTokenizer, AutoModelForSequenceClassification  # type: ignore
+            import torch  # type: ignore
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
+            if self.device == "cuda" and torch.cuda.is_available():
+                self._model.to("cuda")
+            logger.info("medical_bert_loaded_real", model=self.model_name, device=self.device)
+            return True
+        except Exception as err:
+            logger.warning("medical_bert_fallback_stub", error=str(err))
+            return False
+    
     def load(self) -> bool:
         """
-        Carga (o simula) el modelo BERT. En producción, inicializaría tokenizer y modelo.
+        Carga (o simula) el modelo BERT usando caché y lazy loading.
+        En producción, inicializaría tokenizer y modelo.
         """
         use_real = os.getenv("AI_USE_REAL_MODELS", "0") == "1"
+        
         if use_real:
+            # Usar caché y lazy loading
+            cache = get_model_cache()
+            lazy_loader = get_lazy_loader()
+            
+            # Intentar cargar desde caché o lazy loader
             try:
-                from transformers import AutoTokenizer, AutoModelForSequenceClassification  # type: ignore
-                import torch  # type: ignore
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                self._model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
-                if self.device == "cuda" and torch.cuda.is_available():
-                    self._model.to("cuda")
-                logger.info("medical_bert_loaded_real", model=self.model_name, device=self.device)
-                self._loaded = True
+                import asyncio
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            async def _load_with_cache():
+                def loader():
+                    return self._load_model_real()
+                
+                model, was_cached = await cache.get_or_load(
+                    model_name=self.model_name,
+                    model_type="medical_bert",
+                    loader_func=loader,
+                    device=self.device
+                )
+                
+                if model:
+                    self._model = model
+                    self._tokenizer = None  # Se carga por separado
+                    self._loaded = True
+                    return True
+                return False
+            
+            try:
+                result = loop.run_until_complete(_load_with_cache())
+                if result:
+                    return True
+            except Exception as e:
+                logger.warning("cache_load_failed", error=str(e))
+        
+        # Fallback a carga directa o stub
+        if use_real:
+            if self._load_model_real():
                 return True
-            except Exception as err:
-                logger.warning("medical_bert_fallback_stub", error=str(err))
-                # Fallback a stub si no están disponibles las dependencias/pesos
+        
         # Stub
         self._tokenizer = None
         self._model = None

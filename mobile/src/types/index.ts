@@ -362,6 +362,7 @@ export type RootStackParamList = {
   PatientAnalytics: undefined;
   DoctorAnalytics: undefined;
   Consent: undefined;
+  MLAdvancedResults: { analysisId?: string; experimentId?: string; sessionId?: string } | undefined;
 };
 
 export type MainTabParamList = {

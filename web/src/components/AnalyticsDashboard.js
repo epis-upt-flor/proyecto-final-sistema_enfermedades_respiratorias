@@ -13,6 +13,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
+import MLAdvancedResults from './MLAdvancedResults';
 import './AnalyticsDashboard.css';
 import { LEGACY_API_BASE, API_BASE } from '../utils/apiBase';
 
@@ -24,6 +25,9 @@ function AnalyticsDashboard() {
 
   const [mlMetrics, setMlMetrics] = useState(null);
   const [mlError, setMlError] = useState(null);
+  const [mlExperiments, setMlExperiments] = useState([]);
+  const [mlExperimentsLoading, setMlExperimentsLoading] = useState(false);
+  const [selectedExperiment, setSelectedExperiment] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -63,15 +67,36 @@ function AnalyticsDashboard() {
     }
   }, []);
 
+  const fetchMlExperiments = useCallback(async () => {
+    setMlExperimentsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE}/ml/experiments`, {
+        params: { limit: 5 },
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      if (response.data.success) {
+        setMlExperiments(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching ML experiments:', err);
+    } finally {
+      setMlExperimentsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboardData();
     fetchMlMetrics();
+    fetchMlExperiments();
     const interval = setInterval(() => {
       fetchDashboardData();
       fetchMlMetrics();
+      fetchMlExperiments();
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchDashboardData, fetchMlMetrics]);
+  }, [fetchDashboardData, fetchMlMetrics, fetchMlExperiments]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -394,6 +419,113 @@ function AnalyticsDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ML Experiments Section */}
+      <div className="summary-section">
+        <h3>🧪 Experimentos ML Recientes</h3>
+        {mlExperimentsLoading ? (
+          <p>Cargando experimentos...</p>
+        ) : mlExperiments.length === 0 ? (
+          <p>No hay experimentos ML recientes</p>
+        ) : (
+          <div className="experiments-list" style={{ marginTop: '16px' }}>
+            {mlExperiments.map((exp) => (
+              <div
+                key={exp.experimentId || exp._id}
+                className="experiment-item"
+                style={{
+                  padding: '12px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  marginBottom: '8px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                onClick={() => setSelectedExperiment(exp)}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong>{exp.experimentType === 'rl_session' ? '🔄 RL Session' : exp.experimentType === 'fl_round' ? '🌐 FL Round' : '🤖 ML Experiment'}</strong>
+                    <p style={{ margin: '4px 0', color: '#666', fontSize: '14px' }}>
+                      {exp.modelName || 'Unknown Model'} • {exp.status || 'unknown'}
+                    </p>
+                    <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
+                      {exp.createdAt ? new Date(exp.createdAt).toLocaleString('es-ES') : 'Fecha desconocida'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedExperiment(exp);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Ver Detalles
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ML Advanced Results Modal */}
+      {selectedExperiment && (
+        <div className="advanced-results-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div className="advanced-results-container" style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '90%',
+            maxHeight: '90%',
+            overflow: 'auto',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setSelectedExperiment(null)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+            <MLAdvancedResults
+              experimentId={selectedExperiment.experimentId || selectedExperiment._id}
+              sessionId={selectedExperiment.metadata?.sessionId}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

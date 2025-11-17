@@ -31,6 +31,7 @@ import DirectChatScreen from '../screens/DirectChatScreen';
 import PatientAnalyticsScreen from '../screens/PatientAnalyticsScreen';
 import DoctorAnalyticsScreen from '../screens/DoctorAnalyticsScreen';
 import ConsentScreen from '../screens/ConsentScreen';
+import MLAdvancedResultsScreen from '../screens/MLAdvancedResultsScreen';
 import { featureFlags } from '../config/environment';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -338,6 +339,11 @@ const AppNavigator = () => {
           name="Consent"
           component={ConsentScreen}
           options={{ title: 'Consentimiento Informado' }}
+        />
+        <Stack.Screen
+          name="MLAdvancedResults"
+          component={MLAdvancedResultsScreen}
+          options={{ title: 'Resultados ML Avanzados' }}
         />
         </Stack.Navigator>
         {privacyVisible && (

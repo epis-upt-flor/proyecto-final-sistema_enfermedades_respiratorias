@@ -22,13 +22,21 @@ async def fl_register(req: FLRegisterRequest) -> Dict[str, Any]:
 
 class FLRoundRequest(BaseModel):
     client_updates: List[Dict[str, Any]] = Field(default_factory=list, description="Lista de updates locales (ej., métricas)")
+    aggregation_method: Optional[str] = Field("fedavg", description="Método de agregación: fedavg, fedprox, scaffold")
+    use_dp: Optional[bool] = Field(False, description="Usar privacidad diferencial")
+    dp_epsilon: Optional[float] = Field(1.0, description="Épsilon para privacidad diferencial")
 
 
 @router.post("/run_round", summary="FL - Ejecutar ronda de agregación")
 async def fl_round(req: FLRoundRequest) -> Dict[str, Any]:
     try:
         fl = FederatedLearningCoordinator()
-        return fl.run_round(req.client_updates or [])
+        return fl.run_round(
+            req.client_updates or [],
+            aggregation_method=req.aggregation_method or 'fedavg',
+            use_dp=req.use_dp or False,
+            dp_epsilon=req.dp_epsilon or 1.0
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

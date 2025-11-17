@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Card, Title, Paragraph, Chip } from 'react-native-paper';
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { Card, Title, Paragraph, Chip, Button } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { localStorageService } from '../services/localStorage';
 import { SymptomAnalysis } from '../types';
 
@@ -24,6 +25,7 @@ const FeatureBar = ({ name, value }: { name: string; value: number }) => {
 };
 
 const SymptomAnalysesScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const [analyses, setAnalyses] = useState<SymptomAnalysis[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -107,6 +109,25 @@ const SymptomAnalysesScreen: React.FC = () => {
                     Sin factores disponibles para este análisis.
                   </Paragraph>
                 )}
+                {/* Button to view advanced ML results */}
+                <View style={{ marginTop: 12 }}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      const analysisId = (item as any).id || (item as any).analysisId;
+                      navigation.navigate('MLAdvancedResults', {
+                        analysisId,
+                        experimentId: (item as any).experimentId,
+                        sessionId: (item as any).sessionId
+                      });
+                    }}
+                    icon="chart-line"
+                    style={{ borderColor: '#667eea' }}
+                    labelStyle={{ color: '#667eea' }}
+                  >
+                    Ver Resultados ML Avanzados
+                  </Button>
+                </View>
               </Card.Content>
             </Card>
           );

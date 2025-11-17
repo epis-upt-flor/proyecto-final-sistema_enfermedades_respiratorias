@@ -66,6 +66,14 @@ try:
 except ImportError as e:
     logger.warning("ml_monitoring_routes_not_available", error=str(e))
 
+# Import and register model cache routes
+try:
+    from api.routes.model_cache import router as model_cache_router
+    app.include_router(model_cache_router, tags=["Model Cache"])
+    logger.info("model_cache_routes_registered")
+except ImportError as e:
+    logger.warning("model_cache_routes_not_available", error=str(e))
+
 # Import and register Advanced ML routes
 try:
     from api.routes.advanced_ml import router as advanced_ml_router

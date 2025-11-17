@@ -27,6 +27,7 @@ import { shallow } from 'zustand/shallow';
 import { voiceRecognitionService } from '../services/voiceRecognitionService';
 import { useTranslation } from '../services/i18nService';
 import { wearablesService, type WearableMetrics } from '../services/wearablesService';
+import { apiService } from '../services/apiService';
 
 type QuickAction = {
   title: string;
@@ -179,6 +180,7 @@ const HomeScreen: React.FC = () => {
   const [isVoiceCmd, setIsVoiceCmd] = useState(false);
   const healthProfile = useAppStore((s) => s.healthProfile);
   const [wearable, setWearable] = useState<WearableMetrics | null>(null);
+  const [mlExperiments, setMlExperiments] = useState<any[]>([]);
 
   const personalizedRecommendations = useMemo(() => {
     const base: string[] = [];
@@ -224,6 +226,7 @@ const HomeScreen: React.FC = () => {
       loadUpcomingAppointments().catch(() => {});
       loadPredictive().catch(() => {});
       loadWearables().catch(() => {});
+      loadMlExperiments().catch(() => {});
       // Medición simple de carga inicial del dashboard
       const elapsed = Date.now() - loadStartTs;
       try {
@@ -295,6 +298,22 @@ const HomeScreen: React.FC = () => {
       setPredictiveSummary(null);
     }
   }, [user?.id]);
+
+  const loadMlExperiments = useCallback(async () => {
+    try {
+      if (!isOnline || !user?.id) {
+        return;
+      }
+      const response = await apiService.get('/ml/experiments', {
+        params: { limit: 3 }
+      });
+      if (response.data?.success) {
+        setMlExperiments(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading ML experiments:', error);
+    }
+  }, [isOnline, user?.id]);
 
   const loadWearables = useCallback(async () => {
     try {
@@ -646,6 +665,60 @@ const HomeScreen: React.FC = () => {
             ))}
             <Button mode="text" onPress={() => navigation.navigate('SymptomAnalyses')} style={{ alignSelf: 'flex-start', marginTop: 8 }}>
               Ver historial de análisis
+            </Button>
+          </View>
+        )}
+
+        {/* ML Experiments */}
+        {mlExperiments.length > 0 && (
+          <View style={styles.section}>
+            <Title style={styles.sectionTitle}>🧪 Experimentos ML Recientes</Title>
+            {mlExperiments.map((exp) => (
+              <Card
+                key={exp.experimentId || exp._id}
+                style={styles.recentCard}
+                onPress={() => {
+                  navigation.navigate('MLAdvancedResults', {
+                    experimentId: exp.experimentId || exp._id,
+                    sessionId: exp.metadata?.sessionId
+                  });
+                }}
+              >
+                <Card.Content>
+                  <View style={styles.recentItemHeader}>
+                    <View style={styles.recentItemInfo}>
+                      <Title style={styles.recentItemTitle}>
+                        {exp.experimentType === 'rl_session' ? '🔄 RL Session' : exp.experimentType === 'fl_round' ? '🌐 FL Round' : '🤖 ML Experiment'}
+                      </Title>
+                      <Paragraph style={styles.recentItemSubtitle}>
+                        {exp.modelName || 'Unknown Model'} • {exp.status || 'unknown'}
+                      </Paragraph>
+                      <Paragraph style={{ color: '#999', fontSize: '12px', marginTop: 4 }}>
+                        {exp.createdAt ? new Date(exp.createdAt).toLocaleString() : 'Fecha desconocida'}
+                      </Paragraph>
+                    </View>
+                    <Chip
+                      mode="outlined"
+                      style={styles.statusChip}
+                      textStyle={{
+                        color: exp.status === 'completed' ? '#388e3c' : exp.status === 'running' ? '#f57c00' : '#757575'
+                      }}
+                    >
+                      {exp.status || 'unknown'}
+                    </Chip>
+                  </View>
+                </Card.Content>
+              </Card>
+            ))}
+            <Button
+              mode="text"
+              onPress={() => {
+                // Navigate to full experiments list if available
+                navigation.navigate('MLAdvancedResults', {});
+              }}
+              style={{ alignSelf: 'flex-start', marginTop: 8 }}
+            >
+              Ver todos los experimentos
             </Button>
           </View>
         )}

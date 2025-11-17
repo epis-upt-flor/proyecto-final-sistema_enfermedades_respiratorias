@@ -13,6 +13,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import SHAPVisualization from './SHAPVisualization';
 import FactorChart from './FactorChart';
+import MLAdvancedResults from './MLAdvancedResults';
 import { t, getCurrentLanguage } from '../services/i18nService';
 import './ChatBot.css';
 import './ChatBotEnhanced.css';
@@ -34,6 +35,10 @@ function ChatBotEnhanced() {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [showAdvancedResults, setShowAdvancedResults] = useState(false);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState(null);
+  const [currentExperimentId, setCurrentExperimentId] = useState(null);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -334,6 +339,14 @@ function ChatBotEnhanced() {
           
           if (mlResponse.data.success) {
             mlAnalysisResult = mlResponse.data.data;
+            // Store analysis ID for advanced results
+            if (mlResponse.data.data.id || mlResponse.data.data.analysisId) {
+              setCurrentAnalysisId(mlResponse.data.data.id || mlResponse.data.data.analysisId);
+            }
+            // Store session ID if available
+            if (sessionId) {
+              setCurrentSessionId(sessionId);
+            }
           }
         } catch (mlError) {
           console.warn('ML analysis failed:', mlError);
@@ -570,6 +583,33 @@ function ChatBotEnhanced() {
                 </div>
               )}
 
+              {/* Button to view advanced ML results */}
+              {message.mlPrediction && message.type === 'bot' && (
+                <div className="message-actions" style={{ marginTop: '10px' }}>
+                  <button
+                    className="advanced-results-btn"
+                    onClick={() => {
+                      setShowAdvancedResults(true);
+                      if (message.mlPrediction?.id || message.mlPrediction?.analysisId) {
+                        setCurrentAnalysisId(message.mlPrediction.id || message.mlPrediction.analysisId);
+                      }
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    📊 Ver Resultados ML Avanzados
+                  </button>
+                </div>
+              )}
+
               <div className="message-time">
                 {message.timestamp.toLocaleTimeString('es-PE', { 
                   hour: '2-digit', 
@@ -608,6 +648,60 @@ function ChatBotEnhanced() {
                 {suggestion}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Advanced ML Results Modal/Overlay */}
+      {showAdvancedResults && (currentAnalysisId || currentExperimentId || currentSessionId) && (
+        <div className="advanced-results-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div className="advanced-results-container" style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '90%',
+            maxHeight: '90%',
+            overflow: 'auto',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => {
+                setShowAdvancedResults(false);
+                setCurrentAnalysisId(null);
+                setCurrentExperimentId(null);
+                setCurrentSessionId(null);
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+            <MLAdvancedResults
+              analysisId={currentAnalysisId}
+              experimentId={currentExperimentId}
+              sessionId={currentSessionId}
+            />
           </div>
         </div>
       )}

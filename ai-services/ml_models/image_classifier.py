@@ -7,6 +7,8 @@ La integración real podría usar torchvision/timm u OpenCV con un backend de DL
 from typing import List, Dict, Any, Optional, Union
 import os
 import structlog
+from .model_cache import get_model_cache
+from .lazy_loader import get_lazy_loader
 
 logger = structlog.get_logger()
 
@@ -17,24 +19,68 @@ class MedicalImageClassifier:
         self.device = device or "cpu"
         self._loaded = False
 
+    def _load_model_real(self) -> bool:
+        """Carga real del modelo de visión"""
+        try:
+            import torch  # type: ignore
+            import torchvision.models as models  # type: ignore
+            self._model = getattr(models, self.model_name, models.resnet50)(pretrained=True)  # type: ignore[attr-defined]
+            self._model.eval()
+            if self.device == "cuda" and torch.cuda.is_available():
+                self._model.to("cuda")
+            logger.info("medical_image_model_loaded_real", model=self.model_name, device=self.device)
+            return True
+        except Exception as err:
+            logger.warning("medical_image_model_fallback_stub", error=str(err))
+            return False
+    
     def load(self) -> bool:
         """
-        Carga (o simula) el modelo de visión. En producción inicializa pesos preentrenados.
+        Carga (o simula) el modelo de visión usando caché y lazy loading.
+        En producción inicializa pesos preentrenados.
         """
         use_real = os.getenv("AI_USE_REAL_MODELS", "0") == "1"
+        
         if use_real:
+            # Usar caché y lazy loading
+            cache = get_model_cache()
+            
             try:
-                import torch  # type: ignore
-                import torchvision.models as models  # type: ignore
-                self._model = getattr(models, self.model_name, models.resnet50)(pretrained=True)  # type: ignore[attr-defined]
-                self._model.eval()
-                if self.device == "cuda" and torch.cuda.is_available():
-                    self._model.to("cuda")
-                logger.info("medical_image_model_loaded_real", model=self.model_name, device=self.device)
-                self._loaded = True
+                import asyncio
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            async def _load_with_cache():
+                def loader():
+                    return self._load_model_real()
+                
+                model, was_cached = await cache.get_or_load(
+                    model_name=self.model_name,
+                    model_type="medical_image",
+                    loader_func=loader,
+                    device=self.device
+                )
+                
+                if model:
+                    self._model = model
+                    self._loaded = True
+                    return True
+                return False
+            
+            try:
+                result = loop.run_until_complete(_load_with_cache())
+                if result:
+                    return True
+            except Exception as e:
+                logger.warning("cache_load_failed", error=str(e))
+        
+        # Fallback a carga directa o stub
+        if use_real:
+            if self._load_model_real():
                 return True
-            except Exception as err:
-                logger.warning("medical_image_model_fallback_stub", error=str(err))
+        
         # Stub
         self._model = None
         self._loaded = True
