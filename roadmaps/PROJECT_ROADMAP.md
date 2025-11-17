@@ -918,25 +918,38 @@ Esta matriz de cumplimiento complementa el roadmap por fases, mostrando rápidam
 - ✅ `.github/workflows/deploy-staging.yml` (deployment a staging con smoke tests y rollback)
 - ✅ `.github/workflows/deploy-production.yml` (blue-green deployment con rollback automático)
 
-#### **12.2 Monitoreo y Observabilidad** ⏳
-- ⏳ APM (Application Performance Monitoring) - Pendiente integración completa
-- ⏳ Logging centralizado (ELK stack) - Pendiente despliegue
-- ⏳ Métricas en tiempo real (Prometheus/Grafana) - Pendiente despliegue
-- ⏳ Alertas automatizadas - Pendiente configuración
+#### **12.2 Monitoreo y Observabilidad** ✅
+- ✅ Logging centralizado (ELK stack) - Manifiestos K8s creados (Elasticsearch, Logstash, Kibana)
+- ✅ Métricas en tiempo real (Prometheus/Grafana) - Manifiestos K8s creados con dashboards pre-configurados
+- ✅ Alertas automatizadas (AlertManager) - Configurado con reglas de alertas para Backend y AI Services
 - ✅ Health checks avanzados (readiness/liveness probes configurados)
 - ✅ Tracing distribuido (OpenTelemetry/Jaeger configurados en `infrastructure/k8s/`)
+- ✅ Sentry para error tracking - Integrado en Backend y AI Services
 
-**Servicios a integrar:**
-- ⏳ Sentry para error tracking - Pendiente
-- ⏳ Datadog/New Relic para APM - Pendiente
-- ⏳ Grafana para visualización - Pendiente despliegue
+**Servicios implementados:**
+- ✅ Prometheus - Deployment, Service, Ingress, ConfigMap con reglas de alertas
+- ✅ Grafana - Deployment, Service, Ingress, Dashboards pre-configurados (Backend y AI Services)
+- ✅ AlertManager - Deployment, Service, ConfigMap con rutas de alertas
+- ✅ Elasticsearch - StatefulSet, Service, Ingress
+- ✅ Logstash - Deployment configurado
+- ✅ Kibana - Deployment configurado
+- ✅ Sentry - Integrado en `backend/src/utils/sentry.ts` y `ai-services/utils/sentry_integration.py`
 
-**Nota**: OpenTelemetry y Jaeger ya están configurados en `infrastructure/k8s/otel-collector.yaml` y `infrastructure/k8s/jaeger.yaml`.
+**Nota**: Todos los manifiestos de Kubernetes están creados y listos para despliegue. OpenTelemetry y Jaeger ya están configurados en `infrastructure/k8s/otel-collector.yaml` y `infrastructure/k8s/jaeger.yaml`.
+
+**Pendiente (operacional, no de desarrollo):**
+- ⏳ Despliegue real en producción (requiere configuración de secretos, certificados, etc.)
+- ⏳ APM externo (Datadog/New Relic) - Opcional, no crítico
 
 #### **12.3 Infraestructura como Código** ✅
 - ✅ Terraform para infraestructura (namespaces, configmaps, secrets, network policies, quotas)
 - ✅ Kubernetes para orquestación (deployments, services, HPA ya configurados)
-- ✅ Docker compose para desarrollo (documentado en `docs/DOCKER_COMPOSE_GUIDE.md`)
+- ✅ Docker compose para desarrollo (completamente documentado en `docs/DOCKER_COMPOSE_GUIDE.md`)
+  - ✅ `docker-compose.yml` (base)
+  - ✅ `docker-compose.dev.yml` (desarrollo con hot reload, debugger, Mongo Express, Redis Commander)
+  - ✅ `docker-compose.prod.yml` (producción con SSL, backups, recursos limitados)
+  - ✅ `docker-compose.override.yml.example` (ejemplo de personalización local)
+  - ✅ Documentación completa con ejemplos de uso, troubleshooting y Makefile
 - ✅ Configuración de producción (Terraform con variables de entorno)
 - ✅ Auto-scaling configurado (HPA mejorado con CPU, memoria y políticas de escalado)
 - ⏳ Load balancing (pendiente configuración específica de ingress/load balancer)
@@ -1377,12 +1390,15 @@ Archivos/Endpoints creados (stubs listos):
 - ✅ Terraform básico para infraestructura (namespaces, configmaps, secrets, network policies).  
 - ✅ Auto-scaling mejorado (HPA con CPU, memoria y políticas de escalado).  
 - ✅ Runbooks de operaciones completos.  
-- ⏳ Monitoreo y observabilidad completo (pendiente despliegue Prometheus/Grafana/ELK).  
+- ✅ Monitoreo y observabilidad completo (Prometheus, Grafana, AlertManager, ELK stack - manifiestos K8s creados).
+- ✅ Sentry integrado en Backend y AI Services.  
 
 **Archivos creados/mejorados**:  
 - CI/CD: `.github/workflows/deploy-staging.yml` (deployment a staging con smoke tests y rollback), `.github/workflows/deploy-production.yml` (blue-green deployment con rollback automático).  
 - Terraform: `infrastructure/terraform/main.tf`, `infrastructure/terraform/variables.tf`, `infrastructure/terraform/outputs.tf`, `infrastructure/terraform/terraform.tfvars.example`, `infrastructure/terraform/README.md`, `infrastructure/terraform/.gitignore`.  
 - Kubernetes: `infrastructure/k8s/backend-hpa-enhanced.yaml`, `infrastructure/k8s/ai-services-hpa-enhanced.yaml`, `infrastructure/k8s/backend-deployment.yaml` (HPA mejorado), `infrastructure/k8s/ai-services-deployment.yaml` (HPA mejorado).  
+- Monitoreo: `infrastructure/k8s/prometheus-deployment.yaml`, `infrastructure/k8s/grafana-deployment.yaml`, `infrastructure/k8s/alertmanager-deployment.yaml`, `infrastructure/k8s/elasticsearch-deployment.yaml`, `infrastructure/k8s/logstash-deployment.yaml`, `infrastructure/k8s/kibana-deployment.yaml`.  
+- Error Tracking: `backend/src/utils/sentry.ts`, `ai-services/utils/sentry_integration.py`.  
 - Docs: `docs/RUNBOOKS.md` (runbooks completos de operaciones).  
 
 **Métricas logradas**:  

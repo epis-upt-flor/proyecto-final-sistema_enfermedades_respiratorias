@@ -13,13 +13,48 @@ Esta guía explica cómo usar Docker Compose para desarrollo local del sistema R
 
 ---
 
+## 📁 Archivos Docker Compose Disponibles
+
+El proyecto incluye varios archivos Docker Compose para diferentes entornos:
+
+### `docker-compose.yml` (Base)
+- Configuración base con todos los servicios
+- Usado como base para desarrollo y producción
+- **No usar directamente** - usar con `-f` flag
+
+### `docker-compose.dev.yml` (Desarrollo) ⭐ **Recomendado para desarrollo**
+- Configuración optimizada para desarrollo local
+- Hot reload habilitado
+- Debugger de Node.js expuesto (puerto 9229)
+- Mongo Express y Redis Commander incluidos
+- Volúmenes montados para desarrollo activo
+
+### `docker-compose.prod.yml` (Producción)
+- Configuración optimizada para producción
+- Sin hot reload
+- Recursos limitados
+- Certbot para SSL
+- Servicio de backups automáticos
+- Puertos restringidos a localhost
+
+### `docker-compose.override.yml.example` (Personalización)
+- Ejemplo de override para personalización local
+- Copiar a `docker-compose.override.yml` (ignorado por git)
+- Permite personalizar sin afectar otros desarrolladores
+
+---
+
 ## 🚀 Inicio Rápido
 
 ### 1. Configurar Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Crea un archivo `.env` en la raíz del proyecto basándote en `env.example`:
 
 ```bash
+# Copiar ejemplo
+cp env.example .env
+
+# Editar con tus valores
 # MongoDB
 MONGO_USERNAME=admin
 MONGO_PASSWORD=password123
@@ -44,11 +79,14 @@ SENTRY_DSN=your-sentry-dsn
 SENTRY_ENABLED=false
 ```
 
-### 2. Iniciar Servicios
+### 2. Iniciar Servicios para Desarrollo
 
 ```bash
-# Iniciar todos los servicios
-docker-compose up -d
+# Opción 1: Usar docker-compose.dev.yml (recomendado)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Opción 2: Usar Makefile (más fácil)
+make dev
 
 # Ver logs
 docker-compose logs -f
@@ -58,7 +96,17 @@ docker-compose logs -f backend
 docker-compose logs -f ai-services
 ```
 
-### 3. Verificar que Todo Funciona
+### 3. Iniciar Servicios para Producción
+
+```bash
+# Usar docker-compose.prod.yml
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Verificar que todo funciona
+docker-compose ps
+```
+
+### 4. Verificar que Todo Funciona
 
 ```bash
 # Backend
@@ -79,36 +127,51 @@ docker-compose exec redis redis-cli ping
 ## 📦 Servicios Incluidos
 
 ### MongoDB
-- **Puerto**: `27017` (solo localhost)
+- **Puerto**: `27017` (solo localhost en producción)
 - **Usuario**: `admin` (por defecto)
 - **Contraseña**: Configurada en `.env`
-- **Base de datos**: `respicare` (por defecto)
+- **Base de datos**: `respicare` (por defecto) / `respicare_dev` (desarrollo)
 - **Volúmenes**: `mongodb_data` (persistente)
+- **Admin UI**: Mongo Express disponible en desarrollo (`http://localhost:8081`)
 
 ### Redis
-- **Puerto**: `6379` (solo localhost)
+- **Puerto**: `6379` (solo localhost en producción)
 - **Memoria máxima**: 256MB
 - **Política**: `allkeys-lru`
 - **Volúmenes**: `redis_data` (persistente)
+- **Admin UI**: Redis Commander disponible en desarrollo (`http://localhost:8082`)
 
 ### Backend API
 - **Puerto**: `3001`
+- **Debugger**: `9229` (solo en desarrollo)
 - **Health check**: `http://localhost:3001/health`
-- **Hot reload**: Habilitado en desarrollo
+- **Hot reload**: Habilitado en desarrollo (`npm run dev`)
 - **Logs**: `backend_logs` volume
+- **Variables de entorno**: `NODE_ENV=development` (dev) / `production` (prod)
 
 ### AI Services
 - **Puerto**: `8000`
 - **Health check**: `http://localhost:8000/api/v1/health`
-- **Hot reload**: Habilitado en desarrollo
+- **Hot reload**: Habilitado en desarrollo (`--reload` flag)
 - **Logs**: `ai_logs` volume
+- **Variables de entorno**: `LOG_LEVEL=DEBUG` (dev) / `INFO` (prod)
+
+### Web Frontend (solo en desarrollo)
+- **Puerto**: `3000`
+- **Hot reload**: Habilitado con `CHOKIDAR_USEPOLLING=true`
+- **Variables de entorno**: `REACT_APP_API_URL`, `REACT_APP_AI_URL`
 
 ### Nginx (Proxy Reverso)
-- **Puerto**: `8080`
+- **Puerto**: `80` (HTTP), `443` (HTTPS)
 - **Configuración**: `nginx/nginx.conf`
 - **Rutas**:
   - `/api` → Backend (3001)
   - `/ai` → AI Services (8000)
+- **SSL**: Certbot configurado en producción
+
+### Servicios Adicionales (solo desarrollo)
+- **Mongo Express**: `http://localhost:8081` - Interfaz web para MongoDB
+- **Redis Commander**: `http://localhost:8082` - Interfaz web para Redis
 
 ---
 
@@ -116,9 +179,13 @@ docker-compose exec redis redis-cli ping
 
 ### Gestión de Servicios
 
+#### Desarrollo
 ```bash
-# Iniciar servicios
-docker-compose up -d
+# Iniciar servicios de desarrollo
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# O usar Makefile
+make dev
 
 # Detener servicios
 docker-compose down
@@ -135,6 +202,30 @@ docker-compose up -d backend
 
 # Ver estado de servicios
 docker-compose ps
+```
+
+#### Producción
+```bash
+# Iniciar servicios de producción
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Detener servicios
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+# Ver estado
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+```
+
+#### Personalización Local
+```bash
+# Copiar ejemplo de override
+cp docker-compose.override.yml.example docker-compose.override.yml
+
+# Editar docker-compose.override.yml con tus personalizaciones
+# Este archivo es ignorado por git y no afecta a otros desarrolladores
+
+# Usar con override
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.override.yml up -d
 ```
 
 ### Logs
@@ -221,7 +312,7 @@ services:
 
 ### Volúmenes Personalizados
 
-Para desarrollo, puedes montar el código local:
+Para desarrollo, puedes montar el código local (ya configurado en `docker-compose.dev.yml`):
 
 ```yaml
 services:
@@ -231,9 +322,24 @@ services:
       - /app/node_modules  # Excluir node_modules del mount
 ```
 
+### Usar docker-compose.override.yml para Personalización
+
+Crea `docker-compose.override.yml` (ignorado por git) para personalizar tu entorno local:
+
+```yaml
+# docker-compose.override.yml
+services:
+  backend:
+    ports:
+      - "9229:9229"  # Node.js debugger
+    environment:
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229
+      - DEBUG=true
+```
+
 ### Redes Personalizadas
 
-Por defecto, todos los servicios están en la red `respicare-network`. Puedes crear redes adicionales:
+Por defecto, todos los servicios están en la red `respicare-network` (o `respicare-dev-network` en desarrollo). Puedes crear redes adicionales:
 
 ```yaml
 networks:
@@ -241,6 +347,34 @@ networks:
     driver: bridge
   backend:
     driver: bridge
+```
+
+### Usar Makefile (Recomendado)
+
+El proyecto incluye un `Makefile` con comandos útiles:
+
+```bash
+# Ver todos los comandos disponibles
+make help
+
+# Setup inicial
+make setup
+
+# Desarrollo
+make dev          # Iniciar en modo desarrollo con logs
+make up           # Iniciar en background
+make down         # Detener servicios
+make logs         # Ver logs
+make logs-backend # Ver logs del backend
+make logs-ai      # Ver logs de AI Services
+
+# Construcción
+make build        # Construir todas las imágenes
+
+# Tests
+make test         # Ejecutar todos los tests
+make test-backend # Tests del backend
+make test-ai      # Tests de AI Services
 ```
 
 ---
@@ -355,6 +489,36 @@ secrets:
 
 ---
 
+---
+
+## 📝 Resumen de Archivos Docker Compose
+
+| Archivo | Uso | Cuándo usar |
+|---------|-----|-------------|
+| `docker-compose.yml` | Base | Nunca usar solo, siempre con `-f` |
+| `docker-compose.dev.yml` | Desarrollo | Desarrollo local, hot reload, debugger |
+| `docker-compose.prod.yml` | Producción | Despliegue en producción |
+| `docker-compose.override.yml` | Personalización | Personalización local (ignorado por git) |
+
+### Ejemplos de Uso
+
+```bash
+# Desarrollo (recomendado)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Producción
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Desarrollo con personalización local
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.override.yml up -d
+
+# Usar Makefile (más fácil)
+make dev  # Desarrollo
+```
+
+---
+
 **Última actualización**: 2024-11-03  
-**Versión**: 1.0.0
+**Versión**: 2.0.0  
+**Mantenido por**: Equipo DevOps RespiCare
 
