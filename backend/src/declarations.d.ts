@@ -27,3 +27,38 @@ declare module 'swagger-ui-express' {
   
   export { serve, setup };
 }
+
+// OpenTelemetry modules (optional dependencies)
+declare module '@opentelemetry/sdk-node' {
+  export class NodeSDK {
+    constructor(options?: any);
+    start(): Promise<void>;
+    shutdown(): Promise<void>;
+  }
+}
+
+declare module '@opentelemetry/auto-instrumentations-node' {
+  export function getNodeAutoInstrumentations(options?: any): any[];
+}
+
+declare module '@opentelemetry/resources' {
+  export class Resource {
+    constructor(attributes?: any);
+  }
+}
+
+declare module '@opentelemetry/semantic-conventions' {
+  export const SemanticResourceAttributes: any;
+}
+
+declare module '@opentelemetry/exporter-jaeger' {
+  export class JaegerExporter {
+    constructor(options?: any);
+  }
+}
+
+declare module '@opentelemetry/exporter-trace-otlp-http' {
+  export class OTLPTraceExporter {
+    constructor(options?: any);
+  }
+}
