@@ -21,15 +21,17 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init and build tools for native modules
+RUN apk add --no-cache dumb-init python3 make g++
 
 # Copy package files
 COPY package*.json ./
 
 # Install only production dependencies
 RUN npm ci --omit=dev && \
-    npm cache clean --force
+    npm cache clean --force && \
+    # Remove build tools after installation to reduce image size
+    apk del python3 make g++
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
