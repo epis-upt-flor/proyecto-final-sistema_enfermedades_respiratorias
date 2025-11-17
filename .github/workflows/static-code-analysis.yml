@@ -190,32 +190,53 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: mobile/package-lock.json
+          check-latest: true
+      
+      - name: Determine mobile project structure
+        id: mobile-structure
+        run: |
+          if [ -f "mobile/RespiCare-Mobile/package.json" ]; then
+            echo "project_path=mobile/RespiCare-Mobile" >> $GITHUB_OUTPUT
+            echo "lockfile_path=mobile/RespiCare-Mobile/package-lock.json" >> $GITHUB_OUTPUT
+          elif [ -f "mobile/package.json" ]; then
+            echo "project_path=mobile" >> $GITHUB_OUTPUT
+            echo "lockfile_path=mobile/package-lock.json" >> $GITHUB_OUTPUT
+          else
+            echo "Error: No mobile package.json found"
+            exit 1
+          fi
       
       - name: Install dependencies
-        working-directory: ./mobile
-        run: npm ci
+        working-directory: ./${{ steps.mobile-structure.outputs.project_path }}
+        run: |
+          if [ ! -f "package-lock.json" ]; then
+            echo "Warning: package-lock.json not found, generating it..."
+            npm install --package-lock-only
+          fi
+          npm ci
       
       - name: Run ESLint
-        working-directory: ./mobile
-        run: npm run lint -- --format json --output-file eslint-report.json || true
+        working-directory: ./${{ steps.mobile-structure.outputs.project_path }}
+        run: |
+          if npm run | grep -q "lint"; then
+            npm run lint -- --format json --output-file eslint-report.json || true
+          else
+            npx eslint . --ext .js,.jsx,.ts,.tsx --format json --output-file eslint-report.json || true
+          fi
         continue-on-error: true
       
       - name: Run TypeScript type check
-        working-directory: ./mobile
+        working-directory: ./${{ steps.mobile-structure.outputs.project_path }}
         run: |
           if [ -f "tsconfig.json" ]; then
             npx tsc --noEmit || true
-          elif [ -f "RespiCare-Mobile/tsconfig.json" ]; then
-            cd RespiCare-Mobile && npx tsc --noEmit || true
           else
             echo "No tsconfig.json found, skipping type check"
           fi
         continue-on-error: true
       
       - name: Run npm audit
-        working-directory: ./mobile
+        working-directory: ./${{ steps.mobile-structure.outputs.project_path }}
         run: npm audit --audit-level=moderate || true
         continue-on-error: true
       
@@ -224,7 +245,7 @@ jobs:
         if: always()
         with:
           name: mobile-eslint-results
-          path: mobile/eslint-report.json
+          path: ${{ steps.mobile-structure.outputs.project_path }}/eslint-report.json
           if-no-files-found: ignore
 
   generate-report:
