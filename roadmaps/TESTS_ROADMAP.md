@@ -108,9 +108,16 @@
   - ✅ Tests de accesibilidad avanzados (`web/src/tests/accessibility/accessibility-advanced.test.js`)
   - Ubicación: `web/src/tests/`
 
-- ⚙️ **Mobile**: Parcial - 3 archivos
-  - Backend integration, offline appointments, offline sync
-  - Pendiente: Más flujos de integración
+- ✅ **Mobile**: Completo - 9 archivos
+  - ✅ Backend integration, offline appointments, offline sync
+  - ✅ Flujo completo de autenticación (login, logout, registro)
+  - ✅ Flujo completo de análisis de síntomas (captura, análisis, resultados)
+  - ✅ Flujo completo de citas (crear, editar, cancelar, sincronizar)
+  - ✅ Flujo de telemedicina (iniciar llamada, finalizar)
+  - ✅ Flujo de notificaciones (recibir, leer, eliminar)
+  - ✅ Flujo de historial médico (crear, editar, sincronizar, buscar)
+  - ✅ Flujo de navegación (navegación entre pantallas, deep linking)
+  - ✅ Flujo completo de sincronización (múltiples tipos de datos)
   - Ubicación: `mobile/__tests__/integration/`
 
 - ✅ **AI Services**: Completo
