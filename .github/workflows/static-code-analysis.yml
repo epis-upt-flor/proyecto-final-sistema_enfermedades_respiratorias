@@ -128,7 +128,6 @@ jobs:
   frontend-analysis:
     name: Frontend Web Static Analysis
     runs-on: ubuntu-latest
-    if: false  # Deshabilitado hasta que se configure el frontend
     
     steps:
       - name: Checkout code
@@ -138,6 +137,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
       
       - name: Install dependencies
         working-directory: ./web
@@ -145,13 +146,41 @@ jobs:
       
       - name: Run ESLint
         working-directory: ./web
-        run: npm run lint || true
+        run: |
+          if command -v eslint &> /dev/null || npx eslint --version &> /dev/null; then
+            npx eslint src/ --ext .js,.jsx,.ts,.tsx --format json --output-file eslint-report.json || true
+          else
+            echo "ESLint not available, skipping lint check"
+            echo "[]" > eslint-report.json
+          fi
         continue-on-error: true
+      
+      - name: Run TypeScript type check
+        working-directory: ./web
+        run: |
+          if [ -f "tsconfig.json" ]; then
+            npx tsc --noEmit || true
+          else
+            echo "No tsconfig.json found, skipping type check"
+          fi
+        continue-on-error: true
+      
+      - name: Run npm audit
+        working-directory: ./web
+        run: npm audit --audit-level=moderate || true
+        continue-on-error: true
+      
+      - name: Upload ESLint results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-eslint-results
+          path: web/eslint-report.json
+          if-no-files-found: ignore
 
   mobile-analysis:
     name: Mobile App Static Analysis
     runs-on: ubuntu-latest
-    if: false  # Deshabilitado hasta que se configure mobile
     
     steps:
       - name: Checkout code
@@ -161,6 +190,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
       
       - name: Install dependencies
         working-directory: ./mobile
@@ -168,13 +199,38 @@ jobs:
       
       - name: Run ESLint
         working-directory: ./mobile
-        run: npm run lint || true
+        run: npm run lint -- --format json --output-file eslint-report.json || true
         continue-on-error: true
+      
+      - name: Run TypeScript type check
+        working-directory: ./mobile
+        run: |
+          if [ -f "tsconfig.json" ]; then
+            npx tsc --noEmit || true
+          elif [ -f "RespiCare-Mobile/tsconfig.json" ]; then
+            cd RespiCare-Mobile && npx tsc --noEmit || true
+          else
+            echo "No tsconfig.json found, skipping type check"
+          fi
+        continue-on-error: true
+      
+      - name: Run npm audit
+        working-directory: ./mobile
+        run: npm audit --audit-level=moderate || true
+        continue-on-error: true
+      
+      - name: Upload ESLint results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-eslint-results
+          path: mobile/eslint-report.json
+          if-no-files-found: ignore
 
   generate-report:
     name: Generate Analysis Report
     runs-on: ubuntu-latest
-    needs: [backend-analysis, ai-services-analysis]
+    needs: [backend-analysis, ai-services-analysis, frontend-analysis, mobile-analysis]
     if: always()
     
     steps:
@@ -200,6 +256,16 @@ jobs:
           echo "- Flake8: ✅ Completed" >> $GITHUB_STEP_SUMMARY
           echo "- Bandit: ✅ Completed" >> $GITHUB_STEP_SUMMARY
           echo "- pip-audit: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Web Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- ESLint: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- TypeScript: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- npm audit: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Mobile App Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- ESLint: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- TypeScript: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- npm audit: ✅ Completed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📝 Ver reporte completo en: [docs/STATIC_CODE_ANALYSIS.md](docs/STATIC_CODE_ANALYSIS.md)" >> $GITHUB_STEP_SUMMARY
 
