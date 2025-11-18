@@ -4,7 +4,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import 'react-native-reanimated/lib/reanimated2/js-reanimated';
+// Reanimated se inicializa automáticamente con Expo
+// import 'react-native-reanimated/lib/reanimated2/js-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -65,7 +66,8 @@ export default function RootLayout() {
     };
 
     initializeApp();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
 
   if (!loaded) {
     return null;

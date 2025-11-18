@@ -13,7 +13,8 @@
 | [DEPLOYMENT.md](../DEPLOYMENT.md) | Guía de deployment | ✅ |
 | [SECURITY.md](../SECURITY.md) | Políticas y medidas de seguridad | ✅ |
 | [TESTING_STRATEGY.md](../TESTING_STRATEGY.md) | Estrategia de testing | ✅ |
-| [docs/STATIC_CODE_ANALYSIS.md](../docs/STATIC_CODE_ANALYSIS.md) | Análisis de código estático | ✅ Nuevo |
+| [docs/STATIC_CODE_ANALYSIS.md](../docs/STATIC_CODE_ANALYSIS.md) | Análisis de código estático | ✅ |
+| [docs/GUIA_ANALISIS_CODIGO_ESTATICO.md](GUIA_ANALISIS_CODIGO_ESTATICO.md) | Guía para elaborar y ejecutar pruebas de análisis estático | ✅ Nuevo |
 | [METODOLOGIA_AGIL_PROYECTO.md](../METODOLOGIA_AGIL_PROYECTO.md) | Metodología ágil aplicada | ✅ |
 
 ### 🏗️ Documentación de Arquitectura
@@ -100,6 +101,7 @@ Archivos temporales o con timestamps que ya no son necesarios:
 2. Arquitectura: [backend/CLEAN_ARCHITECTURE.md](../backend/CLEAN_ARCHITECTURE.md)
 3. Roadmap: [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md)
 4. Calidad de Código: [docs/STATIC_CODE_ANALYSIS.md](../docs/STATIC_CODE_ANALYSIS.md)
+5. Ejecutar Análisis Estático: [docs/GUIA_ANALISIS_CODIGO_ESTATICO.md](GUIA_ANALISIS_CODIGO_ESTATICO.md)
 
 ### Para ML Engineers
 1. ML Roadmap: [ML_ROADMAP.md](../ML_ROADMAP.md)

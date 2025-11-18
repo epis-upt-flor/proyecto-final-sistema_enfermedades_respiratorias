@@ -20,15 +20,20 @@ export default function WearablesScreen() {
   const [alerts, setAlerts] = useState<WearableAlerts | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    initializeWearables();
-    return () => {
-      // Limpiar al desmontar
-      wearableService.stopSync();
-    };
+  const loadMetrics = React.useCallback(async () => {
+    try {
+      const currentMetrics = await wearableService.getMetrics();
+      if (currentMetrics) {
+        setMetrics(currentMetrics);
+        const currentAlerts = await wearableService.checkAlerts(currentMetrics);
+        setAlerts(currentAlerts);
+      }
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+    }
   }, []);
 
-  const initializeWearables = async () => {
+  const initializeWearables = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const authorized = await wearableService.initialize();
@@ -49,20 +54,15 @@ export default function WearablesScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [loadMetrics]);
 
-  const loadMetrics = async () => {
-    try {
-      const currentMetrics = await wearableService.getMetrics();
-      if (currentMetrics) {
-        setMetrics(currentMetrics);
-        const currentAlerts = await wearableService.checkAlerts(currentMetrics);
-        setAlerts(currentAlerts);
-      }
-    } catch (error) {
-      console.error('Error loading metrics:', error);
-    }
-  };
+  useEffect(() => {
+    initializeWearables();
+    return () => {
+      // Limpiar al desmontar
+      wearableService.stopSync();
+    };
+  }, [initializeWearables]);
 
   const handleRequestPermissions = async () => {
     try {

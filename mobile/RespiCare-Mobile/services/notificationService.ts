@@ -17,28 +17,28 @@ class NotificationService {
 
   private configure() {
     PushNotification.configure({
-      onRegister: function (token) {
+      onRegister: function (token: { token: string; os: string }) {
         console.log('TOKEN:', token);
         // Enviar token al backend para notificaciones push
       },
 
-      onNotification: function (notification) {
+      onNotification: function (notification: any) {
         console.log('NOTIFICATION:', notification);
         
         // Manejar diferentes tipos de notificaciones
         if (notification.userInteraction) {
           // Usuario tocó la notificación
-          this.handleNotificationTap(notification);
+          NotificationService.getInstance().handleNotificationTap(notification);
         }
       },
 
-      onAction: function (notification) {
+      onAction: function (notification: any) {
         console.log('ACTION:', notification.action);
         console.log('NOTIFICATION:', notification);
       },
 
-      onRegistrationError: function(err) {
-        console.error(err.message, err);
+      onRegistrationError: function(err: any) {
+        console.error(err?.message || err, err);
       },
 
       permissions: {
@@ -65,7 +65,7 @@ class NotificationService {
           importance: 4,
           vibrate: true,
         },
-        (created) => console.log(`createChannel returned '${created}'`)
+        (created: boolean) => console.log(`createChannel returned '${created}'`)
       );
 
       PushNotification.createChannel(
@@ -78,7 +78,7 @@ class NotificationService {
           importance: 3,
           vibrate: true,
         },
-        (created) => console.log(`createChannel returned '${created}'`)
+        (created: boolean) => console.log(`createChannel returned '${created}'`)
       );
 
       PushNotification.createChannel(
@@ -90,7 +90,7 @@ class NotificationService {
           importance: 2,
           vibrate: false,
         },
-        (created) => console.log(`createChannel returned '${created}'`)
+        (created: boolean) => console.log(`createChannel returned '${created}'`)
       );
     }
   }
@@ -154,7 +154,7 @@ class NotificationService {
   }
 
   // Manejar tap en notificación
-  private handleNotificationTap(notification: any) {
+  handleNotificationTap(notification: any) {
     const { data } = notification;
     
     if (data?.type === 'medical_alert') {
@@ -172,7 +172,7 @@ class NotificationService {
   // Obtener token de notificación
   async getToken(): Promise<string | null> {
     return new Promise((resolve) => {
-      PushNotification.getToken((token) => {
+      PushNotification.getToken((token: string) => {
         resolve(token);
       });
     });
@@ -181,7 +181,7 @@ class NotificationService {
   // Verificar permisos
   async checkPermissions(): Promise<boolean> {
     return new Promise((resolve) => {
-      PushNotification.checkPermissions((permissions) => {
+      PushNotification.checkPermissions((permissions: { alert: boolean; badge: boolean; sound: boolean }) => {
         resolve(permissions.alert && permissions.badge && permissions.sound);
       });
     });
@@ -190,7 +190,7 @@ class NotificationService {
   // Solicitar permisos
   async requestPermissions(): Promise<boolean> {
     return new Promise((resolve) => {
-      PushNotification.requestPermissions().then((permissions) => {
+      PushNotification.requestPermissions().then((permissions: { alert: boolean; badge: boolean; sound: boolean }) => {
         resolve(permissions.alert && permissions.badge && permissions.sound);
       });
     });

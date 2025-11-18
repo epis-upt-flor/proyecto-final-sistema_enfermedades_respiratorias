@@ -11,9 +11,9 @@ import {
   Chip,
   Portal,
   Modal,
-  Provider
+  Provider,
+  useTheme
 } from 'react-native-paper';
-import { useTheme } from 'react-native-paper';
 import { useQuery } from '@tanstack/react-query';
 import { useMedicalHistoryStore } from '@/stores/medicalHistoryStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,12 +23,12 @@ export default function SymptomAnalyzerScreen() {
   const { createMedicalHistory } = useMedicalHistoryStore();
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [currentSymptom, setCurrentSymptom] = useState('');
-  const [severity, setSeverity] = useState<'mild' | 'moderate' | 'severe'>('mild');
+  const [severity] = useState<'mild' | 'moderate' | 'severe'>('mild');
   const [duration, setDuration] = useState('');
   const [description, setDescription] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const { data: analysis, isLoading, refetch } = useQuery({
+  const { data: analysis, refetch } = useQuery({
     queryKey: ['symptom-analysis-ml', symptoms],
     queryFn: async () => {
       if (symptoms.length === 0) return null;
@@ -106,7 +106,7 @@ export default function SymptomAnalyzerScreen() {
       setSymptoms([]);
       setCurrentSymptom('');
       setDescription('');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar el análisis');
     }
   };

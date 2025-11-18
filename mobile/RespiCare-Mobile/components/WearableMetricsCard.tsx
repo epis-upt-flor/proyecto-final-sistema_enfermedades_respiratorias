@@ -7,7 +7,6 @@ import { View, StyleSheet } from 'react-native';
 import { Card, Text, Chip, Divider } from 'react-native-paper';
 import { WearableMetrics, WearableAlerts } from '../services/wearableService';
 import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
 
 interface WearableMetricsCardProps {
   metrics: WearableMetrics;

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
-import { Text } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
@@ -76,7 +75,10 @@ export default function AppointmentsScreen() {
         </Text>
         <Text style={styles.detail}>Doctor: {item.doctorId}</Text>
         <Text style={styles.detail}>Paciente: {item.patientId}</Text>
-        <Text style={[styles.status, styles[`status_${item.status}`] || styles.status_default]}>
+        <Text style={[
+          styles.status, 
+          (styles as Record<string, any>)[`status_${item.status}`] || styles.status_default
+        ]}>
           {item.status.toUpperCase()}
         </Text>
         {item.reason ? <Text style={styles.reason}>{item.reason}</Text> : null}
