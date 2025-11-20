@@ -4,6 +4,13 @@ Generates datasets for image analysis and cough analysis to improve chatbot resp
 """
 
 import argparse
+import sys
+from pathlib import Path
+
+# Agregar raíz del proyecto al path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from ml_models.synthetic_image_dataset_generator import SyntheticImageDatasetGenerator
 from ml_models.synthetic_cough_dataset_generator import SyntheticCoughDatasetGenerator
 

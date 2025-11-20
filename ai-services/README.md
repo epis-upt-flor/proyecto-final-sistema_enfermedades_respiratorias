@@ -47,7 +47,44 @@ ai-services/
 │   ├── ai_service_manager.py       # Gestor principal de servicios IA
 │   ├── symptom_analysis_service.py # Servicio análisis de síntomas
 │   └── medical_history_service.py  # Servicio procesamiento historias
-├── models/                         # Modelos de IA/ML
+├── scripts/                        # ⭐ Scripts organizados
+│   ├── training/                  # Scripts de entrenamiento
+│   │   ├── train_base_model.py
+│   │   ├── train_xgboost_simple.py
+│   │   ├── train_neural_network.py
+│   │   ├── train_multimodal_models.py  # ⭐ Entrenamiento multimodal
+│   │   ├── generate_dataset.py
+│   │   ├── generate_multimodal_datasets.py  # ⭐ Generación multimodal
+│   │   └── ...
+│   ├── analysis/                  # Scripts de análisis
+│   │   ├── analyze_performance.py
+│   │   ├── analyze_prediction_trends.py
+│   │   └── benchmark_endpoints.py
+│   ├── validation/                # Scripts de validación
+│   │   ├── validate_models_performance.py
+│   │   └── validate_models_comparison*.py
+│   └── seed_ml_predictions.py
+├── data/                          # Datos y datasets
+│   ├── datasets/                  # ⭐ Datasets CSV organizados
+│   │   ├── synthetic_dataset.csv
+│   │   ├── synthetic_image_dataset.csv  # ⭐ Dataset de imágenes
+│   │   ├── synthetic_cough_dataset.csv  # ⭐ Dataset de tos
+│   │   └── ...
+│   ├── samples/                   # Datos de ejemplo
+│   └── ...
+├── services/                      # Service Layer
+│   ├── audio_transcription_service.py  # ⭐ Transcripción (Whisper)
+│   ├── cough_analysis_service.py       # ⭐ Análisis de tos
+│   ├── ai_service_manager.py
+│   ├── symptom_analysis_service.py
+│   └── ...
+├── ml_models/                     # Modelos de IA/ML
+│   ├── synthetic_image_dataset_generator.py  # ⭐ Generador imágenes
+│   ├── synthetic_cough_dataset_generator.py   # ⭐ Generador tos
+│   ├── random_forest_model.py
+│   ├── xgboost_model.py
+│   └── ...
+├── models/                         # Modelos entrenados (.pkl)
 │   └── model_manager.py            # Gestor de modelos
 ├── api/                           # API REST
 │   └── routes/
@@ -136,6 +173,28 @@ ai-services/
 - MongoDB 4.4+
 - Redis 6.0+
 - Docker (opcional)
+
+## 📁 Estructura del Proyecto
+
+El proyecto está organizado de la siguiente manera:
+
+```
+ai-services/
+├── api/routes/              # Endpoints de la API
+├── core/                    # Núcleo del sistema
+├── data/                    # Datos y datasets
+│   └── datasets/           # Datasets CSV (sintéticos y reales)
+├── ml_models/              # Modelos de Machine Learning
+├── services/                # Servicios de negocio
+├── scripts/                 # Scripts organizados
+│   ├── training/          # Scripts de entrenamiento
+│   ├── analysis/          # Scripts de análisis
+│   └── validation/        # Scripts de validación
+├── tests/                   # Tests
+└── models/                 # Modelos entrenados (.pkl)
+```
+
+**Ver documentación completa**: [README_ESTRUCTURA.md](README_ESTRUCTURA.md)
 
 ## 🚀 Instalación
 
@@ -394,6 +453,15 @@ Para soporte técnico o preguntas:
 
 ## 🔄 Changelog
 
+### v2.1.0 - Análisis Multimodal y Organización ⭐
+- ✅ **Análisis de Imágenes Médicas**: 8 tipos soportados (ResNet50)
+- ✅ **Procesamiento de Audio/Voz**: Whisper + Librosa
+- ✅ **Análisis de Tos**: 6 tipos con evaluación médica
+- ✅ **Transcripción Multilingüe**: Whisper pre-entrenado
+- ✅ **Generación de Datasets Sintéticos**: Para imágenes y tos
+- ✅ **Estructura Reorganizada**: Scripts, datasets y tests organizados
+- ✅ **Documentación Actualizada**: Guías completas de nuevas funcionalidades
+
 ### v2.0.0 - Arquitectura con Patrones
 - ✅ **Strategy Pattern**: Algoritmos de IA intercambiables
 - ✅ **Factory Pattern**: Creación centralizada de servicios
@@ -456,7 +524,7 @@ RespiCare AI incluye un sistema avanzado de ML para clasificación de enfermedad
 python ml_models/train_models.py --generate-dataset --model all --output models/
 ```
 
-**Ver**: [ML_ROADMAP.md](../ML_ROADMAP.md) para roadmap completo
+**Ver**: [roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md) para roadmap completo (incluye Fase 6: Análisis Multimodal)
 
 ## 📖 Documentación Adicional
 

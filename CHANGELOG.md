@@ -2,6 +2,67 @@
 
 Todas las notas de cambios relevantes del proyecto.
 
+## 2024-11-XX - Versión 2.1.0
+
+### ✨ Nuevas Funcionalidades
+
+#### Análisis Multimodal (Fase 6)
+- ✅ **Análisis de Imágenes Médicas**
+  - Soporte para 8 tipos de imágenes: radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis
+  - Modelo ResNet50 pre-entrenado para clasificación
+  - Generación de datasets sintéticos para entrenamiento
+  - Endpoint: `POST /api/v1/ml/advanced/image`
+  
+- ✅ **Procesamiento de Audio/Voz**
+  - Transcripción de voz a texto usando Whisper (multilingüe, pre-entrenado)
+  - Análisis de tos: 6 tipos (seca, productiva, paroxística, crónica, convulsiva, perruna)
+  - Evaluación automática de severidad y urgencia
+  - Generación de datasets sintéticos para entrenamiento
+  - Endpoints:
+    - `POST /api/v1/audio/cough` - Análisis de tos
+    - `POST /api/v1/audio/transcribe` - Transcripción de voz
+
+#### Chatbot Multimodal
+- ✅ Integración de análisis de imágenes en el chatbot móvil
+- ✅ Integración de análisis de audio (tos y transcripción) en el chatbot móvil
+- ✅ Selección de tipo de imagen antes del análisis
+- ✅ Opciones de audio: análisis de tos o transcripción
+- ✅ Respuestas mejoradas con modelos entrenados usando datasets sintéticos
+
+#### Datasets Sintéticos
+- ✅ Generador de dataset sintético para imágenes médicas
+- ✅ Generador de dataset sintético para análisis de tos
+- ✅ Scripts de entrenamiento de modelos ML con datasets sintéticos
+- ✅ Mejora de respuestas del chatbot con modelos entrenados
+
+### 📚 Documentación
+
+- ✅ Actualizado README.md principal con nuevas funcionalidades
+- ✅ Actualizado QUICKSTART.md con endpoints multimodales
+- ✅ Actualizado SECURITY.md con consideraciones de seguridad para funcionalidades multimodales
+- ✅ Creado índice de documentación centralizado (docs/DOCUMENTATION_INDEX.md)
+- ✅ Agregada documentación de servicios de audio (ai-services/AUDIO_SERVICES_README.md)
+- ✅ Agregada documentación de datasets sintéticos (ai-services/MULTIMODAL_DATASETS_README.md)
+- ✅ Actualizado roadmap ML (roadmaps/ML_ROADMAP.md) con Fase 6: Análisis Multimodal
+
+### 🔧 Mejoras Técnicas
+
+- ✅ Servicios de audio con modelos pre-entrenados (sin dataset propio requerido)
+- ✅ Análisis de imágenes con modelo ResNet50 pre-entrenado
+- ✅ Procesamiento de señales de audio con librosa
+- ✅ Transcripción multilingüe con Whisper
+- ✅ Manejo mejorado de errores en análisis multimodal
+- ✅ Logging detallado para debugging
+
+### 🔒 Seguridad
+
+- ✅ Validación de tipos de archivo para imágenes y audio
+- ✅ Límites de tamaño y duración para archivos
+- ✅ Sanitización de metadatos EXIF
+- ✅ Procesamiento temporal (archivos eliminados después del procesamiento)
+- ✅ Cifrado en tránsito para datos sensibles
+- ✅ Autenticación requerida para endpoints multimodales
+
 ## 2025-11-16
 
 ### Mobile

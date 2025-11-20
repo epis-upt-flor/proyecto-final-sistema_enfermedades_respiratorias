@@ -151,10 +151,16 @@ curl http://localhost:3001/api/health
 - **URL**: http://localhost:8000
 - **Health**: http://localhost:8000/api/v1/health
 - **Docs**: http://localhost:8000/docs
+- **Análisis de Imágenes**: `POST /api/v1/ml/advanced/image`
+- **Análisis de Tos**: `POST /api/v1/audio/cough`
+- **Transcripción de Voz**: `POST /api/v1/audio/transcribe`
 
 ```bash
 # Probar AI API
 curl http://localhost:8000/api/v1/health
+
+# Ver documentación interactiva
+# Abre http://localhost:8000/docs en tu navegador
 ```
 
 ### MongoDB Express (Admin UI)
@@ -321,8 +327,10 @@ docker-compose up -d
 
 3. **Documentación Completa**
    - [DEPLOYMENT.md](./DEPLOYMENT.md) - Guía completa de despliegue
-   - [DOCKER_README.md](./DOCKER_README.md) - Guía de Docker
    - [README.md](./README.md) - Documentación general
+   - [docs/DOCKER_COMPOSE_GUIDE.md](./docs/DOCKER_COMPOSE_GUIDE.md) - Guía de Docker Compose
+   - [ai-services/AUDIO_SERVICES_README.md](./ai-services/AUDIO_SERVICES_README.md) - Servicios de audio
+   - [ai-services/MULTIMODAL_DATASETS_README.md](./ai-services/MULTIMODAL_DATASETS_README.md) - Datasets sintéticos
 
 4. **Configurar Producción**
    - Revisar [DEPLOYMENT.md](./DEPLOYMENT.md)

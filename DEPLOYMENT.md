@@ -22,8 +22,19 @@ Esta guía proporciona instrucciones detalladas para desplegar el sistema RespiC
 - Docker Engine 20.10+ ([Instalar Docker](https://docs.docker.com/get-docker/))
 - Docker Compose 2.0+ ([Instalar Docker Compose](https://docs.docker.com/compose/install/))
 - Git
-- 4GB RAM mínimo (8GB recomendado para producción)
-- 20GB de espacio en disco
+- **FFmpeg** (requerido para servicios de audio - Whisper)
+  ```bash
+  # Ubuntu/Debian
+  sudo apt-get update && sudo apt-get install -y ffmpeg
+  
+  # macOS
+  brew install ffmpeg
+  
+  # Windows (usando Chocolatey)
+  choco install ffmpeg
+  ```
+- 4GB RAM mínimo (8GB recomendado para desarrollo, 16GB para producción)
+- 20GB de espacio en disco (30GB+ recomendado para modelos ML y datasets)
 
 ### Verificar Instalación
 
@@ -85,6 +96,11 @@ graph TB
 2. **Redis**: Cache y gestión de sesiones
 3. **Backend API**: API REST en Node.js/TypeScript
 4. **AI Services**: Servicios de análisis con IA en Python
+   - Análisis de síntomas con ML (99.64% accuracy)
+   - Análisis de imágenes médicas (ResNet50)
+   - Procesamiento de audio/voz (Whisper + Librosa)
+   - Transcripción multilingüe
+   - Análisis de tos
 5. **Nginx**: Proxy reverso y balanceador de carga
 6. **Backup**: Servicio automatizado de respaldo
 
@@ -201,6 +217,9 @@ docker-compose -f docker-compose.dev.yml ps
 - **API Docs (Swagger)**: http://localhost:3001/api-docs
 - **AI Services**: http://localhost:8000
 - **AI Docs**: http://localhost:8000/docs
+  - **Análisis de Imágenes**: `POST /api/v1/ml/advanced/image`
+  - **Análisis de Tos**: `POST /api/v1/audio/cough`
+  - **Transcripción de Voz**: `POST /api/v1/audio/transcribe`
 - **MongoDB Express**: http://localhost:8081 (admin/admin123)
 - **Redis Commander**: http://localhost:8082
 
@@ -481,6 +500,9 @@ curl http://localhost:8000/api/v1/health
 
 # Manual - Nginx
 curl http://localhost/health
+
+# Verificar servicios multimodales
+curl -X POST http://localhost:8000/api/v1/health/detailed
 ```
 
 ## 🔍 Solución de Problemas
@@ -596,6 +618,73 @@ docker exec -it respicare-backend-prod sh
 docker exec respicare-backend-prod env
 ```
 
+## 🎤 Configuración de Servicios Multimodales
+
+### Servicios de Audio (Whisper + Librosa)
+
+Los servicios de audio requieren FFmpeg instalado en el contenedor:
+
+```bash
+# Verificar que FFmpeg está disponible en el contenedor
+docker exec respicare-ai-dev which ffmpeg
+
+# Si no está instalado, agregar al Dockerfile de ai-services:
+# RUN apt-get update && apt-get install -y ffmpeg
+```
+
+### Modelos Pre-entrenados
+
+Los modelos se descargan automáticamente la primera vez que se usan:
+
+- **Whisper**: Modelo "base" (~150MB) - se descarga automáticamente
+- **ResNet50**: Para análisis de imágenes - se carga desde Keras/TensorFlow
+
+**Nota**: La primera carga puede tardar unos minutos. Los modelos se cachean para uso posterior.
+
+### Generación de Datasets Sintéticos (Opcional)
+
+Para mejorar las respuestas del chatbot, puedes generar datasets sintéticos:
+
+```bash
+# Entrar al contenedor de AI Services
+docker exec -it respicare-ai-dev bash
+
+# Generar datasets sintéticos
+cd /app
+python generate_multimodal_datasets.py --all
+
+# Entrenar modelos con los datasets
+python train_multimodal_models.py
+
+# Los modelos entrenados se guardan en models/
+```
+
+### Recursos Recomendados para Procesamiento Multimodal
+
+- **CPU**: Mínimo 4 cores (8+ recomendado para producción)
+- **RAM**: 8GB mínimo (16GB+ recomendado para modelos ML)
+- **Disco**: 30GB+ para modelos y datasets
+- **GPU**: Opcional pero recomendado para procesamiento rápido de imágenes/audio
+
+### Configuración de Variables de Entorno para Multimodal
+
+Agregar al `.env`:
+
+```env
+# Audio Processing
+FFMPEG_ENABLED=true
+WHISPER_MODEL=base  # tiny, base, small, medium, large
+
+# Image Processing
+IMAGE_MODEL=resnet50
+IMAGE_MAX_SIZE=10MB
+
+# Multimodal Settings
+ENABLE_IMAGE_ANALYSIS=true
+ENABLE_AUDIO_ANALYSIS=true
+ENABLE_AUDIO_TRANSCRIPTION=true
+```
+
 ## 🔒 Seguridad
 
 ### Mejores Prácticas
@@ -648,6 +737,21 @@ docker exec respicare-backend-prod env
    sudo apt update && sudo apt upgrade -y
    ```
 
+8. **Seguridad en Funcionalidades Multimodales**
+   - Validar tipos de archivo (solo formatos permitidos)
+   - Limitar tamaño de archivos (imágenes y audio)
+   - Sanitizar metadatos EXIF de imágenes
+   - Eliminar archivos temporales después del procesamiento
+   - Usar autenticación JWT para todos los endpoints multimodales
+   - Monitorear uso de recursos (CPU/RAM) durante procesamiento
+   ```bash
+   # Monitorear procesamiento de imágenes/audio
+   docker stats respicare-ai-prod
+   
+   # Ver logs de procesamiento
+   docker logs respicare-ai-prod | grep -i "image\|audio"
+   ```
+
 ### Hardening de Docker
 
 ```bash
@@ -668,6 +772,15 @@ docker run -it --net host --pid host --userns host --cap-add audit_control \
 - [MongoDB en Docker](https://hub.docker.com/_/mongo)
 - [Nginx Configuration](https://nginx.org/en/docs/)
 - [Let's Encrypt](https://letsencrypt.org/)
+- [OpenAI Whisper](https://github.com/openai/whisper) - Modelo de transcripción
+- [Librosa](https://librosa.org/) - Procesamiento de señales de audio
+- [FFmpeg](https://ffmpeg.org/) - Herramienta de procesamiento multimedia
+
+### Documentación Específica del Proyecto
+
+- [ai-services/AUDIO_SERVICES_README.md](../ai-services/AUDIO_SERVICES_README.md) - Servicios de audio
+- [ai-services/MULTIMODAL_DATASETS_README.md](../ai-services/MULTIMODAL_DATASETS_README.md) - Datasets sintéticos
+- [roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md) - Roadmap ML (incluye Fase 6: Multimodal)
 
 ## 🆘 Soporte
 

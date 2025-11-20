@@ -146,9 +146,15 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 - **[ai-services/README.md](ai-services/README.md)** - Documentación de servicios de IA
 - **[ai-services/API_DOCUMENTATION.md](ai-services/API_DOCUMENTATION.md)** - API completa de servicios de IA
 - **[ai-services/TESTING_GUIDE.md](ai-services/TESTING_GUIDE.md)** - Guía de testing de AI Services
+- **[ai-services/AUDIO_SERVICES_README.md](ai-services/AUDIO_SERVICES_README.md)** - Servicios de audio (Whisper + Librosa)
+- **[ai-services/MULTIMODAL_DATASETS_README.md](ai-services/MULTIMODAL_DATASETS_README.md)** - Generación de datasets sintéticos
 - **[ai-services/core/cache.py](ai-services/core/cache.py)** - Utilidades Redis async
 - **[ai-services/api/routes/health.py](ai-services/api/routes/health.py)** - Endpoints de health
 - **Healthcheck**: `GET http://localhost:8000/api/v1/health`
+- **Endpoints Multimodales**:
+  - `POST /api/v1/ml/advanced/image` - Análisis de imágenes médicas
+  - `POST /api/v1/audio/cough` - Análisis de tos
+  - `POST /api/v1/audio/transcribe` - Transcripción de voz
 
 #### Frontend Web (React)
 - **[web/README.md](web/README.md)** - Documentación del frontend web
@@ -159,7 +165,10 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 - **[mobile/README.md](mobile/README.md)** - Documentación de la app móvil
 - **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - 📊 Tests (50+ tests: unitarios, integración, E2E)
 - **[mobile/e2e/README.md](mobile/e2e/README.md)** - Guía de tests E2E con Detox
+- **[mobile/RespiCare-Mobile/README_CHATBOT.md](mobile/RespiCare-Mobile/README_CHATBOT.md)** - Guía del chatbot móvil
+- **[mobile/RespiCare-Mobile/GUIA_AUDIO.md](mobile/RespiCare-Mobile/GUIA_AUDIO.md)** - Guía de funcionalidades de audio
 - **Analíticas y errores**: `analyticsService` (eventos/timings con persistencia) y `errorTrackingService` (handler global)
+- **Chatbot Multimodal**: Soporte para imágenes médicas y audio (tos y transcripción)
 
 ### 🧪 Testing y Calidad
 
@@ -221,6 +230,17 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 #### ML Avanzado (Fase 15 - 100% Completado) ✅
 - ✅ **Transformer Models**: BERT para texto médico con integración de caché y lazy loading
 - ✅ **Computer Vision**: Clasificación de imágenes médicas (RX/TC)
+- ✅ **Análisis Multimodal (Fase 6 - 100% Completado)**:
+  - ✅ **Análisis de Imágenes Médicas**: ResNet50 pre-entrenado
+    - 8 tipos de imágenes: radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis
+    - Generación de datasets sintéticos para entrenamiento
+    - Clasificación automática con recomendaciones médicas
+  - ✅ **Procesamiento de Audio/Voz**:
+    - **Whisper** (OpenAI): Transcripción multilingüe pre-entrenada
+    - **Librosa**: Análisis de características de audio
+    - Análisis de tos: 6 tipos (seca, productiva, paroxística, crónica, convulsiva, perruna)
+    - Generación de datasets sintéticos para entrenamiento
+    - Evaluación de severidad y urgencia automática
 - ✅ **Time Series Prediction**: Predicción de tendencias temporales
 - ✅ **Reinforcement Learning**: Optimización de recordatorios de medicamentos (implementación real)
 - ✅ **Federated Learning**: Agregación segura (FedAvg, FedProx, SCAFFOLD) con detección de clientes maliciosos
@@ -228,7 +248,11 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ **AutoML**: Selección de modelos, tuning de hiperparámetros, feature selection, drift detection, auto-retraining
 - ✅ **Optimización GPU**: Caché LRU, lazy loading, monitoreo DCGM, spot instances, auto-scaling agresivo, checkpointing
 
-**Documentación ML Avanzado**: Ver [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md#fase-15-funcionalidades-avanzadas-ml)
+**Documentación ML Avanzado**: 
+- [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md#fase-15-funcionalidades-avanzadas-ml)
+- [roadmaps/ML_ROADMAP.md](roadmaps/ML_ROADMAP.md) - Roadmap completo del sistema ML (incluye Fase 6: Análisis Multimodal)
+- [ai-services/AUDIO_SERVICES_README.md](ai-services/AUDIO_SERVICES_README.md) - Servicios de audio (Whisper + Librosa)
+- [ai-services/MULTIMODAL_DATASETS_README.md](ai-services/MULTIMODAL_DATASETS_README.md) - Generación de datasets sintéticos
 
 ### 💬 Chatbot Médico Mejorado
 
@@ -237,6 +261,13 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Gráficos interactivos de factores (bar, pie, radar)
 - ✅ Historial de conversaciones mejorado con persistencia
 - ✅ Sugerencias contextuales más inteligentes
+- ✅ **Análisis Multimodal**:
+  - ✅ **Análisis de Imágenes Médicas**: 8 tipos soportados (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis)
+  - ✅ **Análisis de Audio/Voz**: 
+    - Transcripción de voz a texto (Whisper - multilingüe)
+    - Análisis de tos (clasificación: seca, productiva, paroxística, etc.)
+  - ✅ Modelos pre-entrenados (sin dataset propio requerido)
+  - ✅ Datasets sintéticos para mejorar respuestas del chatbot
 - ✅ Modo de voz (speech-to-text) usando Web Speech API
 - ✅ Integración con resultados ML avanzados
 
@@ -490,6 +521,14 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - UIs avanzadas para ML (Web y Mobile)
 - Infraestructura GPU completa
 - Optimización de modelos pesados
+
+#### Fase 6: Análisis Multimodal ✅ (100%)
+- Análisis de imágenes médicas (8 tipos, ResNet50)
+- Procesamiento de audio/voz (Whisper + Librosa)
+- Análisis de tos (6 tipos con evaluación médica)
+- Transcripción multilingüe de voz
+- Generación de datasets sintéticos
+- Modelos entrenados para mejorar respuestas del chatbot
 
 **Ver estado detallado**: [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md)
 
