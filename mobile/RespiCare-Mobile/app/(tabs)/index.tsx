@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, View } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Card, Title, Paragraph, Button, FAB, Provider, useTheme } from 'react-native-paper';
@@ -32,25 +32,25 @@ export default function HomeScreen() {
 
   if (!isAuthenticated) {
     return (
-      <ThemedView style={styles.container}>
+      <View style={styles.container}>
         <ThemedText style={styles.title}>RespiCare Tacna</ThemedText>
         <ThemedText style={styles.subtitle}>Sistema de Gestión de Enfermedades Respiratorias</ThemedText>
         <Card style={styles.card}>
           <Card.Content>
-            <Title>Bienvenido</Title>
-            <Paragraph>Inicia sesión para acceder a tu historial médico y análisis de síntomas.</Paragraph>
+            <Title style={{ color: '#ffffff' }}>Bienvenido</Title>
+            <Paragraph style={{ color: '#b1bbc4' }}>Inicia sesión para acceder a tu historial médico y análisis de síntomas.</Paragraph>
             <Button mode="contained" onPress={() => {}} style={styles.button}>
               Iniciar Sesión
             </Button>
           </Card.Content>
         </Card>
-      </ThemedView>
+      </View>
     );
   }
 
   return (
     <Provider theme={theme}>
-      <ThemedView style={styles.container}>
+      <View style={styles.container}>
         <ScrollView 
           style={styles.scrollView}
           refreshControl={
@@ -63,28 +63,28 @@ export default function HomeScreen() {
           {/* Resumen de Salud */}
           <Card style={styles.card}>
             <Card.Content>
-              <Title>Resumen de Salud</Title>
-              <Paragraph>Total de historias: {dashboardData?.totalHistories || 0}</Paragraph>
-              <Paragraph>Alertas pendientes: {dashboardData?.alerts || 0}</Paragraph>
+              <Title style={{ color: '#ffffff' }}>Resumen de Salud</Title>
+              <Paragraph style={{ color: '#b1bbc4' }}>Total de historias: {dashboardData?.totalHistories || 0}</Paragraph>
+              <Paragraph style={{ color: '#b1bbc4' }}>Alertas pendientes: {dashboardData?.alerts || 0}</Paragraph>
             </Card.Content>
           </Card>
 
           {/* Síntomas Recientes */}
           <Card style={styles.card}>
             <Card.Content>
-              <Title>Síntomas Recientes</Title>
+              <Title style={{ color: '#ffffff' }}>Síntomas Recientes</Title>
               {dashboardData?.recentSymptoms?.map((history, index) => (
-                <Paragraph key={index}>
+                <Paragraph key={index} style={{ color: '#b1bbc4' }}>
                   {history.symptoms?.map(s => s.name).join(', ')}
                 </Paragraph>
-              )) || <Paragraph>No hay síntomas recientes</Paragraph>}
+              )) || <Paragraph style={{ color: '#b1bbc4' }}>No hay síntomas recientes</Paragraph>}
             </Card.Content>
           </Card>
 
           {/* Acciones Rápidas */}
           <Card style={styles.card}>
             <Card.Content>
-              <Title>Acciones Rápidas</Title>
+              <Title style={{ color: '#ffffff' }}>Acciones Rápidas</Title>
               <Button 
                 mode="outlined" 
                 onPress={() => {}} 
@@ -112,7 +112,7 @@ export default function HomeScreen() {
           onPress={() => {}}
           label="Nueva Historia"
         />
-      </ThemedView>
+      </View>
     </Provider>
   );
 }
@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: '#0e1621', // Fondo estilo Telegram
   },
   scrollView: {
     flex: 1,
@@ -129,26 +130,32 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#ffffff',
   },
   subtitle: {
     fontSize: 16,
     marginBottom: 16,
-    opacity: 0.7,
+    color: '#b1bbc4',
   },
   card: {
     marginBottom: 16,
     elevation: 2,
+    backgroundColor: '#17212b', // Fondo de cards estilo Telegram
+    borderRadius: 12,
   },
   button: {
     marginTop: 16,
+    backgroundColor: '#3390ec', // Azul estilo Telegram
   },
   actionButton: {
     marginVertical: 4,
+    borderColor: '#3390ec',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
+    backgroundColor: '#3390ec',
   },
 });

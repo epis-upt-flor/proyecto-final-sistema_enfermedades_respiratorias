@@ -1,4 +1,12 @@
-rootProject.name = 'RespiCareMobile'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
-include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+rootProject.name = 'RespiCareMobile-Legacy'
+
+include ':app-legacy'
+project(':app-legacy').projectDir = new File(rootDir, 'app')
+
+// React Native Gradle Plugin
+// En React Native 0.72+, el autolinking se maneja a través del plugin de Gradle
+// configurado en app/build.gradle con autolinkLibrariesWithApp()
+def reactNativeGradlePlugin = file('../node_modules/@react-native/gradle-plugin')
+if (reactNativeGradlePlugin.exists()) {
+    includeBuild(reactNativeGradlePlugin)
+}

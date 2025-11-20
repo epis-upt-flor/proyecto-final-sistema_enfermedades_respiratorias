@@ -4,7 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
+import { API_BASE_URL } from '@/constants/config';
+
+const API_BASE = `${API_BASE_URL}/api/v1`;
 
 type Appointment = {
   _id: string;
@@ -108,16 +110,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: Colors.light.background,
+    backgroundColor: '#0e1621', // Fondo estilo Telegram
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 16,
-    color: Colors.light.tint,
+    color: '#ffffff', // Texto blanco
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#17212b', // Fondo de cards estilo Telegram
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -131,11 +133,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#0d47a1',
+    color: '#3390ec', // Azul estilo Telegram
   },
   detail: {
     fontSize: 14,
-    color: '#455a64',
+    color: '#b1bbc4', // Texto secundario
   },
   status: {
     marginTop: 8,
@@ -143,24 +145,24 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   status_scheduled: {
-    color: '#1e88e5',
+    color: '#3390ec', // Azul estilo Telegram
   },
   status_rescheduled: {
-    color: '#fb8c00',
+    color: '#ff9800',
   },
   status_completed: {
-    color: '#2e7d32',
+    color: '#4caf50',
   },
   status_cancelled: {
-    color: '#c62828',
+    color: '#f44336',
   },
   status_default: {
-    color: '#546e7a',
+    color: '#708499',
   },
   reason: {
     marginTop: 6,
     fontStyle: 'italic',
-    color: '#546e7a',
+    color: '#b1bbc4',
   },
   emptyContainer: {
     flexGrow: 1,
@@ -169,11 +171,11 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#78909c',
+    color: '#708499',
     textAlign: 'center',
   },
   error: {
-    color: '#c62828',
+    color: '#f44336',
     marginBottom: 12,
   },
 });

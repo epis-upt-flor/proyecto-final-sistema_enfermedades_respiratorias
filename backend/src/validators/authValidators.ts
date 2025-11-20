@@ -19,7 +19,7 @@ export const registerSchema = Joi.object({
     }),
   password: Joi.string()
     .min(8)
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])'))
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/)
     .required()
     .messages({
       'string.min': 'La contraseña debe tener al menos 8 caracteres',
@@ -80,7 +80,7 @@ export const changePasswordSchema = Joi.object({
     }),
   newPassword: Joi.string()
     .min(8)
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])'))
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/)
     .required()
     .messages({
       'string.min': 'La nueva contraseña debe tener al menos 8 caracteres',

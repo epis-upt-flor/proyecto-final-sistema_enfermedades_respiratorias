@@ -50,6 +50,14 @@ try:
 except ImportError as e:
     logger.warning("chat_analyzer_routes_not_available", error=str(e))
 
+# Import and register audio analyzer routes
+try:
+    from api.routes.audio_analyzer import router as audio_analyzer_router
+    app.include_router(audio_analyzer_router, prefix="/api", tags=["Audio Analysis"])
+    logger.info("audio_analyzer_routes_registered")
+except ImportError as e:
+    logger.warning("audio_analyzer_routes_not_available", error=str(e))
+
 # Import and register ML symptom analyzer routes
 try:
     from api.routes.symptom_ml_analyzer import router as symptom_ml_router

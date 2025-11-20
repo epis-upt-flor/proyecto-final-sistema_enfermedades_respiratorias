@@ -1,8 +1,18 @@
-import PushNotification from 'react-native-push-notification';
 import { Platform } from 'react-native';
+
+// Importar PushNotification solo en plataformas nativas
+let PushNotification: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    PushNotification = require('react-native-push-notification').default;
+  } catch (error) {
+    console.warn('react-native-push-notification no disponible:', error);
+  }
+}
 
 class NotificationService {
   private static instance: NotificationService;
+  private isWeb = Platform.OS === 'web';
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -12,10 +22,16 @@ class NotificationService {
   }
 
   constructor() {
-    this.configure();
+    if (!this.isWeb && PushNotification) {
+      this.configure();
+    } else {
+      console.log('NotificationService: Modo web - notificaciones deshabilitadas');
+    }
   }
 
   private configure() {
+    if (!PushNotification) return;
+    
     PushNotification.configure({
       onRegister: function (token: { token: string; os: string }) {
         console.log('TOKEN:', token);
@@ -54,6 +70,11 @@ class NotificationService {
 
   // Configurar canales de notificación para Android
   createNotificationChannels() {
+    if (this.isWeb || !PushNotification) {
+      console.log('NotificationService: createNotificationChannels no disponible en web');
+      return;
+    }
+    
     if (Platform.OS === 'android') {
       PushNotification.createChannel(
         {
@@ -97,6 +118,17 @@ class NotificationService {
 
   // Enviar notificación local
   sendLocalNotification(title: string, message: string, data?: any) {
+    if (this.isWeb || !PushNotification) {
+      console.log('NotificationService: Notificación (web):', title, message);
+      // En web, podrías usar la API de notificaciones del navegador
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification(title, { body: message });
+        }
+      }
+      return;
+    }
+    
     PushNotification.localNotification({
       title,
       message,
@@ -109,6 +141,11 @@ class NotificationService {
 
   // Enviar notificación de recordatorio
   sendReminderNotification(title: string, message: string, data?: any) {
+    if (this.isWeb || !PushNotification) {
+      console.log('NotificationService: Recordatorio (web):', title, message);
+      return;
+    }
+    
     PushNotification.localNotification({
       title,
       message,
@@ -121,6 +158,11 @@ class NotificationService {
 
   // Programar notificación para más tarde
   scheduleNotification(title: string, message: string, date: Date, data?: any) {
+    if (this.isWeb || !PushNotification) {
+      console.log('NotificationService: Programar notificación no disponible en web');
+      return;
+    }
+    
     PushNotification.localNotificationSchedule({
       title,
       message,
@@ -134,6 +176,11 @@ class NotificationService {
 
   // Enviar notificación de sincronización
   sendSyncNotification(message: string, isSuccess: boolean = true) {
+    if (this.isWeb || !PushNotification) {
+      console.log('NotificationService: Sincronización (web):', message);
+      return;
+    }
+    
     PushNotification.localNotification({
       title: isSuccess ? 'Sincronización Exitosa' : 'Error de Sincronización',
       message,
@@ -145,11 +192,17 @@ class NotificationService {
 
   // Cancelar todas las notificaciones
   cancelAllNotifications() {
+    if (this.isWeb || !PushNotification) {
+      return;
+    }
     PushNotification.cancelAllLocalNotifications();
   }
 
   // Cancelar notificación específica
   cancelNotification(id: string) {
+    if (this.isWeb || !PushNotification) {
+      return;
+    }
     PushNotification.cancelLocalNotifications({ id });
   }
 
@@ -171,6 +224,10 @@ class NotificationService {
 
   // Obtener token de notificación
   async getToken(): Promise<string | null> {
+    if (this.isWeb || !PushNotification) {
+      return null;
+    }
+    
     return new Promise((resolve) => {
       PushNotification.getToken((token: string) => {
         resolve(token);
@@ -180,6 +237,18 @@ class NotificationService {
 
   // Verificar permisos
   async checkPermissions(): Promise<boolean> {
+    if (this.isWeb) {
+      // En web, verificar permisos de la API de notificaciones del navegador
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        return Notification.permission === 'granted';
+      }
+      return false;
+    }
+    
+    if (!PushNotification) {
+      return false;
+    }
+    
     return new Promise((resolve) => {
       PushNotification.checkPermissions((permissions: { alert: boolean; badge: boolean; sound: boolean }) => {
         resolve(permissions.alert && permissions.badge && permissions.sound);
@@ -189,9 +258,24 @@ class NotificationService {
 
   // Solicitar permisos
   async requestPermissions(): Promise<boolean> {
+    if (this.isWeb) {
+      // En web, usar la API de notificaciones del navegador
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+      }
+      return false;
+    }
+    
+    if (!PushNotification) {
+      return false;
+    }
+    
     return new Promise((resolve) => {
       PushNotification.requestPermissions().then((permissions: { alert: boolean; badge: boolean; sound: boolean }) => {
         resolve(permissions.alert && permissions.badge && permissions.sound);
+      }).catch(() => {
+        resolve(false);
       });
     });
   }

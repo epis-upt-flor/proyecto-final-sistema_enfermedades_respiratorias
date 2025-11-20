@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, Alert } from 'react-native';
+import { StyleSheet, ScrollView, Alert, View } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { 
@@ -17,6 +17,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useMedicalHistoryStore } from '@/stores/medicalHistoryStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '@/constants/config';
 
 export default function SymptomAnalyzerScreen() {
   const theme = useTheme();
@@ -42,7 +43,7 @@ export default function SymptomAnalyzerScreen() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:3001/api/v1/symptom-analyzer/ml-analyze', {
+      const response = await fetch(API_ENDPOINTS.SYMPTOM_ANALYZER.ML_ANALYZE, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -113,7 +114,7 @@ export default function SymptomAnalyzerScreen() {
 
   return (
     <Provider theme={theme}>
-      <ThemedView style={styles.container}>
+      <View style={styles.container}>
         <ScrollView style={styles.scrollView}>
           <ThemedText style={styles.title}>Analizador de Síntomas</ThemedText>
           <ThemedText style={styles.subtitle}>Describe tus síntomas para obtener un análisis inteligente</ThemedText>
@@ -160,7 +161,7 @@ export default function SymptomAnalyzerScreen() {
             <Card style={styles.card}>
               <Card.Content>
                 <Title>Síntomas Agregados</Title>
-                <ThemedView style={styles.chipContainer}>
+                <View style={styles.chipContainer}>
                   {symptoms.map((symptom, index) => (
                     <Chip
                       key={index}
@@ -170,7 +171,7 @@ export default function SymptomAnalyzerScreen() {
                       {symptom}
                     </Chip>
                   ))}
-                </ThemedView>
+                </View>
                 <Button mode="outlined" onPress={analyzeSymptoms} style={styles.button}>
                   Analizar Síntomas
                 </Button>
@@ -334,7 +335,7 @@ export default function SymptomAnalyzerScreen() {
             </Card>
           </Modal>
         </Portal>
-      </ThemedView>
+      </View>
     </Provider>
   );
 }
@@ -343,6 +344,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: '#0e1621', // Fondo estilo Telegram
   },
   scrollView: {
     flex: 1,
@@ -351,21 +353,26 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#ffffff',
   },
   subtitle: {
     fontSize: 16,
     marginBottom: 16,
-    opacity: 0.7,
+    color: '#b1bbc4',
   },
   card: {
     marginBottom: 16,
     elevation: 2,
+    backgroundColor: '#17212b', // Fondo de cards estilo Telegram
+    borderRadius: 12,
   },
   input: {
     marginBottom: 16,
+    backgroundColor: '#1e2732',
   },
   button: {
     marginTop: 8,
+    backgroundColor: '#3390ec', // Azul estilo Telegram
   },
   chipContainer: {
     flexDirection: 'row',
@@ -374,17 +381,21 @@ const styles = StyleSheet.create({
   },
   chip: {
     margin: 4,
+    backgroundColor: '#1e2732',
   },
   analysisText: {
     marginBottom: 8,
+    color: '#ffffff',
   },
   bold: {
     fontWeight: 'bold',
   },
   modalCard: {
     margin: 20,
+    backgroundColor: '#17212b',
   },
   modalButton: {
     marginVertical: 4,
+    borderColor: '#3390ec',
   },
 });

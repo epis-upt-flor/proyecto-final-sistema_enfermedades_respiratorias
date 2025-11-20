@@ -474,8 +474,8 @@ class WearableService {
       }
 
       // Enviar al backend
-      const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_BASE_URL}/api/v1/wearables/sync`, {
+      const { API_ENDPOINTS } = await import('@/constants/config');
+      const response = await fetch(API_ENDPOINTS.WEARABLES.SYNC, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -315,6 +315,18 @@ User receives comprehensive prediction with full explainability
 
 ---
 
+### **Semana 13-14: Análisis Multimodal (Imágenes y Voz)** ✅ COMPLETADO
+- ✅ Implementación de análisis de imágenes médicas con ResNet50 (8 tipos soportados).
+- ✅ Servicio de transcripción de voz usando Whisper (pre-entrenado, multilingüe).
+- ✅ Servicio de análisis de tos usando procesamiento de señales (librosa).
+- ✅ Endpoints REST para análisis de imágenes y audio.
+- ✅ Integración con chatbot móvil para análisis multimodal.
+- ✅ Documentación completa de servicios de audio (`AUDIO_SERVICES_README.md`).
+- ✅ Tipos de imágenes médicas definidos y documentados.
+- ✅ Manejo de archivos base64 para imágenes y audio.
+
+---
+
 ## 🎯 Métricas de Éxito
 
 ### **Rendimiento**: ✅ SUPERADAS
@@ -417,6 +429,11 @@ User receives comprehensive prediction with full explainability
 - ✅ **scikit-learn MLPClassifier**: Neural Network Multi-Tarea (99.64% accuracy, 307k casos validados)
 - ✅ **pandas / numpy**: Preparación de datos para modelos analíticos (tendencias/anomalías/demanda).
 - ✅ **scikit-learn clustering & metrics**: Algoritmos auxiliares para detección de anomalías y clústeres.
+- ✅ **ResNet50 (Keras/TensorFlow)**: Análisis de imágenes médicas (pre-entrenado)
+- ✅ **OpenAI Whisper**: Transcripción de voz multilingüe (pre-entrenado, sin dataset propio)
+- ✅ **librosa**: Procesamiento de señales de audio (análisis de tos, características espectrales)
+- ✅ **soundfile**: Lectura/escritura de archivos de audio
+- ✅ **ffmpeg-python**: Conversión de formatos de audio
 
 ### **Métodologías Aplicadas**:
 - ✅ Model-Driven Development (MDSD)
@@ -453,6 +470,13 @@ User receives comprehensive prediction with full explainability
 - ✅ `api/routes/ml_monitoring.py` - Endpoints REST de métricas, fairness y explicabilidad SHAP
 - ✅ `web/src/components/ShapDashboard.js` - Visualización interactiva de contribuciones SHAP y métricas de equidad
 - ✅ `web/src/components/__tests__/ShapDashboard.test.js` - Cobertura unitaria del dashboard SHAP
+- ✅ `api/routes/advanced_ml.py` - Endpoint de análisis de imágenes médicas
+- ✅ `api/routes/audio_analyzer.py` - Endpoints de análisis de audio (tos y transcripción)
+- ✅ `services/audio_transcription_service.py` - Servicio de transcripción usando Whisper
+- ✅ `services/cough_analysis_service.py` - Servicio de análisis de tos usando librosa
+- ✅ `constants/imageTypes.ts` (mobile) - Tipos de imágenes médicas soportados
+- ✅ `services/audioService.ts` (mobile) - Cliente de servicios de audio
+- ✅ `AUDIO_SERVICES_README.md` - Documentación completa de servicios de audio
 
 ---
 

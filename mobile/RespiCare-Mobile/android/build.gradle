@@ -1,5 +1,4 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
   repositories {
     google()
@@ -12,13 +11,13 @@ buildscript {
   }
 }
 
-def reactNativeAndroidDir = new File(
-  providers.exec {
-    workingDir(rootDir)
-    commandLine("node", "--print", "require.resolve('react-native/package.json')")
-  }.standardOutput.asText.get().trim(),
-  "../android"
-)
+def projectRoot = rootDir.parentFile
+def reactNativePackageJsonPath = providers.exec {
+  workingDir(projectRoot)
+  commandLine("node", "--print", "require.resolve('react-native/package.json')")
+}.standardOutput.asText.get().trim()
+def reactNativeDir = new File(reactNativePackageJsonPath).getParentFile()
+def reactNativeAndroidDir = new File(reactNativeDir, "android")
 
 allprojects {
   repositories {

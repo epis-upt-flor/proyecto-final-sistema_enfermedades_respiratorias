@@ -256,6 +256,7 @@ export default function WearablesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0e1621', // Fondo estilo Telegram
   },
   scrollView: {
     flex: 1,
@@ -271,20 +272,25 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
+    color: '#b1bbc4',
   },
   card: {
     margin: 16,
     elevation: 4,
+    backgroundColor: '#17212b', // Fondo de cards estilo Telegram
+    borderRadius: 12,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 12,
+    color: '#ffffff',
   },
   description: {
     fontSize: 16,
     marginBottom: 16,
     lineHeight: 24,
+    color: '#b1bbc4',
   },
   featuresList: {
     marginBottom: 24,
@@ -293,9 +299,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     lineHeight: 24,
+    color: '#b1bbc4',
   },
   button: {
     marginTop: 16,
+    backgroundColor: '#3390ec', // Azul estilo Telegram
   },
   buttonContent: {
     paddingVertical: 8,
@@ -303,6 +311,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#ffffff',
     marginBottom: 12,
   },
   summaryRow: {
@@ -312,11 +321,12 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#b1bbc4', // Texto secundario estilo Telegram
   },
   summaryValue: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#ffffff',
   },
   recommendationChip: {
     marginVertical: 4,

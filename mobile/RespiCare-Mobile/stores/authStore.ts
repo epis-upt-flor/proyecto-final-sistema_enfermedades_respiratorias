@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '@/constants/config';
 
 export interface User {
   id: string;
@@ -29,8 +30,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true });
     try {
-      // Simular llamada a API
-      const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+      // Llamada a API
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (userData) => {
     set({ isLoading: true });
     try {
-      const response = await fetch('http://localhost:3000/api/v1/auth/register', {
+      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (user && token) {
         // Verificar token con el backend
-        const response = await fetch('http://localhost:3000/api/v1/auth/me', {
+        const response = await fetch(API_ENDPOINTS.AUTH.ME, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

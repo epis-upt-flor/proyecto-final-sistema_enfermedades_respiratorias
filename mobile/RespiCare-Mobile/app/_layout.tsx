@@ -4,12 +4,13 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 // Reanimated se inicializa automáticamente con Expo
 // import 'react-native-reanimated/lib/reanimated2/js-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { useAuthStore } from '@/stores/authStore';
 import { useMedicalHistoryStore } from '@/stores/medicalHistoryStore';
 import NotificationService from '@/services/notificationService';
@@ -51,14 +52,16 @@ export default function RootLayout() {
         // Verificar conectividad
         await checkConnectivity();
         
-        // Configurar notificaciones
-        const notificationService = NotificationService.getInstance();
-        notificationService.createNotificationChannels();
-        
-        // Verificar permisos de notificación
-        const hasPermissions = await notificationService.checkPermissions();
-        if (!hasPermissions) {
-          await notificationService.requestPermissions();
+        // Configurar notificaciones (solo en plataformas nativas)
+        if (Platform.OS !== 'web') {
+          const notificationService = NotificationService.getInstance();
+          notificationService.createNotificationChannels();
+          
+          // Verificar permisos de notificación
+          const hasPermissions = await notificationService.checkPermissions();
+          if (!hasPermissions) {
+            await notificationService.requestPermissions();
+          }
         }
       } catch (error) {
         console.error('Error inicializando app:', error);
@@ -73,15 +76,45 @@ export default function RootLayout() {
     return null;
   }
 
+  // Tema personalizado estilo Telegram para Paper
+  const telegramPaperTheme = {
+    ...MD3DarkTheme,
+    colors: {
+      ...MD3DarkTheme.colors,
+      primary: '#3390ec',
+      background: '#0e1621',
+      surface: '#17212b',
+      surfaceVariant: '#1e2732',
+      onBackground: '#ffffff',
+      onSurface: '#ffffff',
+      onSurfaceVariant: '#b1bbc4',
+      outline: '#1e2732',
+    },
+  };
+
+  // Tema personalizado estilo Telegram para Navigation
+  const telegramNavTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      primary: '#3390ec',
+      background: '#0e1621',
+      card: '#17212b',
+      text: '#ffffff',
+      border: '#1e2732',
+      notification: '#3390ec',
+    },
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
-      <PaperProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <PaperProvider theme={telegramPaperTheme}>
+        <ThemeProvider value={telegramNavTheme}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
         </ThemeProvider>
       </PaperProvider>
     </QueryClientProvider>
