@@ -25,12 +25,17 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.respicare.mobile",
+      "versionCode": 1,
       "permissions": [
         "android.permission.ACTIVITY_RECOGNITION",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -48,10 +53,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cd65e242-c8be-4bab-a7f1-c6c0d08a0ffe"
+      }
     }
   }
 }

@@ -53,6 +53,8 @@ class ChatbotService {
       await this.initializeSession();
       
       const token = await AsyncStorage.getItem('token');
+      // Si hay transcripción de audio, usarla como mensaje principal
+      // Esto permite que personas que no pueden escribir usen la voz
       const userMessage = audioTranscription || message;
       
       // Agregar al historial

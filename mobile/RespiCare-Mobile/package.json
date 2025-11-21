@@ -15,7 +15,11 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "audit": "npm audit",
-    "audit:fix": "npm audit fix"
+    "audit:fix": "npm audit fix",
+    "prebuild:android": "expo prebuild --platform android",
+    "build:android:debug": "cd android && ./gradlew assembleDebug",
+    "build:android:release": "cd android && ./gradlew assembleRelease",
+    "build:android:clean": "cd android && ./gradlew clean"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

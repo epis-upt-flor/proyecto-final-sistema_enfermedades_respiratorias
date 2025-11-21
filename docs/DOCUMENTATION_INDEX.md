@@ -53,10 +53,13 @@
 - **[ai-services/README.md](../ai-services/README.md)** - Documentación principal
 - **[ai-services/API_DOCUMENTATION.md](../ai-services/API_DOCUMENTATION.md)** - API completa
 - **[ai-services/TESTING_GUIDE.md](../ai-services/TESTING_GUIDE.md)** - Guía de testing
-- **[ai-services/AUDIO_SERVICES_README.md](../ai-services/AUDIO_SERVICES_README.md)** - ⭐ **NUEVO**: Servicios de audio (Whisper + Librosa)
-- **[ai-services/MULTIMODAL_DATASETS_README.md](../ai-services/MULTIMODAL_DATASETS_README.md)** - ⭐ **NUEVO**: Generación de datasets sintéticos
 - **[ai-services/README_PATTERNS.md](../ai-services/README_PATTERNS.md)** - Patrones implementados
-- **[ai-services/GUIA_CHATBOT_MEDICO.md](../ai-services/GUIA_CHATBOT_MEDICO.md)** - Guía del chatbot médico
+- **[ai-services/README_ESTRUCTURA.md](../ai-services/README_ESTRUCTURA.md)** - Estructura organizada
+- **[ai-services/docs/README.md](../ai-services/docs/README.md)** - Índice de documentación específica
+- **[ai-services/docs/AUDIO_SERVICES.md](../ai-services/docs/AUDIO_SERVICES.md)** - ⭐ **NUEVO**: Servicios de audio (Whisper + Librosa)
+- **[ai-services/docs/MULTIMODAL_DATASETS.md](../ai-services/docs/MULTIMODAL_DATASETS.md)** - ⭐ **NUEVO**: Generación de datasets sintéticos
+- **[ai-services/docs/GUIA_CHATBOT_MEDICO.md](../ai-services/docs/GUIA_CHATBOT_MEDICO.md)** - Guía del chatbot médico
+- **[ai-services/docs/MODELOS_INICIALES.md](../ai-services/docs/MODELOS_INICIALES.md)** - Modelos iniciales
 
 ### Frontend Web (React)
 - **[web/README.md](../web/README.md)** - Documentación del frontend
@@ -168,13 +171,13 @@ Los reportes de implementación están en **[docs/implementation-reports/](imple
 ### Análisis Multimodal
 
 #### Imágenes Médicas
-- **[ai-services/MULTIMODAL_DATASETS_README.md](../ai-services/MULTIMODAL_DATASETS_README.md)** - Generación de datasets sintéticos
+- **[ai-services/docs/MULTIMODAL_DATASETS.md](../ai-services/docs/MULTIMODAL_DATASETS.md)** - Generación de datasets sintéticos
 - **[roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md#fase-6-análisis-multimodal---imágenes-y-voz--completado)** - Fase 6 del roadmap ML
 - **Endpoint**: `POST /api/v1/ml/advanced/image`
 - **Tipos soportados**: 8 tipos (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis)
 
 #### Audio/Voz
-- **[ai-services/AUDIO_SERVICES_README.md](../ai-services/AUDIO_SERVICES_README.md)** - Servicios de audio (Whisper + Librosa)
+- **[ai-services/docs/AUDIO_SERVICES.md](../ai-services/docs/AUDIO_SERVICES.md)** - Servicios de audio (Whisper + Librosa)
 - **[mobile/RespiCare-Mobile/GUIA_AUDIO.md](../mobile/RespiCare-Mobile/GUIA_AUDIO.md)** - Guía de uso en mobile
 - **[roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md#fase-6-análisis-multimodal---imágenes-y-voz--completado)** - Fase 6 del roadmap ML
 - **Endpoints**:

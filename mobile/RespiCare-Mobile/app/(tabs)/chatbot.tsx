@@ -67,7 +67,7 @@ export default function ChatbotScreen() {
     // Mensaje de bienvenida
     const welcomeMessage: ChatMessage = {
       id: 'welcome',
-      text: '¡Hola! Soy tu asistente médico virtual. Puedo ayudarte con:\n\n• Consultas sobre enfermedades respiratorias\n• Análisis de síntomas\n• Recomendaciones médicas\n• Análisis de imágenes médicas\n\n¿En qué puedo ayudarte hoy?',
+      text: '¡Hola! Soy tu asistente médico virtual. Puedo ayudarte con:\n\n• Consultas sobre enfermedades respiratorias\n• Análisis de síntomas\n• Recomendaciones médicas\n• Análisis de imágenes médicas\n• Transcripción de voz (para personas que no pueden escribir)\n\n¿En qué puedo ayudarte hoy?',
       type: 'assistant',
       timestamp: new Date(),
     };
@@ -327,14 +327,26 @@ export default function ChatbotScreen() {
     setShowAudioOptions(false);
 
     try {
+      // Mostrar mensaje de procesamiento
+      const processingMessage: ChatMessage = {
+        id: `processing_${Date.now()}`,
+        text: '🎤 Transcribiendo tu mensaje de voz...',
+        type: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, processingMessage]);
+      scrollToBottom();
+
       const transcriptionResult = await audioService.transcribeAudio(recordedAudioUri);
 
       if (transcriptionResult.success && transcriptionResult.transcription) {
         // Usar la transcripción como mensaje de texto
-        const transcription = transcriptionResult.transcription;
-        setInputText(transcription);
+        const transcription = transcriptionResult.transcription.trim();
         
-        // Enviar automáticamente el mensaje transcrito
+        // Remover el mensaje de procesamiento
+        setMessages((prev) => prev.filter(msg => msg.id !== processingMessage.id));
+        
+        // Mostrar el mensaje transcrito del usuario
         const userMessage: ChatMessage = {
           id: `user_${Date.now()}`,
           text: transcription,
@@ -344,12 +356,19 @@ export default function ChatbotScreen() {
         };
 
         setMessages((prev) => [...prev, userMessage]);
-        setInputText('');
         setIsLoading(true);
         scrollToBottom();
 
         try {
-          const response = await chatbotService.sendMessage(transcription);
+          // Enviar automáticamente el mensaje transcrito al chatbot
+          // Pasar la transcripción como audioTranscription para que el servicio la use
+          const response = await chatbotService.sendMessage(
+            transcription, // mensaje principal
+            undefined, // sin imagen
+            transcription, // transcripción de audio (para contexto)
+            undefined, // sin análisis de tos
+            undefined // sin tipo de imagen
+          );
           
           const assistantMessage: ChatMessage = {
             id: `assistant_${Date.now()}`,
@@ -365,18 +384,41 @@ export default function ChatbotScreen() {
           setRecordedAudioUri(null);
           scrollToBottom();
         } catch (error: any) {
-          Alert.alert('Error', error.message || 'No se pudo enviar el mensaje');
+          console.error('Error enviando mensaje transcrito:', error);
+          Alert.alert(
+            'Error al enviar mensaje',
+            error.message || 'No se pudo enviar el mensaje transcrito. El texto está disponible para que lo envíes manualmente.'
+          );
+          // Si falla, poner el texto en el input para que el usuario pueda enviarlo manualmente
+          setInputText(transcription);
         } finally {
           setIsLoading(false);
         }
       } else {
+        // Remover el mensaje de procesamiento
+        setMessages((prev) => prev.filter(msg => msg.id !== processingMessage.id));
+        
         Alert.alert(
           'Transcripción no disponible',
-          transcriptionResult.error || 'No se pudo transcribir el audio. Por favor, escribe tu mensaje manualmente.'
+          transcriptionResult.error || 'No se pudo transcribir el audio. Por favor, intenta de nuevo o escribe tu mensaje manualmente.',
+          [
+            { text: 'OK' },
+            {
+              text: 'Intentar de nuevo',
+              onPress: () => {
+                setRecordedAudioUri(null);
+                setShowAudioOptions(false);
+              }
+            }
+          ]
         );
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al transcribir el audio');
+      console.error('Error en transcripción:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Error al transcribir el audio. Por favor, intenta de nuevo o escribe tu mensaje manualmente.'
+      );
     } finally {
       setIsProcessingAudio(false);
       setRecordedAudioUri(null);
@@ -557,7 +599,7 @@ export default function ChatbotScreen() {
                   icon="microphone"
                   disabled={isProcessingAudio}
                 >
-                  🎤 Transcribir y Analizar
+                  🎤 Transcribir y Enviar (Para personas que no pueden escribir)
                 </Button>
                 <Button
                   mode="outlined"
@@ -601,7 +643,7 @@ export default function ChatbotScreen() {
                   icon="microphone"
                   disabled={isProcessingAudio}
                 >
-                  🎤 Transcribir y Analizar
+                  🎤 Transcribir y Enviar (Para personas que no pueden escribir)
                 </Button>
                 <Button
                   mode="outlined"

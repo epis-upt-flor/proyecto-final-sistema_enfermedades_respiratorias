@@ -142,33 +142,54 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 - **[backend/src/config/redisClient.ts](backend/src/config/redisClient.ts)** - Cliente Redis centralizado
 - **Healthcheck**: `GET http://localhost:3001/health` (incluye estado de MongoDB y Redis)
 
-#### AI Services (Python/FastAPI)
+#### AI Services (Python/FastAPI) ⭐ **ACTUALIZADO**
 - **[ai-services/README.md](ai-services/README.md)** - Documentación de servicios de IA
 - **[ai-services/API_DOCUMENTATION.md](ai-services/API_DOCUMENTATION.md)** - API completa de servicios de IA
 - **[ai-services/TESTING_GUIDE.md](ai-services/TESTING_GUIDE.md)** - Guía de testing de AI Services
-- **[ai-services/AUDIO_SERVICES_README.md](ai-services/AUDIO_SERVICES_README.md)** - Servicios de audio (Whisper + Librosa)
-- **[ai-services/MULTIMODAL_DATASETS_README.md](ai-services/MULTIMODAL_DATASETS_README.md)** - Generación de datasets sintéticos
+- **[ai-services/README_PATTERNS.md](ai-services/README_PATTERNS.md)** - Patrones de arquitectura implementados
+- **[ai-services/README_ESTRUCTURA.md](ai-services/README_ESTRUCTURA.md)** - Estructura organizada del proyecto
+- **[ai-services/docs/README.md](ai-services/docs/README.md)** - Índice de documentación específica
+- **[ai-services/docs/AUDIO_SERVICES.md](ai-services/docs/AUDIO_SERVICES.md)** - ⭐ **NUEVO**: Servicios de audio (Whisper + Librosa)
+- **[ai-services/docs/MULTIMODAL_DATASETS.md](ai-services/docs/MULTIMODAL_DATASETS.md)** - ⭐ **NUEVO**: Generación de datasets sintéticos
+- **[ai-services/docs/GUIA_CHATBOT_MEDICO.md](ai-services/docs/GUIA_CHATBOT_MEDICO.md)** - Guía del chatbot médico
 - **[ai-services/core/cache.py](ai-services/core/cache.py)** - Utilidades Redis async
 - **[ai-services/api/routes/health.py](ai-services/api/routes/health.py)** - Endpoints de health
 - **Healthcheck**: `GET http://localhost:8000/api/v1/health`
-- **Endpoints Multimodales**:
-  - `POST /api/v1/ml/advanced/image` - Análisis de imágenes médicas
-  - `POST /api/v1/audio/cough` - Análisis de tos
-  - `POST /api/v1/audio/transcribe` - Transcripción de voz
+- **Endpoints Multimodales** ⭐ **NUEVOS**:
+  - `POST /api/v1/ml/advanced/image` - Análisis de imágenes médicas (8 tipos, ResNet50)
+  - `POST /api/v1/audio/cough` - Análisis de tos (6 tipos, Librosa)
+  - `POST /api/v1/audio/transcribe` - Transcripción de voz (Whisper multilingüe)
+- **Scripts de Entrenamiento**:
+  - `scripts/training/generate_multimodal_datasets.py` - Generar datasets sintéticos
+  - `scripts/training/train_multimodal_models.py` - Entrenar modelos ML
 
 #### Frontend Web (React)
 - **[web/README.md](web/README.md)** - Documentación del frontend web
 - **[web/tests/README.md](web/tests/README.md)** - 📊 Resultados de pruebas (40+ tests)
 - **Design System**: Temas light/dark, accesibilidad WCAG 2.1 AA, i18n
 
-#### Mobile (React Native/Expo)
+#### Mobile (React Native/Expo) ⭐ **ACTUALIZADO**
 - **[mobile/README.md](mobile/README.md)** - Documentación de la app móvil
 - **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - 📊 Tests (50+ tests: unitarios, integración, E2E)
 - **[mobile/e2e/README.md](mobile/e2e/README.md)** - Guía de tests E2E con Detox
 - **[mobile/RespiCare-Mobile/README_CHATBOT.md](mobile/RespiCare-Mobile/README_CHATBOT.md)** - Guía del chatbot móvil
-- **[mobile/RespiCare-Mobile/GUIA_AUDIO.md](mobile/RespiCare-Mobile/GUIA_AUDIO.md)** - Guía de funcionalidades de audio
+- **[mobile/RespiCare-Mobile/GUIA_AUDIO.md](mobile/RespiCare-Mobile/GUIA_AUDIO.md)** - ⭐ **NUEVO**: Guía de funcionalidades de audio
 - **Analíticas y errores**: `analyticsService` (eventos/timings con persistencia) y `errorTrackingService` (handler global)
-- **Chatbot Multimodal**: Soporte para imágenes médicas y audio (tos y transcripción)
+- **Chatbot Multimodal** ⭐ **NUEVO**:
+  - **Análisis de Imágenes Médicas**: 
+    - Captura o selección de imágenes desde la app
+    - Selección de tipo de imagen (8 tipos disponibles)
+    - Análisis en tiempo real con ResNet50
+    - Resultados integrados en la conversación del chatbot
+  - **Análisis de Audio/Voz**:
+    - **Grabación de audio**: Botón de micrófono en el chatbot
+    - **Dos opciones después de grabar**:
+      1. **Analizar tos**: Clasifica tipo, severidad, urgencia
+      2. **Transcribir y analizar**: Convierte voz a texto y analiza
+    - **Integración Whisper**: Transcripción multilingüe
+    - **Integración Librosa**: Análisis de características de audio
+- **Tema Telegram**: Interfaz oscura estilo Telegram para mejor experiencia visual
+- **Compatibilidad Web**: Soporte para ejecutar en navegador con adaptaciones específicas
 
 ### 🧪 Testing y Calidad
 
@@ -229,18 +250,21 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 
 #### ML Avanzado (Fase 15 - 100% Completado) ✅
 - ✅ **Transformer Models**: BERT para texto médico con integración de caché y lazy loading
-- ✅ **Computer Vision**: Clasificación de imágenes médicas (RX/TC)
-- ✅ **Análisis Multimodal (Fase 6 - 100% Completado)**:
-  - ✅ **Análisis de Imágenes Médicas**: ResNet50 pre-entrenado
-    - 8 tipos de imágenes: radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis
-    - Generación de datasets sintéticos para entrenamiento
-    - Clasificación automática con recomendaciones médicas
+- ✅ **Computer Vision**: Clasificación de imágenes médicas (RX/TC) con ResNet50 pre-entrenado
+- ✅ **Análisis Multimodal (Fase 6 - 100% Completado)** ⭐ **NUEVO**:
+  - ✅ **Análisis de Imágenes Médicas**: 
+    - **8 tipos soportados**: Radiografías de tórax, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras imágenes médicas
+    - **Modelo**: ResNet50 pre-entrenado con fine-tuning médico
+    - **Generación de datasets sintéticos**: Scripts para crear datasets de entrenamiento realistas
+    - **Clasificación automática**: Detección de condiciones, severidad, urgencia y recomendaciones médicas
+    - **Integración con chatbot**: Análisis en tiempo real desde la app móvil
   - ✅ **Procesamiento de Audio/Voz**:
-    - **Whisper** (OpenAI): Transcripción multilingüe pre-entrenada
-    - **Librosa**: Análisis de características de audio
-    - Análisis de tos: 6 tipos (seca, productiva, paroxística, crónica, convulsiva, perruna)
-    - Generación de datasets sintéticos para entrenamiento
-    - Evaluación de severidad y urgencia automática
+    - **Whisper (OpenAI)**: Transcripción multilingüe pre-entrenada (modelo base, soporte para ES/EN/PT/FR)
+    - **Librosa**: Análisis de características de audio (MFCC, frecuencia, energía)
+    - **Análisis de tos**: 6 tipos detectados (seca, productiva, paroxística, crónica, convulsiva, perruna)
+    - **Generación de datasets sintéticos**: Scripts para crear datasets de entrenamiento de tos
+    - **Evaluación médica**: Severidad, urgencia, características y recomendaciones automáticas
+    - **Modelos entrenados**: Random Forest y XGBoost para clasificación de tos
 - ✅ **Time Series Prediction**: Predicción de tendencias temporales
 - ✅ **Reinforcement Learning**: Optimización de recordatorios de medicamentos (implementación real)
 - ✅ **Federated Learning**: Agregación segura (FedAvg, FedProx, SCAFFOLD) con detección de clientes maliciosos
@@ -251,25 +275,33 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 **Documentación ML Avanzado**: 
 - [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md#fase-15-funcionalidades-avanzadas-ml)
 - [roadmaps/ML_ROADMAP.md](roadmaps/ML_ROADMAP.md) - Roadmap completo del sistema ML (incluye Fase 6: Análisis Multimodal)
-- [ai-services/AUDIO_SERVICES_README.md](ai-services/AUDIO_SERVICES_README.md) - Servicios de audio (Whisper + Librosa)
-- [ai-services/MULTIMODAL_DATASETS_README.md](ai-services/MULTIMODAL_DATASETS_README.md) - Generación de datasets sintéticos
+- [ai-services/docs/AUDIO_SERVICES.md](ai-services/docs/AUDIO_SERVICES.md) - Servicios de audio (Whisper + Librosa)
+- [ai-services/docs/MULTIMODAL_DATASETS.md](ai-services/docs/MULTIMODAL_DATASETS.md) - Generación de datasets sintéticos
 
-### 💬 Chatbot Médico Mejorado
+### 💬 Chatbot Médico Mejorado ⭐ **ACTUALIZADO**
 
 - ✅ Análisis inteligente de síntomas
 - ✅ Explicaciones SHAP mejoradas con visualizaciones interactivas (waterfall, bar, summary)
 - ✅ Gráficos interactivos de factores (bar, pie, radar)
 - ✅ Historial de conversaciones mejorado con persistencia
 - ✅ Sugerencias contextuales más inteligentes
-- ✅ **Análisis Multimodal**:
-  - ✅ **Análisis de Imágenes Médicas**: 8 tipos soportados (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis)
-  - ✅ **Análisis de Audio/Voz**: 
-    - Transcripción de voz a texto (Whisper - multilingüe)
-    - Análisis de tos (clasificación: seca, productiva, paroxística, etc.)
-  - ✅ Modelos pre-entrenados (sin dataset propio requerido)
-  - ✅ Datasets sintéticos para mejorar respuestas del chatbot
+- ✅ **Análisis Multimodal** ⭐ **NUEVO**:
+  - ✅ **Análisis de Imágenes Médicas**:
+    - **8 tipos soportados**: Radiografías de tórax, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras
+    - **Desde app móvil**: Captura o selección de imágenes con análisis en tiempo real
+    - **Clasificación automática**: Condiciones detectadas, severidad, urgencia y recomendaciones
+    - **Integración completa**: Análisis se incluye automáticamente en el contexto del chatbot
+  - ✅ **Análisis de Audio/Voz**:
+    - **Transcripción de voz**: Whisper multilingüe (ES/EN/PT/FR) - ideal para usuarios que no pueden escribir
+    - **Análisis de tos**: Clasificación automática de 6 tipos de tos con evaluación médica
+    - **Dos modos de uso**:
+      1. **Analizar tos**: Clasifica tipo, severidad, urgencia y genera recomendaciones
+      2. **Transcribir y analizar**: Convierte voz a texto y luego analiza el contenido
+    - **Modelos pre-entrenados**: Whisper y Librosa (no requieren dataset propio)
+    - **Modelos entrenados**: Mejora continua con datasets sintéticos generados
 - ✅ Modo de voz (speech-to-text) usando Web Speech API
 - ✅ Integración con resultados ML avanzados
+- ✅ **Tema Telegram**: Interfaz oscura estilo Telegram para mejor UX
 
 ### 📊 Dashboards y Analytics
 
@@ -323,7 +355,10 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ AR (ejercicios guiados)
 - ✅ Telemedicina (videollamadas Jitsi para citas)
 - ✅ Chat directo médico-paciente
-- ✅ Captura y adjunto de fotos de síntomas
+- ✅ **Chatbot Multimodal** ⭐ **NUEVO**:
+  - ✅ **Análisis de Imágenes Médicas**: Captura o selección de imágenes con 8 tipos soportados
+  - ✅ **Análisis de Audio**: Grabación de audio con dos modos (analizar tos o transcribir)
+  - ✅ **Integración completa**: Resultados integrados automáticamente en la conversación
 - ✅ Compartir reportes PDF vía WhatsApp/Email
 - ✅ Análisis predictivo con fallback local
 - ✅ Wearables (resumen FC, pasos, SpO₂)
@@ -522,13 +557,21 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Infraestructura GPU completa
 - Optimización de modelos pesados
 
-#### Fase 6: Análisis Multimodal ✅ (100%)
-- Análisis de imágenes médicas (8 tipos, ResNet50)
-- Procesamiento de audio/voz (Whisper + Librosa)
-- Análisis de tos (6 tipos con evaluación médica)
-- Transcripción multilingüe de voz
-- Generación de datasets sintéticos
-- Modelos entrenados para mejorar respuestas del chatbot
+#### Fase 6: Análisis Multimodal ✅ (100%) ⭐ **COMPLETADO**
+- ✅ **Análisis de imágenes médicas**: 8 tipos soportados (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras)
+  - Modelo ResNet50 pre-entrenado con fine-tuning médico
+  - Clasificación automática de condiciones, severidad y urgencia
+  - Generación de datasets sintéticos para entrenamiento
+  - Integración completa con chatbot móvil
+- ✅ **Procesamiento de audio/voz**: 
+  - **Whisper (OpenAI)**: Transcripción multilingüe pre-entrenada (ES/EN/PT/FR)
+  - **Librosa**: Análisis de características de audio (MFCC, frecuencia, energía)
+  - **Análisis de tos**: 6 tipos detectados (seca, productiva, paroxística, crónica, convulsiva, perruna)
+  - Evaluación médica automática (severidad, urgencia, recomendaciones)
+  - Generación de datasets sintéticos para entrenamiento
+  - Modelos entrenados (Random Forest, XGBoost) para clasificación
+- ✅ **Integración móvil**: Chatbot con soporte completo para imágenes y audio
+- ✅ **Documentación completa**: Guías de uso, API y datasets sintéticos
 
 **Ver estado detallado**: [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md)
 
@@ -743,5 +786,24 @@ Para más detalles sobre licencias específicas, consulta los archivos `LICENSE`
 
 ---
 
-**Última actualización:** Noviembre 2024  
-**Versión del Proyecto:** 2.0.0
+**Última actualización:** Noviembre 2025  
+**Versión del Proyecto:** 2.1.0
+
+---
+
+## 🆕 Novedades en v2.1.0
+
+### ⭐ Análisis Multimodal Completo
+- **Imágenes Médicas**: 8 tipos soportados con análisis automático desde la app móvil
+- **Audio/Voz**: Transcripción multilingüe y análisis de tos con 6 tipos detectados
+- **Modelos Entrenados**: Datasets sintéticos y modelos ML para mejorar respuestas del chatbot
+- **Integración Móvil**: Chatbot multimodal con captura de imágenes y audio
+
+### 📁 Organización Mejorada
+- **AI Services**: Estructura reorganizada con scripts, datasets y documentación organizados
+- **Documentación**: Índice centralizado y documentación específica en `docs/`
+- **Referencias Actualizadas**: Todas las referencias apuntan a las nuevas ubicaciones
+
+### 🎨 Mejoras de UX
+- **Tema Telegram**: Interfaz oscura estilo Telegram en la app móvil
+- **Compatibilidad Web**: Soporte mejorado para ejecutar la app en navegador

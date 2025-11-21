@@ -41,8 +41,8 @@ Todas las notas de cambios relevantes del proyecto.
 - ✅ Actualizado QUICKSTART.md con endpoints multimodales
 - ✅ Actualizado SECURITY.md con consideraciones de seguridad para funcionalidades multimodales
 - ✅ Creado índice de documentación centralizado (docs/DOCUMENTATION_INDEX.md)
-- ✅ Agregada documentación de servicios de audio (ai-services/AUDIO_SERVICES_README.md)
-- ✅ Agregada documentación de datasets sintéticos (ai-services/MULTIMODAL_DATASETS_README.md)
+- ✅ Agregada documentación de servicios de audio (ai-services/docs/AUDIO_SERVICES.md)
+- ✅ Agregada documentación de datasets sintéticos (ai-services/docs/MULTIMODAL_DATASETS.md)
 - ✅ Actualizado roadmap ML (roadmaps/ML_ROADMAP.md) con Fase 6: Análisis Multimodal
 
 ### 🔧 Mejoras Técnicas

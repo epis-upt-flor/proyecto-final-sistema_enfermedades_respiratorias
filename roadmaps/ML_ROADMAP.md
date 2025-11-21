@@ -321,7 +321,7 @@ User receives comprehensive prediction with full explainability
 - ✅ Servicio de análisis de tos usando procesamiento de señales (librosa).
 - ✅ Endpoints REST para análisis de imágenes y audio.
 - ✅ Integración con chatbot móvil para análisis multimodal.
-- ✅ Documentación completa de servicios de audio (`AUDIO_SERVICES_README.md`).
+- ✅ Documentación completa de servicios de audio (`docs/AUDIO_SERVICES.md`).
 - ✅ Tipos de imágenes médicas definidos y documentados.
 - ✅ Manejo de archivos base64 para imágenes y audio.
 
@@ -476,7 +476,7 @@ User receives comprehensive prediction with full explainability
 - ✅ `services/cough_analysis_service.py` - Servicio de análisis de tos usando librosa
 - ✅ `constants/imageTypes.ts` (mobile) - Tipos de imágenes médicas soportados
 - ✅ `services/audioService.ts` (mobile) - Cliente de servicios de audio
-- ✅ `AUDIO_SERVICES_README.md` - Documentación completa de servicios de audio
+- ✅ `docs/AUDIO_SERVICES.md` - Documentación completa de servicios de audio
 
 ---
 

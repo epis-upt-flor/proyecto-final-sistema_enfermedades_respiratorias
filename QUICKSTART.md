@@ -329,8 +329,8 @@ docker-compose up -d
    - [DEPLOYMENT.md](./DEPLOYMENT.md) - Guía completa de despliegue
    - [README.md](./README.md) - Documentación general
    - [docs/DOCKER_COMPOSE_GUIDE.md](./docs/DOCKER_COMPOSE_GUIDE.md) - Guía de Docker Compose
-   - [ai-services/AUDIO_SERVICES_README.md](./ai-services/AUDIO_SERVICES_README.md) - Servicios de audio
-   - [ai-services/MULTIMODAL_DATASETS_README.md](./ai-services/MULTIMODAL_DATASETS_README.md) - Datasets sintéticos
+   - [ai-services/docs/AUDIO_SERVICES.md](./ai-services/docs/AUDIO_SERVICES.md) - Servicios de audio
+   - [ai-services/docs/MULTIMODAL_DATASETS.md](./ai-services/docs/MULTIMODAL_DATASETS.md) - Datasets sintéticos
 
 4. **Configurar Producción**
    - Revisar [DEPLOYMENT.md](./DEPLOYMENT.md)

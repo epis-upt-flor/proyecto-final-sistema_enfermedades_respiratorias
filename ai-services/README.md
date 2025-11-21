@@ -528,7 +528,19 @@ python ml_models/train_models.py --generate-dataset --model all --output models/
 
 ## 📖 Documentación Adicional
 
+### Documentación Principal (Raíz)
 - **[README_PATTERNS.md](README_PATTERNS.md)**: Documentación detallada de patrones implementados
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)**: Documentación completa de la API
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)**: Guía completa de testing
+- **[README_ESTRUCTURA.md](README_ESTRUCTURA.md)**: Estructura organizada del proyecto
+
+### Documentación Específica (docs/)
+- **[docs/AUDIO_SERVICES.md](docs/AUDIO_SERVICES.md)**: Servicios de audio (Whisper, análisis de tos)
+- **[docs/MULTIMODAL_DATASETS.md](docs/MULTIMODAL_DATASETS.md)**: Generación de datasets sintéticos multimodales
+- **[docs/GUIA_CHATBOT_MEDICO.md](docs/GUIA_CHATBOT_MEDICO.md)**: Guía del chatbot médico
+- **[docs/MODELOS_INICIALES.md](docs/MODELOS_INICIALES.md)**: Documentación de modelos iniciales
+
+### Enlaces Externos
 - **[API Documentation](http://localhost:8000/docs)**: Documentación interactiva de la API
 - **[Health Checks](http://localhost:8000/api/v1/health/detailed)**: Estado detallado del sistema
-- **[ML Roadmap](../ML_ROADMAP.md)**: Sistema de ML progresivo
+- **[ML Roadmap](../roadmaps/ML_ROADMAP.md)**: Sistema de ML progresivo (incluye Fase 6: Multimodal)
