@@ -57,6 +57,14 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/api/v1/medical-history/${id}`,
   },
   
+  // Historiales médicos (plural, usado en algunos endpoints)
+  MEDICAL_HISTORIES: {
+    LIST: `${API_BASE_URL}/api/v1/medical-histories`,
+    CREATE: `${API_BASE_URL}/api/v1/medical-histories`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/v1/medical-histories/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/v1/medical-histories/${id}`,
+  },
+  
   // Wearables
   WEARABLES: {
     SYNC: `${API_BASE_URL}/api/v1/wearables/sync`,

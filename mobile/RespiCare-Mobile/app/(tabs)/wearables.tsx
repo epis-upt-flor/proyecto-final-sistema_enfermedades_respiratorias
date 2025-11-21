@@ -12,6 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { wearableService, WearableMetrics, WearableAlerts } from '@/services/wearableService';
 import { WearableMetricsCard } from '@/components/WearableMetricsCard';
 import Toast from 'react-native-toast-message';
+import NetInfo from '@react-native-community/netinfo';
 
 export default function WearablesScreen() {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -19,14 +20,25 @@ export default function WearablesScreen() {
   const [metrics, setMetrics] = useState<WearableMetrics | null>(null);
   const [alerts, setAlerts] = useState<WearableAlerts | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   const loadMetrics = React.useCallback(async () => {
     try {
+      // Verificar conectividad
+      const netInfo = await NetInfo.fetch();
+      const offline = !netInfo.isConnected || !netInfo.isInternetReachable;
+      setIsOffline(offline);
+      
       const currentMetrics = await wearableService.getMetrics();
       if (currentMetrics) {
         setMetrics(currentMetrics);
         const currentAlerts = await wearableService.checkAlerts(currentMetrics);
         setAlerts(currentAlerts);
+      }
+      
+      // Si hay conexión, sincronizar datos pendientes
+      if (!offline) {
+        await wearableService.syncToBackend();
       }
     } catch (error) {
       console.error('Error loading metrics:', error);
@@ -174,6 +186,11 @@ export default function WearablesScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      {isOffline && (
+        <View style={styles.offlineIndicator}>
+          <Text style={styles.offlineIndicatorText}>📴 Modo Offline - Datos locales</Text>
+        </View>
+      )}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}

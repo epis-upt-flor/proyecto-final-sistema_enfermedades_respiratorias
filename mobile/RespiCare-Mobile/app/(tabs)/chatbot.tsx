@@ -64,14 +64,55 @@ export default function ChatbotScreen() {
       }
     })();
 
-    // Mensaje de bienvenida
-    const welcomeMessage: ChatMessage = {
-      id: 'welcome',
-      text: '¡Hola! Soy tu asistente médico virtual. Puedo ayudarte con:\n\n• Consultas sobre enfermedades respiratorias\n• Análisis de síntomas\n• Recomendaciones médicas\n• Análisis de imágenes médicas\n• Transcripción de voz (para personas que no pueden escribir)\n\n¿En qué puedo ayudarte hoy?',
-      type: 'assistant',
-      timestamp: new Date(),
+    // Cargar mensajes guardados desde SQLite
+    const loadSavedMessages = async () => {
+      try {
+        const sessionId = await chatbotService.initializeSession();
+        
+        // Cargar mensajes desde SQLite
+        const { databaseService } = await import('@/services/databaseService');
+        await databaseService.initialize();
+        const savedMessages = await databaseService.getChatbotMessages(sessionId);
+        
+        if (savedMessages.length > 0) {
+          // Convertir mensajes de SQLite a ChatMessage
+          const chatMessages: ChatMessage[] = savedMessages.map(msg => ({
+            id: msg.id,
+            text: msg.text,
+            type: msg.type as 'user' | 'assistant',
+            timestamp: new Date(msg.timestamp),
+            urgencyLevel: msg.urgencyLevel as any,
+            symptomCount: msg.symptomCount || undefined,
+            needsMedicalAttention: msg.needsMedicalAttention === 1,
+            imageUri: msg.imageUri || undefined,
+            audioUri: msg.audioUri || undefined,
+          }));
+          setMessages(chatMessages);
+          scrollToBottom();
+        } else {
+          // Si no hay mensajes guardados, mostrar mensaje de bienvenida
+          const welcomeMessage: ChatMessage = {
+            id: 'welcome',
+            text: '¡Hola! Soy tu asistente médico virtual. Puedo ayudarte con:\n\n• Consultas sobre enfermedades respiratorias\n• Análisis de síntomas\n• Recomendaciones médicas\n• Análisis de imágenes médicas\n• Transcripción de voz (para personas que no pueden escribir)\n\n¿En qué puedo ayudarte hoy?',
+            type: 'assistant',
+            timestamp: new Date(),
+          };
+          setMessages([welcomeMessage]);
+        }
+      } catch (error) {
+        console.error('Error cargando mensajes guardados:', error);
+        // Si falla, mostrar mensaje de bienvenida
+        const welcomeMessage: ChatMessage = {
+          id: 'welcome',
+          text: '¡Hola! Soy tu asistente médico virtual. Puedo ayudarte con:\n\n• Consultas sobre enfermedades respiratorias\n• Análisis de síntomas\n• Recomendaciones médicas\n• Análisis de imágenes médicas\n• Transcripción de voz (para personas que no pueden escribir)\n\n¿En qué puedo ayudarte hoy?',
+          type: 'assistant',
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMessage]);
+      }
     };
-    setMessages([welcomeMessage]);
+
+    loadSavedMessages();
   }, []);
 
   const scrollToBottom = () => {
@@ -260,8 +301,9 @@ export default function ChatbotScreen() {
         // Crear mensaje con el análisis de tos
         const coughMessage = `He analizado tu tos. Severidad: ${coughInfo.severity}. Características: ${coughInfo.characteristics?.join(', ')}.`;
         
+        const messageId = `user_${Date.now()}`;
         const userMessage: ChatMessage = {
-          id: `user_${Date.now()}`,
+          id: messageId,
           text: 'Análisis de tos',
           type: 'user',
           timestamp: new Date(),
@@ -271,6 +313,24 @@ export default function ChatbotScreen() {
         setMessages((prev) => [...prev, userMessage]);
         setIsLoading(true);
         scrollToBottom();
+        
+        // Guardar mensaje en SQLite
+        try {
+          const { databaseService } = await import('@/services/databaseService');
+          await databaseService.initialize();
+          const sessionId = await chatbotService.initializeSession();
+          
+          await databaseService.saveChatbotMessage({
+            id: messageId,
+            sessionId,
+            text: userMessage.text,
+            type: 'user',
+            timestamp: userMessage.timestamp.toISOString(),
+            audioUri: recordedAudioUri || null,
+          });
+        } catch (error) {
+          console.error('Error guardando mensaje en SQLite:', error);
+        }
 
         try {
           // Enviar al chatbot con el análisis de tos
@@ -347,8 +407,9 @@ export default function ChatbotScreen() {
         setMessages((prev) => prev.filter(msg => msg.id !== processingMessage.id));
         
         // Mostrar el mensaje transcrito del usuario
+        const messageId = `user_${Date.now()}`;
         const userMessage: ChatMessage = {
-          id: `user_${Date.now()}`,
+          id: messageId,
           text: transcription,
           type: 'user',
           timestamp: new Date(),
@@ -358,6 +419,24 @@ export default function ChatbotScreen() {
         setMessages((prev) => [...prev, userMessage]);
         setIsLoading(true);
         scrollToBottom();
+        
+        // Guardar mensaje en SQLite
+        try {
+          const { databaseService } = await import('@/services/databaseService');
+          await databaseService.initialize();
+          const sessionId = await chatbotService.initializeSession();
+          
+          await databaseService.saveChatbotMessage({
+            id: messageId,
+            sessionId,
+            text: transcription,
+            type: 'user',
+            timestamp: userMessage.timestamp.toISOString(),
+            audioUri: recordedAudioUri || null,
+          });
+        } catch (error) {
+          console.error('Error guardando mensaje transcrito en SQLite:', error);
+        }
 
         try {
           // Enviar automáticamente el mensaje transcrito al chatbot

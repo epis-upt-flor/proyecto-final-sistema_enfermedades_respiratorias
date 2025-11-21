@@ -11,6 +11,8 @@
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { databaseService, WearableDataRow } from './databaseService';
+import NetInfo from '@react-native-community/netinfo';
 
 // NOTA: Las librerías nativas de salud (HealthKit/Google Fit) requieren configuración adicional
 // Por ahora, el servicio funciona con datos simulados y está preparado para integración futura
@@ -198,16 +200,50 @@ class WearableService {
   }
 
   /**
-   * Obtiene datos recientes de wearables
+   * Obtiene datos recientes de wearables (con soporte offline usando SQLite)
    */
   async getRecentData(hours: number = 24): Promise<WearableData[]> {
     try {
+      // Inicializar base de datos
+      await databaseService.initialize();
+      
+      // Verificar conectividad
+      const netInfo = await NetInfo.fetch();
+      const isOffline = !netInfo.isConnected || !netInfo.isInternetReachable;
+      
+      // Si está offline, cargar desde SQLite
+      if (isOffline) {
+        try {
+          const userId = await AsyncStorage.getItem('user');
+          const userObj = userId ? JSON.parse(userId) : null;
+          const userIdStr = userObj?.id || 'default';
+          
+          const rows = await databaseService.getWearableData(userIdStr, hours * 4); // Aprox 4 datos por hora
+          const data: WearableData[] = rows.map(row => ({
+            heartRate: row.heartRate || undefined,
+            oxygenSaturation: row.spo2 || undefined,
+            steps: row.steps || undefined,
+            timestamp: new Date(row.timestamp),
+            source: row.source as 'apple_health' | 'google_fit' | 'manual',
+          }));
+          
+          if (data.length > 0) {
+            return data;
+          }
+        } catch (error) {
+          console.error('Error cargando datos offline de wearables:', error);
+        }
+      }
+      
       if (!this.isAuthorized) {
         const authorized = await this.initialize();
         if (!authorized) {
           // En desarrollo, usar datos simulados
           if (__DEV__) {
-            return this.getSimulatedData(hours);
+            const simulated = this.getSimulatedData(hours);
+            // Guardar datos simulados en SQLite
+            await this.saveDataToSQLite(simulated);
+            return simulated;
           }
           return [];
         }
@@ -315,16 +351,96 @@ class WearableService {
         // Ordenar por timestamp
         data.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
+        // Guardar datos en SQLite para uso offline
+        if (data.length > 0) {
+          await this.saveDataToSQLite(data);
+        }
+
         return data.length > 0 ? data : this.getSimulatedData(hours);
       } catch (error) {
         console.error('Error fetching health data:', error);
-        // Fallback a datos simulados en caso de error
-        return this.getSimulatedData(hours);
+        // Fallback: intentar cargar desde SQLite
+        try {
+          const userId = await AsyncStorage.getItem('user');
+          const userObj = userId ? JSON.parse(userId) : null;
+          const userIdStr = userObj?.id || 'default';
+          const rows = await databaseService.getWearableData(userIdStr, hours * 4);
+          const offlineData: WearableData[] = rows.map(row => ({
+            heartRate: row.heartRate || undefined,
+            oxygenSaturation: row.spo2 || undefined,
+            steps: row.steps || undefined,
+            timestamp: new Date(row.timestamp),
+            source: row.source as 'apple_health' | 'google_fit' | 'manual',
+          }));
+          if (offlineData.length > 0) {
+            return offlineData;
+          }
+        } catch (dbError) {
+          console.error('Error cargando desde SQLite:', dbError);
+        }
+        // Último fallback: datos simulados
+        const simulated = this.getSimulatedData(hours);
+        await this.saveDataToSQLite(simulated);
+        return simulated;
       }
     } catch (error) {
       console.error('Error getting wearable data:', error);
-      // Fallback a datos simulados
-      return this.getSimulatedData(hours);
+      // Fallback: intentar cargar desde SQLite
+      try {
+        const userId = await AsyncStorage.getItem('user');
+        const userObj = userId ? JSON.parse(userId) : null;
+        const userIdStr = userObj?.id || 'default';
+        const rows = await databaseService.getWearableData(userIdStr, hours * 4);
+        const offlineData: WearableData[] = rows.map(row => ({
+          heartRate: row.heartRate || undefined,
+          oxygenSaturation: row.spo2 || undefined,
+          steps: row.steps || undefined,
+          timestamp: new Date(row.timestamp),
+          source: row.source as 'apple_health' | 'google_fit' | 'manual',
+        }));
+        if (offlineData.length > 0) {
+          return offlineData;
+        }
+      } catch (dbError) {
+        console.error('Error cargando desde SQLite:', dbError);
+      }
+      // Último fallback: datos simulados
+      const simulated = this.getSimulatedData(hours);
+      await this.saveDataToSQLite(simulated);
+      return simulated;
+    }
+  }
+
+  /**
+   * Guarda datos de wearables en SQLite
+   */
+  private async saveDataToSQLite(data: WearableData[]): Promise<void> {
+    try {
+      await databaseService.initialize();
+      const userId = await AsyncStorage.getItem('user');
+      const userObj = userId ? JSON.parse(userId) : null;
+      const userIdStr = userObj?.id || 'default';
+      
+      const netInfo = await NetInfo.fetch();
+      const isOffline = !netInfo.isConnected || !netInfo.isInternetReachable;
+      
+      for (const item of data) {
+        const wearableRow: WearableDataRow = {
+          id: `wearable_${item.timestamp.getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: userIdStr,
+          heartRate: item.heartRate || null,
+          steps: item.steps || null,
+          spo2: item.oxygenSaturation || null,
+          timestamp: item.timestamp.toISOString(),
+          source: item.source,
+          syncStatus: isOffline ? 'pending' : 'synced',
+          createdAt: new Date().toISOString(),
+        };
+        
+        await databaseService.saveWearableData(wearableRow);
+      }
+    } catch (error) {
+      console.error('Error guardando datos de wearables en SQLite:', error);
     }
   }
 
@@ -456,48 +572,78 @@ class WearableService {
   }
 
   /**
-   * Sincroniza datos con el backend
+   * Sincroniza datos con el backend (usando SQLite para datos pendientes)
    */
   async syncToBackend(): Promise<boolean> {
     try {
-      const data = await this.getRecentData(24);
-      if (data.length === 0) {
+      await databaseService.initialize();
+      
+      // Verificar conectividad
+      const netInfo = await NetInfo.fetch();
+      if (!netInfo.isConnected || !netInfo.isInternetReachable) {
+        console.log('Sin conexión, los datos se guardarán en SQLite para sincronización posterior');
         return false;
+      }
+
+      // Obtener datos pendientes de sincronización desde SQLite
+      const pendingData = await databaseService.getPendingWearableData();
+      if (pendingData.length === 0) {
+        return true; // No hay datos pendientes
       }
 
       // Obtener token de autenticación
-      const token = await AsyncStorage.getItem('auth_token');
+      const token = await AsyncStorage.getItem('token');
       if (!token) {
-        console.warn('No auth token found, saving locally');
-        await AsyncStorage.setItem('wearable_data_pending', JSON.stringify(data));
+        console.warn('No auth token found, data will be synced later');
         return false;
       }
 
-      // Enviar al backend
+      // Enviar datos pendientes al backend
       const { API_ENDPOINTS } = await import('@/constants/config');
+      
+      // Agrupar datos por timestamp para enviar en lotes
+      const dataToSync = pendingData.map(row => ({
+        heartRate: row.heartRate,
+        steps: row.steps,
+        spo2: row.spo2,
+        timestamp: row.timestamp,
+        source: row.source,
+      }));
+
       const response = await fetch(API_ENDPOINTS.WEARABLES.SYNC, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ data: dataToSync }),
       });
 
       if (response.ok) {
-        // Limpiar datos pendientes si se sincronizó exitosamente
-        await AsyncStorage.removeItem('wearable_data_pending');
+        // Marcar como sincronizado en SQLite
+        for (const row of pendingData) {
+          await databaseService.saveWearableData({
+            ...row,
+            syncStatus: 'synced' as const,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+        console.log(`✅ Sincronizados ${pendingData.length} registros de wearables`);
         return true;
       } else {
-        // Guardar localmente para sincronización offline
-        await AsyncStorage.setItem('wearable_data_pending', JSON.stringify(data));
+        // Marcar como error en SQLite
+        for (const row of pendingData) {
+          await databaseService.saveWearableData({
+            ...row,
+            syncStatus: 'error' as const,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+        console.error('Error sincronizando wearables:', response.status);
         return false;
       }
     } catch (error) {
-      console.error('Error syncing to backend:', error);
-      // Guardar localmente para sincronización offline
-      const data = await this.getRecentData(24);
-      await AsyncStorage.setItem('wearable_data_pending', JSON.stringify(data));
+      console.error('Error syncing wearable data to backend:', error);
       return false;
     }
   }

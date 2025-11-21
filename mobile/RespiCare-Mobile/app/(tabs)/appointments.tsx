@@ -1,76 +1,63 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View, Text } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/Colors';
-
-import { API_BASE_URL } from '@/constants/config';
-
-const API_BASE = `${API_BASE_URL}/api/v1`;
-
-type Appointment = {
-  _id: string;
-  doctorId: string;
-  patientId: string;
-  scheduledAt: string;
-  durationMinutes: number;
-  status: string;
-  reason?: string;
-};
+import { useAppointmentStore } from '@/stores/appointmentStore';
 
 export default function AppointmentsScreen() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { 
+    appointments, 
+    isLoading: loading, 
+    isOffline,
+    fetchAppointments,
+    checkConnectivity 
+  } = useAppointmentStore();
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAppointments = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/appointments/me/upcoming`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo obtener las citas');
-      }
-
-      const data = await response.json();
-      setAppointments(data.data ?? []);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchAppointments().catch(() => undefined);
+    fetchAppointments().catch((err) => {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    });
   }, [fetchAppointments]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchAppointments().catch(() => undefined);
-    }, [fetchAppointments])
+      checkConnectivity().catch(() => undefined);
+      fetchAppointments().catch((err) => {
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+      });
+    }, [fetchAppointments, checkConnectivity])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchAppointments();
-    setRefreshing(false);
-  }, [fetchAppointments]);
+    try {
+      await checkConnectivity();
+      await fetchAppointments();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchAppointments, checkConnectivity]);
 
-  const renderItem = ({ item }: { item: Appointment }) => {
+  const renderItem = ({ item }: { item: typeof appointments[0] }) => {
     const startDate = new Date(item.scheduledAt);
     const endDate = new Date(startDate.getTime() + item.durationMinutes * 60 * 1000);
     return (
       <View style={styles.card}>
+        {item.syncStatus === 'pending' && (
+          <View style={styles.offlineBadge}>
+            <Text style={styles.offlineText}>⏳ Pendiente de sincronización</Text>
+          </View>
+        )}
+        {item.syncStatus === 'error' && (
+          <View style={[styles.offlineBadge, { backgroundColor: '#f44336' }]}>
+            <Text style={styles.offlineText}>❌ Error al sincronizar</Text>
+          </View>
+        )}
         <Text style={styles.date}>
           {startDate.toLocaleDateString()} {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
           {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -90,11 +77,18 @@ export default function AppointmentsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Próximas Citas</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Próximas Citas</Text>
+        {isOffline && (
+          <View style={styles.offlineIndicator}>
+            <Text style={styles.offlineIndicatorText}>📴 Modo Offline</Text>
+          </View>
+        )}
+      </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={appointments}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={appointments.length === 0 ? styles.emptyContainer : undefined}
@@ -177,6 +171,36 @@ const styles = StyleSheet.create({
   error: {
     color: '#f44336',
     marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  offlineIndicator: {
+    backgroundColor: '#ff9800',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  offlineIndicatorText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  offlineBadge: {
+    backgroundColor: '#ff9800',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  offlineText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
 

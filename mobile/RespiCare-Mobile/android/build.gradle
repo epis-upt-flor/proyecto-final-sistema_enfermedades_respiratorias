@@ -1,5 +1,8 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
+  ext {
+    kotlinVersion = '2.1.0'
+  }
   repositories {
     google()
     mavenCentral()
@@ -7,8 +10,13 @@ buildscript {
   dependencies {
     classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
-    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
   }
+}
+
+// Configuración global de Kotlin
+ext {
+  kotlinVersion = '2.1.0'
 }
 
 def projectRoot = rootDir.parentFile
@@ -29,6 +37,40 @@ allprojects {
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
+  }
+  
+  // Configuración global para resolver conflictos de Android Support vs AndroidX
+  configurations.all {
+    exclude group: 'com.android.support', module: 'support-compat'
+    exclude group: 'com.android.support', module: 'support-annotations'
+    exclude group: 'com.android.support', module: 'support-v4'
+    exclude group: 'com.android.support', module: 'support-core-utils'
+    exclude group: 'com.android.support', module: 'support-fragment'
+    
+    resolutionStrategy {
+      // Forzar uso de AndroidX
+      force 'androidx.core:core:1.13.1'
+      force 'androidx.core:core-ktx:1.13.1'
+    }
+  }
+  
+  // Configuración de Kotlin para todos los subproyectos
+  afterEvaluate { project ->
+    if (project.hasProperty('android')) {
+      project.android {
+        compileOptions {
+          sourceCompatibility JavaVersion.VERSION_17
+          targetCompatibility JavaVersion.VERSION_17
+        }
+      }
+    }
+    if (project.plugins.hasPlugin('org.jetbrains.kotlin.android')) {
+      project.android {
+        kotlinOptions {
+          jvmTarget = '17'
+        }
+      }
+    }
   }
 }
 

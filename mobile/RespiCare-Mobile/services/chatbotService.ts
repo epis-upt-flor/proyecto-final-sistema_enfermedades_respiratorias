@@ -1,5 +1,6 @@
 import { AI_SERVICE_URL, API_ENDPOINTS } from '@/constants/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { databaseService, ChatbotMessageRow } from './databaseService';
 
 export interface ChatMessage {
   id: string;
@@ -192,6 +193,38 @@ class ChatbotService {
         content: data.message,
       });
 
+      // Guardar mensajes en SQLite para persistencia offline
+      try {
+        await databaseService.initialize();
+        
+        const now = Date.now();
+        
+        // Guardar mensaje del usuario (con imageUri si hay imagen)
+        await databaseService.saveChatbotMessage({
+          id: `user_${now}`,
+          sessionId: this.sessionId!,
+          text: userMessage,
+          type: 'user',
+          timestamp: new Date().toISOString(),
+          // imageUri y audioUri se guardarán desde el componente que llama
+        });
+
+        // Guardar respuesta del asistente
+        await databaseService.saveChatbotMessage({
+          id: `assistant_${now + 1}`,
+          sessionId: this.sessionId!,
+          text: data.message,
+          type: 'assistant',
+          urgencyLevel: data.urgency_level,
+          symptomCount: data.symptom_count,
+          needsMedicalAttention: data.needs_medical_attention ? 1 : 0,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (dbError) {
+        console.error('Error guardando mensajes en SQLite:', dbError);
+        // No fallar si SQLite falla
+      }
+
       // Guardar historial (últimos 20 mensajes)
       if (this.conversationHistory.length > 20) {
         this.conversationHistory = this.conversationHistory.slice(-20);
@@ -281,17 +314,48 @@ class ChatbotService {
   /**
    * Obtener historial de conversación
    */
-  getConversationHistory(): Array<{ role: string; content: string }> {
+  async getConversationHistory(): Promise<Array<{ role: string; content: string }>> {
+    // Si hay sesión, intentar cargar desde SQLite
+    if (this.sessionId) {
+      try {
+        await databaseService.initialize();
+        const messages = await databaseService.getChatbotMessages(this.sessionId);
+        
+        // Convertir mensajes de SQLite a formato de historial
+        const history = messages.map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.text,
+        }));
+        
+        if (history.length > 0) {
+          this.conversationHistory = history;
+        }
+      } catch (error) {
+        console.error('Error cargando historial desde SQLite:', error);
+      }
+    }
+    
     return [...this.conversationHistory];
   }
 
   /**
    * Limpiar historial de conversación
    */
-  clearHistory(): void {
+  async clearHistory(): Promise<void> {
     this.conversationHistory = [];
+    
+    // Eliminar mensajes de SQLite si hay sesión
+    if (this.sessionId) {
+      try {
+        await databaseService.initialize();
+        await databaseService.deleteChatbotMessages(this.sessionId);
+      } catch (error) {
+        console.error('Error eliminando mensajes de SQLite:', error);
+      }
+    }
+    
     this.sessionId = null;
-    AsyncStorage.removeItem('chatbot_session_id');
+    await AsyncStorage.removeItem('chatbot_session_id');
   }
 
   /**

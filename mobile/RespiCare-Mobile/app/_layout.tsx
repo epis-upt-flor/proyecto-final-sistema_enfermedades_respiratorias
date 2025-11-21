@@ -14,6 +14,8 @@ import { Provider as PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { useAuthStore } from '@/stores/authStore';
 import { useMedicalHistoryStore } from '@/stores/medicalHistoryStore';
 import NotificationService from '@/services/notificationService';
+import { databaseService } from '@/services/databaseService';
+import { syncService } from '@/services/syncService';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -46,13 +48,23 @@ export default function RootLayout() {
     // Inicializar servicios
     const initializeApp = async () => {
       try {
-        // Verificar autenticación
+        // 1. Inicializar base de datos SQLite (primero, es crítico)
+        console.log('📦 Inicializando base de datos SQLite...');
+        await databaseService.initialize();
+        console.log('✅ Base de datos SQLite inicializada');
+        
+        // 2. Inicializar servicio de sincronización
+        console.log('🔄 Inicializando servicio de sincronización...');
+        await syncService.initialize();
+        console.log('✅ Servicio de sincronización inicializado');
+        
+        // 3. Verificar autenticación
         await checkAuth();
         
-        // Verificar conectividad
+        // 4. Verificar conectividad (esto también sincroniza automáticamente)
         await checkConnectivity();
         
-        // Configurar notificaciones (solo en plataformas nativas)
+        // 5. Configurar notificaciones (solo en plataformas nativas)
         if (Platform.OS !== 'web') {
           const notificationService = NotificationService.getInstance();
           notificationService.createNotificationChannels();
@@ -63,8 +75,10 @@ export default function RootLayout() {
             await notificationService.requestPermissions();
           }
         }
+        
+        console.log('✅ Aplicación inicializada correctamente');
       } catch (error) {
-        console.error('Error inicializando app:', error);
+        console.error('❌ Error inicializando app:', error);
       }
     };
 
