@@ -169,27 +169,36 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 - **Design System**: Temas light/dark, accesibilidad WCAG 2.1 AA, i18n
 
 #### Mobile (React Native/Expo) ⭐ **ACTUALIZADO**
-- **[mobile/README.md](mobile/README.md)** - Documentación de la app móvil
+- **[mobile/README.md](mobile/README.md)** - Documentación completa de la app móvil
 - **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - 📊 Tests (50+ tests: unitarios, integración, E2E)
 - **[mobile/e2e/README.md](mobile/e2e/README.md)** - Guía de tests E2E con Detox
-- **[mobile/RespiCare-Mobile/README_CHATBOT.md](mobile/RespiCare-Mobile/README_CHATBOT.md)** - Guía del chatbot móvil
+- **[mobile/RespiCare-Mobile/README_CHATBOT.md](mobile/RespiCare-Mobile/README_CHATBOT.md)** - Guía completa del chatbot móvil
 - **[mobile/RespiCare-Mobile/GUIA_AUDIO.md](mobile/RespiCare-Mobile/GUIA_AUDIO.md)** - ⭐ **NUEVO**: Guía de funcionalidades de audio
+- **[mobile/RespiCare-Mobile/GUIA_GENERAR_APK.md](mobile/RespiCare-Mobile/GUIA_GENERAR_APK.md)** - ⭐ **NUEVO**: Guía para generar APK de Android
 - **Analíticas y errores**: `analyticsService` (eventos/timings con persistencia) y `errorTrackingService` (handler global)
 - **Chatbot Multimodal** ⭐ **NUEVO**:
   - **Análisis de Imágenes Médicas**: 
     - Captura o selección de imágenes desde la app
-    - Selección de tipo de imagen (8 tipos disponibles)
+    - Selección de tipo de imagen (8 tipos disponibles: radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras)
     - Análisis en tiempo real con ResNet50
     - Resultados integrados en la conversación del chatbot
   - **Análisis de Audio/Voz**:
     - **Grabación de audio**: Botón de micrófono en el chatbot
     - **Dos opciones después de grabar**:
-      1. **Analizar tos**: Clasifica tipo, severidad, urgencia
-      2. **Transcribir y analizar**: Convierte voz a texto y analiza
-    - **Integración Whisper**: Transcripción multilingüe
-    - **Integración Librosa**: Análisis de características de audio
+      1. **Analizar tos**: Clasifica tipo (6 tipos: seca, productiva, paroxística, crónica, convulsiva, perruna), severidad, urgencia
+      2. **Transcribir y analizar**: Convierte voz a texto (Whisper) y analiza con el chatbot
+    - **Integración Whisper**: Transcripción multilingüe (ES/EN/PT/FR)
+    - **Integración Librosa**: Análisis de características de audio (MFCC, frecuencia, energía)
 - **Tema Telegram**: Interfaz oscura estilo Telegram para mejor experiencia visual
 - **Compatibilidad Web**: Soporte para ejecutar en navegador con adaptaciones específicas
+- **Funcionalidades Adicionales**:
+  - Reconocimiento de voz para entrada de texto
+  - Modo oscuro completo con Material Design 3
+  - Internacionalización (i18n) con 5 idiomas (ES, EN, PT, FR, QU)
+  - Machine Learning local para análisis offline
+  - Integración con wearables (HealthKit/Google Fit)
+  - Realidad aumentada (AR) para visualización médica
+  - Análisis predictivo con fallback local
 
 ### 🧪 Testing y Calidad
 
@@ -342,6 +351,8 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Offline-first con colas de sync (citas, alertas, historias)
 - ✅ Sincronización automática y estados visibles (pending/synced/error)
 - ✅ Notificaciones in-app y push (según plataforma)
+- ✅ Gestión completa de historias médicas, citas y prescripciones
+- ✅ Captura de datos optimizada para móvil con geolocalización
 
 #### UX/UI Avanzado
 - ✅ Onboarding con i18n (ES/EN) y placeholders PT/FR/QU
@@ -349,19 +360,38 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Microinteracciones y animaciones suaves
 - ✅ Design system unificado
 - ✅ Accesibilidad WCAG 2.1 AA (VoiceOver/TalkBack, testIDs)
+- ✅ **Tema Telegram**: Interfaz oscura estilo Telegram para mejor experiencia visual
+- ✅ **Modo Oscuro**: Tema oscuro completo con Material Design 3
+- ✅ **Compatibilidad Web**: Soporte para ejecutar en navegador con adaptaciones específicas
+
+#### Chatbot Multimodal ⭐ **NUEVO**
+- ✅ **Análisis de Imágenes Médicas**:
+  - Captura o selección de imágenes desde la app
+  - **8 tipos soportados**: Radiografías de tórax, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras imágenes médicas
+  - Análisis en tiempo real con ResNet50
+  - Clasificación automática de condiciones, severidad y urgencia
+  - Resultados integrados automáticamente en la conversación del chatbot
+- ✅ **Análisis de Audio/Voz**:
+  - **Grabación de audio**: Botón de micrófono en el chatbot
+  - **Dos modos de análisis**:
+    1. **Analizar tos**: Clasifica tipo (6 tipos: seca, productiva, paroxística, crónica, convulsiva, perruna), severidad, urgencia y genera recomendaciones
+    2. **Transcribir y analizar**: Convierte voz a texto (Whisper multilingüe) y analiza con el chatbot
+  - **Integración Whisper**: Transcripción multilingüe (ES/EN/PT/FR) - ideal para usuarios que no pueden escribir
+  - **Integración Librosa**: Análisis de características de audio (MFCC, frecuencia, energía)
+  - **Evaluación médica automática**: Severidad, urgencia, características y recomendaciones
+- ✅ **Historial de conversaciones**: Persistencia local y sincronización con backend
+- ✅ **Detección de emergencias**: Identificación automática de situaciones críticas
+- ✅ **Sugerencias contextuales**: Recomendaciones inteligentes basadas en síntomas
 
 #### Funcionalidades Avanzadas
-- ✅ Voz (dictado + comandos)
-- ✅ AR (ejercicios guiados)
-- ✅ Telemedicina (videollamadas Jitsi para citas)
-- ✅ Chat directo médico-paciente
-- ✅ **Chatbot Multimodal** ⭐ **NUEVO**:
-  - ✅ **Análisis de Imágenes Médicas**: Captura o selección de imágenes con 8 tipos soportados
-  - ✅ **Análisis de Audio**: Grabación de audio con dos modos (analizar tos o transcribir)
-  - ✅ **Integración completa**: Resultados integrados automáticamente en la conversación
+- ✅ **Reconocimiento de Voz**: Servicio completo para entrada de texto por voz
+- ✅ **Machine Learning Local**: Análisis de síntomas sin conexión a internet con modelo de reglas médicas
+- ✅ **Telemedicina**: Videollamadas con médicos (preparado para Jitsi/Twilio/Agora)
+- ✅ **Realidad Aumentada (AR)**: Visualización médica con ARKit/ARCore (preparado)
+- ✅ **Integración con Wearables**: HealthKit (iOS) y Google Fit (Android) - métricas de salud en tiempo real
+- ✅ **Análisis Predictivo**: Predicción de riesgo de complicaciones con fallback local
+- ✅ **Internacionalización (i18n)**: Soporte completo para 5 idiomas (ES, EN, PT, FR, QU)
 - ✅ Compartir reportes PDF vía WhatsApp/Email
-- ✅ Análisis predictivo con fallback local
-- ✅ Wearables (resumen FC, pasos, SpO₂)
 - ✅ Panel médico móvil optimizado
 
 #### Optimizaciones
@@ -369,13 +399,21 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Optimización de imágenes y assets
 - ✅ Optimización de consumo de batería
 - ✅ Privacidad: overlay al background y bloqueo de captura en pantallas sensibles
+- ✅ Caché inteligente de datos y predicciones
+- ✅ Lazy loading de componentes y servicios
 
 #### Testing
 - ✅ Tests unitarios, integración, E2E (Detox)
 - ✅ Tests de modo offline y sincronización
 - ✅ Tests de performance mobile
+- ✅ Tests de funcionalidades multimodal (imágenes y audio)
 
-**Ver roadmap completo**: [roadmaps/MOBILE_ROADMAP.md](roadmaps/MOBILE_ROADMAP.md)
+**Ver documentación completa**: 
+- [mobile/README.md](mobile/README.md) - Documentación completa
+- [mobile/RespiCare-Mobile/README_CHATBOT.md](mobile/RespiCare-Mobile/README_CHATBOT.md) - Guía del chatbot
+- [mobile/RespiCare-Mobile/GUIA_AUDIO.md](mobile/RespiCare-Mobile/GUIA_AUDIO.md) - Guía de audio
+- [mobile/RespiCare-Mobile/GUIA_GENERAR_APK.md](mobile/RespiCare-Mobile/GUIA_GENERAR_APK.md) - Guía para generar APK
+- [roadmaps/MOBILE_ROADMAP.md](roadmaps/MOBILE_ROADMAP.md) - Roadmap completo
 
 ### 🌐 Web (React)
 
@@ -585,24 +623,31 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 
 ### 👤 Paciente (Mobile)
 - Ver mi historia médica
-- Chatbot síntomas con ML
+- **Chatbot multimodal** con análisis de imágenes y audio
 - Solicitar y gestionar citas
 - Ver prescripciones y recordatorios
 - Ver alertas y notificaciones
-- Análisis predictivo en Home
-- Integración con wearables
-- Modo offline con sincronización
+- Análisis predictivo en Home con fallback local
+- Integración con wearables (HealthKit/Google Fit)
+- Modo offline con sincronización automática
+- Reconocimiento de voz para entrada de texto
+- Análisis de tos con clasificación automática
+- Transcripción de voz multilingüe (Whisper)
+- Compartir reportes PDF vía WhatsApp/Email
 
 ### 👨‍⚕️ Médico (Mobile/Web)
 - Ver historias de pacientes
 - Crear y editar historias
-- Chatbot síntomas con ML
+- **Chatbot multimodal** con análisis de imágenes y audio
 - Gestionar citas (calendario, disponibilidad)
 - Crear prescripciones con validación
 - Generar reportes PDF con firma digital
 - Panel médico móvil optimizado
-- Telemedicina (videollamadas)
+- Telemedicina (videollamadas Jitsi/Twilio/Agora)
 - Chat directo con pacientes
+- Análisis de imágenes médicas en tiempo real
+- Análisis de audio/tos para diagnóstico
+- Modo offline con sincronización
 
 ### 👨‍💼 Administrador DIRESA (Web)
 - Dashboard ejecutivo con KPIs
@@ -794,16 +839,34 @@ Para más detalles sobre licencias específicas, consulta los archivos `LICENSE`
 ## 🆕 Novedades en v2.1.0
 
 ### ⭐ Análisis Multimodal Completo
-- **Imágenes Médicas**: 8 tipos soportados con análisis automático desde la app móvil
-- **Audio/Voz**: Transcripción multilingüe y análisis de tos con 6 tipos detectados
-- **Modelos Entrenados**: Datasets sintéticos y modelos ML para mejorar respuestas del chatbot
-- **Integración Móvil**: Chatbot multimodal con captura de imágenes y audio
+- **Imágenes Médicas**: 8 tipos soportados (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras) con análisis automático desde la app móvil usando ResNet50
+- **Audio/Voz**: 
+  - Transcripción multilingüe con Whisper (ES/EN/PT/FR) - ideal para usuarios que no pueden escribir
+  - Análisis de tos con 6 tipos detectados (seca, productiva, paroxística, crónica, convulsiva, perruna)
+  - Análisis de características de audio con Librosa (MFCC, frecuencia, energía)
+- **Modelos Entrenados**: Datasets sintéticos y modelos ML (Random Forest, XGBoost) para mejorar respuestas del chatbot
+- **Integración Móvil**: Chatbot multimodal completo con captura de imágenes y audio, resultados integrados automáticamente en la conversación
+
+### 📱 Nuevas Funcionalidades Mobile
+- **Chatbot Multimodal**: Análisis de imágenes y audio integrado en el chatbot médico
+- **Reconocimiento de Voz**: Servicio completo para entrada de texto por voz
+- **Machine Learning Local**: Análisis de síntomas sin conexión a internet
+- **Tema Telegram**: Interfaz oscura estilo Telegram para mejor experiencia visual
+- **Modo Oscuro**: Tema oscuro completo con Material Design 3
+- **Internacionalización**: Soporte completo para 5 idiomas (ES, EN, PT, FR, QU)
+- **Integración con Wearables**: HealthKit (iOS) y Google Fit (Android)
+- **Realidad Aumentada**: Preparado para visualización médica con ARKit/ARCore
+- **Análisis Predictivo**: Predicción de riesgo con fallback local
+- **Guía de Generación de APK**: Documentación completa para generar APK de Android
 
 ### 📁 Organización Mejorada
 - **AI Services**: Estructura reorganizada con scripts, datasets y documentación organizados
+- **Documentación Mobile**: Nuevas guías para chatbot, audio y generación de APK
 - **Documentación**: Índice centralizado y documentación específica en `docs/`
 - **Referencias Actualizadas**: Todas las referencias apuntan a las nuevas ubicaciones
 
 ### 🎨 Mejoras de UX
 - **Tema Telegram**: Interfaz oscura estilo Telegram en la app móvil
 - **Compatibilidad Web**: Soporte mejorado para ejecutar la app en navegador
+- **Modo Oscuro**: Tema oscuro completo en mobile
+- **Accesibilidad**: Mejoras en accesibilidad para usuarios con discapacidades
