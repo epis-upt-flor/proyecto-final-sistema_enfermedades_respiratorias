@@ -27,6 +27,8 @@ import dsrRoutes from './routes/dsrRoutes';
 import biRoutes from './routes/biRoutes';
 import consentRoutes from './routes/consentRoutes';
 import mlOrchestrationRoutes from './routes/mlOrchestrationRoutes';
+import fhirRoutes from './routes/fhirRoutes';
+import integrationRoutes from './routes/integrationRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -214,6 +216,8 @@ class App {
     this.app.use('/api/v1/bi', biRoutes);
     this.app.use('/api/v1/consent', consentRoutes);
     this.app.use('/api/v1/ml', mlOrchestrationRoutes);
+    this.app.use('/api/v1/fhir', fhirRoutes);
+    this.app.use('/api/v1/integrations', integrationRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {

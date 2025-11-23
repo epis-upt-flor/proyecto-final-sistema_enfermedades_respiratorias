@@ -54,6 +54,11 @@ const permissionsByRole: Record<Role, Set<string>> = {
     'uploads:manage',
     'uploads:read',
     'uploads:delete',
+    'fhir:read',
+    'fhir:create',
+    'fhir:update',
+    'fhir:delete',
+    'integrations:manage',
   ]),
   doctor: new Set([
     'reports:read',
@@ -71,6 +76,9 @@ const permissionsByRole: Record<Role, Set<string>> = {
     'analytics:read',
     'bi:export',
     'uploads:read',
+    'fhir:read',
+    'fhir:create',
+    'fhir:update',
   ]),
   patient: new Set([
     'prescriptions:read', // Solo sus propias prescripciones
