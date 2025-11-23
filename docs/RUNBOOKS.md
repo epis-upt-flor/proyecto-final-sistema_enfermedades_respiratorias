@@ -468,6 +468,103 @@ kubectl get prometheusrules -n monitoring
 
 ---
 
+## Escalado y Recuperación de Fallos
+
+### Escalado de Emergencia
+
+#### Escalar Todos los Servicios
+```bash
+# Escalar backend
+kubectl scale deployment/backend --replicas=10 -n respicare-production
+
+# Escalar AI Services
+kubectl scale deployment/ai-services --replicas=5 -n respicare-production
+
+# Escalar ML Advanced Service (si tiene GPU disponible)
+kubectl scale deployment/ml-advanced-service --replicas=3 -n respicare-production
+```
+
+#### Escalado Vertical de Emergencia
+```bash
+# Aumentar recursos de backend temporalmente
+kubectl set resources deployment/backend \
+  --limits=cpu=8000m,memory=8Gi \
+  --requests=cpu=4000m,memory=4Gi \
+  -n respicare-production
+
+# Reiniciar para aplicar cambios
+kubectl rollout restart deployment/backend -n respicare-production
+```
+
+### Recuperación Rápida de Servicios
+
+#### Reinicio Completo de Servicio
+```bash
+# 1. Escalar a 0
+kubectl scale deployment/backend --replicas=0 -n respicare-production
+
+# 2. Esperar 30 segundos
+sleep 30
+
+# 3. Escalar de vuelta
+kubectl scale deployment/backend --replicas=3 -n respicare-production
+
+# 4. Verificar
+kubectl rollout status deployment/backend -n respicare-production
+```
+
+#### Recuperación de Base de Datos
+
+##### MongoDB Replica Set
+```bash
+# Verificar estado del replica set
+kubectl exec -it statefulset/mongodb-0 -n respicare-prod -- \
+  mongosh --eval "rs.status()"
+
+# Si un nodo está caído, forzar re-elección
+kubectl exec -it statefulset/mongodb-0 -n respicare-prod -- \
+  mongosh --eval "rs.stepDown()"
+
+# Reiniciar nodo problemático
+kubectl delete pod mongodb-1 -n respicare-prod
+```
+
+##### Restaurar desde Backup Rápido
+```bash
+# 1. Identificar backup más reciente
+restic -r s3:s3.amazonaws.com/respicare-backups snapshots | tail -5
+
+# 2. Restaurar solo colecciones críticas
+restic -r s3:s3.amazonaws.com/respicare-backups restore latest \
+  --target /tmp/restore \
+  --include "medicalhistories.bson"
+
+# 3. Restaurar en MongoDB
+kubectl cp /tmp/restore mongodb-0:/tmp/restore -n respicare-prod
+kubectl exec -it statefulset/mongodb-0 -n respicare-prod -- \
+  mongorestore --drop /tmp/restore
+```
+
+### Recuperación de Cache
+
+#### Limpiar Cache Redis
+```bash
+# Limpiar todo el cache (usar con precaución)
+kubectl exec -it statefulset/redis-0 -n respicare-prod -- \
+  redis-cli FLUSHALL
+
+# Limpiar cache específico
+kubectl exec -it statefulset/redis-0 -n respicare-prod -- \
+  redis-cli --scan --pattern "user:*" | xargs redis-cli DEL
+```
+
+#### Reconstruir Cache
+```bash
+# Forzar recarga de cache desde base de datos
+kubectl exec -it deployment/backend -n respicare-prod -- \
+  npm run cache:warmup
+```
+
 ## Troubleshooting
 
 ### Pods No Inician

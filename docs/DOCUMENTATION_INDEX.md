@@ -115,8 +115,11 @@
 
 - **[DEPLOYMENT.md](../DEPLOYMENT.md)** - Guía completa de despliegue
 - **[docs/DOCKER_COMPOSE_GUIDE.md](DOCKER_COMPOSE_GUIDE.md)** - Guía de Docker Compose
-- **[docs/RUNBOOKS.md](RUNBOOKS.md)** - Runbooks operacionales
+- **[docs/RUNBOOKS.md](RUNBOOKS.md)** - Runbooks operacionales (actualizado con escalado y recuperación)
+- **[docs/TROUBLESHOOTING_GUIDE.md](TROUBLESHOOTING_GUIDE.md)** - ⭐ **NUEVO**: Guía completa de troubleshooting y recuperación de fallos
 - **[docs/GPU_INFRASTRUCTURE_GUIDE.md](GPU_INFRASTRUCTURE_GUIDE.md)** - Infraestructura GPU
+- **[docs/SCALABILITY_ARCHITECTURE.md](SCALABILITY_ARCHITECTURE.md)** - ⭐ **NUEVO**: Arquitectura de escalabilidad y microservicios
+- **[docs/MONGODB_SHARDING_STRATEGY.md](MONGODB_SHARDING_STRATEGY.md)** - ⭐ **NUEVO**: Estrategia de replicación y sharding MongoDB
 - **[infrastructure/terraform/README.md](../infrastructure/terraform/README.md)** - Terraform (IaC)
 
 ---
@@ -203,6 +206,12 @@ Los reportes de implementación están en **[docs/implementation-reports/](imple
 - **[mobile/GUIA_INICIO_RAPIDO.md](../mobile/GUIA_INICIO_RAPIDO.md)** - Inicio rápido mobile
 - **[mobile/RespiCare-Mobile/README_USO_RAPIDO.md](../mobile/RespiCare-Mobile/README_USO_RAPIDO.md)** - Uso rápido mobile
 
+## 📖 Manuales de Usuario
+
+- **[docs/MANUAL_USUARIO_WEB.md](MANUAL_USUARIO_WEB.md)** - ⭐ **NUEVO**: Manual completo de la consola web (dashboard, reportes, administración)
+- **[docs/MANUAL_USUARIO_MOBILE.md](MANUAL_USUARIO_MOBILE.md)** - ⭐ **NUEVO**: Manual completo de la app móvil para pacientes y médicos
+- **[docs/GUIA_CAPACITACION.md](GUIA_CAPACITACION.md)** - ⭐ **NUEVO**: Guía de capacitación para usuarios, desarrolladores y administradores
+
 ---
 
 ## 🔧 Configuración y Setup
@@ -242,6 +251,17 @@ Los reportes de implementación están en **[docs/implementation-reports/](imple
 
 ## 🔄 Actualizaciones Recientes
 
+### Noviembre 2025
+- ✅ **Fase 8 Completada**: Integraciones externas (FHIR, laboratorios, medicamentos, OAuth2, mTLS)
+- ✅ **Fase 13 Completada**: Escalabilidad y arquitectura (microservicios, API Gateway, Service Mesh, Message Queue)
+- ✅ **Fase 14 Completada**: Documentación y capacitación
+  - Manual de usuario web completo
+  - Manual de usuario mobile completo
+  - Guía de capacitación
+  - Guía de troubleshooting expandida
+  - Runbooks técnicos completos
+  - Índice de documentación consolidado
+
 ### Noviembre 2024
 - ✅ Agregada documentación de análisis multimodal (imágenes y voz)
 - ✅ Actualizado README principal con nuevas funcionalidades
@@ -258,5 +278,42 @@ Los reportes de implementación están en **[docs/implementation-reports/](imple
 
 ---
 
-**Última actualización:** Noviembre 2024  
+**Última actualización:** Noviembre 2025  
 **Mantenido por:** Equipo de Desarrollo RespiCare Tacna
+
+---
+
+## 📚 Índice Completo por Categoría
+
+### Para Usuarios Finales
+- [Manual de Usuario Web](MANUAL_USUARIO_WEB.md) - Consola web completa
+- [Manual de Usuario Mobile](MANUAL_USUARIO_MOBILE.md) - App móvil para pacientes y médicos
+- [Guía de Capacitación](GUIA_CAPACITACION.md) - Programa de formación
+
+### Para Desarrolladores
+- [QUICKSTART.md](../QUICKSTART.md) - Inicio rápido
+- [backend/SETUP.md](../backend/SETUP.md) - Setup backend
+- [TESTING_SETUP_GUIDE.md](TESTING_SETUP_GUIDE.md) - Configuración de testing
+- [SECURITY_DEVELOPER_GUIDE.md](SECURITY_DEVELOPER_GUIDE.md) - Seguridad para devs
+- [PERFORMANCE_PLAYBOOK.md](PERFORMANCE_PLAYBOOK.md) - Mejores prácticas de performance
+
+### Para DevOps/SRE
+- [RUNBOOKS.md](RUNBOOKS.md) - Operaciones diarias
+- [TROUBLESHOOTING_GUIDE.md](TROUBLESHOOTING_GUIDE.md) - Diagnóstico y resolución
+- [DEPLOYMENT.md](../DEPLOYMENT.md) - Despliegue
+- [SCALABILITY_ARCHITECTURE.md](SCALABILITY_ARCHITECTURE.md) - Arquitectura escalable
+- [MONGODB_SHARDING_STRATEGY.md](MONGODB_SHARDING_STRATEGY.md) - Estrategia de BD
+
+### Para Arquitectos
+- [SCALABILITY_ARCHITECTURE.md](SCALABILITY_ARCHITECTURE.md) - Arquitectura completa
+- [backend/CLEAN_ARCHITECTURE.md](../backend/CLEAN_ARCHITECTURE.md) - Clean Architecture
+- [EXTERNAL_INTEGRATIONS_GUIDE.md](EXTERNAL_INTEGRATIONS_GUIDE.md) - Integraciones
+
+### Para Analistas/BI
+- [DASHBOARDS_GUIDE.md](DASHBOARDS_GUIDE.md) - Dashboards y KPIs
+- [SHAP_DASHBOARD_TROUBLESHOOTING.md](SHAP_DASHBOARD_TROUBLESHOOTING.md) - SHAP
+
+### Para QA/Testing
+- [TESTING_STRATEGY.md](TESTING_STRATEGY.md) - Estrategia completa
+- [TESTING_SETUP_GUIDE.md](TESTING_SETUP_GUIDE.md) - Setup
+- [TESTING_COMPLETADO_100.md](TESTING_COMPLETADO_100.md) - Estado de testing
