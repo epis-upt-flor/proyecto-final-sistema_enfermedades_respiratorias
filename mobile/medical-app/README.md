@@ -1,6 +1,6 @@
-# Medical App - Aplicación Web Next.js
+# Medical App - Aplicación Web Next.js / Mobile APK
 
-Esta es una aplicación web desarrollada con Next.js que simula una interfaz móvil para el sistema de enfermedades respiratorias RespiCare.
+Esta es una aplicación web desarrollada con Next.js que simula una interfaz móvil para el sistema de enfermedades respiratorias RespiCare. También puede compilarse como aplicación móvil nativa para Android usando Capacitor.
 
 ## 🚀 Ejecutar la aplicación en web
 
@@ -184,7 +184,40 @@ Asegúrate de que:
 - **Zustand** - Estado global
 - **Sonner** - Notificaciones toast
 
+## 📱 Generar APK para Android
+
+Esta aplicación puede compilarse como APK para instalar en dispositivos Android.
+
+### Opción Rápida (Recomendada)
+
+1. **Instalar y configurar Capacitor:**
+   ```powershell
+   .\instalar-capacitor.ps1
+   ```
+
+2. **Generar APK Debug (para testing):**
+   ```powershell
+   .\generar-apk.ps1 debug
+   ```
+
+3. **Generar APK Release (para producción):**
+   ```powershell
+   .\generar-apk.ps1 release
+   ```
+
+### Requisitos Previos
+
+- **Android Studio** instalado
+- **Android SDK** configurado
+- Variables de entorno `ANDROID_HOME` configurada
+- **Java JDK 17** o superior
+
+### Documentación Completa
+
+Ver `GUIA_GENERAR_APK.md` para instrucciones detalladas paso a paso.
+
 ## 📚 Documentación Adicional
 
+- `GUIA_GENERAR_APK.md` - Guía completa para generar APK
 - `INTEGRACION_BACKEND.md` - Guía completa de integración con el backend
 - Ver también: `/backend/README.md` - Documentación del backend

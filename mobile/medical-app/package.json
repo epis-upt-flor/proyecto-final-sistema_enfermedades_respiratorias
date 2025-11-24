@@ -4,9 +4,15 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "build:static": "next build",
     "dev": "next dev -p 8083",
     "lint": "eslint .",
-    "start": "next start -p 8083"
+    "start": "next start -p 8083",
+    "capacitor:sync": "npx cap sync",
+    "capacitor:copy": "npx cap copy",
+    "capacitor:open": "npx cap open android",
+    "android:build": "npm run build:static && npm run capacitor:sync && cd android && gradlew.bat assembleDebug",
+    "android:release": "npm run build:static && npm run capacitor:sync && cd android && gradlew.bat assembleRelease"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -59,7 +65,16 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "zod": "3.25.76",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor/camera": "^6.0.0",
+    "@capacitor/filesystem": "^6.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
