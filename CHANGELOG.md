@@ -43,7 +43,7 @@ Todas las notas de cambios relevantes del proyecto.
 - ✅ Creado índice de documentación centralizado (docs/DOCUMENTATION_INDEX.md)
 - ✅ Agregada documentación de servicios de audio (ai-services/docs/AUDIO_SERVICES.md)
 - ✅ Agregada documentación de datasets sintéticos (ai-services/docs/MULTIMODAL_DATASETS.md)
-- ✅ Actualizado roadmap ML (roadmaps/ML_ROADMAP.md) con Fase 6: Análisis Multimodal
+- ✅ Actualizado roadmap ML (docs/roadmaps/ML_ROADMAP.md) con Fase 6: Análisis Multimodal
 
 ### 🔧 Mejoras Técnicas
 

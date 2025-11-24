@@ -56,8 +56,8 @@ Para documentación general del proyecto, consulta:
 - **Health Check Detallado**: http://localhost:8000/api/v1/health/detailed
 
 ### Roadmaps del Proyecto
-- **[ML Roadmap](../../roadmaps/ML_ROADMAP.md)**: Roadmap completo de ML (incluye Fase 6: Multimodal)
-- **[AI Services Roadmap](../../roadmaps/AI_SERVICES_ROADMAP.md)**: Roadmap específico de AI Services
+- **[ML Roadmap](../../docs/roadmaps/ML_ROADMAP.md)**: Roadmap completo de ML (incluye Fase 6: Multimodal)
+- **[AI Services Roadmap](../../docs/roadmaps/AI_SERVICES_ROADMAP.md)**: Roadmap específico de AI Services
 
 ---
 

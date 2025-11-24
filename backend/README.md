@@ -342,7 +342,7 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
   - `DELETE /api/v1/dsr/delete/:userId` (requiere header `X-Confirm-Action: yes` y `confirm=true` o `?confirm=yes`)
   - Permisos: `dsr:export`, `dsr:delete`
   - Código: `backend/src/routes/dsrRoutes.ts`, `backend/src/controllers/dsrController.ts`
-- Política detallada para desarrolladores: `backend/GDPR_HIPAA_POLICY.md`
+- Política detallada para desarrolladores: [docs/backend/GDPR_HIPAA_POLICY.md](../docs/backend/GDPR_HIPAA_POLICY.md)
 - Copias de seguridad cifradas y acceso restringido
 - WAF/Rate limiting/DoS mitigation y monitoreo continuo
 
@@ -801,6 +801,13 @@ CMD ["node", "dist/index.js"]
 - `CORS_ORIGINS` - Dominios permitidos
 
 ## 📚 Documentación
+
+### **Documentación Técnica:**
+- **[docs/backend/README.md](../docs/backend/README.md)** - Índice de documentación del backend
+- **[docs/backend/SETUP.md](../docs/backend/SETUP.md)** - Guía de configuración e instalación
+- **[docs/backend/CLEAN_ARCHITECTURE.md](../docs/backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia implementada
+- **[docs/backend/GDPR_HIPAA_POLICY.md](../docs/backend/GDPR_HIPAA_POLICY.md)** - Políticas de cumplimiento GDPR/HIPAA
+- **[docs/backend/CORRECCIONES_LINTING.md](../docs/backend/CORRECCIONES_LINTING.md)** - Correcciones de linting y calidad
 
 ### **Swagger/OpenAPI:**
 - Documentación disponible en `/api/docs`

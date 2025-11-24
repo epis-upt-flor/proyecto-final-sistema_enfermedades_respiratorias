@@ -223,7 +223,7 @@ pytest tests/performance/test_benchmark.py --benchmark-only --benchmark-json=ben
 
 ## 📚 Archivos Relacionados
 
-- `roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
+- `../roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
 - `ai-services/tests/performance/` - Todos los tests de performance
 - `ai-services/benchmark_endpoints.py` - Script de benchmark de endpoints
 

@@ -249,7 +249,7 @@ npm run test:coverage -- integration
 
 ## 📚 Archivos Relacionados
 
-- `roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
+- `../roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
 - `mobile/__tests__/integration/` - Todos los tests de integración
 
 ---

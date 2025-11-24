@@ -780,7 +780,7 @@ docker run -it --net host --pid host --userns host --cap-add audit_control \
 
 - [ai-services/docs/AUDIO_SERVICES.md](../ai-services/docs/AUDIO_SERVICES.md) - Servicios de audio
 - [ai-services/docs/MULTIMODAL_DATASETS.md](../ai-services/docs/MULTIMODAL_DATASETS.md) - Datasets sintéticos
-- [roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md) - Roadmap ML (incluye Fase 6: Multimodal)
+- [docs/roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md) - Roadmap ML (incluye Fase 6: Multimodal)
 
 ## 🆘 Soporte
 

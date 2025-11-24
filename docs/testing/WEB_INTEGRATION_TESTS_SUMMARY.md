@@ -188,7 +188,7 @@ npm install --save-dev jest-axe
 
 - `docs/WEB_UNIT_TESTS_SUMMARY.md` - Resumen de tests unitarios
 - `web/src/tests/README.md` - Guía de tests
-- `roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
+- `../roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
 
 ---
 

@@ -303,7 +303,7 @@ npm test -- --coverage tests/e2e/flows.test.ts
 
 ## 📚 Archivos Relacionados
 
-- `roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
+- `../roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
 - `web/cypress/e2e/` - Tests E2E Web
 - `mobile/e2e/` - Tests E2E Mobile
 - `backend/tests/e2e/` - Tests E2E Backend

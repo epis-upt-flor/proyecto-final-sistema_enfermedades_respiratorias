@@ -326,7 +326,7 @@ Guía completa para capacitación de usuarios, desarrolladores y administradores
 ### Documentación Técnica
 - [README Principal](../README.md)
 - [Índice de Documentación](DOCUMENTATION_INDEX.md)
-- [Roadmaps](../roadmaps/)
+- [Roadmaps](../docs/roadmaps/)
 
 ### Comunidad
 - **Slack**: #respicare-dev

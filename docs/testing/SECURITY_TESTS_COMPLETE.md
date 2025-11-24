@@ -212,7 +212,7 @@ pytest tests/security/ -m security --cov=. --cov-report=html
 
 ## 📚 Archivos Relacionados
 
-- `roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
+- `../roadmaps/TESTS_ROADMAP.md` - Roadmap de tests
 - `web/src/tests/security/` - Tests de seguridad Web
 - `mobile/__tests__/security/` - Tests de seguridad Mobile
 - `ai-services/tests/security/` - Tests de seguridad AI Services

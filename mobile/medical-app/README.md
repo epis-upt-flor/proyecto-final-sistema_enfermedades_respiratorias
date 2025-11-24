@@ -214,10 +214,12 @@ Esta aplicación puede compilarse como APK para instalar en dispositivos Android
 
 ### Documentación Completa
 
-Ver `GUIA_GENERAR_APK.md` para instrucciones detalladas paso a paso.
+Ver [docs/mobile/GUIA_GENERAR_APK.md](../../docs/mobile/GUIA_GENERAR_APK.md) para instrucciones detalladas paso a paso.
 
 ## 📚 Documentación Adicional
 
-- `GUIA_GENERAR_APK.md` - Guía completa para generar APK
+- [docs/mobile/GUIA_GENERAR_APK.md](../../docs/mobile/GUIA_GENERAR_APK.md) - Guía completa para generar APK
+- [docs/mobile/INICIO_RAPIDO_APK.md](../../docs/mobile/INICIO_RAPIDO_APK.md) - Inicio rápido para generar APK
+- [docs/mobile/ANALISIS_ROADMAP.md](../../docs/mobile/ANALISIS_ROADMAP.md) - Análisis del roadmap y estado de funcionalidades
 - `INTEGRACION_BACKEND.md` - Guía completa de integración con el backend
 - Ver también: `/backend/README.md` - Documentación del backend

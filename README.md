@@ -113,33 +113,65 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 
 ### 📖 Índice de Documentación
 
-**Índice centralizado**: [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)
+**Índice centralizado**: [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) - Navegación completa de toda la documentación del proyecto
+
+### 📋 Documentación Esencial
+
+#### Para Desarrolladores
+- **[QUICKSTART.md](QUICKSTART.md)** - Inicio rápido del proyecto
+- **[docs/testing/README.md](docs/testing/README.md)** - Índice de documentación de testing
+- **[docs/testing/TESTING_STRATEGY.md](docs/testing/TESTING_STRATEGY.md)** - Estrategia completa de testing
+- **[docs/testing/TESTING_STATUS.md](docs/testing/TESTING_STATUS.md)** - Estado actualizado de testing
+- **[docs/security/SECURITY_DEVELOPER_GUIDE.md](docs/security/SECURITY_DEVELOPER_GUIDE.md)** - Guía de seguridad
+- **[docs/guides/PERFORMANCE_PLAYBOOK.md](docs/guides/PERFORMANCE_PLAYBOOK.md)** - Mejores prácticas de performance
+
+#### Para DevOps/SRE
+- **[docs/guides/README.md](docs/guides/README.md)** - Índice de guías técnicas
+- **[docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md)** - Guía completa de despliegue
+- **[docs/guides/DOCKER_COMPOSE_GUIDE.md](docs/guides/DOCKER_COMPOSE_GUIDE.md)** - Guía de Docker Compose
+- **[docs/guides/RUNBOOKS.md](docs/guides/RUNBOOKS.md)** - Runbooks operacionales
+- **[docs/guides/TROUBLESHOOTING_GUIDE.md](docs/guides/TROUBLESHOOTING_GUIDE.md)** - Guía de troubleshooting
+- **[docs/architecture/SCALABILITY_ARCHITECTURE.md](docs/architecture/SCALABILITY_ARCHITECTURE.md)** - Arquitectura escalable
+
+#### Para Usuarios Finales
+- **[docs/manuals/README.md](docs/manuals/README.md)** - Índice de manuales de usuario
+- **[docs/manuals/MANUAL_USUARIO_WEB.md](docs/manuals/MANUAL_USUARIO_WEB.md)** - Manual completo de la consola web
+- **[docs/manuals/MANUAL_USUARIO_MOBILE.md](docs/manuals/MANUAL_USUARIO_MOBILE.md)** - Manual completo de la app móvil
+- **[docs/manuals/GUIA_CAPACITACION.md](docs/manuals/GUIA_CAPACITACION.md)** - Guía de capacitación
+
+#### Para Arquitectos
+- **[docs/architecture/README.md](docs/architecture/README.md)** - Índice de documentación de arquitectura
+- **[docs/backend/CLEAN_ARCHITECTURE.md](docs/backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia del backend
+- **[docs/architecture/ANALISIS_MDSD_RESPICARE.md](docs/architecture/ANALISIS_MDSD_RESPICARE.md)** - Análisis MDSD del proyecto
+- **[docs/architecture/SCALABILITY_ARCHITECTURE.md](docs/architecture/SCALABILITY_ARCHITECTURE.md)** - Arquitectura de escalabilidad
+- **[docs/guides/EXTERNAL_INTEGRATIONS_GUIDE.md](docs/guides/EXTERNAL_INTEGRATIONS_GUIDE.md)** - Guía de integraciones externas
 
 ### 🗺️ Roadmaps del Proyecto
 
-- **[roadmaps/INDEX.md](roadmaps/INDEX.md)** - Índice de roadmaps por función
-- **[roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md)** - Roadmap completo del proyecto (15 fases)
-- **[roadmaps/WEB_ROADMAP.md](roadmaps/WEB_ROADMAP.md)** - Roadmap específico de Web
-- **[roadmaps/MOBILE_ROADMAP.md](roadmaps/MOBILE_ROADMAP.md)** - Roadmap específico de Mobile
-- **[roadmaps/BACKEND_ROADMAP.md](roadmaps/BACKEND_ROADMAP.md)** - Roadmap específico de Backend
-- **[roadmaps/AI_SERVICES_ROADMAP.md](roadmaps/AI_SERVICES_ROADMAP.md)** - Roadmap específico de AI Services
-- **[roadmaps/WORKFLOWS_ROADMAP.md](roadmaps/WORKFLOWS_ROADMAP.md)** - Roadmap de CI/CD y Workflows
-- **[roadmaps/TESTS_ROADMAP.md](roadmaps/TESTS_ROADMAP.md)** - Roadmap de Testing y Cobertura
-- **[ML_ROADMAP.md](ML_ROADMAP.md)** - Roadmap del sistema ML
+- **[docs/roadmaps/INDEX.md](docs/roadmaps/INDEX.md)** - Índice de roadmaps por función
+- **[docs/roadmaps/PROJECT_ROADMAP.md](docs/roadmaps/PROJECT_ROADMAP.md)** - Roadmap completo del proyecto (15 fases)
+- **[docs/roadmaps/WEB_ROADMAP.md](docs/roadmaps/WEB_ROADMAP.md)** - Roadmap específico de Web
+- **[docs/roadmaps/MOBILE_ROADMAP.md](docs/roadmaps/MOBILE_ROADMAP.md)** - Roadmap específico de Mobile
+- **[docs/roadmaps/BACKEND_ROADMAP.md](docs/roadmaps/BACKEND_ROADMAP.md)** - Roadmap específico de Backend
+- **[docs/roadmaps/AI_SERVICES_ROADMAP.md](docs/roadmaps/AI_SERVICES_ROADMAP.md)** - Roadmap específico de AI Services
+- **[docs/roadmaps/WORKFLOWS_ROADMAP.md](docs/roadmaps/WORKFLOWS_ROADMAP.md)** - Roadmap de CI/CD y Workflows
+- **[docs/roadmaps/TESTS_ROADMAP.md](docs/roadmaps/TESTS_ROADMAP.md)** - Roadmap de Testing y Cobertura
+- **[docs/roadmaps/ML_ROADMAP.md](docs/roadmaps/ML_ROADMAP.md)** - Roadmap del sistema ML
 
 ### 🏗️ Arquitectura y Diseño
 
-- **[backend/CLEAN_ARCHITECTURE.md](backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia del backend
-- **[ANALISIS_MDSD_RESPICARE.md](ANALISIS_MDSD_RESPICARE.md)** - Análisis MDSD del proyecto
-- **[METODOLOGIA_AGIL_PROYECTO.md](METODOLOGIA_AGIL_PROYECTO.md)** - Metodología ágil aplicada
+- **[docs/backend/CLEAN_ARCHITECTURE.md](docs/backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia del backend
+- **[docs/architecture/ANALISIS_MDSD_RESPICARE.md](docs/architecture/ANALISIS_MDSD_RESPICARE.md)** - Análisis MDSD del proyecto
+- **[Documentation/METODOLOGIA_AGIL_PROYECTO.md](Documentation/METODOLOGIA_AGIL_PROYECTO.md)** - Metodología ágil aplicada
 
 ### 📱 Documentación por Componente
 
 #### Backend (Node.js/TypeScript) ⭐ **ACTUALIZADO**
 - **[backend/README.md](backend/README.md)** - Documentación completa del backend con todos los endpoints
-- **[backend/SETUP.md](backend/SETUP.md)** - Guía de configuración e instalación
-- **[backend/CLEAN_ARCHITECTURE.md](backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia implementada
-- **[backend/GDPR_HIPAA_POLICY.md](backend/GDPR_HIPAA_POLICY.md)** - Políticas de cumplimiento GDPR/HIPAA
+- **[docs/backend/README.md](docs/backend/README.md)** - Índice de documentación del backend
+- **[docs/backend/SETUP.md](docs/backend/SETUP.md)** - Guía de configuración e instalación
+- **[docs/backend/CLEAN_ARCHITECTURE.md](docs/backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia implementada
+- **[docs/backend/GDPR_HIPAA_POLICY.md](docs/backend/GDPR_HIPAA_POLICY.md)** - Políticas de cumplimiento GDPR/HIPAA
 - **[backend/tests/README.md](backend/tests/README.md)** - 📊 Resultados de pruebas (380+ tests, 98% cobertura)
 - **Healthcheck**: `GET http://localhost:3001/health` (incluye estado de MongoDB y Redis)
 - **API Docs**: `GET http://localhost:3001/api/docs` (Swagger/OpenAPI interactivo)
@@ -159,10 +191,11 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 
 #### AI Services (Python/FastAPI) ⭐ **ACTUALIZADO**
 - **[ai-services/README.md](ai-services/README.md)** - Documentación completa de servicios de IA
-- **[ai-services/API_DOCUMENTATION.md](ai-services/API_DOCUMENTATION.md)** - API completa con todos los endpoints
-- **[ai-services/TESTING_GUIDE.md](ai-services/TESTING_GUIDE.md)** - Guía completa de testing
-- **[ai-services/README_PATTERNS.md](ai-services/README_PATTERNS.md)** - Patrones de arquitectura implementados
-- **[ai-services/README_ESTRUCTURA.md](ai-services/README_ESTRUCTURA.md)** - Estructura organizada del proyecto
+- **[docs/ai-services/README.md](docs/ai-services/README.md)** - Índice de documentación de AI Services
+- **[docs/ai-services/API_DOCUMENTATION.md](docs/ai-services/API_DOCUMENTATION.md)** - API completa con todos los endpoints
+- **[docs/ai-services/TESTING_GUIDE.md](docs/ai-services/TESTING_GUIDE.md)** - Guía completa de testing
+- **[docs/ai-services/README_PATTERNS.md](docs/ai-services/README_PATTERNS.md)** - Patrones de arquitectura implementados
+- **[docs/ai-services/README_ESTRUCTURA.md](docs/ai-services/README_ESTRUCTURA.md)** - Estructura organizada del proyecto
 - **[ai-services/docs/README.md](ai-services/docs/README.md)** - Índice de documentación específica
 - **[ai-services/docs/AUDIO_SERVICES.md](ai-services/docs/AUDIO_SERVICES.md)** - ⭐ Servicios de audio (Whisper + Librosa)
 - **[ai-services/docs/MULTIMODAL_DATASETS.md](ai-services/docs/MULTIMODAL_DATASETS.md)** - ⭐ Generación de datasets sintéticos
@@ -180,20 +213,25 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
   - Federated Learning: `/api/v1/fl/*`
 
 #### Frontend Web (React) ⭐ **ACTUALIZADO**
+- **[docs/web/README.md](docs/web/README.md)** - Índice de documentación del frontend
+- **[docs/web/LAZY_LOADING.md](docs/web/LAZY_LOADING.md)** - Documentación de lazy loading y code splitting
 - **[web/tests/README.md](web/tests/README.md)** - 📊 Documentación de pruebas (40+ tests: unitarios, E2E, accesibilidad)
 - **[web/src/tests/README.md](web/src/tests/README.md)** - Tests avanzados (integración, performance, accesibilidad)
-- **[web/docs/LAZY_LOADING.md](web/docs/LAZY_LOADING.md)** - Documentación de lazy loading y code splitting
 - **Stack Tecnológico**: React 18.2.0, React Router 6, Chart.js, Recharts, Leaflet, Axios
 - **Design System**: Temas light/dark, accesibilidad WCAG 2.1 AA, i18n completo
 - **PWA**: Service Workers para funcionalidad offline
 
 #### Mobile (React Native/Expo) ⭐ **ACTUALIZADO**
 - **[mobile/README.md](mobile/README.md)** - Documentación completa de la app móvil
+- **[mobile/medical-app/README.md](mobile/medical-app/README.md)** - Documentación de la app Next.js/Capacitor
+- **[docs/mobile/README.md](docs/mobile/README.md)** - Índice de documentación mobile
+- **[docs/mobile/GUIA_GENERAR_APK.md](docs/mobile/GUIA_GENERAR_APK.md)** - ⭐ Guía completa para generar APK de Android
+- **[docs/mobile/INICIO_RAPIDO_APK.md](docs/mobile/INICIO_RAPIDO_APK.md)** - ⭐ Inicio rápido para generar APK
+- **[docs/mobile/ANALISIS_ROADMAP.md](docs/mobile/ANALISIS_ROADMAP.md)** - Análisis del roadmap y estado
 - **[mobile/RespiCare-Mobile/README_SETUP.md](mobile/RespiCare-Mobile/README_SETUP.md)** - Guía de configuración e instalación
 - **[mobile/RespiCare-Mobile/README_USO_RAPIDO.md](mobile/RespiCare-Mobile/README_USO_RAPIDO.md)** - Guía rápida de uso con backend
 - **[mobile/RespiCare-Mobile/README_CHATBOT.md](mobile/RespiCare-Mobile/README_CHATBOT.md)** - Guía completa del chatbot multimodal
 - **[mobile/RespiCare-Mobile/GUIA_AUDIO.md](mobile/RespiCare-Mobile/GUIA_AUDIO.md)** - ⭐ Guía de funcionalidades de audio
-- **[mobile/RespiCare-Mobile/GUIA_GENERAR_APK.md](mobile/RespiCare-Mobile/GUIA_GENERAR_APK.md)** - ⭐ Guía para generar APK de Android
 - **[mobile/RespiCare-Mobile/GUIA_OFFLINE_SQLITE.md](mobile/RespiCare-Mobile/GUIA_OFFLINE_SQLITE.md)** - Guía de funcionalidad offline
 - **[mobile/RespiCare-Mobile/WEARABLES_SETUP.md](mobile/RespiCare-Mobile/WEARABLES_SETUP.md)** - Configuración de wearables
 - **[mobile/__tests__/README.md](mobile/__tests__/README.md)** - 📊 Tests (50+ tests: unitarios, integración, E2E)
@@ -204,6 +242,8 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 ### 🧪 Testing y Calidad
 
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Estrategia de testing completa
+- **[docs/TESTING_STATUS.md](docs/TESTING_STATUS.md)** - Estado actualizado de testing (380+ tests, 98% backend)
+- **[docs/COVERAGE_STATUS.md](docs/COVERAGE_STATUS.md)** - Estado de cobertura por componente
 - **[docs/testing/backend-coverage-2025-11.md](docs/testing/backend-coverage-2025-11.md)** - 🛡️ Resumen de cobertura backend (98% global)
 - **[docs/STATIC_CODE_ANALYSIS.md](docs/STATIC_CODE_ANALYSIS.md)** - Análisis de código estático
 - **[docs/STATIC_CODE_ANALYSIS_SETUP.md](docs/STATIC_CODE_ANALYSIS_SETUP.md)** - Configuración de análisis estático
@@ -211,30 +251,32 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 ### 🔒 Seguridad
 
 - **[SECURITY.md](SECURITY.md)** - Políticas de seguridad
-- **[docs/SECURITY_DEVELOPER_GUIDE.md](docs/SECURITY_DEVELOPER_GUIDE.md)** - Guía de seguridad para desarrolladores
-- **[docs/WAF_DDOS_TESTING.md](docs/WAF_DDOS_TESTING.md)** - Pruebas WAF/DDoS y hallazgos
+- **[docs/security/README.md](docs/security/README.md)** - Índice de documentación de seguridad
+- **[docs/security/SECURITY_DEVELOPER_GUIDE.md](docs/security/SECURITY_DEVELOPER_GUIDE.md)** - Guía de seguridad para desarrolladores
+- **[docs/security/WAF_DDOS_TESTING.md](docs/security/WAF_DDOS_TESTING.md)** - Pruebas WAF/DDoS y hallazgos
 - **[backend/GDPR_HIPAA_POLICY.md](backend/GDPR_HIPAA_POLICY.md)** - Políticas de cumplimiento GDPR/HIPAA
 
 ### 🚀 DevOps e Infraestructura
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Guía de deployment
-- **[docs/DOCKER_COMPOSE_GUIDE.md](docs/DOCKER_COMPOSE_GUIDE.md)** - Guía completa de Docker Compose
-- **[docs/RUNBOOKS.md](docs/RUNBOOKS.md)** - Runbooks operacionales (despliegue, rollback, troubleshooting)
-- **[docs/GPU_INFRASTRUCTURE_GUIDE.md](docs/GPU_INFRASTRUCTURE_GUIDE.md)** - Guía de infraestructura GPU para modelos pesados
+- **[docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md)** - Guía completa de despliegue
+- **[docs/guides/README.md](docs/guides/README.md)** - Índice de guías técnicas
+- **[docs/guides/DOCKER_COMPOSE_GUIDE.md](docs/guides/DOCKER_COMPOSE_GUIDE.md)** - Guía completa de Docker Compose
+- **[docs/guides/RUNBOOKS.md](docs/guides/RUNBOOKS.md)** - Runbooks operacionales (despliegue, rollback, troubleshooting)
+- **[docs/guides/GPU_INFRASTRUCTURE_GUIDE.md](docs/guides/GPU_INFRASTRUCTURE_GUIDE.md)** - Guía de infraestructura GPU para modelos pesados
 - **[infrastructure/terraform/README.md](infrastructure/terraform/README.md)** - Documentación de Terraform (IaC)
 
 ### 📊 Analytics y Dashboards
 
-- **[docs/DASHBOARDS_GUIDE.md](docs/DASHBOARDS_GUIDE.md)** - Guía completa de dashboards y KPIs
-- **[docs/SHAP_DASHBOARD_TROUBLESHOOTING.md](docs/SHAP_DASHBOARD_TROUBLESHOOTING.md)** - Solución de problemas del dashboard SHAP
+- **[docs/guides/DASHBOARDS_GUIDE.md](docs/guides/DASHBOARDS_GUIDE.md)** - Guía completa de dashboards y KPIs
+- **[docs/guides/SHAP_DASHBOARD_TROUBLESHOOTING.md](docs/guides/SHAP_DASHBOARD_TROUBLESHOOTING.md)** - Solución de problemas del dashboard SHAP
 
 ### 🎨 UX/UI
 
-- **[docs/UX_UI_GUIDE.md](docs/UX_UI_GUIDE.md)** - Guía completa de UX/UI para Web y Mobile
+- **[docs/guides/UX_UI_GUIDE.md](docs/guides/UX_UI_GUIDE.md)** - Guía completa de UX/UI para Web y Mobile
 
 ### ⚡ Performance
 
-- **[docs/PERFORMANCE_PLAYBOOK.md](docs/PERFORMANCE_PLAYBOOK.md)** - Guía de mejores prácticas de performance
+- **[docs/guides/PERFORMANCE_PLAYBOOK.md](docs/guides/PERFORMANCE_PLAYBOOK.md)** - Guía de mejores prácticas de performance
 
 ### 📊 Reportes de Implementación
 
@@ -245,6 +287,11 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Personalización por riesgo
 - Analytics y BI
 - Y más...
+
+### 📚 Referencias y Datos
+
+- **[docs/reference/README.md](docs/reference/README.md)** - Índice de referencias y datos
+- **[docs/reference/lista_enfermedades_respiratorias.md](docs/reference/lista_enfermedades_respiratorias.md)** - Lista completa de 124 enfermedades respiratorias
 
 ## 🎯 Características Principales
 
@@ -379,8 +426,8 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ **Scripts de entrenamiento**: Automatizados para todos los modelos
 
 **Ver documentación completa**: 
-- [roadmaps/ML_ROADMAP.md](roadmaps/ML_ROADMAP.md) - Roadmap completo del sistema ML (5 fases + multimodal)
-- [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md#fase-15-funcionalidades-avanzadas-ml) - Fase 15: ML Avanzado
+- [docs/roadmaps/ML_ROADMAP.md](docs/roadmaps/ML_ROADMAP.md) - Roadmap completo del sistema ML (5 fases + multimodal)
+- [docs/roadmaps/PROJECT_ROADMAP.md](docs/roadmaps/PROJECT_ROADMAP.md#fase-15-funcionalidades-avanzadas-ml) - Fase 15: ML Avanzado
 - [ai-services/docs/AUDIO_SERVICES.md](ai-services/docs/AUDIO_SERVICES.md) - Servicios de audio (Whisper + Librosa)
 - [ai-services/docs/MULTIMODAL_DATASETS.md](ai-services/docs/MULTIMODAL_DATASETS.md) - Generación de datasets sintéticos
 - [ai-services/README.md](ai-services/README.md#-sistema-de-machine-learning) - Sistema ML completo
@@ -530,7 +577,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - [mobile/RespiCare-Mobile/WEARABLES_SETUP.md](mobile/RespiCare-Mobile/WEARABLES_SETUP.md) - Configuración de wearables
 - [mobile/__tests__/README.md](mobile/__tests__/README.md) - Documentación de tests
 - [mobile/e2e/README.md](mobile/e2e/README.md) - Guía de tests E2E
-- [roadmaps/MOBILE_ROADMAP.md](roadmaps/MOBILE_ROADMAP.md) - Roadmap completo
+- [docs/roadmaps/MOBILE_ROADMAP.md](docs/roadmaps/MOBILE_ROADMAP.md) - Roadmap completo
 
 ### 🌐 Web (React)
 
@@ -609,7 +656,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - [web/tests/README.md](web/tests/README.md) - Documentación completa de pruebas
 - [web/src/tests/README.md](web/src/tests/README.md) - Tests avanzados (integración, performance, accesibilidad)
 - [web/docs/LAZY_LOADING.md](web/docs/LAZY_LOADING.md) - Guía de lazy loading y code splitting
-- [roadmaps/WEB_ROADMAP.md](roadmaps/WEB_ROADMAP.md) - Roadmap completo
+- [docs/roadmaps/WEB_ROADMAP.md](docs/roadmaps/WEB_ROADMAP.md) - Roadmap completo
 
 ### 🤖 AI Services (Python/FastAPI)
 
@@ -677,8 +724,8 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - [ai-services/docs/AUDIO_SERVICES.md](ai-services/docs/AUDIO_SERVICES.md) - Servicios de audio (Whisper + Librosa)
 - [ai-services/docs/MULTIMODAL_DATASETS.md](ai-services/docs/MULTIMODAL_DATASETS.md) - Generación de datasets sintéticos
 - [ai-services/docs/GUIA_CHATBOT_MEDICO.md](ai-services/docs/GUIA_CHATBOT_MEDICO.md) - Guía del chatbot médico
-- [roadmaps/AI_SERVICES_ROADMAP.md](roadmaps/AI_SERVICES_ROADMAP.md) - Roadmap completo
-- [roadmaps/ML_ROADMAP.md](roadmaps/ML_ROADMAP.md) - Roadmap del sistema ML
+- [docs/roadmaps/AI_SERVICES_ROADMAP.md](docs/roadmaps/AI_SERVICES_ROADMAP.md) - Roadmap completo
+- [docs/roadmaps/ML_ROADMAP.md](docs/roadmaps/ML_ROADMAP.md) - Roadmap del sistema ML
 
 ### 🔧 Backend (Node.js/TypeScript)
 
@@ -750,10 +797,11 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 
 **Ver documentación completa**: 
 - [backend/README.md](backend/README.md) - Documentación completa con todos los endpoints
-- [backend/SETUP.md](backend/SETUP.md) - Guía de configuración
-- [backend/CLEAN_ARCHITECTURE.md](backend/CLEAN_ARCHITECTURE.md) - Arquitectura limpia
-- [backend/GDPR_HIPAA_POLICY.md](backend/GDPR_HIPAA_POLICY.md) - Políticas de cumplimiento
-- [roadmaps/BACKEND_ROADMAP.md](roadmaps/BACKEND_ROADMAP.md) - Roadmap completo
+- [docs/backend/README.md](docs/backend/README.md) - Índice de documentación del backend
+- [docs/backend/SETUP.md](docs/backend/SETUP.md) - Guía de configuración
+- [docs/backend/CLEAN_ARCHITECTURE.md](docs/backend/CLEAN_ARCHITECTURE.md) - Arquitectura limpia
+- [docs/backend/GDPR_HIPAA_POLICY.md](docs/backend/GDPR_HIPAA_POLICY.md) - Políticas de cumplimiento
+- [docs/roadmaps/BACKEND_ROADMAP.md](docs/roadmaps/BACKEND_ROADMAP.md) - Roadmap completo
 
 ### 🎮 Infraestructura GPU
 
@@ -811,7 +859,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Kubernetes para orquestación (deployments, services, HPA)
 - ✅ Auto-scaling configurado (HPA mejorado con CPU, memoria y políticas)
 
-**Ver roadmap completo**: [roadmaps/WORKFLOWS_ROADMAP.md](roadmaps/WORKFLOWS_ROADMAP.md)
+**Ver roadmap completo**: [docs/roadmaps/WORKFLOWS_ROADMAP.md](docs/roadmaps/WORKFLOWS_ROADMAP.md)
 
 ## 📈 Estado del Proyecto
 
@@ -886,7 +934,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ **Integración móvil**: Chatbot con soporte completo para imágenes y audio
 - ✅ **Documentación completa**: Guías de uso, API y datasets sintéticos
 
-**Ver estado detallado**: [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md)
+**Ver estado detallado**: [docs/roadmaps/PROJECT_ROADMAP.md](docs/roadmaps/PROJECT_ROADMAP.md)
 
 ### 🚧 En Progreso
 
@@ -940,7 +988,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - Retraining ML
 - Gestión completa del sistema
 
-**Ver matriz completa**: [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md#-matriz-de-funcionalidades-por-rol-y-plataforma)
+**Ver matriz completa**: [docs/roadmaps/PROJECT_ROADMAP.md](docs/roadmaps/PROJECT_ROADMAP.md#-matriz-de-funcionalidades-por-rol-y-plataforma)
 
 ## 🧪 Testing
 
@@ -1008,7 +1056,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 
 ## 🤝 Contribución
 
-Ver [roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md) para el plan de desarrollo y próximas fases.
+Ver [docs/roadmaps/PROJECT_ROADMAP.md](docs/roadmaps/PROJECT_ROADMAP.md) para el plan de desarrollo y próximas fases.
 
 ## 📄 Licencia
 
@@ -1134,10 +1182,15 @@ Para más detalles sobre licencias específicas, consulta los archivos `LICENSE`
 - **Análisis Predictivo**: Predicción de riesgo con fallback local
 - **Guía de Generación de APK**: Documentación completa para generar APK de Android
 
-### 📁 Organización Mejorada
+### 📁 Organización Mejorada de Documentación
+- **Estructura por Tipo**: Documentación organizada en carpetas lógicas (`manuals/`, `guides/`, `testing/`, `security/`, `architecture/`, `code-analysis/`, `reference/`)
+- **Documentos Raíz Organizados**: 
+  - `CHANGELOG.md`, `SECURITY.md`, `QUICKSTART.md` - Documentos principales en raíz
+  - `DEPLOYMENT.md` → `docs/guides/DEPLOYMENT.md` - Movido a guías técnicas
+  - `lista_enfermedades_respiratorias.md` → `docs/reference/` - Movido a referencias
+- **Índices por Carpeta**: Cada carpeta tiene su propio `README.md` como índice
 - **AI Services**: Estructura reorganizada con scripts, datasets y documentación organizados
 - **Documentación Mobile**: Nuevas guías para chatbot, audio y generación de APK
-- **Documentación**: Índice centralizado y documentación específica en `docs/`
 - **Referencias Actualizadas**: Todas las referencias apuntan a las nuevas ubicaciones
 
 ### 🎨 Mejoras de UX

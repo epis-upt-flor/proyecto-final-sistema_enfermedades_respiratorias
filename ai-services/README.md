@@ -13,7 +13,7 @@ ai-services/
 ├── requirements.txt                 # Dependencias Python
 ├── dockerfile                       # Configuración Docker
 ├── env.example                      # Variables de entorno
-├── README_PATTERNS.md              # Documentación de patrones implementados
+├── [Ver docs/ai-services/](../docs/ai-services/)  # Documentación de patrones y API
 ├── core/                           # Módulos centrales
 │   ├── config.py                   # Configuración de la aplicación
 │   ├── pattern_config.py           # Configuración de patrones
@@ -194,7 +194,7 @@ ai-services/
 └── models/                 # Modelos entrenados (.pkl)
 ```
 
-**Ver documentación completa**: [README_ESTRUCTURA.md](README_ESTRUCTURA.md)
+**Ver documentación completa**: [docs/ai-services/README_ESTRUCTURA.md](../docs/ai-services/README_ESTRUCTURA.md)
 
 ## 🚀 Instalación
 
@@ -524,15 +524,16 @@ RespiCare AI incluye un sistema avanzado de ML para clasificación de enfermedad
 python ml_models/train_models.py --generate-dataset --model all --output models/
 ```
 
-**Ver**: [roadmaps/ML_ROADMAP.md](../roadmaps/ML_ROADMAP.md) para roadmap completo (incluye Fase 6: Análisis Multimodal)
+**Ver**: [docs/roadmaps/ML_ROADMAP.md](../docs/roadmaps/ML_ROADMAP.md) para roadmap completo (incluye Fase 6: Análisis Multimodal)
 
 ## 📖 Documentación Adicional
 
 ### Documentación Principal (Raíz)
-- **[README_PATTERNS.md](README_PATTERNS.md)**: Documentación detallada de patrones implementados
-- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)**: Documentación completa de la API
-- **[TESTING_GUIDE.md](TESTING_GUIDE.md)**: Guía completa de testing
-- **[README_ESTRUCTURA.md](README_ESTRUCTURA.md)**: Estructura organizada del proyecto
+- **[docs/ai-services/README.md](../docs/ai-services/README.md)**: Índice de documentación de AI Services
+- **[docs/ai-services/README_PATTERNS.md](../docs/ai-services/README_PATTERNS.md)**: Documentación detallada de patrones implementados
+- **[docs/ai-services/API_DOCUMENTATION.md](../docs/ai-services/API_DOCUMENTATION.md)**: Documentación completa de la API
+- **[docs/ai-services/TESTING_GUIDE.md](../docs/ai-services/TESTING_GUIDE.md)**: Guía completa de testing
+- **[docs/ai-services/README_ESTRUCTURA.md](../docs/ai-services/README_ESTRUCTURA.md)**: Estructura organizada del proyecto
 
 ### Documentación Específica (docs/)
 - **[docs/AUDIO_SERVICES.md](docs/AUDIO_SERVICES.md)**: Servicios de audio (Whisper, análisis de tos)
@@ -543,4 +544,4 @@ python ml_models/train_models.py --generate-dataset --model all --output models/
 ### Enlaces Externos
 - **[API Documentation](http://localhost:8000/docs)**: Documentación interactiva de la API
 - **[Health Checks](http://localhost:8000/api/v1/health/detailed)**: Estado detallado del sistema
-- **[ML Roadmap](../roadmaps/ML_ROADMAP.md)**: Sistema de ML progresivo (incluye Fase 6: Multimodal)
+- **[ML Roadmap](../docs/roadmaps/ML_ROADMAP.md)**: Sistema de ML progresivo (incluye Fase 6: Multimodal)
