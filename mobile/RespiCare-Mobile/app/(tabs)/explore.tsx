@@ -2,25 +2,18 @@ import React, { useState } from 'react';
 import { StyleSheet, ScrollView, Alert, View } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { 
-  Card, 
-  Title, 
-  Paragraph, 
-  Button, 
-  TextInput, 
-  Chip,
-  Portal,
-  Modal,
-  Provider,
-  useTheme
-} from 'react-native-paper';
+import { TouchableOpacity, TextInput as RNTextInput, Modal as RNModal } from 'react-native';
+import { RespiCareColors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useQuery } from '@tanstack/react-query';
 import { useMedicalHistoryStore } from '@/stores/medicalHistoryStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS } from '@/constants/config';
 
 export default function SymptomAnalyzerScreen() {
-  const theme = useTheme();
+  const colorScheme = useColorScheme();
+  // FORZAR modo oscuro para asegurar que se vean los cambios
+  const isDark = true; // Siempre oscuro para ver los cambios
   const { createMedicalHistory } = useMedicalHistoryStore();
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [currentSymptom, setCurrentSymptom] = useState('');
@@ -114,43 +107,68 @@ export default function SymptomAnalyzerScreen() {
 
   return (
     <Provider theme={theme}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: '#0f172a' }]}>
         <ScrollView style={styles.scrollView}>
-          <ThemedText style={styles.title}>Analizador de Síntomas</ThemedText>
-          <ThemedText style={styles.subtitle}>Describe tus síntomas para obtener un análisis inteligente</ThemedText>
+          <ThemedText style={[styles.title, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
+            Analizador de Síntomas
+          </ThemedText>
+          <ThemedText style={[styles.subtitle, { color: isDark ? RespiCareColors.textTertiary : RespiCareColors.textSecondary }]}>
+            Describe tus síntomas para obtener un análisis inteligente
+          </ThemedText>
 
           {/* Formulario de Síntomas */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title>Agregar Síntomas</Title>
+          <Card 
+            style={[styles.card, { 
+              backgroundColor: isDark ? RespiCareColors.dark.card : RespiCareColors.light.card,
+              borderRadius: 24,
+            }]}
+            contentStyle={{ backgroundColor: 'transparent' }}
+          >
+            <Card.Content style={{ backgroundColor: 'transparent' }}>
+              <Title style={{ color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>Agregar Síntomas</Title>
               
               <TextInput
                 label="Síntoma"
                 value={currentSymptom}
                 onChangeText={setCurrentSymptom}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: isDark ? RespiCareColors.dark.backgroundTertiary : '#ffffff' }]}
                 mode="outlined"
+                outlineColor={isDark ? RespiCareColors.dark.backgroundTertiary : RespiCareColors.border}
+                activeOutlineColor={RespiCareColors.primary}
+                textColor={isDark ? '#f8fafc' : RespiCareColors.textPrimary}
               />
 
               <TextInput
                 label="Duración (ej: 3 días, 1 semana)"
                 value={duration}
                 onChangeText={setDuration}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: isDark ? RespiCareColors.dark.backgroundTertiary : '#ffffff' }]}
                 mode="outlined"
+                outlineColor={isDark ? RespiCareColors.dark.backgroundTertiary : RespiCareColors.border}
+                activeOutlineColor={RespiCareColors.primary}
+                textColor={isDark ? '#f8fafc' : RespiCareColors.textPrimary}
               />
 
               <TextInput
                 label="Descripción adicional"
                 value={description}
                 onChangeText={setDescription}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: isDark ? RespiCareColors.dark.backgroundTertiary : '#ffffff' }]}
                 mode="outlined"
                 multiline
                 numberOfLines={3}
+                outlineColor={isDark ? RespiCareColors.dark.backgroundTertiary : RespiCareColors.border}
+                activeOutlineColor={RespiCareColors.primary}
+                textColor={isDark ? '#f8fafc' : RespiCareColors.textPrimary}
               />
 
-              <Button mode="contained" onPress={addSymptom} style={styles.button}>
+              <Button 
+                mode="contained" 
+                onPress={addSymptom} 
+                style={[styles.button, { backgroundColor: RespiCareColors.primary }]}
+                buttonColor={RespiCareColors.primary}
+                labelStyle={{ color: '#ffffff', fontWeight: '600' }}
+              >
                 Agregar Síntoma
               </Button>
             </Card.Content>
@@ -158,9 +176,15 @@ export default function SymptomAnalyzerScreen() {
 
           {/* Lista de Síntomas */}
           {symptoms.length > 0 && (
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title>Síntomas Agregados</Title>
+            <Card 
+              style={[styles.card, { 
+                backgroundColor: isDark ? RespiCareColors.dark.card : RespiCareColors.light.card,
+                borderRadius: 24,
+              }]}
+              contentStyle={{ backgroundColor: 'transparent' }}
+            >
+              <Card.Content style={{ backgroundColor: 'transparent' }}>
+                <Title style={{ color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>Síntomas Agregados</Title>
                 <View style={styles.chipContainer}>
                   {symptoms.map((symptom, index) => (
                     <Chip
@@ -172,7 +196,13 @@ export default function SymptomAnalyzerScreen() {
                     </Chip>
                   ))}
                 </View>
-                <Button mode="outlined" onPress={analyzeSymptoms} style={styles.button}>
+                <Button 
+                  mode="outlined" 
+                  onPress={analyzeSymptoms} 
+                  style={[styles.button, { borderColor: RespiCareColors.primary }]}
+                  textColor={RespiCareColors.primary}
+                  labelStyle={{ fontWeight: '600' }}
+                >
                   Analizar Síntomas
                 </Button>
               </Card.Content>
@@ -181,16 +211,22 @@ export default function SymptomAnalyzerScreen() {
 
           {/* Resultados del Análisis ML */}
           {analysis && (
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title>📊 Análisis ML</Title>
+            <Card 
+              style={[styles.card, { 
+                backgroundColor: isDark ? RespiCareColors.dark.card : RespiCareColors.light.card,
+                borderRadius: 24,
+              }]}
+              contentStyle={{ backgroundColor: 'transparent' }}
+            >
+              <Card.Content style={{ backgroundColor: 'transparent' }}>
+                <Title style={{ color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>📊 Análisis ML</Title>
                 
-                <Paragraph style={styles.analysisText}>
-                  <ThemedText style={styles.bold}>Enfermedad Predicha:</ThemedText> {analysis.disease || 'No disponible'}
+                <Paragraph style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
+                  <ThemedText style={[styles.bold, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>Enfermedad Predicha:</ThemedText> {analysis.disease || 'No disponible'}
                 </Paragraph>
                 
-                <Paragraph style={styles.analysisText}>
-                  <ThemedText style={styles.bold}>Confianza:</ThemedText> {analysis.confidence ? `${(analysis.confidence * 100).toFixed(1)}%` : 'No disponible'}
+                <Paragraph style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
+                  <ThemedText style={[styles.bold, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>Confianza:</ThemedText> {analysis.confidence ? `${(analysis.confidence * 100).toFixed(1)}%` : 'No disponible'}
                 </Paragraph>
                 
                 <Chip 
@@ -209,7 +245,7 @@ export default function SymptomAnalyzerScreen() {
                 
                 {/* Main Explanation (Friendly) */}
                 {analysis.explanation?.friendly?.main_explanation && (
-                  <Paragraph style={[styles.analysisText, { marginTop: 8, fontSize: 15, lineHeight: 22 }]}>
+                  <Paragraph style={[styles.analysisText, { marginTop: 8, fontSize: 15, lineHeight: 22, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                     {analysis.explanation.friendly.main_explanation}
                   </Paragraph>
                 )}
@@ -217,9 +253,9 @@ export default function SymptomAnalyzerScreen() {
                 {/* Key Factors (Friendly) */}
                 {analysis.explanation?.friendly?.key_factors && analysis.explanation.friendly.key_factors.length > 0 && (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>🔍 ¿Por qué este diagnóstico?</Title>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>🔍 ¿Por qué este diagnóstico?</Title>
                     {analysis.explanation.friendly.key_factors.slice(0, 3).map((factor: string, idx: number) => (
-                      <Paragraph key={idx} style={styles.analysisText}>
+                      <Paragraph key={idx} style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                         • {factor}
                       </Paragraph>
                     ))}
@@ -229,8 +265,8 @@ export default function SymptomAnalyzerScreen() {
                 {/* Reasoning (Friendly) */}
                 {analysis.explanation?.friendly?.reasoning && (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>💭 Explicación:</Title>
-                    <Paragraph style={styles.analysisText}>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>💭 Explicación:</Title>
+                    <Paragraph style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                       {analysis.explanation.friendly.reasoning}
                     </Paragraph>
                   </>
@@ -239,16 +275,16 @@ export default function SymptomAnalyzerScreen() {
                 {/* Alternatives (Friendly) */}
                 {analysis.explanation?.friendly?.alternatives ? (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>💡 Otras Posibilidades:</Title>
-                    <Paragraph style={styles.analysisText}>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>💡 Otras Posibilidades:</Title>
+                    <Paragraph style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                       {analysis.explanation.friendly.alternatives}
                     </Paragraph>
                   </>
                 ) : analysis.top_3_predictions && analysis.top_3_predictions.length > 1 && (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>💡 Otras Posibilidades:</Title>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>💡 Otras Posibilidades:</Title>
                     {analysis.top_3_predictions.slice(1, 3).map((pred: any, idx: number) => (
-                      <Paragraph key={idx} style={styles.analysisText}>
+                      <Paragraph key={idx} style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                         • {pred.disease} ({parseFloat(pred.confidence) * 100}% de probabilidad)
                       </Paragraph>
                     ))}
@@ -258,18 +294,18 @@ export default function SymptomAnalyzerScreen() {
                 {/* Recommendations (Friendly or Personalized) */}
                 {analysis.explanation?.friendly?.recommendations && analysis.explanation.friendly.recommendations.length > 0 ? (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>✅ Recomendaciones:</Title>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>✅ Recomendaciones:</Title>
                     {analysis.explanation.friendly.recommendations.slice(0, 4).map((rec: string, idx: number) => (
-                      <Paragraph key={idx} style={styles.analysisText}>
+                      <Paragraph key={idx} style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                         {rec}
                       </Paragraph>
                     ))}
                   </>
                 ) : analysis.personalized_recommendations && analysis.personalized_recommendations.length > 0 && (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>✅ Recomendaciones:</Title>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>✅ Recomendaciones:</Title>
                     {analysis.personalized_recommendations.slice(0, 4).map((rec: string, idx: number) => (
-                      <Paragraph key={idx} style={styles.analysisText}>
+                      <Paragraph key={idx} style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                         {rec}
                       </Paragraph>
                     ))}
@@ -279,11 +315,11 @@ export default function SymptomAnalyzerScreen() {
                 {/* Fallback: Technical factors if friendly not available */}
                 {!analysis.explanation?.friendly && analysis.explanation?.decision_factors && (
                   <>
-                    <Title style={{ marginTop: 16, fontSize: 16 }}>🔍 Factores Clave:</Title>
+                    <Title style={{ marginTop: 16, fontSize: 16, color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>🔍 Factores Clave:</Title>
                     {analysis.explanation.decision_factors.slice(0, 3).map((factor: any, idx: number) => {
                       const factorText = typeof factor === 'string' ? factor : factor.feature_name || `Factor ${idx + 1}`;
                       return (
-                        <Paragraph key={idx} style={styles.analysisText}>
+                        <Paragraph key={idx} style={[styles.analysisText, { color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }]}>
                           • {factorText}
                         </Paragraph>
                       );
@@ -297,7 +333,13 @@ export default function SymptomAnalyzerScreen() {
                   </Chip>
                 )}
                 
-                <Button mode="contained" onPress={saveAnalysis} style={styles.button}>
+                <Button 
+                  mode="contained" 
+                  onPress={saveAnalysis} 
+                  style={[styles.button, { backgroundColor: RespiCareColors.primary }]}
+                  buttonColor={RespiCareColors.primary}
+                  labelStyle={{ color: '#ffffff', fontWeight: '600' }}
+                >
                   Guardar en Historial
                 </Button>
               </Card.Content>
@@ -305,10 +347,16 @@ export default function SymptomAnalyzerScreen() {
           )}
 
           {/* Información Adicional */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title>Información Importante</Title>
-              <Paragraph>
+          <Card 
+            style={[styles.card, { 
+              backgroundColor: isDark ? RespiCareColors.dark.card : RespiCareColors.light.card,
+              borderRadius: 24,
+            }]}
+            contentStyle={{ backgroundColor: 'transparent' }}
+          >
+            <Card.Content style={{ backgroundColor: 'transparent' }}>
+              <Title style={{ color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>Información Importante</Title>
+              <Paragraph style={{ color: isDark ? RespiCareColors.textTertiary : RespiCareColors.textSecondary }}>
                 Este análisis es solo informativo y no reemplaza la consulta médica profesional. 
                 Si experimentas síntomas graves, consulta inmediatamente con un médico.
               </Paragraph>
@@ -319,16 +367,31 @@ export default function SymptomAnalyzerScreen() {
         {/* Modal para más opciones */}
         <Portal>
           <Modal visible={showModal} onDismiss={() => setShowModal(false)}>
-            <Card style={styles.modalCard}>
+            <Card style={[styles.modalCard, { backgroundColor: isDark ? RespiCareColors.dark.card : RespiCareColors.light.card }]}>
               <Card.Content>
-                <Title>Opciones Adicionales</Title>
-                <Button mode="outlined" onPress={() => {}} style={styles.modalButton}>
+                <Title style={{ color: isDark ? '#f8fafc' : RespiCareColors.textPrimary }}>Opciones Adicionales</Title>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => {}} 
+                  style={[styles.modalButton, { borderColor: RespiCareColors.primary }]}
+                  textColor={RespiCareColors.primary}
+                >
                   Tomar Foto
                 </Button>
-                <Button mode="outlined" onPress={() => {}} style={styles.modalButton}>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => {}} 
+                  style={[styles.modalButton, { borderColor: RespiCareColors.primary }]}
+                  textColor={RespiCareColors.primary}
+                >
                   Grabar Audio
                 </Button>
-                <Button mode="outlined" onPress={() => setShowModal(false)} style={styles.modalButton}>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => setShowModal(false)} 
+                  style={[styles.modalButton, { borderColor: RespiCareColors.primary }]}
+                  textColor={RespiCareColors.primary}
+                >
                   Cerrar
                 </Button>
               </Card.Content>
@@ -336,43 +399,50 @@ export default function SymptomAnalyzerScreen() {
           </Modal>
         </Portal>
       </View>
-    </Provider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#0e1621', // Fondo estilo Telegram
+    padding: 24,
+    backgroundColor: '#0f172a', // FORZADO: Dark background moderno
   },
   scrollView: {
     flex: 1,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#ffffff',
+    color: '#f8fafc',
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 16,
-    color: '#b1bbc4',
+    marginBottom: 24,
+    color: '#94a3b8',
+    lineHeight: 24,
   },
   card: {
-    marginBottom: 16,
-    elevation: 2,
-    backgroundColor: '#17212b', // Fondo de cards estilo Telegram
-    borderRadius: 12,
+    marginBottom: 20,
+    elevation: 4,
+    backgroundColor: '#1e293b', // Slate 800
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   input: {
     marginBottom: 16,
-    backgroundColor: '#1e2732',
+    backgroundColor: '#334155',
+    borderRadius: 16,
   },
   button: {
     marginTop: 8,
-    backgroundColor: '#3390ec', // Azul estilo Telegram
+    backgroundColor: '#14b8a6', // Teal primary
+    borderRadius: 24,
+    paddingVertical: 12,
   },
   chipContainer: {
     flexDirection: 'row',
@@ -381,21 +451,24 @@ const styles = StyleSheet.create({
   },
   chip: {
     margin: 4,
-    backgroundColor: '#1e2732',
+    backgroundColor: '#334155',
+    borderRadius: 16,
   },
   analysisText: {
     marginBottom: 8,
-    color: '#ffffff',
+    lineHeight: 22,
   },
   bold: {
     fontWeight: 'bold',
   },
   modalCard: {
     margin: 20,
-    backgroundColor: '#17212b',
+    backgroundColor: '#1e293b',
+    borderRadius: 24,
   },
   modalButton: {
     marginVertical: 4,
-    borderColor: '#3390ec',
+    borderColor: '#14b8a6',
+    borderRadius: 16,
   },
 });

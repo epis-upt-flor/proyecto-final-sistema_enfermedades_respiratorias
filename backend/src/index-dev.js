@@ -328,6 +328,59 @@ app.use('/api/analytics', simpleAnalyticsRoutes);
 const mockAnalyticsRoutes = require('./routes/mockAnalyticsRoutes');
 app.use('/api/analytics', mockAnalyticsRoutes);
 
+// Alert Routes - Rutas temporales para desarrollo
+// Nota: Las rutas completas están en alertRoutes.ts (TypeScript)
+// Estas son rutas temporales hasta que se compile TypeScript o se migre a JS
+
+app.get('/api/v1/alerts/test', (req, res) => {
+  res.json({ success: true, message: 'Alert routes are working (temporary mock)' });
+});
+
+app.get('/api/v1/alerts', (req, res) => {
+  // Verificar autenticación básica
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'Token de acceso requerido',
+      error: 'Unauthorized'
+    });
+  }
+  
+  // Retornar datos mock para desarrollo
+  res.json({
+    success: true,
+    message: 'Alertas (mock - desarrollo)',
+    data: [],
+    note: 'Esta es una implementación temporal. Las rutas completas están en alertRoutes.ts'
+  });
+});
+
+app.get('/api/v1/alerts/monitoring', (req, res) => {
+  // Verificar autenticación básica
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'Token de acceso requerido',
+      error: 'Unauthorized'
+    });
+  }
+  
+  // Retornar datos mock para desarrollo
+  res.json({
+    success: true,
+    message: 'Métricas de monitoreo (mock - desarrollo)',
+    data: {
+      queueSize: 0,
+      processingRate: 0,
+      errorRate: 0,
+      lastProcessed: null
+    },
+    note: 'Esta es una implementación temporal. Las rutas completas están en alertRoutes.ts'
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Mocked Appointments API (development-only)
 // ---------------------------------------------------------------------------

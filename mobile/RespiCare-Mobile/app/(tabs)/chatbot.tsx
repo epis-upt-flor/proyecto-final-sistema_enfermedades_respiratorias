@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Modal as RNModal,
 } from 'react-native';
-import { TextInput, Button, Card, Avatar, ActivityIndicator, useTheme, Portal, Modal, Title, Paragraph } from 'react-native-paper';
+import { ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
@@ -35,7 +35,8 @@ const URGENCY_COLORS = {
 };
 
 export default function ChatbotScreen() {
-  const theme = useTheme();
+  // FORZAR modo oscuro
+  const isDark = true;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -510,7 +511,7 @@ export default function ChatbotScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: '#0f172a' }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -532,42 +533,42 @@ export default function ChatbotScreen() {
               {message.imageUri && (
                 <Image source={{ uri: message.imageUri }} style={styles.messageImage} />
               )}
-              <Card
+              <View
                 style={[
-                  styles.messageCard,
-                  message.type === 'user'
-                    ? styles.userCard
-                    : styles.assistantCard,
+                  {
+                    backgroundColor: message.type === 'user' ? '#14b8a6' : '#1e293b',
+                    borderRadius: 24,
+                    padding: 16,
+                    maxWidth: '85%',
+                  }
                 ]}
               >
-                <Card.Content>
-                  <ThemedText style={styles.messageText}>{message.text}</ThemedText>
-                  {message.urgencyLevel && (
-                    <View style={styles.urgencyBadge}>
-                      <ThemedText style={styles.urgencyText}>
-                        {URGENCY_EMOJIS[message.urgencyLevel]}{' '}
-                        {message.urgencyLevel.toUpperCase()}
-                      </ThemedText>
-                    </View>
-                  )}
-                  {message.needsMedicalAttention && (
-                    <ThemedText style={[styles.medicalAlert, { color: '#ff9800' }]}>
-                      ⚠️ Se recomienda atención médica
+                <ThemedText style={{ fontSize: 16, lineHeight: 22, color: '#ffffff' }}>{message.text}</ThemedText>
+                {message.urgencyLevel && (
+                  <View style={{ marginTop: 8, padding: 4, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                    <ThemedText style={{ fontSize: 12, fontWeight: 'bold', color: '#ffffff' }}>
+                      {URGENCY_EMOJIS[message.urgencyLevel]}{' '}
+                      {message.urgencyLevel.toUpperCase()}
                     </ThemedText>
-                  )}
-                </Card.Content>
-              </Card>
+                  </View>
+                )}
+                {message.needsMedicalAttention && (
+                  <ThemedText style={{ marginTop: 8, fontSize: 12, fontWeight: 'bold', color: '#f59e0b' }}>
+                    ⚠️ Se recomienda atención médica
+                  </ThemedText>
+                )}
+              </View>
             </View>
           ))}
           {isLoading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#3390ec" />
+              <ActivityIndicator size="small" color="#14b8a6" />
               <ThemedText style={styles.loadingText}>El asistente está pensando...</ThemedText>
             </View>
           )}
           {isProcessingAudio && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#3390ec" />
+              <ActivityIndicator size="small" color="#14b8a6" />
               <ThemedText style={styles.loadingText}>Procesando audio...</ThemedText>
             </View>
           )}
@@ -582,16 +583,17 @@ export default function ChatbotScreen() {
                   {MEDICAL_IMAGE_TYPES.find(t => t.id === imageType)?.icon} {MEDICAL_IMAGE_TYPES.find(t => t.id === imageType)?.name}
                 </ThemedText>
               )}
-              <Button 
+              <TouchableOpacity 
                 onPress={() => {
                   setSelectedImage(null);
                   setImageType(null);
-                }} 
-                mode="text" 
-                compact
+                }}
+                style={{ padding: 8 }}
               >
-                Eliminar
-              </Button>
+                <ThemedText style={{ color: '#14b8a6', fontSize: 14, fontWeight: '600' }}>
+                  Eliminar
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -604,19 +606,17 @@ export default function ChatbotScreen() {
             <TouchableOpacity onPress={handleTakePhoto} style={styles.iconButton}>
               <ThemedText style={styles.iconText}>📸</ThemedText>
             </TouchableOpacity>
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Escribe tu mensaje..."
-              placeholderTextColor="#708499"
-              multiline
-              mode="outlined"
-              disabled={isLoading}
-              outlineColor="#1e2732"
-              activeOutlineColor="#3390ec"
-              textColor="#ffffff"
-            />
+            <View style={{ flex: 1, backgroundColor: '#1e293b', borderRadius: 24, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 16, paddingVertical: 12, marginHorizontal: 8 }}>
+              <TextInput
+                style={{ color: '#ffffff', fontSize: 16, minHeight: 40, maxHeight: 100 }}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Escribe tu mensaje..."
+                placeholderTextColor="#94a3b8"
+                multiline
+                editable={!isLoading}
+              />
+            </View>
             {isRecording ? (
               <TouchableOpacity 
                 onPress={stopRecording} 
@@ -633,14 +633,23 @@ export default function ChatbotScreen() {
                 <ThemedText style={styles.recordText}>🎤</ThemedText>
               </TouchableOpacity>
             )}
-            <Button
-              mode="contained"
+            <TouchableOpacity
               onPress={handleSendMessage}
               disabled={isLoading || (!inputText.trim() && !selectedImage)}
-              style={styles.sendButton}
+              style={{
+                backgroundColor: isLoading || (!inputText.trim() && !selectedImage) ? '#64748b' : '#14b8a6',
+                borderRadius: 24,
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                justifyContent: 'center',
+                alignItems: 'center',
+                minWidth: 80,
+              }}
             >
-              Enviar
-            </Button>
+              <ThemedText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                Enviar
+              </ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -654,87 +663,138 @@ export default function ChatbotScreen() {
           onRequestClose={handleCancelAudio}
         >
           <View style={styles.audioModalOverlay}>
-            <Card style={styles.audioModalCard}>
-              <Card.Content>
-                <Title style={{ color: '#ffffff', marginBottom: 8 }}>
-                  ¿Qué deseas hacer con el audio?
-                </Title>
-                <Paragraph style={{ color: '#b1bbc4', marginBottom: 16 }}>
-                  Selecciona una opción para procesar tu grabación de audio.
-                </Paragraph>
-                <Button
-                  mode="contained"
-                  onPress={handleAnalyzeCough}
-                  style={[styles.audioOptionButton, { backgroundColor: '#3390ec' }]}
-                  icon="stethoscope"
-                  disabled={isProcessingAudio}
-                >
+            <View style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 24,
+              padding: 24,
+              width: '90%',
+              maxWidth: 400,
+            }}>
+              <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 }}>
+                ¿Qué deseas hacer con el audio?
+              </ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>
+                Selecciona una opción para procesar tu grabación de audio.
+              </ThemedText>
+              <TouchableOpacity
+                onPress={handleAnalyzeCough}
+                disabled={isProcessingAudio}
+                style={{
+                  backgroundColor: '#14b8a6',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  marginBottom: 12,
+                  opacity: isProcessingAudio ? 0.5 : 1,
+                }}
+              >
+                <ThemedText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   🫁 Analizar Tos
-                </Button>
-                <Button
-                  mode="contained"
-                  onPress={handleTranscribeAndAnalyze}
-                  style={[styles.audioOptionButton, { backgroundColor: '#3390ec', marginTop: 12 }]}
-                  icon="microphone"
-                  disabled={isProcessingAudio}
-                >
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleTranscribeAndAnalyze}
+                disabled={isProcessingAudio}
+                style={{
+                  backgroundColor: '#14b8a6',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  marginBottom: 12,
+                  opacity: isProcessingAudio ? 0.5 : 1,
+                }}
+              >
+                <ThemedText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   🎤 Transcribir y Enviar (Para personas que no pueden escribir)
-                </Button>
-                <Button
-                  mode="outlined"
-                  onPress={handleCancelAudio}
-                  style={[styles.audioOptionButton, { marginTop: 12, borderColor: '#1e2732' }]}
-                >
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCancelAudio}
+                style={{
+                  borderWidth: 2,
+                  borderColor: '#334155',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                }}
+              >
+                <ThemedText style={{ color: '#94a3b8', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   Cancelar
-                </Button>
-              </Card.Content>
-            </Card>
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           </View>
         </RNModal>
       ) : (
-        <Portal>
-          <Modal 
-            visible={showAudioOptions} 
-            onDismiss={handleCancelAudio}
-            contentContainerStyle={styles.audioModal}
-          >
-            <Card style={styles.audioModalCard}>
-              <Card.Content>
-                <Title style={{ color: '#ffffff', marginBottom: 8 }}>
-                  ¿Qué deseas hacer con el audio?
-                </Title>
-                <Paragraph style={{ color: '#b1bbc4', marginBottom: 16 }}>
-                  Selecciona una opción para procesar tu grabación de audio.
-                </Paragraph>
-                <Button
-                  mode="contained"
-                  onPress={handleAnalyzeCough}
-                  style={[styles.audioOptionButton, { backgroundColor: '#3390ec' }]}
-                  icon="stethoscope"
-                  disabled={isProcessingAudio}
-                >
+        <RNModal
+          visible={showAudioOptions}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCancelAudio}
+        >
+          <View style={styles.audioModalOverlay}>
+            <View style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 24,
+              padding: 24,
+              width: '90%',
+              maxWidth: 400,
+            }}>
+              <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 }}>
+                ¿Qué deseas hacer con el audio?
+              </ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>
+                Selecciona una opción para procesar tu grabación de audio.
+              </ThemedText>
+              <TouchableOpacity
+                onPress={handleAnalyzeCough}
+                disabled={isProcessingAudio}
+                style={{
+                  backgroundColor: '#14b8a6',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  marginBottom: 12,
+                  opacity: isProcessingAudio ? 0.5 : 1,
+                }}
+              >
+                <ThemedText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   🫁 Analizar Tos
-                </Button>
-                <Button
-                  mode="contained"
-                  onPress={handleTranscribeAndAnalyze}
-                  style={[styles.audioOptionButton, { backgroundColor: '#3390ec', marginTop: 12 }]}
-                  icon="microphone"
-                  disabled={isProcessingAudio}
-                >
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleTranscribeAndAnalyze}
+                disabled={isProcessingAudio}
+                style={{
+                  backgroundColor: '#14b8a6',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  marginBottom: 12,
+                  opacity: isProcessingAudio ? 0.5 : 1,
+                }}
+              >
+                <ThemedText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   🎤 Transcribir y Enviar (Para personas que no pueden escribir)
-                </Button>
-                <Button
-                  mode="outlined"
-                  onPress={handleCancelAudio}
-                  style={[styles.audioOptionButton, { marginTop: 12, borderColor: '#1e2732' }]}
-                >
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCancelAudio}
+                style={{
+                  borderWidth: 2,
+                  borderColor: '#334155',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                }}
+              >
+                <ThemedText style={{ color: '#94a3b8', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   Cancelar
-                </Button>
-              </Card.Content>
-            </Card>
-          </Modal>
-        </Portal>
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </RNModal>
       )}
 
       {/* Modal para seleccionar tipo de imagen médica */}
@@ -746,93 +806,134 @@ export default function ChatbotScreen() {
           onRequestClose={handleCancelImageType}
         >
           <View style={styles.imageTypeModalOverlay}>
-            <Card style={styles.imageTypeModalCard}>
-              <Card.Content>
-                <Title style={{ color: '#ffffff', marginBottom: 8 }}>
-                  Tipo de Imagen Médica
-                </Title>
-                <Paragraph style={{ color: '#b1bbc4', marginBottom: 16 }}>
-                  Selecciona el tipo de imagen que estás enviando para un mejor análisis.
-                </Paragraph>
-                <ScrollView style={styles.imageTypeList} nestedScrollEnabled>
-                  {MEDICAL_IMAGE_TYPES.map((type) => (
-                    <Button
-                      key={type.id}
-                      mode={imageType === type.id ? 'contained' : 'outlined'}
-                      onPress={() => handleSelectImageType(type)}
-                      style={[
-                        styles.imageTypeButton,
-                        imageType === type.id && { backgroundColor: '#3390ec' },
-                      ]}
-                    >
-                      <View style={styles.imageTypeButtonContent}>
-                        <ThemedText style={styles.imageTypeIcon}>{type.icon}</ThemedText>
-                        <View>
-                          <ThemedText style={styles.imageTypeButtonText}>{type.name}</ThemedText>
-                          <ThemedText style={styles.imageTypeButtonDesc}>{type.description}</ThemedText>
-                        </View>
+            <View style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 24,
+              padding: 24,
+              width: '90%',
+              maxWidth: 400,
+              maxHeight: '80%',
+            }}>
+              <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 }}>
+                Tipo de Imagen Médica
+              </ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#94a3b8', marginBottom: 16 }}>
+                Selecciona el tipo de imagen que estás enviando para un mejor análisis.
+              </ThemedText>
+              <ScrollView style={{ maxHeight: 300 }} nestedScrollEnabled>
+                {MEDICAL_IMAGE_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type.id}
+                    onPress={() => handleSelectImageType(type)}
+                    style={{
+                      backgroundColor: imageType === type.id ? '#14b8a6' : 'transparent',
+                      borderWidth: 2,
+                      borderColor: imageType === type.id ? '#14b8a6' : '#334155',
+                      borderRadius: 24,
+                      padding: 16,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <ThemedText style={{ fontSize: 24 }}>{type.icon}</ThemedText>
+                      <View style={{ flex: 1 }}>
+                        <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#ffffff', marginBottom: 4 }}>
+                          {type.name}
+                        </ThemedText>
+                        <ThemedText style={{ fontSize: 12, color: '#94a3b8' }}>
+                          {type.description}
+                        </ThemedText>
                       </View>
-                    </Button>
-                  ))}
-                </ScrollView>
-                <Button
-                  mode="outlined"
-                  onPress={handleCancelImageType}
-                  style={[styles.imageTypeButton, { marginTop: 12, borderColor: '#1e2732' }]}
-                >
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                onPress={handleCancelImageType}
+                style={{
+                  borderWidth: 2,
+                  borderColor: '#334155',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  marginTop: 12,
+                }}
+              >
+                <ThemedText style={{ color: '#94a3b8', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   Cancelar
-                </Button>
-              </Card.Content>
-            </Card>
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           </View>
         </RNModal>
       ) : (
-        <Portal>
-          <Modal 
-            visible={showImageTypeSelector} 
-            onDismiss={handleCancelImageType}
-            contentContainerStyle={styles.imageTypeModal}
-          >
-            <Card style={styles.imageTypeModalCard}>
-              <Card.Content>
-                <Title style={{ color: '#ffffff', marginBottom: 8 }}>
-                  Tipo de Imagen Médica
-                </Title>
-                <Paragraph style={{ color: '#b1bbc4', marginBottom: 16 }}>
-                  Selecciona el tipo de imagen que estás enviando para un mejor análisis.
-                </Paragraph>
-                <ScrollView style={styles.imageTypeList} nestedScrollEnabled>
-                  {MEDICAL_IMAGE_TYPES.map((type) => (
-                    <Button
-                      key={type.id}
-                      mode={imageType === type.id ? 'contained' : 'outlined'}
-                      onPress={() => handleSelectImageType(type)}
-                      style={[
-                        styles.imageTypeButton,
-                        imageType === type.id && { backgroundColor: '#3390ec' },
-                      ]}
-                    >
-                      <View style={styles.imageTypeButtonContent}>
-                        <ThemedText style={styles.imageTypeIcon}>{type.icon}</ThemedText>
-                        <View>
-                          <ThemedText style={styles.imageTypeButtonText}>{type.name}</ThemedText>
-                          <ThemedText style={styles.imageTypeButtonDesc}>{type.description}</ThemedText>
-                        </View>
+        <RNModal
+          visible={showImageTypeSelector}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCancelImageType}
+        >
+          <View style={styles.imageTypeModalOverlay}>
+            <View style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 24,
+              padding: 24,
+              width: '90%',
+              maxWidth: 400,
+              maxHeight: '80%',
+            }}>
+              <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 }}>
+                Tipo de Imagen Médica
+              </ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#94a3b8', marginBottom: 16 }}>
+                Selecciona el tipo de imagen que estás enviando para un mejor análisis.
+              </ThemedText>
+              <ScrollView style={{ maxHeight: 300 }} nestedScrollEnabled>
+                {MEDICAL_IMAGE_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type.id}
+                    onPress={() => handleSelectImageType(type)}
+                    style={{
+                      backgroundColor: imageType === type.id ? '#14b8a6' : 'transparent',
+                      borderWidth: 2,
+                      borderColor: imageType === type.id ? '#14b8a6' : '#334155',
+                      borderRadius: 24,
+                      padding: 16,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <ThemedText style={{ fontSize: 24 }}>{type.icon}</ThemedText>
+                      <View style={{ flex: 1 }}>
+                        <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#ffffff', marginBottom: 4 }}>
+                          {type.name}
+                        </ThemedText>
+                        <ThemedText style={{ fontSize: 12, color: '#94a3b8' }}>
+                          {type.description}
+                        </ThemedText>
                       </View>
-                    </Button>
-                  ))}
-                </ScrollView>
-                <Button
-                  mode="outlined"
-                  onPress={handleCancelImageType}
-                  style={[styles.imageTypeButton, { marginTop: 12, borderColor: '#1e2732' }]}
-                >
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                onPress={handleCancelImageType}
+                style={{
+                  borderWidth: 2,
+                  borderColor: '#334155',
+                  borderRadius: 24,
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  marginTop: 12,
+                }}
+              >
+                <ThemedText style={{ color: '#94a3b8', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
                   Cancelar
-                </Button>
-              </Card.Content>
-            </Card>
-          </Modal>
-        </Portal>
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </RNModal>
       )}
     </View>
   );
@@ -841,18 +942,18 @@ export default function ChatbotScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0e1621', // Fondo estilo Telegram
+    backgroundColor: '#0f172a', // FORZADO: Dark background moderno
   },
   keyboardView: {
     flex: 1,
   },
   messagesContainer: {
     flex: 1,
-    backgroundColor: '#0e1621',
+    backgroundColor: '#0f172a',
   },
   messagesContent: {
     padding: 16,
-    backgroundColor: '#0e1621',
+    backgroundColor: '#0f172a',
   },
   messageContainer: {
     marginBottom: 12,
@@ -868,14 +969,14 @@ const styles = StyleSheet.create({
   },
   messageCard: {
     padding: 0,
-    borderRadius: 12,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   userCard: {
-    backgroundColor: '#3390ec', // Azul estilo Telegram
+    backgroundColor: '#14b8a6', // Teal primary
   },
   assistantCard: {
-    backgroundColor: '#182229', // Gris oscuro estilo Telegram
+    backgroundColor: '#1e293b', // Slate 800
   },
   messageText: {
     fontSize: 16,
@@ -913,15 +1014,15 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     fontStyle: 'italic',
-    color: '#b1bbc4',
+    color: '#94a3b8',
   },
   imagePreview: {
     padding: 8,
-    backgroundColor: '#17212b',
+    backgroundColor: '#1e293b',
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#1e2732',
+    borderTopColor: '#334155',
   },
   previewImage: {
     width: 60,
@@ -930,10 +1031,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   inputContainer: {
-    padding: 8,
-    backgroundColor: '#17212b',
+    padding: 12,
+    backgroundColor: '#1e293b',
     borderTopWidth: 1,
-    borderTopColor: '#1e2732',
+    borderTopColor: '#334155',
   },
   inputRow: {
     flexDirection: 'row',
@@ -950,8 +1051,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
     maxHeight: 100,
-    backgroundColor: '#1e2732',
-    color: '#ffffff',
+    backgroundColor: '#334155',
+    color: '#f8fafc',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   recordButton: {
     padding: 8,
@@ -962,7 +1066,8 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     marginLeft: 4,
-    backgroundColor: '#3390ec',
+    backgroundColor: '#14b8a6',
+    borderRadius: 24,
   },
   audioModal: {
     padding: 20,
@@ -976,8 +1081,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   audioModalCard: {
-    backgroundColor: '#17212b',
-    borderRadius: 12,
+    backgroundColor: '#1e293b',
+    borderRadius: 24,
   },
   audioOptionButton: {
     marginVertical: 4,
@@ -989,7 +1094,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   imageTypeLabel: {
-    color: '#b1bbc4',
+    color: '#94a3b8',
     fontSize: 12,
     marginLeft: 8,
   },
@@ -1005,8 +1110,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   imageTypeModalCard: {
-    backgroundColor: '#17212b',
-    borderRadius: 12,
+    backgroundColor: '#1e293b',
+    borderRadius: 24,
     maxHeight: '80%',
     width: '90%',
     maxWidth: 500,
@@ -1017,7 +1122,7 @@ const styles = StyleSheet.create({
   },
   imageTypeButton: {
     marginVertical: 6,
-    borderColor: '#1e2732',
+    borderColor: '#334155',
     justifyContent: 'flex-start',
     paddingVertical: 12,
   },
@@ -1032,7 +1137,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   imageTypeButtonDesc: {
-    color: '#b1bbc4',
+    color: '#94a3b8',
     fontSize: 11,
     marginTop: 2,
   },

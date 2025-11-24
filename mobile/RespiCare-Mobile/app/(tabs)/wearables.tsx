@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Card, Button, Text, ActivityIndicator, Chip } from 'react-native-paper';
+import { ActivityIndicator, TouchableOpacity } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { wearableService, WearableMetrics, WearableAlerts } from '@/services/wearableService';
@@ -153,39 +153,61 @@ export default function WearablesScreen() {
 
   if (!isAuthorized) {
     return (
-      <ThemedView style={styles.container}>
+      <ThemedView style={{ flex: 1, backgroundColor: '#0f172a' }}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Card style={styles.card}>
-            <Card.Content>
-              <ThemedText style={styles.title}>💓 Monitoreo de Salud</ThemedText>
-              <ThemedText style={styles.description}>
-                Conecta tu dispositivo wearable (Apple Watch, Fitbit, etc.) o permite el acceso
-                a los datos de salud de tu teléfono para monitorear:
-              </ThemedText>
-              <View style={styles.featuresList}>
-                <Text style={styles.feature}>• Ritmo cardíaco</Text>
-                <Text style={styles.feature}>• Oxigenación (SpO2)</Text>
-                <Text style={styles.feature}>• Actividad física</Text>
-                <Text style={styles.feature}>• Frecuencia respiratoria</Text>
-                <Text style={styles.feature}>• Horas de sueño</Text>
-              </View>
-              <Button
-                mode="contained"
-                onPress={handleRequestPermissions}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-              >
+          <View style={{
+            backgroundColor: '#1e293b',
+            borderRadius: 24,
+            padding: 24,
+            marginBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+          }}>
+            <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#f8fafc', marginBottom: 12 }}>
+              💓 Monitoreo de Salud
+            </ThemedText>
+            <ThemedText style={{ fontSize: 14, color: '#94a3b8', marginBottom: 20, lineHeight: 20 }}>
+              Conecta tu dispositivo wearable (Apple Watch, Fitbit, etc.) o permite el acceso
+              a los datos de salud de tu teléfono para monitorear:
+            </ThemedText>
+            <View style={{ gap: 8, marginBottom: 24 }}>
+              <ThemedText style={{ fontSize: 14, color: '#f8fafc' }}>• Ritmo cardíaco</ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#f8fafc' }}>• Oxigenación (SpO2)</ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#f8fafc' }}>• Actividad física</ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#f8fafc' }}>• Frecuencia respiratoria</ThemedText>
+              <ThemedText style={{ fontSize: 14, color: '#f8fafc' }}>• Horas de sueño</ThemedText>
+            </View>
+            <TouchableOpacity
+              onPress={handleRequestPermissions}
+              style={{
+                backgroundColor: '#14b8a6',
+                borderRadius: 24,
+                paddingVertical: 16,
+                paddingHorizontal: 24,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#14b8a6',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <ThemedText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                 Conectar con HealthKit / Google Fit
-              </Button>
-            </Card.Content>
-          </Card>
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </ThemedView>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor: '#0f172a' }]}>
       {isOffline && (
         <View style={styles.offlineIndicator}>
           <Text style={styles.offlineIndicatorText}>📴 Modo Offline - Datos locales</Text>
@@ -207,63 +229,113 @@ export default function WearablesScreen() {
             />
 
             {/* Información adicional */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <ThemedText style={styles.sectionTitle}>📊 Resumen del Día</ThemedText>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Rango cardíaco:</Text>
-                  <Text style={styles.summaryValue}>
-                    {metrics.heartRate.min} - {metrics.heartRate.max} bpm
-                  </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Oxigenación mínima:</Text>
-                  <Text style={[styles.summaryValue, { color: metrics.oxygenSaturation.min < 95 ? '#f57c00' : '#388e3c' }]}>
-                    {metrics.oxygenSaturation.min.toFixed(1)}%
-                  </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Actividad total:</Text>
-                  <Text style={styles.summaryValue}>
-                    {metrics.activity.steps.toLocaleString()} pasos
-                  </Text>
-                </View>
-              </Card.Content>
-            </Card>
+            <View style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 24,
+              padding: 20,
+              marginBottom: 16,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+              <ThemedText style={{ fontSize: 18, fontWeight: 'bold', color: '#f8fafc', marginBottom: 16 }}>
+                📊 Resumen del Día
+              </ThemedText>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <ThemedText style={{ fontSize: 14, color: '#94a3b8' }}>Rango cardíaco:</ThemedText>
+                <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#f8fafc' }}>
+                  {metrics.heartRate.min} - {metrics.heartRate.max} bpm
+                </ThemedText>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <ThemedText style={{ fontSize: 14, color: '#94a3b8' }}>Oxigenación mínima:</ThemedText>
+                <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: metrics.oxygenSaturation.min < 95 ? '#f59e0b' : '#10b981' }}>
+                  {metrics.oxygenSaturation.min.toFixed(1)}%
+                </ThemedText>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <ThemedText style={{ fontSize: 14, color: '#94a3b8' }}>Actividad total:</ThemedText>
+                <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#f8fafc' }}>
+                  {metrics.activity.steps.toLocaleString()} pasos
+                </ThemedText>
+              </View>
+            </View>
 
             {/* Recomendaciones */}
-            <Card style={styles.card}>
-              <Card.Content>
-                <ThemedText style={styles.sectionTitle}>💡 Recomendaciones</ThemedText>
-                {alerts && alerts.alertMessages.length > 0 ? (
-                  <View>
-                    {alerts.alertMessages.map((msg, idx) => (
-                      <Chip key={idx} mode="flat" style={styles.recommendationChip}>
+            <View style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 24,
+              padding: 20,
+              marginBottom: 16,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+              <ThemedText style={{ fontSize: 18, fontWeight: 'bold', color: '#f8fafc', marginBottom: 16 }}>
+                💡 Recomendaciones
+              </ThemedText>
+              {alerts && alerts.alertMessages.length > 0 ? (
+                <View style={{ gap: 8 }}>
+                  {alerts.alertMessages.map((msg, idx) => (
+                    <View key={idx} style={{
+                      backgroundColor: 'rgba(20, 184, 166, 0.2)',
+                      borderRadius: 16,
+                      padding: 12,
+                      borderWidth: 1,
+                      borderColor: 'rgba(20, 184, 166, 0.3)',
+                    }}>
+                      <ThemedText style={{ fontSize: 14, color: '#f8fafc' }}>
                         {msg}
-                      </Chip>
-                    ))}
-                  </View>
-                ) : (
-                  <Text style={styles.recommendationText}>
-                    ✅ Tus métricas de salud están dentro de rangos normales.
-                    Continúa monitoreando tu salud regularmente.
-                  </Text>
-                )}
-              </Card.Content>
-            </Card>
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <ThemedText style={{ fontSize: 14, color: '#94a3b8', lineHeight: 20 }}>
+                  ✅ Tus métricas de salud están dentro de rangos normales.
+                  Continúa monitoreando tu salud regularmente.
+                </ThemedText>
+              )}
+            </View>
           </>
         ) : (
-          <Card style={styles.card}>
-            <Card.Content>
-              <ThemedText style={styles.title}>No hay datos disponibles</ThemedText>
-              <ThemedText style={styles.description}>
-                Asegúrate de que tu dispositivo wearable esté conectado y sincronizado.
-              </ThemedText>
-              <Button mode="outlined" onPress={handleSync} style={styles.button}>
+          <View style={{
+            backgroundColor: '#1e293b',
+            borderRadius: 24,
+            padding: 24,
+            marginBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+            alignItems: 'center',
+          }}>
+            <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#f8fafc', marginBottom: 12, textAlign: 'center' }}>
+              No hay datos disponibles
+            </ThemedText>
+            <ThemedText style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24, textAlign: 'center', lineHeight: 20 }}>
+              Asegúrate de que tu dispositivo wearable esté conectado y sincronizado.
+            </ThemedText>
+            <TouchableOpacity
+              onPress={handleSync}
+              style={{
+                borderWidth: 2,
+                borderColor: '#14b8a6',
+                borderRadius: 24,
+                paddingVertical: 14,
+                paddingHorizontal: 32,
+              }}
+            >
+              <ThemedText style={{ color: '#14b8a6', fontSize: 16, fontWeight: '600' }}>
                 Sincronizar ahora
-              </Button>
-            </Card.Content>
-          </Card>
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
     </ThemedView>
@@ -273,7 +345,7 @@ export default function WearablesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0e1621', // Fondo estilo Telegram
+    backgroundColor: '#0f172a', // Dark background moderno
   },
   scrollView: {
     flex: 1,
@@ -289,13 +361,13 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#b1bbc4',
+    color: '#94a3b8',
   },
   card: {
     margin: 16,
     elevation: 4,
-    backgroundColor: '#17212b', // Fondo de cards estilo Telegram
-    borderRadius: 12,
+    backgroundColor: '#1e293b', // Slate 800
+    borderRadius: 24,
   },
   title: {
     fontSize: 24,
@@ -307,7 +379,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
     lineHeight: 24,
-    color: '#b1bbc4',
+    color: '#94a3b8',
   },
   featuresList: {
     marginBottom: 24,
@@ -316,11 +388,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     lineHeight: 24,
-    color: '#b1bbc4',
+    color: '#94a3b8',
   },
   button: {
     marginTop: 16,
-    backgroundColor: '#3390ec', // Azul estilo Telegram
+    backgroundColor: '#14b8a6', // Teal primary
+    borderRadius: 24,
   },
   buttonContent: {
     paddingVertical: 8,
@@ -338,7 +411,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 16,
-    color: '#b1bbc4', // Texto secundario estilo Telegram
+    color: '#94a3b8', // Texto secundario estilo Telegram
   },
   summaryValue: {
     fontSize: 16,
@@ -352,7 +425,7 @@ const styles = StyleSheet.create({
   recommendationText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#666',
+    color: '#94a3b8', // Slate 400
   },
 });
 

@@ -25,11 +25,19 @@ const AlertConsole = () => {
 
   const handleError = (error) => {
     console.error('AlertConsole error:', error);
-    const message =
+    let message =
       error.response?.data?.message ||
       error.response?.data?.error ||
       error.message ||
       'Error desconocido al contactar el backend';
+    
+    // Agregar información adicional sobre la URL si es un error de red
+    if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+      message = `Error de conexión: No se pudo conectar al backend en ${ALERTS_ENDPOINT}. Asegúrate de que el backend esté corriendo en http://localhost:3001`;
+    } else if (error.response?.status === 404) {
+      message = `Ruta no encontrada: ${error.config?.url}. Verifica que el backend esté corriendo y que la ruta sea correcta.`;
+    }
+    
     setMessage({ type: 'error', text: message });
   };
 

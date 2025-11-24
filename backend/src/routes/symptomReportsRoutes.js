@@ -16,10 +16,11 @@ const initializeModel = () => {
       const mongoose = require('mongoose');
       // Only connect if not already connected
       if (mongoose.connection.readyState === 0) {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://mongodb:27017/respicare';
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://admin:password123@mongodb:27017/respicare_dev?authSource=admin';
         mongoose.connect(mongoUri, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true
+          maxPoolSize: 10,
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 45000
         }).then(() => {
           console.log('✅ MongoDB connected for symptom reports');
         }).catch(err => {

@@ -4,6 +4,8 @@
  * Sistema de diseño unificado con soporte para temas light/dark
  */
 
+import React from 'react';
+
 export const colors = {
   // Colores primarios
   primary: {

@@ -154,11 +154,22 @@ router.post(
   validate,
   notifyDoctorForCriticalCase
 );
-router.post('/:alertId/acknowledge', auth, authorize('patient', 'doctor', 'admin'), acknowledgeValidation, validate, acknowledgeAlert);
-router.get('/', auth, queryValidation, validate, getUserAlerts);
+
+// Ruta de prueba para verificar que las rutas están registradas (sin autenticación)
+router.get('/test', (_req, res) => {
+  res.json({ success: true, message: 'Alert routes are working' });
+});
+
+// IMPORTANTE: Las rutas GET específicas deben ir ANTES de las rutas con parámetros
 router.get('/dashboard/summary', auth, authorize('admin'), getAlertDashboardSummary);
 router.get('/monitoring', auth, authorize('admin'), getAlertMonitoringMetrics);
+router.get('/', auth, queryValidation, validate, getUserAlerts);
+
+// Rutas POST específicas
 router.post('/admin/process', auth, authorize('admin'), processAlertsNow);
+
+// Rutas con parámetros deben ir al final
+router.post('/:alertId/acknowledge', auth, authorize('patient', 'doctor', 'admin'), acknowledgeValidation, validate, acknowledgeAlert);
 
 export default router;
 

@@ -10,19 +10,23 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#3390ec', // Azul estilo Telegram
-        tabBarInactiveTintColor: '#708499', // Gris estilo Telegram
+        tabBarActiveTintColor: '#14b8a6', // Teal primary
+        tabBarInactiveTintColor: isDark ? '#64748b' : '#94a3b8', // Slate 500/400
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: {
-          backgroundColor: '#17212b', // Fondo oscuro estilo Telegram
-          borderTopColor: '#1e2732',
+          backgroundColor: isDark ? '#1e293b' : '#ffffff', // Slate 800 / White
+          borderTopColor: isDark ? '#334155' : '#e2e8f0', // Slate 700 / Slate 200
           borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          paddingTop: 8,
           ...Platform.select({
             ios: {
               position: 'absolute',
