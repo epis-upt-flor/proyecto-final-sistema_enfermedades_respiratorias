@@ -29,6 +29,9 @@ import consentRoutes from './routes/consentRoutes';
 import mlOrchestrationRoutes from './routes/mlOrchestrationRoutes';
 import fhirRoutes from './routes/fhirRoutes';
 import integrationRoutes from './routes/integrationRoutes';
+import emergencyRoutes from './routes/emergencyRoutes';
+import smsWebhookRoutes from './routes/smsWebhookRoutes';
+import smsRoutes from './routes/smsRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -218,6 +221,9 @@ class App {
     this.app.use('/api/v1/ml', mlOrchestrationRoutes);
     this.app.use('/api/v1/fhir', fhirRoutes);
     this.app.use('/api/v1/integrations', integrationRoutes);
+    this.app.use('/api/v1/emergencies', emergencyRoutes);
+    this.app.use('/api/v1/sms/webhooks', smsWebhookRoutes);
+    this.app.use('/api/v1/sms', smsRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {

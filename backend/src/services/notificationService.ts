@@ -54,11 +54,13 @@ class NotificationService {
             });
             break;
           case 'email':
-          case 'sms':
-            logger.info('Channel not yet implemented, skipping', {
+            logger.info('Email channel not yet implemented, skipping', {
               channel,
               alertId: alert.id,
             });
+            break;
+          case 'sms':
+            await this.sendSMSNotification(alert);
             break;
           default:
             logger.warn('Unknown notification channel', { channel });
@@ -168,6 +170,67 @@ class NotificationService {
       delivered,
       failed,
     };
+  }
+
+  /**
+   * Enviar notificación SMS
+   */
+  async sendSMSNotification(alert: AlertDocument): Promise<void> {
+    try {
+      const { smsService } = await import('./smsService');
+      const UserModel = (await import('../models/User')).default;
+
+      // Obtener número de teléfono del usuario
+      const user = await UserModel.findById(alert.userId);
+      if (!user || !(user as any).phone) {
+        logger.warn('Usuario no encontrado o sin número de teléfono para SMS', {
+          alertId: alert.id,
+          userId: alert.userId,
+        });
+        return;
+      }
+
+      const phoneNumber = (user as any).phone;
+
+      // Para emergencias, usar formato especial
+      if (alert.category === 'emergency') {
+        const emergencyInfo = alert.metadata?.location
+          ? {
+              type: alert.metadata.emergencyType || 'Emergencia Médica',
+              location: alert.metadata.location.address ||
+                `Coordenadas: ${alert.metadata.location.latitude}, ${alert.metadata.location.longitude}`,
+              patientName: alert.metadata.contactInfo?.name,
+              description: alert.message,
+            }
+          : {
+              type: 'Emergencia Médica',
+              location: 'Ubicación no disponible',
+              description: alert.message,
+            };
+
+        await smsService.sendEmergencySMS(phoneNumber, emergencyInfo);
+      } else {
+        // SMS estándar para otras alertas
+        await smsService.sendSMS({
+          to: phoneNumber,
+          message: `${alert.title}\n\n${alert.message}`,
+        });
+      }
+
+      logger.info('SMS notification dispatched', {
+        alertId: alert.id,
+        userId: alert.userId,
+        phone: phoneNumber.substring(0, 4) + '****', // Ocultar número completo en logs
+        category: alert.category,
+      });
+    } catch (error: any) {
+      logger.error(`Error al enviar SMS: ${error.message}`, {
+        alertId: alert.id,
+        userId: alert.userId,
+        error: error.message,
+      });
+      // No lanzar error para no bloquear otros canales
+    }
   }
 }
 

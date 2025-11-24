@@ -113,12 +113,43 @@ Backend API completo para el sistema de gestión de enfermedades respiratorias R
 - ✅ Validación de datos robusta con Joi
 - ✅ TypeScript con configuración optimizada para CI/CD
 
-#### **13. Integraciones HL7 / FHIR** *(En progreso)*
+#### **13. Integraciones HL7 / FHIR** ✅
 - ✅ Cliente FHIR configurable con soporte CRUD, búsqueda y bundles transaccionales
 - ✅ Parser HL7 v2 (segmentos MSH/PID/OBR/OBX) y conversor a recursos FHIR `Observation`
 - ✅ Soporte HL7 v3 (XML) mediante `xml2js`
 - ✅ Pruebas unitarias dedicadas (`npm run test -- fhirService`, `npm run test -- hl7Parser`)
-- ⏳ Publicación de endpoints REST externos y flujos de interoperabilidad hospitalaria
+- ✅ Endpoints REST externos y flujos de interoperabilidad hospitalaria
+
+#### **14. Servicio de Emergencias** ⭐ **NUEVO**
+- ✅ Integración con servicios de emergencia (API externa configurable)
+- ✅ Alertas automáticas a emergencias (integración con sistema de alertas)
+- ✅ Integración GPS para ubicación (validación y tracking)
+- ✅ Detección automática de emergencias desde síntomas críticos
+- ✅ Gestión de emergencias activas (crear, consultar, cancelar)
+- ✅ Notificación a contactos de emergencia vía SMS (Twilio)
+- ✅ Endpoints REST completos (`/api/v1/emergencies/*`)
+  - `POST /api/v1/emergencies` - Crear emergencia
+  - `GET /api/v1/emergencies/:emergencyId` - Obtener estado
+  - `POST /api/v1/emergencies/:emergencyId/cancel` - Cancelar emergencia
+  - `GET /api/v1/emergencies/active` - Emergencias activas del usuario
+  - `POST /api/v1/emergencies/detect` - Detección automática desde síntomas
+
+#### **15. Servicio SMS (Multi-proveedor)** ⭐ **NUEVO**
+- ✅ Integración con múltiples proveedores (Twilio, AWS SNS, MessageBird)
+- ✅ Soporte para modo mock (desarrollo/testing)
+- ✅ Validación de números telefónicos (formato E.164)
+- ✅ Formato automático de números locales a internacionales
+- ✅ SMS especiales para emergencias con formato optimizado
+- ✅ Envío masivo de SMS (bulk) con rate limiting
+- ✅ Verificación de estado de mensajes
+- ✅ Integración completa con sistema de notificaciones
+- ✅ Fallback automático a modo mock si el proveedor falla
+- ✅ Cifrado de números de teléfono en base de datos
+- ✅ **Rate limiting avanzado** basado en límites de proveedores
+- ✅ **Webhooks** para recibir confirmaciones de entrega (Twilio, AWS SNS, MessageBird)
+- ✅ **Métricas completas** (tasa de éxito, costos, estadísticas por proveedor)
+- ✅ **Tracking de costos** por proveedor y período
+- ✅ **Estadísticas de rate limiting** en tiempo real
 
 ## 🏗️ Arquitectura Técnica
 
@@ -266,6 +297,35 @@ PUSH_API_KEY=your_push_api_key
 PUSH_PROJECT_ID=your_push_project_id
 DRUG_INTERACTION_API_URL=https://api.drugs.com/v1
 DRUG_INTERACTION_API_KEY=your_api_key_here
+
+# Servicio de Emergencias
+EMERGENCY_SERVICE_ENABLED=true
+EMERGENCY_SERVICE_API_URL=https://api.emergency-service.com/v1
+EMERGENCY_SERVICE_API_KEY=your_emergency_service_api_key
+EMERGENCY_NUMBER=911
+
+# Servicio SMS (Multi-proveedor)
+SMS_ENABLED=true
+SMS_PROVIDER=twilio  # Opciones: twilio, aws_sns, messagebird, mock, none
+
+# Twilio
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
+
+# AWS SNS
+AWS_SNS_REGION=us-east-1
+AWS_SNS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SNS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+
+# MessageBird
+MESSAGEBIRD_API_KEY=your_messagebird_api_key
+MESSAGEBIRD_ORIGINATOR=RespiCare
+
+# Rate Limiting (opcional, usa límites por defecto del proveedor si no se especifica)
+SMS_RATE_LIMIT_PER_MINUTE=60
+SMS_RATE_LIMIT_PER_HOUR=1000
+SMS_RATE_LIMIT_PER_DAY=10000
 
 # Jobs de alertas
 ALERTS_SCHEDULED_INTERVAL_MS=30000
@@ -457,6 +517,20 @@ GET    /                              # Listar alertas del usuario autenticado
 GET    /dashboard/summary            # Resumen global de alertas (admin)
 GET    /monitoring                   # Métricas de cola Redis y fallos (admin)
 POST   /admin/process                # Forzar procesamiento inmediato (admin)
+```
+
+### **SMS (`/api/v1/sms`)** ⭐ **NUEVO**
+```http
+GET     /metrics              # Métricas generales (admin)
+GET     /metrics/costs        # Costos por período (admin)
+GET     /metrics/rate-limit   # Estadísticas de rate limiting (admin)
+```
+
+### **SMS Webhooks (`/api/v1/sms/webhooks`)** ⭐ **NUEVO**
+```http
+POST    /twilio               # Webhook de Twilio para confirmaciones
+POST    /aws-sns              # Webhook de AWS SNS para confirmaciones
+POST    /messagebird          # Webhook de MessageBird para confirmaciones
 ```
 
 ### **Citas Médicas (`/api/v1/appointments`)**

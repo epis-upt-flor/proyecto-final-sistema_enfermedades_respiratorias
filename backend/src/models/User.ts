@@ -51,6 +51,15 @@ const UserSchema = new Schema<UserDocument>({
     type: String,
     default: null
   },
+  phone: {
+    type: String,
+    trim: true,
+    match: [
+      /^\+[1-9]\d{1,14}$/,
+      'El número de teléfono debe estar en formato E.164 (ej: +51987654321)'
+    ],
+    default: null
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -68,7 +77,8 @@ const UserSchema = new Schema<UserDocument>({
 // Cifrado en reposo para datos de perfil no indexados
 applyFieldEncryption(UserSchema, [
   'name',
-  'avatar'
+  'avatar',
+  'phone' // Cifrar número de teléfono por privacidad
 ]);
 
 // Índices para optimizar consultas

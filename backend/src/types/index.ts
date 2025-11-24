@@ -8,6 +8,7 @@ export interface User {
   password: string;
   role: 'patient' | 'doctor' | 'admin';
   avatar?: string;
+  phone?: string; // Número de teléfono en formato E.164 (ej: +51987654321)
   isActive: boolean;
   lastLogin?: Date;
   createdAt: Date;
@@ -70,7 +71,8 @@ export type AlertCategory =
   | 'medication_reminder'
   | 'follow_up'
   | 'doctor_notification'
-  | 'system';
+  | 'system'
+  | 'emergency';
 
 export type AlertChannel = 'in_app' | 'push' | 'email' | 'sms';
 
@@ -91,7 +93,8 @@ export type AlertTriggerSource =
   | 'follow_up_rule'
   | 'manual'
   | 'system'
-  | 'doctor_portal';
+  | 'doctor_portal'
+  | 'emergency_service';
 
 export interface AlertTrigger {
   source: AlertTriggerSource;
