@@ -382,6 +382,339 @@ app.get('/api/v1/alerts/monitoring', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Automatic Reports Routes - Rutas temporales para desarrollo
+// ---------------------------------------------------------------------------
+
+// GET /api/v1/reports/automatic - Listar reportes automáticos
+app.get('/api/v1/reports/automatic', (req, res) => {
+  try {
+    const { type } = req.query;
+    
+    // Datos mock de reportes con la estructura esperada por el frontend
+    const mockReports = [
+      {
+        _id: 'report-001',
+        reportType: 'daily',
+        status: 'completed',
+        generatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        period: {
+          startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString()
+        },
+        metrics: {
+          totalMedicalHistories: 45,
+          totalAlerts: 12,
+          totalPatients: 38,
+          totalDoctors: 8,
+          totalAdmins: 2,
+          criticalAlerts: 3,
+          totalAppointments: 25,
+          completedAppointments: 20,
+          aiAnalyses: 45,
+          averageAIConfidence: 0.87
+        },
+        growthMetrics: {
+          patientsGrowth: 5.2,
+          historiesGrowth: 8.1,
+          alertsGrowth: -2.3
+        },
+        anomalies: [
+          {
+            metric: 'Alertas críticas',
+            value: 3,
+            severity: 'high',
+            description: 'Aumento inusual de alertas críticas en las últimas 24 horas',
+            expectedRange: { min: 0, max: 1 }
+          }
+        ],
+        topDiagnoses: [
+          { diagnosis: 'Asma', count: 12 },
+          { diagnosis: 'COVID-19', count: 8 },
+          { diagnosis: 'Bronquitis', count: 6 }
+        ],
+        exportFormats: ['pdf', 'csv'],
+        exportedAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        _id: 'report-002',
+        reportType: 'weekly',
+        status: 'completed',
+        generatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        period: {
+          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString()
+        },
+        metrics: {
+          totalMedicalHistories: 312,
+          totalAlerts: 89,
+          totalPatients: 245,
+          totalDoctors: 12,
+          totalAdmins: 3,
+          criticalAlerts: 15,
+          totalAppointments: 156,
+          completedAppointments: 142,
+          aiAnalyses: 312,
+          averageAIConfidence: 0.85
+        },
+        growthMetrics: {
+          patientsGrowth: 12.5,
+          historiesGrowth: 15.3,
+          alertsGrowth: 8.7
+        },
+        anomalies: [
+          {
+            metric: 'Crecimiento de pacientes',
+            value: 12.5,
+            severity: 'medium',
+            description: 'Crecimiento significativo en el número de pacientes',
+            expectedRange: { min: 0, max: 10 }
+          },
+          {
+            metric: 'Alertas críticas',
+            value: 15,
+            severity: 'high',
+            description: 'Aumento considerable de alertas críticas',
+            expectedRange: { min: 0, max: 8 }
+          }
+        ],
+        topDiagnoses: [
+          { diagnosis: 'Asma', count: 85 },
+          { diagnosis: 'COVID-19', count: 62 },
+          { diagnosis: 'Bronquitis', count: 48 },
+          { diagnosis: 'Gripe', count: 35 }
+        ],
+        exportFormats: ['pdf', 'csv', 'json'],
+        exportedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        _id: 'report-003',
+        reportType: 'monthly',
+        status: 'generating',
+        generatedAt: null,
+        period: {
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString()
+        },
+        metrics: {
+          totalMedicalHistories: 0,
+          totalAlerts: 0,
+          totalPatients: 0,
+          totalDoctors: 0,
+          totalAdmins: 0,
+          criticalAlerts: 0,
+          totalAppointments: 0,
+          completedAppointments: 0,
+          aiAnalyses: 0,
+          averageAIConfidence: 0
+        },
+        growthMetrics: {
+          patientsGrowth: 0,
+          historiesGrowth: 0,
+          alertsGrowth: 0
+        },
+        anomalies: [],
+        exportFormats: []
+      }
+    ];
+
+    // Filtrar por tipo si se especifica
+    let filteredReports = mockReports;
+    if (type && type !== 'all') {
+      filteredReports = mockReports.filter(r => r.reportType === type);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        reports: filteredReports,
+        total: filteredReports.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching automatic reports',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/automatic/stats - Estadísticas de reportes
+app.get('/api/v1/reports/automatic/stats', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        total: 12,
+        byType: {
+          daily: 8,
+          weekly: 3,
+          monthly: 1
+        },
+        byStatus: {
+          completed: 10,
+          pending: 1,
+          generating: 1,
+          failed: 0
+        },
+        lastGenerated: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        nextScheduled: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching report statistics',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/automatic/:reportId - Obtener detalles de un reporte
+app.get('/api/v1/reports/automatic/:reportId', (req, res) => {
+  try {
+    const { reportId } = req.params;
+    
+    // Datos mock de un reporte detallado con la estructura esperada por el frontend
+    const mockReport = {
+      _id: reportId,
+      reportType: 'daily',
+      status: 'completed',
+      generatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      period: {
+        startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date().toISOString()
+      },
+      metrics: {
+        totalMedicalHistories: 45,
+        totalAlerts: 12,
+        totalPatients: 38,
+        totalDoctors: 8,
+        totalAdmins: 2,
+        criticalAlerts: 3,
+        totalAppointments: 25,
+        completedAppointments: 20,
+        aiAnalyses: 45,
+        averageAIConfidence: 0.87,
+        topDiagnoses: [
+          { diagnosis: 'Asma', count: 12 },
+          { diagnosis: 'COVID-19', count: 8 },
+          { diagnosis: 'Bronquitis', count: 6 },
+          { diagnosis: 'Gripe', count: 5 },
+          { diagnosis: 'Neumonía', count: 4 }
+        ]
+      },
+      growthMetrics: {
+        patientsGrowth: 5.2,
+        historiesGrowth: 8.1,
+        alertsGrowth: -2.3
+      },
+      anomalies: [
+        {
+          metric: 'Alertas críticas',
+          value: 3,
+          severity: 'high',
+          description: 'Aumento inusual de alertas críticas en las últimas 24 horas',
+          expectedRange: { min: 0, max: 1 }
+        },
+        {
+          metric: 'Crecimiento de historias',
+          value: 8.1,
+          severity: 'medium',
+          description: 'Crecimiento significativo en el número de historias médicas',
+          expectedRange: { min: 0, max: 5 }
+        }
+      ],
+      exportFormats: ['pdf', 'csv'],
+      exportedAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString()
+    };
+
+    res.json({
+      success: true,
+      data: mockReport
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching report details',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/v1/reports/automatic/generate - Generar un nuevo reporte
+app.post('/api/v1/reports/automatic/generate', (req, res) => {
+  try {
+    const { reportType, includeAnomalies, autoExport, exportFormat } = req.body;
+    
+    // Simular generación de reporte
+    const newReport = {
+      _id: `report-${Date.now()}`,
+      reportType: reportType || 'daily',
+      status: 'generating',
+      generatedAt: null,
+      period: {
+        start: new Date(Date.now() - (reportType === 'daily' ? 24 : reportType === 'weekly' ? 7 * 24 : 30 * 24) * 60 * 60 * 1000).toISOString(),
+        end: new Date().toISOString()
+      },
+      summary: null,
+      exportFormats: exportFormat ? [exportFormat] : []
+    };
+
+    // Simular que el reporte se completa después de un tiempo
+    setTimeout(() => {
+      newReport.status = 'completed';
+      newReport.generatedAt = new Date().toISOString();
+      newReport.summary = {
+        totalCases: Math.floor(Math.random() * 100) + 20,
+        highSeverity: Math.floor(Math.random() * 20),
+        mediumSeverity: Math.floor(Math.random() * 40),
+        lowSeverity: Math.floor(Math.random() * 30),
+        anomalies: includeAnomalies ? Math.floor(Math.random() * 5) : 0
+      };
+    }, 2000);
+
+    res.status(201).json({
+      success: true,
+      message: `Reporte ${reportType} en proceso de generación`,
+      data: newReport
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error generating report',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/v1/reports/automatic/:reportId/export - Exportar un reporte
+app.post('/api/v1/reports/automatic/:reportId/export', (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const { format = 'pdf' } = req.body;
+    
+    // Simular exportación
+    res.json({
+      success: true,
+      message: `Reporte exportado en formato ${format}`,
+      data: {
+        reportId,
+        format,
+        downloadUrl: `/api/v1/reports/automatic/${reportId}/download?format=${format}`,
+        exportedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error exporting report',
+      error: error.message
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Mocked Appointments API (development-only)
 // ---------------------------------------------------------------------------
 

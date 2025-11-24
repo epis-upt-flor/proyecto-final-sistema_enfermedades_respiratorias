@@ -10,6 +10,66 @@ router.get('/dashboard', async (req, res) => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    // Verificar si MongoDB está conectado
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    if (!isMongoConnected) {
+      // Retornar datos mock si MongoDB no está conectado
+      console.warn('MongoDB no está conectado, retornando datos mock para dashboard');
+      const mockData = {
+        overview: {
+          totalReports: 203,
+          recentReports: 45,
+          urgentReports: 8,
+          totalConversations: 156,
+          recentConversations: 32
+        },
+        distributions: {
+          severity: [
+            { _id: 'high', count: 45 },
+            { _id: 'medium', count: 94 },
+            { _id: 'low', count: 64 }
+          ],
+          category: [
+            { _id: 'respiratory', count: 170 },
+            { _id: 'fever', count: 25 },
+            { _id: 'pain', count: 8 }
+          ]
+        },
+        topDistricts: [
+          { _id: 'Centro de Tacna', count: 45, avgSeverity: 2.1, severityLevel: 'high' },
+          { _id: 'Alto de la Alianza', count: 38, avgSeverity: 2.3, severityLevel: 'high' },
+          { _id: 'Gregorio Albarracín', count: 32, avgSeverity: 1.8, severityLevel: 'medium' },
+          { _id: 'Ciudad Nueva', count: 28, avgSeverity: 2.0, severityLevel: 'medium' },
+          { _id: 'Boca del Río', count: 25, avgSeverity: 1.9, severityLevel: 'medium' }
+        ],
+        recentActivity: [
+          {
+            district: 'Centro de Tacna',
+            symptoms: [{ name: 'tos seca' }, { name: 'fiebre' }],
+            severityLevel: 'high',
+            category: 'respiratory',
+            reportedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+          },
+          {
+            district: 'Alto de la Alianza',
+            symptoms: [{ name: 'dificultad respiratoria' }],
+            severityLevel: 'medium',
+            category: 'respiratory',
+            reportedAt: new Date(Date.now() - 4 * 60 * 60 * 1000)
+          }
+        ],
+        lastUpdated: now,
+        dataSource: 'mock'
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: mockData
+      });
+    }
+
     const overviewPromise = Promise.all([
       SymptomReport.countDocuments().exec(),
       SymptomReport.countDocuments({ createdAt: { $gte: sevenDaysAgo, $lte: now } }).exec(),
@@ -136,6 +196,64 @@ router.get('/dashboard', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
+    
+    // Si es un error de MongoDB, retornar datos mock
+    if (error.name === 'MongooseError' || error.message.includes('buffering timed out')) {
+      console.warn('Error de MongoDB, retornando datos mock para dashboard');
+      const mockData = {
+        overview: {
+          totalReports: 203,
+          recentReports: 45,
+          urgentReports: 8,
+          totalConversations: 156,
+          recentConversations: 32
+        },
+        distributions: {
+          severity: [
+            { _id: 'high', count: 45 },
+            { _id: 'medium', count: 94 },
+            { _id: 'low', count: 64 }
+          ],
+          category: [
+            { _id: 'respiratory', count: 170 },
+            { _id: 'fever', count: 25 },
+            { _id: 'pain', count: 8 }
+          ]
+        },
+        topDistricts: [
+          { _id: 'Centro de Tacna', count: 45, avgSeverity: 2.1, severityLevel: 'high' },
+          { _id: 'Alto de la Alianza', count: 38, avgSeverity: 2.3, severityLevel: 'high' },
+          { _id: 'Gregorio Albarracín', count: 32, avgSeverity: 1.8, severityLevel: 'medium' },
+          { _id: 'Ciudad Nueva', count: 28, avgSeverity: 2.0, severityLevel: 'medium' },
+          { _id: 'Boca del Río', count: 25, avgSeverity: 1.9, severityLevel: 'medium' }
+        ],
+        recentActivity: [
+          {
+            district: 'Centro de Tacna',
+            symptoms: [{ name: 'tos seca' }, { name: 'fiebre' }],
+            severityLevel: 'high',
+            category: 'respiratory',
+            reportedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+          },
+          {
+            district: 'Alto de la Alianza',
+            symptoms: [{ name: 'dificultad respiratoria' }],
+            severityLevel: 'medium',
+            category: 'respiratory',
+            reportedAt: new Date(Date.now() - 4 * 60 * 60 * 1000)
+          }
+        ],
+        lastUpdated: new Date(),
+        dataSource: 'mock'
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: mockData,
+        warning: 'Datos mock - MongoDB no disponible'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error fetching dashboard data',
@@ -227,6 +345,49 @@ router.get('/temporal-trends', async (req, res) => {
 // GET /api/analytics/disease-reports - Get disease reports data
 router.get('/disease-reports', async (req, res) => {
   try {
+    // Verificar si MongoDB está conectado
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    if (!isMongoConnected) {
+      // Retornar datos mock si MongoDB no está conectado
+      console.warn('MongoDB no está conectado, retornando datos mock para disease-reports');
+      const mockData = {
+        symptomAnalysis: [
+          {
+            _id: 'tos seca',
+            count: 45,
+            avgSeverity: 2.1,
+            districts: ['Centro de Tacna', 'Alto de la Alianza'],
+            categories: ['respiratory'],
+            potentialDiseases: ['Asma', 'Bronquitis', 'COVID-19']
+          }
+        ],
+        chatDiseaseAnalysis: [
+          { _id: 'Asma', count: 25, avgConfidence: 0.85, avgUrgency: 2.1 },
+          { _id: 'COVID-19', count: 18, avgConfidence: 0.78, avgUrgency: 3.2 }
+        ],
+        districtDistribution: [
+          {
+            _id: 'Centro de Tacna',
+            symptoms: [{ name: 'tos seca', count: 15, severity: 2.1 }],
+            totalReports: 45
+          }
+        ],
+        period: '30d',
+        dateRange: {
+          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          end: new Date()
+        }
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: mockData,
+        warning: 'Datos mock - MongoDB no disponible'
+      });
+    }
+
     const { district, period = '30d' } = req.query;
 
     const periodToDays = {
@@ -365,6 +526,46 @@ router.get('/disease-reports', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching disease reports:', error);
+    
+    // Si es un error de MongoDB, retornar datos mock
+    if (error.name === 'MongooseError' || error.message.includes('buffering timed out')) {
+      console.warn('Error de MongoDB, retornando datos mock para disease-reports');
+      const mockData = {
+        symptomAnalysis: [
+          {
+            _id: 'tos seca',
+            count: 45,
+            avgSeverity: 2.1,
+            districts: ['Centro de Tacna', 'Alto de la Alianza'],
+            categories: ['respiratory'],
+            potentialDiseases: ['Asma', 'Bronquitis', 'COVID-19']
+          }
+        ],
+        chatDiseaseAnalysis: [
+          { _id: 'Asma', count: 25, avgConfidence: 0.85, avgUrgency: 2.1 },
+          { _id: 'COVID-19', count: 18, avgConfidence: 0.78, avgUrgency: 3.2 }
+        ],
+        districtDistribution: [
+          {
+            _id: 'Centro de Tacna',
+            symptoms: [{ name: 'tos seca', count: 15, severity: 2.1 }],
+            totalReports: 45
+          }
+        ],
+        period: '30d',
+        dateRange: {
+          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          end: new Date()
+        }
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: mockData,
+        warning: 'Datos mock - MongoDB no disponible'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error fetching disease reports',

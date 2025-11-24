@@ -238,17 +238,26 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
               {formatDate(report.period.startDate)} - {formatDate(report.period.endDate)}
             </div>
             <div className="report-metrics-preview">
-              <div className="metric-item">
-                <span className="metric-label">Historias:</span>
-                <span className="metric-value">{report.metrics.totalMedicalHistories}</span>
-              </div>
-              <div className="metric-item">
-                <span className="metric-label">Alertas:</span>
-                <span className="metric-value">{report.metrics.totalAlerts}</span>
-              </div>
-              {report.anomalies && report.anomalies.length > 0 && (
-                <div className="anomalies-badge">
-                  {report.anomalies.length} anomalía(s) detectada(s)
+              {report.metrics ? (
+                <>
+                  <div className="metric-item">
+                    <span className="metric-label">Historias:</span>
+                    <span className="metric-value">{report.metrics.totalMedicalHistories || 0}</span>
+                  </div>
+                  <div className="metric-item">
+                    <span className="metric-label">Alertas:</span>
+                    <span className="metric-value">{report.metrics.totalAlerts || 0}</span>
+                  </div>
+                  {report.anomalies && report.anomalies.length > 0 && (
+                    <div className="anomalies-badge">
+                      {report.anomalies.length} anomalía(s) detectada(s)
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="metric-item">
+                  <span className="metric-label">Estado:</span>
+                  <span className="metric-value">Generando...</span>
                 </div>
               )}
             </div>
