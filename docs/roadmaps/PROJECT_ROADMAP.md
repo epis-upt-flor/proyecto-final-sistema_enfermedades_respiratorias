@@ -8,8 +8,9 @@
 - [AI_SERVICES_ROADMAP.md](AI_SERVICES_ROADMAP.md) — AI Services
 - [WORKFLOWS_ROADMAP.md](WORKFLOWS_ROADMAP.md) — Workflows (CI/CD)
 - [TESTS_ROADMAP.md](TESTS_ROADMAP.md) — Pruebas y Cobertura
+- [PENDIENTES_IMPLEMENTACION.md](PENDIENTES_IMPLEMENTACION.md) ⭐ **NUEVO** — Funcionalidades pendientes
 
-> Nota de sincronización: cuando se marque un punto como completado en cualquiera de los roadmaps por función, este Roadmap General debe ser actualizado inmediatamente para reflejar el mismo estado (y viceversa). Mantener consistencia 1:1 entre los estados (✅/⏳/[ ]) y los hitos.
+> Nota de sincronización: cuando se marque un punto como completado en cualquiera de los roadmaps por función, este Roadmap General debe ser actualizado inmediatamente para reflejar el mismo estado (y viceversa). Mantener consistencia 1:1 entre los estados (✅/⏳/[ ]) y los hitos. El documento [PENDIENTES_IMPLEMENTACION.md](PENDIENTES_IMPLEMENTACION.md) consolida todas las funcionalidades documentadas que aún no han sido implementadas.
 
 ---
 

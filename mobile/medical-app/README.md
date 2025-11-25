@@ -19,10 +19,26 @@ pnpm install
 ```
 
 2. **Configurar variables de entorno**:
-Crea un archivo `.env.local` en la raíz del proyecto:
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
-```
+
+   **Opción A - Automático (Recomendado para desarrollo móvil)**:
+   ```bash
+   npm run config:ip
+   ```
+   Este comando detecta automáticamente tu IP local y crea el archivo `.env.local`.
+
+   **Opción B - Manual**:
+   Crea un archivo `.env.local` en la raíz del proyecto:
+   ```bash
+   # Para desarrollo local (web):
+   NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+   NEXT_PUBLIC_AI_SERVICE_URL=http://localhost:8000
+
+   # Para dispositivo móvil (reemplaza TU_IP_LOCAL con tu IP local):
+   NEXT_PUBLIC_API_URL=http://TU_IP_LOCAL:3001/api/v1
+   NEXT_PUBLIC_AI_SERVICE_URL=http://TU_IP_LOCAL:8000
+   ```
+   
+   📖 **Más información**: Consulta `CONFIGURACION_RED.md` para instrucciones detalladas sobre cómo conectar la app móvil con Docker.
 
 ### Ejecutar en modo desarrollo
 
@@ -67,8 +83,23 @@ npm run lint
 
 ## 🔗 Integración con Backend
 
-La aplicación está completamente integrada con el backend de RespiCare. Ver documentación detallada en:
-- `INTEGRACION_BACKEND.md` - Documentación completa de integración
+La aplicación está completamente integrada con el backend de RespiCare.
+
+### 📱 Conectar App Móvil con Docker
+
+Si vas a usar la app en un dispositivo físico, necesitas configurar la conexión con Docker:
+
+**🚀 Guía Rápida**: Ver `GUIA_RAPIDA_CONEXION.md` para instrucciones paso a paso.
+
+**Pasos rápidos**:
+1. Ejecuta `npm run config:ip` para configurar tu IP local
+2. Configura el firewall: `powershell -ExecutionPolicy Bypass -File scripts/configure-firewall.ps1` (como Admin)
+3. Prueba la conexión: `npm run test:connection`
+4. Genera el APK: `npm run apk`
+
+📖 **Guía completa para generar APK**: Ver `GENERAR_APK.md`
+
+Para más detalles, consulta `CONFIGURACION_RED.md`.
 
 ### Funcionalidades Integradas
 

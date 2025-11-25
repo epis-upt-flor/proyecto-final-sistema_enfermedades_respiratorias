@@ -39,28 +39,54 @@ export function DashboardView({ t, setCurrentView }: DashboardViewProps) {
     try {
       // Cargar dashboard según el rol del usuario
       let stats
-      if (user.role === 'admin') {
-        stats = await dashboardService.getAdminDashboard()
-      } else if (user.role === 'doctor') {
-        stats = await dashboardService.getDoctorDashboard()
-      } else {
-        stats = await dashboardService.getPatientDashboard()
+      try {
+        if (user.role === 'admin') {
+          stats = await dashboardService.getAdminDashboard()
+        } else if (user.role === 'doctor') {
+          stats = await dashboardService.getDoctorDashboard()
+        } else {
+          stats = await dashboardService.getPatientDashboard()
+        }
+        
+        // El backend devuelve { success: true, data: {...} }, extraer data
+        if (stats && typeof stats === 'object' && 'data' in stats) {
+          setDashboardStats(stats.data)
+        } else {
+          setDashboardStats(stats)
+        }
+      } catch (dashboardError: any) {
+        console.error('Error al cargar dashboard:', dashboardError)
+        // Continuar aunque falle el dashboard
       }
-      setDashboardStats(stats)
 
       // Cargar próximas citas
-      const upcomingAppointments = await appointmentService.getUpcoming()
-      setAppointments(upcomingAppointments)
+      try {
+        const upcomingAppointments = await appointmentService.getUpcoming()
+        setAppointments(Array.isArray(upcomingAppointments) ? upcomingAppointments : [])
+      } catch (appointmentsError: any) {
+        console.error('Error al cargar citas:', appointmentsError)
+        // Continuar aunque falle las citas
+      }
 
       // Cargar alertas no reconocidas
-      const alertsData = await alertService.list({ acknowledged: false, limit: 10 })
-      const alertsList = Array.isArray(alertsData.data) ? alertsData.data : (Array.isArray(alertsData) ? alertsData : [])
-      setAlerts(alertsList)
+      try {
+        const alertsData = await alertService.list({ acknowledged: false, limit: 10 })
+        const alertsList = Array.isArray(alertsData.data) ? alertsData.data : (Array.isArray(alertsData) ? alertsData : [])
+        setAlerts(alertsList)
+      } catch (alertsError: any) {
+        console.error('Error al cargar alertas:', alertsError)
+        // Continuar aunque falle las alertas
+      }
 
     } catch (error: any) {
-      console.error('Error al cargar datos del dashboard:', error)
+      console.error('Error general al cargar datos del dashboard:', error)
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        stack: error?.stack
+      })
       if (isOnline) {
-        toast.error('Error al cargar datos del dashboard')
+        toast.error(error?.message || 'Error al cargar datos del dashboard')
       }
     } finally {
       setIsLoading(false)
@@ -234,41 +260,50 @@ export function DashboardView({ t, setCurrentView }: DashboardViewProps) {
         </div>
       )}
 
-      {/* Estadísticas Rápidas */}
-      {dashboardStats && (
-        <ModernCard variant="gradient" className="p-6 relative overflow-hidden">
-          <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
-          <div className="relative z-10">
-            <h4 className="font-bold text-lg mb-4">Resumen</h4>
+      {/* Estadísticas Rápidas - Resumen */}
+      <ModernCard variant="gradient" className="p-6 relative overflow-hidden">
+        <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
+        <div className="relative z-10">
+          <h4 className="font-bold text-lg mb-4">Resumen</h4>
+          {isLoading ? (
             <div className="grid grid-cols-2 gap-4">
-              {dashboardStats.totalAlerts !== undefined && (
-                <div>
-                  <p className="text-2xl font-bold">{dashboardStats.totalAlerts}</p>
-                  <p className="text-xs text-muted-foreground">Alertas</p>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <div className="h-8 bg-secondary/50 rounded animate-pulse mb-2" />
+                  <div className="h-4 bg-secondary/30 rounded animate-pulse w-16" />
                 </div>
-              )}
-              {dashboardStats.totalAppointments !== undefined && (
-                <div>
-                  <p className="text-2xl font-bold">{dashboardStats.totalAppointments}</p>
-                  <p className="text-xs text-muted-foreground">Citas</p>
-                </div>
-              )}
-              {dashboardStats.upcomingAppointments !== undefined && (
-                <div>
-                  <p className="text-2xl font-bold">{dashboardStats.upcomingAppointments}</p>
-                  <p className="text-xs text-muted-foreground">Próximas</p>
-                </div>
-              )}
-              {dashboardStats.totalMedicalHistories !== undefined && (
-                <div>
-                  <p className="text-2xl font-bold">{dashboardStats.totalMedicalHistories}</p>
-                  <p className="text-xs text-muted-foreground">Historias</p>
-                </div>
-              )}
+              ))}
             </div>
-          </div>
-        </ModernCard>
-      )}
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-2xl font-bold">
+                  {dashboardStats?.totalAlerts ?? alerts.filter(a => !a.acknowledged && a.status !== 'acknowledged').length ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Alertas</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {dashboardStats?.totalAppointments ?? appointments.length ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Citas</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {dashboardStats?.upcomingAppointments ?? upcomingAppointments.length ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Próximas</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {dashboardStats?.totalMedicalHistories ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Historias</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </ModernCard>
     </div>
   )
 }

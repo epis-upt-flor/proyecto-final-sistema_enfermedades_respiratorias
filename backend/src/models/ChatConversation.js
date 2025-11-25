@@ -191,14 +191,44 @@ chatConversationSchema.methods.addMessage = function(role, content, metadata = {
   // Update highest urgency
   if (metadata.urgencyLevel) {
     const urgencyLevels = ['very_low', 'low', 'medium', 'high', 'critical'];
-    const currentLevel = urgencyLevels.indexOf(this.summary.highestUrgency);
-    const newLevel = urgencyLevels.indexOf(metadata.urgencyLevel);
     
-    if (newLevel > currentLevel) {
-      this.summary.highestUrgency = metadata.urgencyLevel;
+    // Normalize urgency level to ensure it's valid
+    const normalizeUrgency = (urgency) => {
+      if (!urgency) return 'low';
+      const urgencyStr = String(urgency).toLowerCase();
+      const urgencyMap = {
+        'critica': 'critical',
+        'critical': 'critical',
+        'alta': 'high',
+        'high': 'high',
+        'media': 'medium',
+        'medium': 'medium',
+        'baja': 'low',
+        'low': 'low',
+        'muy_baja': 'very_low',
+        'very_low': 'very_low'
+      };
+      return urgencyMap[urgencyStr] || 'low';
+    };
+    
+    const normalizedUrgency = normalizeUrgency(metadata.urgencyLevel);
+    const currentUrgency = normalizeUrgency(this.summary.highestUrgency || 'low');
+    
+    const currentLevel = urgencyLevels.indexOf(currentUrgency);
+    const newLevel = urgencyLevels.indexOf(normalizedUrgency);
+    
+    // Ensure both levels are valid (>= 0)
+    if (currentLevel >= 0 && newLevel >= 0 && newLevel > currentLevel) {
+      this.summary.highestUrgency = normalizedUrgency;
       
       // Mark for follow-up if high or critical
       if (newLevel >= 3) { // high or critical
+        this.requiresFollowUp = true;
+      }
+    } else if (newLevel >= 0 && currentLevel < 0) {
+      // If current is invalid but new is valid, use new
+      this.summary.highestUrgency = normalizedUrgency;
+      if (newLevel >= 3) {
         this.requiresFollowUp = true;
       }
     }

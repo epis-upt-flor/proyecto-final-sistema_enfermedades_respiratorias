@@ -49,7 +49,17 @@ export class ChatService {
     const response = await apiClient.get<{ data: ChatConversation }>(
       API_ENDPOINTS.chat.getConversation(sessionId)
     )
-    return response.data || response as ChatConversation
+    const conversation = response.data || response as ChatConversation
+    
+    // Map 'bot' role to 'assistant' for frontend compatibility
+    if (conversation.messages) {
+      conversation.messages = conversation.messages.map(msg => ({
+        ...msg,
+        role: msg.role === 'bot' ? 'assistant' : msg.role
+      }))
+    }
+    
+    return conversation
   }
 
   async getConversations(filters?: {
@@ -72,8 +82,16 @@ export class ChatService {
     content: string,
     metadata?: any
   ): Promise<{ userMessage: ChatMessage; assistantMessage?: ChatMessage }> {
-    // Enviar mensaje del usuario
-    await apiClient.post(
+    // Enviar mensaje del usuario - el backend ahora devuelve la respuesta del asistente directamente
+    const response = await apiClient.post<{
+      success: boolean
+      message: string
+      data: {
+        userMessage: ChatMessage
+        assistantMessage?: ChatMessage
+        messageCount: number
+      }
+    }>(
       API_ENDPOINTS.chat.messages(sessionId),
       {
         role: 'user',
@@ -82,11 +100,18 @@ export class ChatService {
       }
     )
     
-    // El backend procesa el mensaje y genera respuesta automáticamente
-    // Esperar un momento para que el backend procese
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // El backend ahora devuelve ambos mensajes en la respuesta
+    if (response.data?.userMessage && response.data?.assistantMessage) {
+      return {
+        userMessage: response.data.userMessage,
+        assistantMessage: {
+          ...response.data.assistantMessage,
+          role: 'assistant' // Asegurar que el role sea 'assistant' para el frontend
+        }
+      }
+    }
     
-    // Obtener la conversación actualizada
+    // Fallback: si el backend no devuelve los mensajes, obtener la conversación
     const conversation = await this.getConversation(sessionId)
     const messages = conversation.messages || []
     const userMessage = messages[messages.length - 2] // Último mensaje del usuario
@@ -94,7 +119,10 @@ export class ChatService {
     
     return {
       userMessage: userMessage || { role: 'user', content, timestamp: new Date().toISOString() },
-      assistantMessage
+      assistantMessage: assistantMessage ? {
+        ...assistantMessage,
+        role: assistantMessage.role === 'bot' ? 'assistant' : assistantMessage.role
+      } : undefined
     }
   }
 

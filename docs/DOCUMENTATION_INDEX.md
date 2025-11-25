@@ -22,6 +22,7 @@
 ### Roadmaps Principales
 - **[docs/roadmaps/INDEX.md](roadmaps/INDEX.md)** - Índice de roadmaps
 - **[docs/roadmaps/PROJECT_ROADMAP.md](roadmaps/PROJECT_ROADMAP.md)** - Roadmap completo del proyecto (15 fases)
+- **[docs/roadmaps/PENDIENTES_IMPLEMENTACION.md](roadmaps/PENDIENTES_IMPLEMENTACION.md)** ⭐ **NUEVO** - Funcionalidades pendientes de implementación
 - **[docs/roadmaps/ML_ROADMAP.md](roadmaps/ML_ROADMAP.md)** - Roadmap del sistema ML (incluye Fase 6: Análisis Multimodal)
 - **[docs/roadmaps/WEB_ROADMAP.md](roadmaps/WEB_ROADMAP.md)** - Roadmap de Web
 - **[docs/roadmaps/MOBILE_ROADMAP.md](roadmaps/MOBILE_ROADMAP.md)** - Roadmap de Mobile

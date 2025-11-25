@@ -262,7 +262,10 @@ app.get('/api', (req, res) => {
           analytics: '/api/analytics/* (ACTIVE)',
           temporalTrends: '/api/analytics/temporal-trends (ACTIVE)',
           diseaseReports: '/api/analytics/disease-reports (ACTIVE)',
-          dashboard: '/api/analytics/dashboard (ACTIVE)'
+          dashboard: '/api/analytics/dashboard (ACTIVE)',
+          mlMonitoring: '/api/analytics/ml/monitoring (ACTIVE)',
+          mlFeatures: '/api/analytics/ml/features (ACTIVE)',
+          mlFairness: '/api/analytics/ml/fairness (ACTIVE)'
     },
     database: {
       mongodb: 'Connected (placeholder)',
@@ -271,23 +274,203 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Temporary auth endpoints
-app.post('/api/auth/login', (req, res) => {
-  console.log('Login attempt:', req.body);
-  res.json({
-    message: 'Login endpoint - implementation in progress',
-    status: 'placeholder',
-    note: 'This is a temporary endpoint for testing'
-  });
+// Authentication Routes
+const authRoutesDev = require('./routes/authRoutesDev');
+app.use('/api/v1/auth', authRoutesDev);
+app.use('/api/auth', authRoutesDev); // Legacy support
+
+// Dashboard Routes - Simple implementation for development
+// IMPORTANTE: Estas rutas deben estar ANTES de las rutas de analytics para evitar conflictos
+app.get('/api/v1/dashboard/patient', async (req, res) => {
+  console.log('📊 Dashboard patient route called');
+  try {
+    const mongoose = require('mongoose');
+    const jwt = require('jsonwebtoken');
+    
+    // Intentar obtener userId del token de autenticación
+    let authenticatedUserId = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+        const decoded = jwt.verify(token, secret);
+        authenticatedUserId = decoded.userId || decoded.id || decoded._id;
+        console.log('✅ User authenticated for dashboard:', authenticatedUserId);
+      } catch (e) {
+        console.warn('⚠️ Invalid token in dashboard request:', e.message);
+        return res.status(401).json({
+          success: false,
+          message: 'Token de autenticación inválido'
+        });
+      }
+    }
+    
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+    }
+    
+    // Convertir userId a ObjectId
+    let userIdObj;
+    try {
+      userIdObj = typeof authenticatedUserId === 'string'
+        ? new mongoose.Types.ObjectId(authenticatedUserId)
+        : authenticatedUserId;
+    } catch (e) {
+      userIdObj = authenticatedUserId;
+    }
+    
+    // Obtener estadísticas básicas del paciente
+    let MedicalHistory, Appointment, Alert;
+    
+    try {
+      MedicalHistory = mongoose.model('MedicalHistory');
+    } catch (e) {
+      const schema = new mongoose.Schema({}, { strict: false, timestamps: true });
+      MedicalHistory = mongoose.model('MedicalHistory', schema);
+    }
+    
+    try {
+      Appointment = mongoose.model('Appointment');
+    } catch (e) {
+      const schema = new mongoose.Schema({}, { strict: false, timestamps: true });
+      Appointment = mongoose.model('Appointment', schema);
+    }
+    
+    try {
+      Alert = mongoose.model('Alert');
+    } catch (e) {
+      const schema = new mongoose.Schema({}, { strict: false, timestamps: true });
+      Alert = mongoose.model('Alert', schema);
+    }
+    
+    // Contar historias médicas del paciente (usar ObjectId)
+    const totalHistories = await MedicalHistory.countDocuments({
+      $or: [
+        { patientId: userIdObj },
+        { patientId: authenticatedUserId },
+        { patientId: authenticatedUserId.toString() }
+      ]
+    }).catch(() => 0);
+    
+    // Contar todas las citas del paciente
+    const totalAppointments = await Appointment.countDocuments({
+      $or: [
+        { patientId: userIdObj },
+        { patientId: authenticatedUserId },
+        { patientId: authenticatedUserId.toString() }
+      ]
+    }).catch(() => 0);
+    
+    // Contar citas próximas (con fecha mayor o igual a hoy)
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Resetear a inicio del día
+    
+    const upcomingAppointments = await Appointment.countDocuments({
+      $or: [
+        { patientId: userIdObj },
+        { patientId: authenticatedUserId },
+        { patientId: authenticatedUserId.toString() }
+      ],
+      status: { $in: ['scheduled', 'rescheduled'] },
+      $or: [
+        { date: { $gte: now } },
+        { scheduledAt: { $gte: now } }
+      ]
+    }).catch(() => 0);
+    
+    // Contar alertas activas (no reconocidas)
+    const activeAlerts = await Alert.countDocuments({
+      $or: [
+        { userId: userIdObj },
+        { userId: authenticatedUserId },
+        { userId: authenticatedUserId.toString() },
+        { patientId: userIdObj },
+        { patientId: authenticatedUserId },
+        { patientId: authenticatedUserId.toString() }
+      ],
+      $or: [
+        { acknowledged: false },
+        { acknowledged: { $exists: false } },
+        { status: { $ne: 'acknowledged' } }
+      ]
+    }).catch(() => 0);
+    
+    console.log(`📊 Dashboard stats for user ${authenticatedUserId}:`, {
+      totalHistories,
+      totalAppointments,
+      upcomingAppointments,
+      activeAlerts
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        totalHistories,
+        totalMedicalHistories: totalHistories,
+        upcomingAppointments,
+        totalAppointments,
+        activeAlerts,
+        totalAlerts: activeAlerts,
+        recentActivity: [],
+        healthScore: null,
+        lastCheckup: null
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching patient dashboard:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener datos del dashboard',
+      error: error.message
+    });
+  }
 });
 
-app.post('/api/auth/register', (req, res) => {
-  console.log('Register attempt:', req.body);
-  res.json({
-    message: 'Register endpoint - implementation in progress',
-    status: 'placeholder',
-    note: 'This is a temporary endpoint for testing'
-  });
+app.get('/api/v1/dashboard/doctor', async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        totalPatients: 0,
+        todayAppointments: 0,
+        pendingReports: 0,
+        recentActivity: []
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching doctor dashboard:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener datos del dashboard',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/dashboard/admin', async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        totalUsers: 0,
+        totalPatients: 0,
+        totalDoctors: 0,
+        systemHealth: 'operational'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching admin dashboard:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener datos del dashboard',
+      error: error.message
+    });
+  }
 });
 
 // Temporary patients endpoint
@@ -299,13 +482,167 @@ app.get('/api/patients', (req, res) => {
   });
 });
 
-// Temporary medical history endpoint
-app.get('/api/medical-history', (req, res) => {
-  res.json({
-    message: 'Medical history endpoint',
-    status: 'placeholder',
-    data: []
-  });
+// Medical History Routes - Simple implementation for development
+app.get('/api/v1/medical-histories', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const jwt = require('jsonwebtoken');
+    const { patientId, limit = 50, page = 1 } = req.query;
+    
+    // Intentar obtener userId del token de autenticación
+    let authenticatedUserId = null;
+    let userRole = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+        const decoded = jwt.verify(token, secret);
+        authenticatedUserId = decoded.userId || decoded.id || decoded._id;
+        
+        // Obtener el rol del usuario
+        try {
+          const UserModel = mongoose.model('User');
+          const user = await UserModel.findById(authenticatedUserId).lean();
+          if (user) {
+            userRole = user.role;
+          }
+        } catch (e) {
+          // Si no se puede obtener el usuario, continuar sin rol
+        }
+      } catch (e) {
+        console.warn('Invalid token in medical histories request:', e.message);
+      }
+    }
+    
+    // Intentar obtener el modelo MedicalHistory si existe
+    let MedicalHistory;
+    try {
+      MedicalHistory = mongoose.model('MedicalHistory');
+    } catch (e) {
+      // Si no existe, crear un schema simple
+      const medicalHistorySchema = new mongoose.Schema({
+        patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+        doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+        patientName: String,
+        age: Number,
+        diagnosis: String,
+        symptoms: [{
+          name: String,
+          severity: String,
+          duration: String
+        }],
+        description: String,
+        date: { type: Date, default: Date.now },
+        location: {
+          latitude: Number,
+          longitude: Number,
+          address: String
+        },
+        images: [String],
+        audioNotes: String,
+        isOffline: Boolean,
+        syncStatus: String
+      }, { timestamps: true });
+      
+      medicalHistorySchema.index({ patientId: 1, createdAt: -1 });
+      MedicalHistory = mongoose.model('MedicalHistory', medicalHistorySchema);
+    }
+    
+    // Construir query
+    const query = {};
+    
+    // Si el usuario autenticado es un paciente, solo mostrar sus historias
+    if (userRole === 'patient' && authenticatedUserId) {
+      // Para pacientes, filtrar automáticamente por su ID usando ObjectId
+      try {
+        const userIdObj = typeof authenticatedUserId === 'string' 
+          ? new mongoose.Types.ObjectId(authenticatedUserId)
+          : authenticatedUserId;
+        query.patientId = userIdObj;
+        console.log(`🔒 Filtering medical histories for patient: ${authenticatedUserId}`);
+      } catch (e) {
+        query.patientId = authenticatedUserId;
+      }
+    } else if (patientId) {
+      // Si se proporciona patientId explícitamente (para doctores o admins)
+      try {
+        const patientIdObj = typeof patientId === 'string'
+          ? new mongoose.Types.ObjectId(patientId)
+          : patientId;
+        query.patientId = patientIdObj;
+      } catch (e) {
+        query.patientId = patientId;
+      }
+    } else if (authenticatedUserId) {
+      // Si hay usuario autenticado pero no sabemos el rol, asumir paciente
+      try {
+        const userIdObj = typeof authenticatedUserId === 'string'
+          ? new mongoose.Types.ObjectId(authenticatedUserId)
+          : authenticatedUserId;
+        query.patientId = userIdObj;
+        console.log(`🔒 Filtering medical histories for authenticated user: ${authenticatedUserId}`);
+      } catch (e) {
+        query.patientId = authenticatedUserId;
+      }
+    }
+    
+    // Obtener historias médicas
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const histories = await MedicalHistory.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(skip)
+      .lean();
+    
+    const total = await MedicalHistory.countDocuments(query);
+    
+    console.log(`📋 Medical histories query - User: ${authenticatedUserId}, Role: ${userRole}, Found: ${histories.length}`);
+    
+    res.json({
+      success: true,
+      data: histories,
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (error) {
+    console.error('Error fetching medical histories:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener historias médicas',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/medical-histories/:id', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const MedicalHistory = mongoose.model('MedicalHistory');
+    const history = await MedicalHistory.findById(req.params.id).lean();
+    
+    if (!history) {
+      return res.status(404).json({
+        success: false,
+        message: 'Historia médica no encontrada'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: history
+    });
+  } catch (error) {
+    console.error('Error fetching medical history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener historia médica',
+      error: error.message
+    });
+  }
 });
 
 // Symptom Reports Routes
@@ -315,6 +652,14 @@ app.use('/api/symptom-reports', symptomReportsRoutes);
 // Chat Conversations Routes
 const chatConversationsRoutes = require('./routes/chatConversationsRoutes');
 app.use('/api/chat-conversations', chatConversationsRoutes);
+
+// Chat Audio Routes (Transcription & Cough Analysis)
+const chatAudioRoutes = require('./routes/chatAudioRoutes');
+app.use('/api/v1/chat', chatAudioRoutes);
+
+// Chat Image Routes (Image Analysis)
+const chatImageRoutes = require('./routes/chatImageRoutes');
+app.use('/api/v1/chat', chatImageRoutes);
 
 // Analytics Routes
 const analyticsRoutes = require('./routes/analyticsRoutesNew');
@@ -327,6 +672,11 @@ app.use('/api/analytics', simpleAnalyticsRoutes);
 // Mock Analytics Routes (for demonstration)
 const mockAnalyticsRoutes = require('./routes/mockAnalyticsRoutes');
 app.use('/api/analytics', mockAnalyticsRoutes);
+
+// ML Analytics Routes (for SHAP and ML monitoring)
+const mlAnalyticsRoutes = require('./routes/mlAnalyticsRoutes');
+app.use('/api/analytics', mlAnalyticsRoutes);
+app.use('/api/v1/analytics', mlAnalyticsRoutes);
 
 // Alert Routes - Rutas temporales para desarrollo
 // Nota: Las rutas completas están en alertRoutes.ts (TypeScript)
@@ -797,6 +1147,94 @@ app.get('/api/v1/appointments', (req, res) => {
   });
 });
 
+// Ruta para obtener citas próximas del usuario autenticado
+app.get('/api/v1/appointments/me/upcoming', async (req, res) => {
+  console.log('📅 Upcoming appointments route called');
+  try {
+    const mongoose = require('mongoose');
+    const jwt = require('jsonwebtoken');
+    
+    // Intentar obtener userId del token de autenticación
+    let userId = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+        const decoded = jwt.verify(token, secret);
+        userId = decoded.userId || decoded.id || decoded._id;
+        console.log('✅ User authenticated:', userId);
+      } catch (e) {
+        console.warn('⚠️ Invalid token in appointments request:', e.message);
+        return res.status(401).json({
+          success: false,
+          message: 'Token de autenticación inválido',
+          error: e.message
+        });
+      }
+    } else {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de autenticación requerido'
+      });
+    }
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'No se pudo identificar al usuario'
+      });
+    }
+    
+    // Intentar obtener citas de la base de datos
+    let Appointment;
+    try {
+      Appointment = mongoose.model('Appointment');
+    } catch (e) {
+      // Si no existe el modelo, usar datos mock
+      console.log('⚠️ Appointment model not found, using mock data');
+      const now = new Date();
+      const mockAppointments = SAMPLE_APPOINTMENTS.filter(
+        (appointment) => 
+          appointment.patientId === String(userId) &&
+          (appointment.status === 'scheduled' || appointment.status === 'rescheduled') &&
+          new Date(appointment.scheduledAt) >= now
+      ).sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+      
+      return res.json({
+        success: true,
+        data: mockAppointments
+      });
+    }
+    
+    // Buscar citas próximas en la base de datos
+    const now = new Date();
+    const upcomingAppointments = await Appointment.find({
+      patientId: userId,
+      status: { $in: ['scheduled', 'rescheduled'] },
+      scheduledAt: { $gte: now }
+    })
+      .sort({ scheduledAt: 1 }) // Ordenar por fecha ascendente
+      .limit(10) // Limitar a 10 citas
+      .lean();
+    
+    console.log(`✅ Found ${upcomingAppointments.length} upcoming appointments for user ${userId}`);
+    
+    res.json({
+      success: true,
+      data: upcomingAppointments
+    });
+  } catch (error) {
+    console.error('❌ Error fetching upcoming appointments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener citas próximas',
+      error: error.message
+    });
+  }
+});
+
 const buildAvailabilitySlots = ({ doctorId, start, end, slotMinutes = 30 }) => {
   const startDate = new Date(start);
   const endDate = new Date(end);
@@ -833,6 +1271,191 @@ const buildAvailabilitySlots = ({ doctorId, start, end, slotMinutes = 30 }) => {
 
   return slots;
 };
+
+// Helper function to get or create WearableMetrics model
+const getWearableMetricsModel = () => {
+  const mongoose = require('mongoose');
+  try {
+    return mongoose.model('WearableMetrics');
+  } catch (e) {
+    // Si no existe el modelo, crearlo
+    const schema = new mongoose.Schema({
+      userId: { type: String, required: true, index: true },
+      heartRate: Number,
+      steps: Number,
+      spO2: Number,
+      provider: String,
+      lastSync: { type: Date, default: Date.now }
+    }, { timestamps: true });
+    
+    return mongoose.model('WearableMetrics', schema);
+  }
+};
+
+// Wearables Routes
+app.get('/api/v1/wearables/metrics', async (req, res) => {
+  console.log('⌚ Wearables metrics route called');
+  try {
+    const mongoose = require('mongoose');
+    const jwt = require('jsonwebtoken');
+    
+    // Intentar obtener userId del token de autenticación
+    let userId = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+        const decoded = jwt.verify(token, secret);
+        userId = decoded.userId || decoded.id || decoded._id;
+        console.log('✅ User authenticated for wearables:', userId);
+      } catch (e) {
+        console.warn('⚠️ Invalid token in wearables request:', e.message);
+        return res.status(401).json({
+          success: false,
+          message: 'Token de autenticación inválido',
+          error: e.message
+        });
+      }
+    } else {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de autenticación requerido'
+      });
+    }
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'No se pudo identificar al usuario'
+      });
+    }
+    
+    // Obtener o crear el modelo
+    const WearableMetrics = getWearableMetricsModel();
+    
+    // Buscar las métricas más recientes del usuario
+    const latestMetrics = await WearableMetrics.findOne({ userId })
+      .sort({ lastSync: -1 })
+      .lean();
+    
+    if (!latestMetrics) {
+      console.log(`ℹ️ No wearable metrics found for user ${userId}`);
+      return res.json({
+        success: true,
+        heartRate: null,
+        steps: null,
+        spO2: null,
+        lastSync: null,
+        provider: null
+      });
+    }
+    
+    console.log(`✅ Found wearable metrics for user ${userId}:`, {
+      heartRate: latestMetrics.heartRate,
+      steps: latestMetrics.steps,
+      spO2: latestMetrics.spO2,
+      provider: latestMetrics.provider
+    });
+    
+    res.json({
+      success: true,
+      heartRate: latestMetrics.heartRate || null,
+      steps: latestMetrics.steps || null,
+      spO2: latestMetrics.spO2 || null,
+      lastSync: latestMetrics.lastSync?.toISOString() || null,
+      provider: latestMetrics.provider || null
+    });
+  } catch (error) {
+    console.error('❌ Error fetching wearable metrics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener métricas de wearables',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/v1/wearables/sync', async (req, res) => {
+  console.log('⌚ Wearables sync route called');
+  try {
+    const mongoose = require('mongoose');
+    const jwt = require('jsonwebtoken');
+    
+    // Intentar obtener userId del token de autenticación
+    let userId = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+        const decoded = jwt.verify(token, secret);
+        userId = decoded.userId || decoded.id || decoded._id;
+        console.log('✅ User authenticated for wearables sync:', userId);
+      } catch (e) {
+        console.warn('⚠️ Invalid token in wearables sync request:', e.message);
+        return res.status(401).json({
+          success: false,
+          message: 'Token de autenticación inválido',
+          error: e.message
+        });
+      }
+    } else {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de autenticación requerido'
+      });
+    }
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'No se pudo identificar al usuario'
+      });
+    }
+    
+    const { heartRate, steps, spO2, provider } = req.body;
+    
+    // Obtener o crear el modelo
+    const WearableMetrics = getWearableMetricsModel();
+    
+    // Guardar o actualizar métricas
+    const metricsData = {
+      userId,
+      heartRate: heartRate || null,
+      steps: steps || null,
+      spO2: spO2 || null,
+      provider: provider || 'Unknown',
+      lastSync: new Date()
+    };
+    
+    const savedMetrics = await WearableMetrics.findOneAndUpdate(
+      { userId },
+      metricsData,
+      { upsert: true, new: true }
+    );
+    
+    console.log(`✅ Wearable metrics saved for user ${userId}`);
+    
+    res.json({
+      success: true,
+      heartRate: savedMetrics.heartRate || null,
+      steps: savedMetrics.steps || null,
+      spO2: savedMetrics.spO2 || null,
+      lastSync: savedMetrics.lastSync?.toISOString() || new Date().toISOString(),
+      provider: savedMetrics.provider || null
+    });
+  } catch (error) {
+    console.error('❌ Error syncing wearable metrics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al sincronizar métricas de wearables',
+      error: error.message
+    });
+  }
+});
 
 app.get('/api/v1/appointments/doctor/:doctorId/availability', (req, res) => {
   const { doctorId } = req.params;

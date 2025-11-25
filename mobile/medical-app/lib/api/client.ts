@@ -39,13 +39,21 @@ export class ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout)
 
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      // Detectar si es una ruta de chat y usar la baseURL correcta
+      const isChatEndpoint = endpoint.includes('/chat-conversations')
+      const baseURL = isChatEndpoint ? API_CONFIG.chatBaseURL : this.baseURL
+      const fullURL = `${baseURL}${endpoint}`
+      console.log(`[API] ${options.method || 'GET'} ${fullURL}`)
+      
+      const response = await fetch(fullURL, {
         ...options,
         headers,
         signal: controller.signal,
       })
 
       clearTimeout(timeoutId)
+      
+      console.log(`[API] Response status: ${response.status} ${response.statusText}`)
 
       // Detectar errores de red
       if (!response.ok && response.status === 0) {
@@ -75,14 +83,21 @@ export class ApiClient {
       }
 
       return this.handleResponse<T>(response)
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId)
       
-      if (error.name === 'AbortError') {
-        throw new Error('La solicitud tardó demasiado. Intenta nuevamente.')
-      }
+      console.error(`[API] Error en ${options.method || 'GET'} ${this.baseURL}${endpoint}:`, error)
       
       if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('La solicitud tardó demasiado. Intenta nuevamente.')
+        }
+        
+        // Si es un error de red (fetch failed)
+        if (error.message.includes('fetch') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          throw new Error(`No se pudo conectar al servidor. Verifica que el backend esté corriendo en ${this.baseURL}`)
+        }
+        
         throw error
       }
       

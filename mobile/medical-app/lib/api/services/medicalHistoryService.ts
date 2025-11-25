@@ -51,7 +51,7 @@ export class MedicalHistoryService {
     if (filters?.diagnosis) params.append('diagnosis', filters.diagnosis)
 
     const query = params.toString()
-    const endpoint = query ? `/api/v1${API_ENDPOINTS.medicalHistories.list}?${query}` : `/api/v1${API_ENDPOINTS.medicalHistories.list}`
+    const endpoint = query ? `${API_ENDPOINTS.medicalHistories.list}?${query}` : API_ENDPOINTS.medicalHistories.list
 
     const response = await apiClient.get<PaginatedResponse<MedicalHistory> | MedicalHistory[]>(endpoint)
     
@@ -63,12 +63,12 @@ export class MedicalHistoryService {
   }
 
   async get(id: string): Promise<MedicalHistory> {
-    return apiClient.get<MedicalHistory>(`/api/v1${API_ENDPOINTS.medicalHistories.get(id)}`)
+    return apiClient.get<MedicalHistory>(API_ENDPOINTS.medicalHistories.get(id))
   }
 
   async create(data: CreateMedicalHistoryRequest): Promise<MedicalHistory> {
     const response = await apiClient.post<{ success: boolean; data: MedicalHistory } | MedicalHistory>(
-      `/api/v1${API_ENDPOINTS.medicalHistories.create}`,
+      API_ENDPOINTS.medicalHistories.create,
       data
     )
     // Manejar diferentes formatos de respuesta
@@ -80,7 +80,7 @@ export class MedicalHistoryService {
 
   async update(id: string, data: UpdateMedicalHistoryRequest): Promise<MedicalHistory> {
     const response = await apiClient.put<{ success: boolean; data: MedicalHistory } | MedicalHistory>(
-      `/api/v1${API_ENDPOINTS.medicalHistories.update(id)}`,
+      API_ENDPOINTS.medicalHistories.update(id),
       data
     )
     // Manejar diferentes formatos de respuesta
@@ -96,7 +96,7 @@ export class MedicalHistoryService {
 
   async sync(histories: MedicalHistory[]): Promise<{ synced: number; errors: number }> {
     const response = await apiClient.post<{ success: boolean; data: { synced: number; errors: number } } | { synced: number; errors: number }>(
-      `/api/v1${API_ENDPOINTS.medicalHistories.sync}`,
+      API_ENDPOINTS.medicalHistories.sync,
       { histories }
     )
     // Manejar diferentes formatos de respuesta

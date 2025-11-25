@@ -129,7 +129,8 @@ export function HistoryView({ t, setCurrentView }: HistoryViewProps) {
       <div className="flex items-center justify-between pt-2">
         <h2 className="text-2xl font-bold tracking-tight">{t.history.title}</h2>
         <div className="flex gap-2">
-          {viewMode === 'histories' && user && (
+          {/* Solo los doctores pueden crear nuevas historias médicas */}
+          {viewMode === 'histories' && user && user.role === 'doctor' && (
             <ModernButton
               size="sm"
               onClick={() => {
@@ -227,13 +228,16 @@ export function HistoryView({ t, setCurrentView }: HistoryViewProps) {
                 <div className="flex flex-col gap-1 shrink-0">
                   {user && (
                     <>
-                      <button
-                        onClick={() => handleEditHistory(history)}
-                        className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4 text-primary" />
-                      </button>
+                      {/* Solo los doctores pueden editar historias médicas */}
+                      {user.role === 'doctor' && (
+                        <button
+                          onClick={() => handleEditHistory(history)}
+                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <Edit className="w-4 h-4 text-primary" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleViewHistory(history)}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"

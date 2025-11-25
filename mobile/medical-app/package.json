@@ -12,7 +12,14 @@
     "capacitor:copy": "npx cap copy",
     "capacitor:open": "npx cap open android",
     "android:build": "npm run build:static && npm run capacitor:sync && cd android && gradlew.bat assembleDebug",
-    "android:release": "npm run build:static && npm run capacitor:sync && cd android && gradlew.bat assembleRelease"
+    "android:release": "npm run build:static && npm run capacitor:sync && cd android && gradlew.bat assembleRelease",
+    "apk:debug": "npm run build:static && npm run capacitor:sync && powershell -ExecutionPolicy Bypass -File scripts/build-apk-with-env.ps1",
+    "apk:release": "npm run build:static && npm run capacitor:sync && cd android && gradlew.bat assembleRelease",
+    "apk": "npm run apk:debug",
+    "setup:android": "node scripts/setup-android-sdk.js",
+    "fix:android": "powershell -ExecutionPolicy Bypass -File scripts/fix-android-sdk.ps1",
+    "config:ip": "node scripts/config-ip.js",
+    "test:connection": "node scripts/test-connection.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
