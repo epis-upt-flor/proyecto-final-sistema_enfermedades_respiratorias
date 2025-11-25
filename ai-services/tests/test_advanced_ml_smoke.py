@@ -9,9 +9,12 @@ import numpy as np
 from typing import Dict, Any
 
 try:
-    from ..main import app  # type: ignore
+    from main import app  # type: ignore
 except Exception:
-    from ai-services.main import app  # type: ignore
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from main import app  # type: ignore
 
 client = TestClient(app)
 

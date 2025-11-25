@@ -224,7 +224,8 @@ class TestFactoryIntegration:
         assert ai_manager is not None
         assert service is not None
     
-    def test_factory_configuration_consistency(self):
+    @pytest.mark.asyncio
+    async def test_factory_configuration_consistency(self):
         """Test configuration consistency across factories"""
         # All factories should handle None configuration gracefully
         strategy = StrategyFactory.create_strategy()  # Default config
