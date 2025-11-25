@@ -195,9 +195,9 @@ jobs:
       - name: Determine mobile project structure
         id: mobile-structure
         run: |
-          if [ -f "mobile/RespiCare-Mobile/package.json" ]; then
-            echo "project_path=mobile/RespiCare-Mobile" >> $GITHUB_OUTPUT
-            echo "lockfile_path=mobile/RespiCare-Mobile/package-lock.json" >> $GITHUB_OUTPUT
+          if [ -f "mobile/medical-app/package.json" ]; then
+            echo "project_path=mobile/medical-app" >> $GITHUB_OUTPUT
+            echo "lockfile_path=mobile/medical-app/package-lock.json" >> $GITHUB_OUTPUT
           elif [ -f "mobile/package.json" ]; then
             echo "project_path=mobile" >> $GITHUB_OUTPUT
             echo "lockfile_path=mobile/package-lock.json" >> $GITHUB_OUTPUT

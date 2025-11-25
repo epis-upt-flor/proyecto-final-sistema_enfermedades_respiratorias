@@ -220,20 +220,20 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: mobile/RespiCare-Mobile/package-lock.json
+        cache-dependency-path: mobile/medical-app/package-lock.json
         
     - name: Install dependencies
-      working-directory: ./mobile/RespiCare-Mobile
+      working-directory: ./mobile/medical-app
       run: npm ci
       
     - name: Run linting
-      working-directory: ./mobile/RespiCare-Mobile
+      working-directory: ./mobile/medical-app
       run: |
         npm run lint
         npm run lint:fix
         
     - name: Run tests with coverage
-      working-directory: ./mobile/RespiCare-Mobile
+      working-directory: ./mobile/medical-app
       run: |
         npm test -- --coverage \
           --coverageReporters=text \
@@ -245,7 +245,7 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./mobile/RespiCare-Mobile/coverage/lcov.info
+        file: ./mobile/medical-app/coverage/lcov.info
         flags: mobile
         name: mobile-coverage
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -256,7 +256,7 @@ jobs:
       if: always()
       with:
         name: mobile-test-results
-        path: mobile/RespiCare-Mobile/coverage/
+        path: mobile/medical-app/coverage/
 
   integration-tests:
     runs-on: ubuntu-latest
