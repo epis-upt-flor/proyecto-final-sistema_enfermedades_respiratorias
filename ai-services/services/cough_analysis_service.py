@@ -16,13 +16,19 @@ logger = structlog.get_logger()
 
 class CoughAnalysisService:
     """
-    Service for analyzing cough audio using signal processing
-    No dataset needed - uses audio feature extraction and medical knowledge
+    Service for analyzing cough audio using trained ML models
+    Uses trained cough classifier models (.pkl) for real medical diagnoses
+    Falls back to signal processing if models are not available
     """
     
     def __init__(self):
         self._librosa_available = False
+        self._trained_model = None
+        self._label_encoder = None
+        self._feature_names = None
+        self._model_loaded = False
         self._check_dependencies()
+        self._load_trained_model()
     
     def _check_dependencies(self):
         """Check if audio processing libraries are available"""
@@ -34,6 +40,44 @@ class CoughAnalysisService:
         except ImportError:
             logger.warning("librosa/soundfile not available. Install with: pip install librosa soundfile")
             self._librosa_available = False
+    
+    def _load_trained_model(self):
+        """Load trained cough classifier model if available"""
+        try:
+            import joblib
+            import os
+            
+            # Possible model paths
+            model_paths = [
+                'models/cough_classifier.pkl',
+                '/app/models/cough_classifier.pkl',
+                'ai-services/models/cough_classifier.pkl',
+                os.path.join(os.path.dirname(__file__), '../models/cough_classifier.pkl')
+            ]
+            
+            for path in model_paths:
+                if os.path.exists(path):
+                    try:
+                        model_data = joblib.load(path)
+                        self._trained_model = model_data.get('model')
+                        self._label_encoder = model_data.get('label_encoder')
+                        self._feature_names = model_data.get('feature_names', [])
+                        self._model_loaded = True
+                        logger.info("Trained cough classifier model loaded", path=path)
+                        return
+                    except Exception as e:
+                        logger.warning("Error loading trained model", path=path, error=str(e))
+                        continue
+            
+            logger.info("No trained cough classifier model found, using signal processing analysis")
+            self._model_loaded = False
+            
+        except ImportError:
+            logger.warning("joblib not available, cannot load trained models")
+            self._model_loaded = False
+        except Exception as e:
+            logger.error("Error loading trained cough model", error=str(e))
+            self._model_loaded = False
     
     def _extract_audio_features(self, audio_path: str) -> Dict[str, Any]:
         """
@@ -173,7 +217,7 @@ class CoughAnalysisService:
             urgency = "medium"
         
         # Generate recommendations based on analysis
-        recommendations = self._generate_recommendations(characteristics, severity, urgency)
+        recommendations = self._generate_medical_recommendations(characteristics, severity, urgency)
         
         # Calculate confidence based on feature quality
         confidence = min(0.95, 0.6 + (duration * 0.05) + (len(characteristics) * 0.05))
@@ -192,39 +236,194 @@ class CoughAnalysisService:
             }
         }
     
-    def _generate_recommendations(
+    def _analyze_with_trained_model(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Use trained ML model to classify cough and provide medical diagnosis
+        
+        Args:
+            features: Extracted audio features
+            
+        Returns:
+            Dict with cough classification, diagnosis, and recommendations
+        """
+        try:
+            import numpy as np
+            
+            # Prepare feature vector from extracted features
+            # Map features to the format expected by the trained model
+            feature_vector = self._prepare_feature_vector(features)
+            
+            # Predict using trained model
+            prediction_idx = self._trained_model.predict(feature_vector.reshape(1, -1))[0]
+            prediction_probs = self._trained_model.predict_proba(feature_vector.reshape(1, -1))[0]
+            
+            # Get predicted cough type/condition
+            cough_type = self._label_encoder.inverse_transform([prediction_idx])[0]
+            confidence = float(prediction_probs[prediction_idx])
+            
+            # Get top 3 predictions
+            top_indices = np.argsort(prediction_probs)[-3:][::-1]
+            top_predictions = [
+                {
+                    'type': self._label_encoder.inverse_transform([idx])[0],
+                    'confidence': float(prediction_probs[idx])
+                }
+                for idx in top_indices
+            ]
+            
+            # Map cough type to severity and urgency
+            severity, urgency = self._classify_severity_from_type(cough_type, confidence)
+            
+            # Generate medical recommendations based on diagnosis
+            characteristics_str = ", ".join(characteristics)
+            recommendations = self._generate_medical_recommendations(characteristics, severity, urgency, cough_type)
+            
+            # Determine characteristics
+            characteristics = self._get_characteristics_from_type(cough_type)
+            
+            logger.info("Cough analyzed with trained model",
+                       cough_type=cough_type,
+                       confidence=confidence,
+                       severity=severity,
+                       urgency=urgency)
+            
+            return {
+                "detected": True,
+                "cough_type": cough_type,
+                "severity": severity,
+                "characteristics": characteristics,
+                "recommendations": recommendations,
+                "urgency_level": urgency,
+                "confidence": confidence,
+                "top_predictions": top_predictions,
+                "diagnosis": f"Tos clasificada como: {cough_type}",
+                "model_used": "trained_ml_model",
+                "features_summary": {
+                    "duration_seconds": round(features.get("duration", 0), 2),
+                    "frequency_range": "high" if features.get("spectral_centroid_mean", 0) > 2500 else "low" if features.get("spectral_centroid_mean", 0) < 1500 else "medium",
+                }
+            }
+            
+        except Exception as e:
+            logger.error("Error using trained model, falling back to signal processing", error=str(e))
+            return self._analyze_cough_characteristics(features)
+    
+    def _prepare_feature_vector(self, features: Dict[str, Any]) -> np.ndarray:
+        """Prepare feature vector from extracted audio features for ML model"""
+        import numpy as np
+        
+        # Extract key features in the order expected by the model
+        # This should match the feature order from training
+        feature_list = [
+            features.get("duration", 0),
+            features.get("zero_crossing_rate", 0),
+            features.get("spectral_centroid_mean", 0),
+            features.get("spectral_centroid_std", 0),
+            features.get("spectral_rolloff_mean", 0),
+            features.get("spectral_bandwidth_mean", 0),
+            features.get("rms_mean", 0),
+            features.get("rms_max", 0),
+            features.get("tempo", 0),
+        ]
+        
+        # Add MFCC features (13 coefficients)
+        mfcc_mean = features.get("mfcc_mean", [0] * 13)
+        feature_list.extend(mfcc_mean[:13])
+        
+        # Add chroma features (12)
+        chroma_mean = features.get("chroma_mean", [0] * 12)
+        feature_list.extend(chroma_mean[:12])
+        
+        return np.array(feature_list[:self._trained_model.n_features_in_ if hasattr(self._trained_model, 'n_features_in_') else len(feature_list)])
+    
+    def _classify_severity_from_type(self, cough_type: str, confidence: float) -> tuple:
+        """Classify severity and urgency based on cough type"""
+        cough_type_lower = cough_type.lower()
+        
+        # Map cough types to severity
+        if any(term in cough_type_lower for term in ['severe', 'severo', 'critico', 'acute', 'agudo']):
+            return "severe", "high"
+        elif any(term in cough_type_lower for term in ['moderate', 'moderado', 'chronic', 'cronico']):
+            return "moderate", "medium"
+        elif any(term in cough_type_lower for term in ['mild', 'leve', 'normal']):
+            return "mild", "low"
+        else:
+            # Default based on confidence
+            if confidence > 0.8:
+                return "moderate", "medium"
+            else:
+                return "mild", "low"
+    
+    def _get_characteristics_from_type(self, cough_type: str) -> List[str]:
+        """Get characteristics description from cough type"""
+        cough_type_lower = cough_type.lower()
+        characteristics = []
+        
+        if 'dry' in cough_type_lower or 'seca' in cough_type_lower:
+            characteristics.append("Tos seca")
+        if 'productive' in cough_type_lower or 'productiva' in cough_type_lower:
+            characteristics.append("Tos productiva")
+        if 'paroxysmal' in cough_type_lower or 'paroxística' in cough_type_lower:
+            characteristics.append("Tos paroxística")
+        if 'chronic' in cough_type_lower or 'cronica' in cough_type_lower:
+            characteristics.append("Tos crónica")
+        if 'acute' in cough_type_lower or 'aguda' in cough_type_lower:
+            characteristics.append("Tos aguda")
+        
+        return characteristics if characteristics else ["Tos detectada"]
+    
+    def _generate_medical_recommendations(
         self, 
         characteristics: List[str], 
         severity: str, 
-        urgency: str
+        urgency: str,
+        cough_type: Optional[str] = None
     ) -> List[str]:
-        """Generate medical recommendations based on cough analysis"""
+        """Generate medical recommendations based on trained model diagnosis"""
         recommendations = []
         
         # General recommendations
         recommendations.append("Mantén hidratación adecuada")
         recommendations.append("Evita irritantes como humo, polvo y productos químicos")
         
+        # Type-specific medical recommendations (from trained model)
+        if cough_type:
+            cough_type_lower = cough_type.lower()
+            
+            if 'dry' in cough_type_lower or 'seca' in cough_type_lower:
+                recommendations.append("Para tos seca: considera usar un humidificador")
+                recommendations.append("Evita ambientes secos y mantén las vías respiratorias húmedas")
+            elif 'productive' in cough_type_lower or 'productiva' in cough_type_lower:
+                recommendations.append("La tos productiva puede indicar infección respiratoria")
+                recommendations.append("Consulta con un médico para descartar infección bacteriana")
+            elif 'chronic' in cough_type_lower or 'cronica' in cough_type_lower:
+                recommendations.append("Tos crónica requiere evaluación médica especializada")
+                recommendations.append("Puede estar relacionada con condiciones subyacentes que necesitan tratamiento")
+            elif 'paroxysmal' in cough_type_lower or 'paroxística' in cough_type_lower:
+                recommendations.append("Tos paroxística puede ser síntoma de enfermedades graves")
+                recommendations.append("Consulta con un médico urgentemente para evaluación completa")
+        
+        # Characteristic-based recommendations
+        characteristics_str = " ".join(characteristics).lower()
+        if "productiva" in characteristics_str:
+            recommendations.append("La tos productiva puede indicar infección - consulta si persiste")
+        if "prolongada" in characteristics_str:
+            recommendations.append("Una tos prolongada puede requerir evaluación médica")
+        if "intensa" in characteristics_str:
+            recommendations.append("Evita esfuerzos físicos hasta que la tos mejore")
+        
         # Severity-based recommendations
         if severity == "severe" or urgency == "high":
-            recommendations.append("Consulta con un médico de inmediato")
-            recommendations.append("Monitorea otros síntomas como fiebre, dificultad respiratoria o dolor en el pecho")
+            recommendations.insert(0, "⚠️ Consulta con un médico de inmediato")
+            recommendations.append("Monitorea otros síntomas: fiebre, dificultad respiratoria, dolor en el pecho")
+            recommendations.append("Busca atención médica urgente si hay dificultad para respirar")
         elif severity == "moderate":
-            recommendations.append("Consulta con un médico si la tos persiste más de 3 días")
+            recommendations.insert(0, "Consulta con un médico si la tos persiste más de 3 días")
             recommendations.append("Considera usar un humidificador en tu habitación")
+            recommendations.append("Evita esfuerzos físicos hasta que la tos mejore")
         else:
             recommendations.append("Monitorea la tos durante los próximos días")
             recommendations.append("Descansa y mantén una buena hidratación")
-        
-        # Characteristic-based recommendations
-        if "productiva" in " ".join(characteristics).lower():
-            recommendations.append("La tos productiva puede indicar infección - consulta si persiste")
-        
-        if "prolongada" in " ".join(characteristics).lower():
-            recommendations.append("Una tos prolongada puede requerir evaluación médica")
-        
-        if "intensa" in " ".join(characteristics).lower():
-            recommendations.append("Evita esfuerzos físicos hasta que la tos mejore")
         
         return recommendations
     
@@ -262,13 +461,18 @@ class CoughAnalysisService:
                 # Extract audio features
                 features = self._extract_audio_features(tmp_file_path)
                 
-                # Analyze cough characteristics
-                analysis = self._analyze_cough_characteristics(features)
+                # Use trained ML model if available
+                if self._model_loaded and self._trained_model:
+                    analysis = self._analyze_with_trained_model(features)
+                else:
+                    # Fallback to signal processing analysis
+                    analysis = self._analyze_cough_characteristics(features)
                 
                 logger.info("Cough analysis completed",
                            detected=analysis["detected"],
-                           severity=analysis["severity"],
-                           urgency=analysis["urgency_level"])
+                           severity=analysis.get("severity", "unknown"),
+                           urgency=analysis.get("urgency_level", "unknown"),
+                           using_trained_model=self._model_loaded)
                 
                 return analysis
                 
