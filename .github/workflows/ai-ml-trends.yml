@@ -38,18 +38,18 @@ jobs:
 
       - name: Run trends analysis (últimos 30 días)
         run: |
-          python analyze_prediction_trends.py --logs-dir monitoring --days 30 --confidence-threshold 0.8
+          python scripts/analysis/analyze_prediction_trends.py --logs-dir monitoring --days 30 --confidence-threshold 0.8
 
       - name: Collect trend artifacts
         run: |
-          mkdir -p ../artifacts
-          cp prediction_trends_*.csv ../artifacts/ || true
-          cp prediction_trends_*.md ../artifacts/ || true
+          mkdir -p artifacts
+          cp prediction_trends_*.csv artifacts/ || true
+          cp prediction_trends_*.md artifacts/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ai-prediction-trends
-          path: artifacts
+          path: ai-services/artifacts
 
 

@@ -39,7 +39,8 @@
     "isomorphic-dompurify": "^2.9.0",
     "jest": "^25.0.0",
     "jest-axe": "^8.0.0",
-    "jest-junit": "^16.0.0"
+    "jest-junit": "^16.0.0",
+    "typescript": "^4.9.5"
   },
   "jest": {
     "moduleNameMapper": {
@@ -71,6 +72,7 @@
     "tough-cookie": ">=4.1.3",
     "nth-check": ">=2.0.1",
     "postcss": ">=8.4.31",
-    "micromatch": ">=4.0.8"
+    "micromatch": ">=4.0.8",
+    "typescript": "^4.9.5"
   }
 }

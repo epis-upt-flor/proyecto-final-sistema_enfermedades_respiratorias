@@ -24,22 +24,21 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
+        working-directory: ./ai-services
         run: |
-          cd ai-services
+          python -m pip install --upgrade pip
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
           if [ -f "requirements-test.txt" ]; then
             pip install -r requirements-test.txt
-          elif [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
-          else
-            pip install fastapi uvicorn pydantic structlog pytest
           fi
-          pip install pytest-cov
 
       - name: Run tests (pytest with coverage)
+        working-directory: ./ai-services
         env:
-          PYTHONPATH: ai-services
+          PYTHONPATH: ${{ github.workspace }}/ai-services
         run: |
-          cd ai-services
           pytest -q \
             --junitxml=junit.xml \
             --cov=./ \

@@ -38,19 +38,18 @@ jobs:
 
       - name: Run model comparison (v2)
         run: |
-          ls -la
-          python validate_models_comparison_v2.py --dataset augmented_dataset_full_20251103_124126.csv --test-size 3000
+          python scripts/validation/validate_models_comparison_v2.py --dataset data/datasets/augmented_dataset_full_20251103_124126.csv --test-size 3000
 
       - name: Collect comparison artifacts
         run: |
-          mkdir -p ../artifacts
-          cp model_comparison_*.txt ../artifacts/ || true
-          cp model_comparison_*.md ../artifacts/ || true
+          mkdir -p artifacts
+          cp model_comparison_*.txt artifacts/ || true
+          cp model_comparison_*.md artifacts/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ai-model-comparison
-          path: artifacts
+          path: ai-services/artifacts
 
 
