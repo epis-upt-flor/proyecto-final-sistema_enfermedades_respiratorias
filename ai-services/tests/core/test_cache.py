@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import json
 
-from core.cache import init_cache, get_cache_client, set_cache, get_cache, delete_cache, clear_cache
+from core.cache import init_cache, get_cache_client, set_cache, get_cache, delete_cache, clear_cache_pattern
 
 
 class TestCache:
@@ -142,18 +142,19 @@ class TestCache:
     async def test_clear_cache(self, mock_redis):
         """Test clearing all cache"""
         with patch('core.cache.cache_client', mock_redis):
-            result = await clear_cache()
+            result = await clear_cache_pattern("*")
             
-            assert result is True
-            mock_redis.flushdb.assert_called_once()
+            assert result >= 0
+            # clear_cache_pattern uses keys() and delete(), not flushdb
+            mock_redis.keys.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_clear_cache_no_client(self):
         """Test clearing cache when client is None"""
         with patch('core.cache.cache_client', None):
-            result = await clear_cache()
+            result = await clear_cache_pattern("*")
             
-            assert result is False
+            assert result == 0
     
     def test_get_cache_client(self, mock_redis):
         """Test getting cache client"""

@@ -48,7 +48,9 @@ except ImportError:
 
 # Add paths
 sys.path.insert(0, os.path.dirname(__file__))
-ml_models_path = os.path.join(os.path.dirname(__file__), 'ml_models')
+# ml_models is in the parent directory, not in tests/
+parent_dir = os.path.dirname(os.path.dirname(__file__))
+ml_models_path = os.path.join(parent_dir, 'ml_models')
 sys.path.insert(0, ml_models_path)
 
 # Import directly to avoid __init__.py issues

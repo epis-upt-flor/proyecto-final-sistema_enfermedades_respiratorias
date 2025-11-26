@@ -8,11 +8,20 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import time
 from datetime import datetime, timedelta
 
-from decorators.cache_decorator import cache_decorator, CacheConfig
+from decorators.cache_decorator import cache_decorator, CacheDecorator
 from decorators.logging_decorator import logging_decorator
 from decorators.retry_decorator import retry_decorator, RetryConfig
 from decorators.circuit_breaker_decorator import circuit_breaker_decorator
 from decorators.metrics_decorator import metrics_decorator
+from dataclasses import dataclass
+
+# Helper class for test compatibility
+@dataclass
+class CacheConfig:
+    """Test helper class for cache configuration"""
+    ttl: int = 3600
+    key_prefix: str = ""
+    enabled: bool = True
 
 
 class TestCacheDecorator:

@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from ml_models.random_forest_model import RandomForestModel
-from ml_models.xgboost_model import XGBoostModel
+from ml_models.xgboost_model import XGBoostDiseaseClassifier
 from ml_models.neural_network_model import NeuralNetworkModel
 from ml_models.ensemble_predictor import EnsemblePredictor
 
@@ -48,7 +48,7 @@ class TestModelPredictions:
 
     def test_xgboost_prediction_format(self, sample_features):
         """Test que XGBoost retorna predicción en formato correcto"""
-        model = XGBoostModel()
+        model = XGBoostDiseaseClassifier()
         model.load_model()
         
         prediction = model.predict(sample_features)
@@ -176,7 +176,7 @@ class TestModelValidation:
     def test_model_loading(self):
         """Test que los modelos se cargan correctamente"""
         rf_model = RandomForestModel()
-        xgb_model = XGBoostModel()
+        xgb_model = XGBoostDiseaseClassifier()
         nn_model = NeuralNetworkModel()
         
         assert rf_model.model is not None or hasattr(rf_model, 'load_model')
@@ -188,7 +188,7 @@ class TestModelValidation:
         # Este test requeriría datos de validación
         # Por ahora verificamos que los modelos existen
         rf_model = RandomForestModel()
-        xgb_model = XGBoostModel()
+        xgb_model = XGBoostDiseaseClassifier()
         nn_model = NeuralNetworkModel()
         
         # Todos deben poder cargar modelos

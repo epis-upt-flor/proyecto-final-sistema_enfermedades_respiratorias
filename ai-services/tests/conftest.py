@@ -31,9 +31,13 @@ if "shap" not in sys.modules:
     sys.modules["shap"] = shap_mock
 
 if "openai" not in sys.modules:
-    openai_mock = MagicMock(name="openai_mock")
+    import types
+    openai_mock = types.ModuleType("openai")
     openai_mock.ChatCompletion = MagicMock()
     openai_mock.AsyncConfiguration = MagicMock()
+    # Create a proper spec for the module
+    spec = types.ModuleSpec("openai", None)
+    openai_mock.__spec__ = spec
     sys.modules["openai"] = openai_mock
 
 
