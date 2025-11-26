@@ -35,9 +35,20 @@ if "openai" not in sys.modules:
     openai_mock = types.ModuleType("openai")
     openai_mock.ChatCompletion = MagicMock()
     openai_mock.AsyncConfiguration = MagicMock()
+    # Add common OpenAI exceptions
+    openai_mock.RateLimitError = type("RateLimitError", (Exception,), {})
+    openai_mock.APIError = type("APIError", (Exception,), {})
+    openai_mock.APIConnectionError = type("APIConnectionError", (Exception,), {})
+    openai_mock.APITimeoutError = type("APITimeoutError", (Exception,), {})
     # Create a proper spec for the module
-    spec = types.ModuleSpec("openai", None)
-    openai_mock.__spec__ = spec
+    try:
+        from importlib.util import spec_from_loader, module_from_spec
+        spec = spec_from_loader("openai", None)
+        if spec:
+            openai_mock.__spec__ = spec
+    except (ImportError, AttributeError):
+        # Fallback if ModuleSpec is not available
+        pass
     sys.modules["openai"] = openai_mock
 
 

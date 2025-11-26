@@ -151,6 +151,30 @@ def with_logging(
     return decorator
 
 
+# Helper function for test compatibility
+def logging_decorator(logger=None, log_level: str = "info", log_args: bool = True, 
+                     log_result: bool = False, log_execution_time: bool = True):
+    """
+    Decorator function for adding logging to methods (test compatibility helper)
+    
+    Args:
+        logger: Optional logger instance (for test compatibility, not used directly)
+        log_level: Log level (default: "info")
+        log_args: Whether to log function arguments (default: True)
+        log_result: Whether to log function result (default: False)
+        log_execution_time: Whether to log execution time (default: True)
+    """
+    def decorator(func: Callable) -> Callable:
+        decorator_instance = LoggingDecorator(
+            log_level=log_level,
+            log_args=log_args,
+            log_result=log_result,
+            log_execution_time=log_execution_time
+        )
+        return decorator_instance(func)
+    return decorator
+
+
 class PerformanceLoggingDecorator:
     """Decorator for performance logging with detailed metrics"""
     

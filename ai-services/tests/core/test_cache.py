@@ -21,6 +21,7 @@ class TestCache:
         mock.set = AsyncMock(return_value=True)
         mock.get = AsyncMock(return_value=None)
         mock.delete = AsyncMock(return_value=1)
+        mock.keys = AsyncMock(return_value=["key1", "key2", "key3"])
         mock.flushdb = AsyncMock(return_value=True)
         return mock
     
@@ -39,7 +40,9 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_init_cache_failure(self):
         """Test cache initialization failure"""
-        with patch('core.cache.redis.from_url', side_effect=Exception("Connection error")):
+        with patch('core.cache.cache_client', None), \
+             patch('core.cache._is_initializing', False), \
+             patch('core.cache.redis.from_url', side_effect=Exception("Connection error")):
             with patch('core.cache.settings') as mock_settings:
                 mock_settings.REDIS_URL = "redis://localhost:6379"
                 

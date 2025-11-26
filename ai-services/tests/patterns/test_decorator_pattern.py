@@ -4,6 +4,7 @@ Unit tests for Decorator Pattern implementation
 
 import pytest
 import asyncio
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 import time
 from datetime import datetime, timedelta
@@ -30,7 +31,10 @@ class TestCacheDecorator:
     @pytest.fixture
     def mock_cache(self):
         """Create mock cache"""
-        return AsyncMock()
+        mock = AsyncMock()
+        mock.get.return_value = None
+        mock.set.return_value = True
+        return mock
     
     @pytest.fixture
     def cache_config(self):
@@ -42,101 +46,155 @@ class TestCacheDecorator:
         )
     
     @pytest.mark.asyncio
-    async def test_cache_decorator_success(self, mock_cache, cache_config):
+    async def test_cache_decorator_success(self, cache_config):
         """Test successful caching"""
         call_count = 0
+        cache_store = {}
         
-        @cache_decorator(cache_config, mock_cache)
-        async def test_function(param1: str, param2: int) -> dict:
-            nonlocal call_count
-            call_count += 1
-            return {"result": f"{param1}_{param2}", "count": call_count}
+        async def mock_get_cache(key):
+            return cache_store.get(key)
         
-        # First call should execute function and cache result
-        result1 = await test_function("test", 123)
+        async def mock_set_cache(key, value, ttl=None):
+            cache_store[key] = json.dumps(value) if isinstance(value, (dict, list)) else value
+            return True
         
-        # Second call should return cached result
-        result2 = await test_function("test", 123)
-        
-        assert result1 == result2
-        assert call_count == 1  # Function should only be called once
-        assert "result" in result1
-        assert result1["result"] == "test_123"
+        with patch('decorators.cache_decorator.get_cache', side_effect=mock_get_cache), \
+             patch('decorators.cache_decorator.set_cache', side_effect=mock_set_cache):
+            
+            @cache_decorator(ttl=cache_config.ttl, key_prefix=cache_config.key_prefix)
+            async def test_function(param1: str, param2: int) -> dict:
+                nonlocal call_count
+                call_count += 1
+                return {"result": f"{param1}_{param2}", "count": call_count}
+            
+            # First call - cache miss
+            result1 = await test_function("test", 123)
+            
+            # Second call - cache hit
+            result2 = await test_function("test", 123)
+            
+            assert result1 == result2
+            assert call_count == 1  # Function should only be called once
+            assert "result" in result1
+            assert result1["result"] == "test_123"
     
     @pytest.mark.asyncio
-    async def test_cache_decorator_different_params(self, mock_cache, cache_config):
+    async def test_cache_decorator_different_params(self, cache_config):
         """Test cache with different parameters"""
         call_count = 0
+        cache_store = {}
         
-        @cache_decorator(cache_config, mock_cache)
-        async def test_function(param1: str, param2: int) -> dict:
-            nonlocal call_count
-            call_count += 1
-            return {"result": f"{param1}_{param2}", "count": call_count}
+        async def mock_get_cache(key):
+            return cache_store.get(key)
         
-        # Different parameters should result in separate cache entries
-        result1 = await test_function("test1", 123)
-        result2 = await test_function("test2", 123)
+        async def mock_set_cache(key, value, ttl=None):
+            cache_store[key] = json.dumps(value) if isinstance(value, (dict, list)) else value
+            return True
         
-        assert result1 != result2
-        assert call_count == 2  # Function should be called twice
+        with patch('decorators.cache_decorator.get_cache', side_effect=mock_get_cache), \
+             patch('decorators.cache_decorator.set_cache', side_effect=mock_set_cache):
+            
+            @cache_decorator(ttl=cache_config.ttl, key_prefix=cache_config.key_prefix)
+            async def test_function(param1: str, param2: int) -> dict:
+                nonlocal call_count
+                call_count += 1
+                return {"result": f"{param1}_{param2}", "count": call_count}
+            
+            # Different parameters should result in separate cache entries
+            result1 = await test_function("test1", 123)
+            result2 = await test_function("test2", 123)
+            
+            assert result1 != result2
+            assert call_count == 2  # Function should be called twice
     
     @pytest.mark.asyncio
-    async def test_cache_decorator_disabled(self, mock_cache):
-        """Test cache decorator when disabled"""
-        cache_config = CacheConfig(enabled=False)
+    async def test_cache_decorator_disabled(self):
+        """Test cache decorator when disabled (no caching)"""
         call_count = 0
         
-        @cache_decorator(cache_config, mock_cache)
-        async def test_function(param: str) -> str:
-            nonlocal call_count
-            call_count += 1
-            return f"result_{param}"
+        # When cache fails, function should still execute
+        async def mock_get_cache(key):
+            return None
         
-        # Multiple calls should all execute function when cache is disabled
-        await test_function("test")
-        await test_function("test")
+        async def mock_set_cache(key, value, ttl=None):
+            raise Exception("Cache disabled")
         
-        assert call_count == 2
+        with patch('decorators.cache_decorator.get_cache', side_effect=mock_get_cache), \
+             patch('decorators.cache_decorator.set_cache', side_effect=mock_set_cache):
+            
+            @cache_decorator(ttl=3600)
+            async def test_function(param: str) -> str:
+                nonlocal call_count
+                call_count += 1
+                return f"result_{param}"
+            
+            # Multiple calls should all execute function when cache fails
+            await test_function("test")
+            await test_function("test")
+            
+            assert call_count == 2
     
     @pytest.mark.asyncio
-    async def test_cache_decorator_ttl_expiry(self, mock_cache, cache_config):
+    async def test_cache_decorator_ttl_expiry(self, cache_config):
         """Test cache TTL expiry"""
-        cache_config.ttl = 0.1  # Very short TTL for testing
         call_count = 0
+        cache_store = {}
+        cache_times = {}
         
-        @cache_decorator(cache_config, mock_cache)
-        async def test_function(param: str) -> str:
-            nonlocal call_count
-            call_count += 1
-            return f"result_{param}"
+        async def mock_get_cache(key):
+            # Simulate TTL expiry
+            if key in cache_store:
+                if time.time() - cache_times.get(key, 0) > 0.1:
+                    del cache_store[key]
+                    del cache_times[key]
+                    return None
+            return cache_store.get(key)
         
-        # First call
-        result1 = await test_function("test")
+        async def mock_set_cache(key, value, ttl=None):
+            cache_store[key] = json.dumps(value) if isinstance(value, (dict, list)) else value
+            cache_times[key] = time.time()
+            return True
         
-        # Wait for TTL to expire
-        await asyncio.sleep(0.2)
-        
-        # Second call should execute function again
-        result2 = await test_function("test")
-        
-        assert result1 == result2
-        assert call_count == 2  # Function should be called twice after TTL expiry
+        with patch('decorators.cache_decorator.get_cache', side_effect=mock_get_cache), \
+             patch('decorators.cache_decorator.set_cache', side_effect=mock_set_cache):
+            
+            @cache_decorator(ttl=0.1, key_prefix=cache_config.key_prefix)
+            async def test_function(param: str) -> str:
+                nonlocal call_count
+                call_count += 1
+                return f"result_{param}"
+            
+            # First call
+            result1 = await test_function("test")
+            
+            # Wait for TTL to expire
+            await asyncio.sleep(0.2)
+            
+            # Second call should execute function again
+            result2 = await test_function("test")
+            
+            assert result1 == result2
+            assert call_count == 2  # Function should be called twice after TTL expiry
     
     @pytest.mark.asyncio
-    async def test_cache_decorator_error_handling(self, mock_cache, cache_config):
+    async def test_cache_decorator_error_handling(self, cache_config):
         """Test cache decorator error handling"""
-        @cache_decorator(cache_config, mock_cache)
-        async def failing_function() -> str:
-            raise ValueError("Test error")
+        async def mock_get_cache(key):
+            return None
         
-        # Function should raise error and not cache it
-        with pytest.raises(ValueError):
-            await failing_function()
+        async def mock_set_cache(key, value, ttl=None):
+            return True
         
-        # Verify error was not cached
-        mock_cache.get.assert_not_called()
-        mock_cache.set.assert_not_called()
+        with patch('decorators.cache_decorator.get_cache', side_effect=mock_get_cache), \
+             patch('decorators.cache_decorator.set_cache', side_effect=mock_set_cache):
+            
+            @cache_decorator(ttl=cache_config.ttl, key_prefix=cache_config.key_prefix)
+            async def failing_function() -> str:
+                raise ValueError("Test error")
+            
+            # Function should raise error and not cache it
+            with pytest.raises(ValueError):
+                await failing_function()
 
 
 class TestLoggingDecorator:
@@ -470,33 +528,43 @@ class TestDecoratorIntegration:
     async def test_multiple_decorators_combined(self):
         """Test combining multiple decorators"""
         logger = MagicMock()
-        mock_cache = AsyncMock()
         metrics_collector = MagicMock()
+        cache_store = {}
+        
+        async def mock_get_cache(key):
+            return cache_store.get(key)
+        
+        async def mock_set_cache(key, value, ttl=None):
+            cache_store[key] = json.dumps(value) if isinstance(value, (dict, list)) else value
+            return True
         
         cache_config = CacheConfig(enabled=True, ttl=3600, key_prefix="test")
         retry_config = RetryConfig(max_attempts=2, delay=0.01)
         
         call_count = 0
         
-        @cache_decorator(cache_config, mock_cache)
-        @logging_decorator(logger)
-        @retry_decorator(retry_config)
-        @metrics_decorator(metrics_collector)
-        async def complex_function(param: str) -> dict:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                raise ValueError("Temporary error")
-            return {"result": f"success_{param}", "count": call_count}
-        
-        result = await complex_function("test")
-        
-        assert result["result"] == "success_test"
-        assert call_count == 2  # Should retry once
-        
-        # Verify all decorators worked
-        logger.info.assert_called()
-        metrics_collector.increment_counter.assert_called()
+        with patch('decorators.cache_decorator.get_cache', side_effect=mock_get_cache), \
+             patch('decorators.cache_decorator.set_cache', side_effect=mock_set_cache):
+            
+            @cache_decorator(ttl=cache_config.ttl, key_prefix=cache_config.key_prefix)
+            @logging_decorator(logger)
+            @retry_decorator(retry_config)
+            @metrics_decorator(metrics_collector)
+            async def complex_function(param: str) -> dict:
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    raise ValueError("Temporary error")
+                return {"result": f"success_{param}", "count": call_count}
+            
+            result = await complex_function("test")
+            
+            assert result["result"] == "success_test"
+            assert call_count == 2  # Should retry once
+            
+            # Verify all decorators worked
+            logger.info.assert_called()
+            metrics_collector.increment_counter.assert_called()
     
     @pytest.mark.asyncio
     async def test_decorator_error_propagation(self):

@@ -168,6 +168,36 @@ def with_metrics(
     return decorator
 
 
+# Helper function for test compatibility
+def metrics_decorator(metrics_collector=None, metric_name: Optional[str] = None,
+                     track_execution_time: bool = True, track_success_rate: bool = True,
+                     track_call_count: bool = True, custom_metrics: Optional[Dict[str, Callable]] = None):
+    """
+    Decorator function for adding metrics collection to methods (test compatibility helper)
+    
+    Args:
+        metrics_collector: Optional metrics collector instance (for test compatibility)
+        metric_name: Optional metric name
+        track_execution_time: Whether to track execution time (default: True)
+        track_success_rate: Whether to track success rate (default: True)
+        track_call_count: Whether to track call count (default: True)
+        custom_metrics: Optional custom metrics dictionary
+    """
+    def decorator(func: Callable) -> Callable:
+        decorator_instance = MetricsDecorator(
+            metric_name=metric_name,
+            track_execution_time=track_execution_time,
+            track_success_rate=track_success_rate,
+            track_call_count=track_call_count,
+            custom_metrics=custom_metrics
+        )
+        # Store metrics_collector if provided (for test compatibility)
+        if metrics_collector:
+            decorator_instance.metrics_collector = metrics_collector
+        return decorator_instance(func)
+    return decorator
+
+
 class PerformanceMetricsDecorator:
     """Specialized decorator for performance metrics"""
     

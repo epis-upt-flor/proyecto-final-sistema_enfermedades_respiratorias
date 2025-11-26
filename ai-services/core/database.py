@@ -63,6 +63,7 @@ async def create_indexes():
 async def get_database():
     """Get database instance"""
     if database is None:
+        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail="Database not initialized")
     return database
 
