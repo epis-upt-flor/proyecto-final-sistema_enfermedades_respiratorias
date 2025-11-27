@@ -56,6 +56,44 @@ Este directorio contiene los diagramas PlantUML que documentan visualmente la ar
 - Durante training de arquitectura
 - En documentación de proyecto
 
+### 4. Class Diagram (`class-diagram.puml`) ⭐ **NUEVO**
+
+**Descripción:** Diagrama completo de clases del sistema RespiCare
+
+**Incluye:**
+- Todos los modelos de dominio (User, MedicalHistory, AIAnalysis, Appointment, Alert, etc.)
+- Servicios principales (AIIntegrationService, AutomaticReportService, PrescriptionService, etc.)
+- Relaciones entre clases (composición, agregación, asociación)
+- Atributos y métodos principales de cada clase
+- Notas con reglas de negocio y validaciones
+
+**Cuándo usar:**
+- Para entender la estructura completa de clases del sistema
+- Al diseñar nuevas funcionalidades
+- Para documentación técnica completa
+- Durante code reviews
+- En presentaciones de arquitectura
+
+### 5. Database Diagram (`database-diagram.puml`) ⭐ **NUEVO**
+
+**Descripción:** Diagrama entidad-relación (ERD) completo de la base de datos MongoDB
+
+**Incluye:**
+- Todas las colecciones de MongoDB
+- Relaciones entre entidades (uno-a-muchos, muchos-a-muchos)
+- Campos principales con tipos de datos
+- Claves primarias (PK) y foráneas (FK)
+- Índices y restricciones
+- Campos cifrados marcados
+- Enumeraciones y validaciones
+
+**Cuándo usar:**
+- Para entender el esquema completo de la base de datos
+- Al diseñar nuevas colecciones o relaciones
+- Para optimización de consultas
+- Durante migraciones de base de datos
+- En documentación de datos
+
 ## 🚀 Generar Diagramas
 
 ### Requisitos
@@ -113,10 +151,15 @@ docs/diagrams/
 ├── domain-model.puml                # Modelo de dominio
 ├── mdsd-transformations.puml        # Transformaciones MDSD
 ├── clean-architecture-mdsd.puml     # Arquitectura limpia
+├── class-diagram.puml               # Diagrama de clases completo
+├── database-diagram.puml            # Diagrama de base de datos (ERD)
+├── diagrama-clases-base-datos.md     # Versión Mermaid de los diagramas
 └── output/                          # Diagramas generados
     ├── domain-model.png
     ├── mdsd-transformations.png
-    └── clean-architecture-mdsd.png
+    ├── clean-architecture-mdsd.png
+    ├── class-diagram.png
+    └── database-diagram.png
 ```
 
 ## 🎨 Personalización

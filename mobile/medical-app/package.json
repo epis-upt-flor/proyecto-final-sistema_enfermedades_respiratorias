@@ -19,7 +19,14 @@
     "setup:android": "node scripts/setup-android-sdk.js",
     "fix:android": "powershell -ExecutionPolicy Bypass -File scripts/fix-android-sdk.ps1",
     "config:ip": "node scripts/config-ip.js",
-    "test:connection": "node scripts/test-connection.js"
+    "test:connection": "node scripts/test-connection.js",
+    "tunnel:ngrok": "powershell -ExecutionPolicy Bypass -File scripts/start-ngrok-full.ps1",
+    "tunnel:ngrok:full": "powershell -ExecutionPolicy Bypass -File scripts/start-ngrok-full.ps1",
+    "tunnel:ngrok:simple": "powershell -ExecutionPolicy Bypass -File scripts/setup-ngrok-simple.ps1",
+    "tunnel:ngrok:get-urls": "powershell -ExecutionPolicy Bypass -File scripts/get-ngrok-urls.ps1",
+    "tunnel:ngrok:legacy": "powershell -ExecutionPolicy Bypass -File scripts/start-ngrok.ps1",
+    "tunnel:ngrok:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-ngrok.ps1",
+    "tunnel:cloudflare": "powershell -ExecutionPolicy Bypass -File scripts/start-cloudflare-tunnel.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

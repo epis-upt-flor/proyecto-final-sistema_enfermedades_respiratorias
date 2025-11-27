@@ -7,7 +7,7 @@ services:
     container_name: respicare-mongodb-dev
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "27018:27017"  # Puerto externo 27018 para evitar conflicto con MongoDB de Windows
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password123}
@@ -57,6 +57,11 @@ services:
       MODEL_PATH: /app/models
       LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Deshabilitar rate limiting para desarrollo (o aumentar límites)
+      AI_RATE_LIMIT_ENABLED: ${AI_RATE_LIMIT_ENABLED:-0}
+      AI_RATE_LIMIT_CAPACITY: ${AI_RATE_LIMIT_CAPACITY:-1000}
+      AI_RATE_LIMIT_REFILL_PER_SEC: ${AI_RATE_LIMIT_REFILL_PER_SEC:-100.0}
+      AI_MAX_BODY_BYTES: ${AI_MAX_BODY_BYTES:-4194304}
     volumes:
       - ./ai-services:/app
       - ai_models_dev:/app/models
@@ -69,7 +74,27 @@ services:
         condition: service_healthy
     networks:
       - respicare-dev-network
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    # En desarrollo mantenemos --reload pero agregamos workers y optimizaciones
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4 --reload --log-level debug --timeout-keep-alive 120 --limit-concurrency 500 --backlog 1024
 
   # Backend API
   backend:

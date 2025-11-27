@@ -101,6 +101,58 @@ Si vas a usar la app en un dispositivo físico, necesitas configurar la conexió
 
 Para más detalles, consulta `CONFIGURACION_RED.md`.
 
+### 🌐 Acceso Externo (Sin Cables ni Misma WiFi)
+
+Si quieres usar la app en un teléfono real desde cualquier lugar (sin estar en la misma red WiFi), necesitas exponer tu backend a internet.
+
+**🚀 Guía Completa**: Ver `GUIA_ACCESO_EXTERNO.md` para todas las opciones disponibles.
+
+**Opciones rápidas:**
+
+1. **ngrok - Ambos Endpoints** ⭐ (Recomendado para desarrollo remoto):
+   ```bash
+   npm run tunnel:ngrok
+   ```
+   Este comando configura automáticamente:
+   - ✅ Túnel para Backend (puerto 3001)
+   - ✅ Túnel para AI Services (puerto 8000)
+   - ✅ Inicia ambos túneles en ventanas separadas
+   - ✅ Obtiene URLs desde ambos paneles (4040 y 4041)
+   - ✅ Actualiza `.env.local` automáticamente con ambas URLs
+   - ✅ Muestra las URLs públicas obtenidas
+   
+   📖 **Guía de implementación**: Ver `GUIA_NGROK_IMPLEMENTACION.md` para instrucciones detalladas.
+
+2. **ngrok - Método Simple** (Ventanas separadas):
+   ```bash
+   npm run tunnel:ngrok:simple
+   ```
+   Inicia ambos túneles en ventanas separadas (método alternativo)
+
+3. **ngrok - Solo Backend** (Método legacy):
+   ```bash
+   npm run tunnel:ngrok:legacy
+   ```
+   Solo inicia el túnel del Backend (requiere configurar AI Services manualmente)
+
+4. **Cloudflare Tunnel** (Recomendado para uso continuo):
+   ```bash
+   npm run tunnel:cloudflare
+   ```
+   Requiere configuración inicial (ver guía completa)
+
+5. **Servidor en la nube** (Para producción):
+   - Railway, Render, Fly.io, etc.
+   - Ver `GUIA_ACCESO_EXTERNO.md` para detalles
+
+**Comandos útiles:**
+- `npm run tunnel:ngrok:stop` - Detiene todos los procesos de ngrok
+
+📖 **Guías detalladas**: 
+- `GUIA_NGROK_IMPLEMENTACION.md` ⭐ - **Nueva guía completa de implementación**
+- `GUIA_NGROK_COMPLETA.md` - Configuración completa con ngrok
+- `GUIA_ACCESO_EXTERNO.md` - Todas las opciones disponibles
+
 ### Funcionalidades Integradas
 
 ✅ **Autenticación**

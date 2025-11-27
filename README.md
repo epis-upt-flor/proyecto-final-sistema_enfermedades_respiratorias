@@ -162,6 +162,38 @@ npm install
 npx expo start
 ```
 
+#### Poblar Base de Datos con Datos Demo
+
+Después de iniciar los servicios, ejecuta el script completo de seed para poblar la base de datos con datos de prueba:
+
+```bash
+# Desde la raíz del proyecto
+cd backend
+MONGODB_URI="mongodb://localhost:27017/respicare_dev" node src/scripts/seed-complete-demo.js
+```
+
+Este script genera:
+- **8 usuarios** (5 pacientes, 2 doctores, 1 admin)
+- **900 reportes de síntomas** para dashboards web
+- **9-15 historias médicas** (1-3 por paciente, enlazadas)
+- **~600 registros de wearables** (sincronizados con pacientes, últimos 30 días)
+- **50 conversaciones de chat** con análisis de síntomas
+- **40 citas médicas** (pasadas y futuras)
+- **30 alertas** de diferentes categorías
+- **9 análisis de IA** enlazados a historias médicas
+
+**Credenciales de acceso demo:**
+- Pacientes: `paciente@demo.com`, `juan.perez@demo.com`, etc. / `demo1234`
+- Doctores: `doctor@demo.com`, `laura.martinez@demo.com` / `demo1234`
+- Admin: `admin@demo.com` / `admin1234`
+
+**Scripts disponibles:**
+- `seed-complete-demo.js` - Script completo con todos los datos (recomendado)
+- `seed-users.js` - Solo usuarios
+- `seed-medical-histories.js` - Solo historias médicas
+- `seed-full-demo.js` - Reportes de síntomas para dashboards
+- `seed-chat-conversations.js` - Solo conversaciones de chat
+
 Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 
 ## 📚 Documentación Completa
@@ -240,6 +272,13 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 - **[docs/backend/CLEAN_ARCHITECTURE.md](docs/backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia implementada
 - **[docs/backend/GDPR_HIPAA_POLICY.md](docs/backend/GDPR_HIPAA_POLICY.md)** - Políticas de cumplimiento GDPR/HIPAA
 - **[backend/tests/README.md](backend/tests/README.md)** - 📊 Resultados de pruebas (380+ tests, 98% cobertura)
+- **Scripts de Seed de Datos** ⭐ **NUEVO**:
+  - `seed-complete-demo.js` - Script completo para poblar base de datos con todos los datos demo (usuarios, reportes, historias, wearables, chat, citas, alertas, análisis IA)
+  - `seed-users.js` - Generar usuarios demo
+  - `seed-medical-histories.js` - Generar historias médicas (1-3 por paciente)
+  - `seed-full-demo.js` - Generar reportes de síntomas para dashboards
+  - `seed-chat-conversations.js` - Generar conversaciones de chat
+  - Ver más en: `backend/src/scripts/`
 - **Healthcheck**: `GET http://localhost:3001/health` (incluye estado de MongoDB y Redis)
 - **API Docs**: `GET http://localhost:3001/api/docs` (Swagger/OpenAPI interactivo)
 - **Endpoints principales**:
@@ -255,6 +294,7 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
   - DSR (Data Subject Rights): `/api/v1/dsr/*`
   - BI: `/api/v1/bi/*`
   - ML Orchestration: `/api/v1/ml/*`
+  - Wearables: `/api/v1/wearables/*` (sincronización de datos de wearables)
 
 #### AI Services (Python/FastAPI) ⭐ **ACTUALIZADO**
 - **[ai-services/README.md](ai-services/README.md)** - Documentación completa de servicios de IA
@@ -526,6 +566,15 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 
 ### 📊 Dashboards y Analytics
 
+#### Dashboard de Análisis Avanzado ⭐ **ACTUALIZADO**
+- ✅ Dashboard completo con métricas en tiempo real
+- ✅ Total de reportes, últimos 7 días, casos urgentes, consultas chat
+- ✅ Distribución por severidad (high, medium, low)
+- ✅ Distribución por categoría (respiratory, fever, pain, etc.)
+- ✅ Top distritos con mayor número de reportes
+- ✅ Datos enlazados desde MongoDB con consultas optimizadas
+- ✅ Actualización automática con botón de refresh manual
+
 #### Dashboard de Explicabilidad SHAP
 - ✅ Visualización de contribuciones SHAP principales
 - ✅ Métricas de confianza del modelo
@@ -554,7 +603,7 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ Exportación automática en PDF, CSV y JSON
 - ✅ Dashboard personalizable con filtros
 
-**Ver guía completa**: [docs/DASHBOARDS_GUIDE.md](docs/DASHBOARDS_GUIDE.md)
+**Ver guía completa**: [docs/guides/DASHBOARDS_GUIDE.md](docs/guides/DASHBOARDS_GUIDE.md)
 
 ### 📱 Mobile (React Native/Expo)
 
@@ -566,6 +615,10 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ **Gestión completa**: Historias médicas, citas, prescripciones y alertas
 - ✅ **Captura de datos**: Formularios optimizados para móvil con geolocalización automática
 - ✅ **Base de datos local**: AsyncStorage + SQLite para almacenamiento offline robusto
+- ✅ **Datos de Wearables**: Sincronización con HealthKit (iOS) y Google Fit (Android)
+  - Frecuencia cardíaca, saturación de oxígeno, pasos, distancia, frecuencia respiratoria, horas de sueño
+  - Datos históricos de últimos 30 días con múltiples mediciones diarias
+  - Actualización constante para diagnóstico médico con IA
 
 #### Chatbot Multimodal ⭐ **NUEVO**
 - ✅ **Análisis de Imágenes Médicas**:
@@ -809,6 +862,16 @@ Los reportes de implementación de features completadas están en [`docs/impleme
 - ✅ **Reportes automáticos** (diarios, semanales, mensuales) con detección de anomalías
 - ✅ **Gestión de archivos** (imágenes médicas, notas de audio) con procesamiento automático
 - ✅ **Exportación de datos** en múltiples formatos (JSON, CSV, PDF)
+- ✅ **Sistema de Wearables** ⭐ **NUEVO**: 
+  - Sincronización de datos de wearables (HealthKit/Google Fit)
+  - Almacenamiento de métricas: frecuencia cardíaca, SpO2, pasos, distancia, frecuencia respiratoria, sueño
+  - Integración con análisis de IA para diagnóstico médico
+  - Datos históricos con timestamps para análisis temporal
+- ✅ **Scripts de Seed de Datos** ⭐ **NUEVO**:
+  - Script completo para poblar base de datos con datos demo
+  - Generación de usuarios, reportes, historias médicas, wearables, chat, citas, alertas y análisis IA
+  - Datos enlazados correctamente entre colecciones
+  - Listo para probar todas las funcionalidades del sistema
 - ✅ **Integraciones HL7/FHIR** para interoperabilidad hospitalaria (completado)
   - Endpoints FHIR RESTful (GET, POST, PATCH, Bundle, Capabilities)
   - Integración con laboratorios (LIMS) con sincronización bidireccional
@@ -1261,6 +1324,20 @@ El proyecto ha sido completado exitosamente con todas las fases implementadas:
 
 ## 🆕 Novedades en v2.1.0
 
+### ⭐ Script Completo de Seed de Datos
+- **Script Unificado**: `seed-complete-demo.js` para poblar toda la base de datos
+- **Datos Completos**: Genera usuarios, reportes de síntomas, historias médicas, datos de wearables, conversaciones de chat, citas médicas, alertas y análisis de IA
+- **Enlaces Correctos**: Todas las relaciones entre colecciones están correctamente enlazadas
+- **Datos Realistas**: 
+  - 900 reportes de síntomas distribuidos en 8 distritos de Tacna
+  - 1-3 historias médicas por paciente con síntomas y diagnósticos
+  - ~600 registros de wearables con datos de últimos 30 días (3-5 mediciones diarias)
+  - 50 conversaciones de chat con análisis de síntomas
+  - 40 citas médicas (pasadas y futuras)
+  - 30 alertas de diferentes categorías
+  - Análisis de IA enlazados a cada historia médica
+- **Listo para Testing**: Todos los dashboards y funcionalidades pueden probarse inmediatamente
+
 ### ⭐ Análisis Multimodal Completo
 - **Imágenes Médicas**: 8 tipos soportados (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras) con análisis automático desde la app móvil usando ResNet50
 - **Audio/Voz**: 
@@ -1270,6 +1347,13 @@ El proyecto ha sido completado exitosamente con todas las fases implementadas:
 - **Modelos Entrenados**: Datasets sintéticos y modelos ML (Random Forest, XGBoost) para mejorar respuestas del chatbot
 - **Integración Móvil**: Chatbot multimodal completo con captura de imágenes y audio, resultados integrados automáticamente en la conversación
 
+### ⭐ Sistema de Wearables Completo
+- **Sincronización**: Integración con HealthKit (iOS) y Google Fit (Android)
+- **Métricas Completas**: Frecuencia cardíaca, saturación de oxígeno, pasos, distancia, frecuencia respiratoria, horas de sueño
+- **Datos Históricos**: Almacenamiento de datos de últimos 30 días con múltiples mediciones diarias
+- **Integración con IA**: Datos utilizados para diagnóstico médico y análisis predictivo
+- **Actualización Constante**: Datos se sincronizan y actualizan constantemente para análisis en tiempo real
+
 ### 📱 Nuevas Funcionalidades Mobile
 - **Chatbot Multimodal**: Análisis de imágenes y audio integrado en el chatbot médico
 - **Reconocimiento de Voz**: Servicio completo para entrada de texto por voz
@@ -1277,7 +1361,10 @@ El proyecto ha sido completado exitosamente con todas las fases implementadas:
 - **Tema Telegram**: Interfaz oscura estilo Telegram para mejor experiencia visual
 - **Modo Oscuro**: Tema oscuro completo con Material Design 3
 - **Internacionalización**: Soporte completo para 5 idiomas (ES, EN, PT, FR, QU)
-- **Integración con Wearables**: HealthKit (iOS) y Google Fit (Android)
+- **Integración con Wearables**: HealthKit (iOS) y Google Fit (Android) con sincronización completa
+  - Datos históricos de últimos 30 días
+  - Múltiples mediciones diarias (3-5 por día)
+  - Integración con diagnóstico médico con IA
 - **Realidad Aumentada**: Preparado para visualización médica con ARKit/ARCore
 - **Análisis Predictivo**: Predicción de riesgo con fallback local
 - **Guía de Generación de APK**: Documentación completa para generar APK de Android
@@ -1298,3 +1385,15 @@ El proyecto ha sido completado exitosamente con todas las fases implementadas:
 - **Compatibilidad Web**: Soporte mejorado para ejecutar la app en navegador
 - **Modo Oscuro**: Tema oscuro completo en mobile
 - **Accesibilidad**: Mejoras en accesibilidad para usuarios con discapacidades
+
+### 🗄️ Base de Datos y Datos Demo
+- **Script Completo de Seed**: `backend/src/scripts/seed-complete-demo.js` para poblar toda la base de datos
+- **Datos Enlazados**: Todas las relaciones entre colecciones correctamente configuradas
+- **Datos para Testing**: 
+  - Dashboards web completamente funcionales con datos reales
+  - Historias médicas enlazadas a usuarios para mobile
+  - Datos de wearables sincronizados con pacientes
+  - Conversaciones de chat con análisis de síntomas
+  - Citas médicas, alertas y análisis de IA completos
+- **Base de Datos**: `respicare_dev` con todas las colecciones pobladas
+- **Credenciales Demo**: Usuarios de prueba listos para usar (pacientes, doctores, admin)

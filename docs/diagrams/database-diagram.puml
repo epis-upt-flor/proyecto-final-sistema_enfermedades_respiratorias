@@ -1,0 +1,248 @@
+@startuml Database Diagram - RespiCare
+
+!theme plain
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam roundcorner 10
+skinparam shadowing false
+skinparam entity {
+    BackgroundColor #E8F4F8
+    BorderColor #2C3E50
+    FontSize 10
+}
+
+left to right direction
+
+title RespiCare - Diagrama de Base de Datos (ERD)
+
+' ============================================
+' ENTIDADES PRINCIPALES
+' ============================================
+
+package "Core Entities" {
+  
+  entity "USERS" as users {
+    * _id : ObjectId <<PK>>
+    --
+    * name : string
+    * email : string <<UK>>
+    * password : string <<encrypted>>
+    * role : string
+    * isActive : boolean
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "MEDICAL_HISTORY" as medical_history {
+    * _id : ObjectId <<PK>>
+    --
+    * patientId : string <<FK>>
+    * doctorId : string <<FK>>
+    * patientName : string
+    * age : number
+    * diagnosis : string
+    * date : Date
+    * syncStatus : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "APPOINTMENTS" as appointments {
+    * _id : ObjectId <<PK>>
+    --
+    * patientId : string <<FK>>
+    * doctorId : string <<FK>>
+    * scheduledAt : Date
+    * status : string
+    * durationMinutes : number
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "PRESCRIPTIONS" as prescriptions {
+    * _id : ObjectId <<PK>>
+    --
+    * patientId : string <<FK>>
+    * doctorId : string <<FK>>
+    * status : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "ALERTS" as alerts {
+    * _id : ObjectId <<PK>>
+    --
+    * userId : string <<FK>>
+    * category : string
+    * priority : string
+    * status : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+}
+
+' ============================================
+' ENTIDADES DE ANÁLISIS
+' ============================================
+
+package "Analysis Entities" {
+  
+  entity "AI_ANALYSES" as ai_analyses {
+    * _id : ObjectId <<PK>>
+    --
+    * medicalHistoryId : string <<FK>>
+    * urgency : string
+    * confidence : number
+    * timestamp : Date
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "SYMPTOM_REPORTS" as symptom_reports {
+    * _id : ObjectId <<PK>>
+    --
+    patientId : string <<FK>>
+    * category : string
+    * overallSeverity : string
+    * status : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "CHAT_CONVERSATIONS" as chat_conversations {
+    * _id : ObjectId <<PK>>
+    --
+    * sessionId : string <<UK>>
+    userId : string <<FK>>
+    * status : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "AUTOMATIC_REPORTS" as automatic_reports {
+    * _id : ObjectId <<PK>>
+    --
+    * reportType : string
+    * status : string
+    * generatedAt : Date
+    * createdAt : Date
+    * updatedAt : Date
+  }
+}
+
+' ============================================
+' ENTIDADES DE SEGURIDAD Y AUDITORÍA
+' ============================================
+
+package "Security & Audit" {
+  
+  entity "AUDIT_LOGS" as audit_logs {
+    * _id : ObjectId <<PK>>
+    --
+    userId : string <<FK>>
+    * method : string
+    * route : string
+    * statusCode : number
+    * createdAt : Date
+  }
+
+  entity "CONSENT_LOGS" as consent_logs {
+    * _id : ObjectId <<PK>>
+    --
+    * userId : string <<FK>>
+    * version : string
+    * timestamp : Date
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "WEARABLE_DATA" as wearable_data {
+    * _id : ObjectId <<PK>>
+    --
+    * patientId : ObjectId <<FK>>
+    * timestamp : Date
+    * source : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+
+  entity "ML_EXPERIMENTS" as ml_experiments {
+    * _id : ObjectId <<PK>>
+    --
+    * experimentId : string <<UK>>
+    * experimentType : string
+    * modelName : string
+    * status : string
+    * createdAt : Date
+    * updatedAt : Date
+  }
+}
+
+' ============================================
+' RELACIONES PRINCIPALES
+' ============================================
+
+users ||--o{ medical_history : "creates"
+users ||--o{ appointments : "schedules"
+users ||--o{ alerts : "receives"
+users ||--o{ prescriptions : "prescribed_to"
+users ||--o{ chat_conversations : "participates"
+users ||--o{ symptom_reports : "submits"
+users ||--o{ wearable_data : "generates"
+users ||--o{ audit_logs : "generates"
+users ||--o{ consent_logs : "consents"
+
+medical_history ||--|| ai_analyses : "has"
+medical_history }o--|| appointments : "related_to"
+appointments ||--o{ prescriptions : "may_result_in"
+
+automatic_reports ..> medical_history : "aggregates"
+automatic_reports ..> alerts : "aggregates"
+automatic_reports ..> appointments : "aggregates"
+
+' ============================================
+' NOTAS INFORMATIVAS
+' ============================================
+
+note right of users
+  <b>Roles:</b>
+  patient | doctor | admin
+  
+  <b>Índices:</b>
+  email (único)
+  role, isActive
+end note
+
+note right of medical_history
+  <b>Sync Status:</b>
+  pending | synced | error
+  
+  <b>Índices:</b>
+  patientId, doctorId
+  date, geoLocation (2dsphere)
+end note
+
+note right of ai_analyses
+  <b>Urgency:</b>
+  low | medium | high | critical
+  
+  <b>Confidence:</b>
+  0-100%
+end note
+
+note right of appointments
+  <b>Status:</b>
+  scheduled | completed
+  cancelled | rescheduled
+  
+  <b>Duración:</b>
+  15-240 minutos
+end note
+
+note right of prescriptions
+  <b>Status:</b>
+  draft | active | completed
+  cancelled | rejected
+end note
+
+@enduml

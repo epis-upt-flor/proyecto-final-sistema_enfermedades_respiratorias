@@ -59,10 +59,10 @@ services:
     build:
       context: ./ai-services
       dockerfile: Dockerfile.prod
-    container_name: respicare-ai-prod
     restart: always
-    ports:
-      - "127.0.0.1:8000:8000"
+    # No exponer puerto directamente, solo a través de nginx
+    expose:
+      - "8000"
     environment:
       PYTHONPATH: /app
       PYTHONUNBUFFERED: 1
@@ -71,6 +71,11 @@ services:
       MODEL_PATH: /app/models
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Configuración de rate limiting optimizada para producción
+      AI_RATE_LIMIT_ENABLED: ${AI_RATE_LIMIT_ENABLED:-1}
+      AI_RATE_LIMIT_CAPACITY: ${AI_RATE_LIMIT_CAPACITY:-500}
+      AI_RATE_LIMIT_REFILL_PER_SEC: ${AI_RATE_LIMIT_REFILL_PER_SEC:-20.0}
+      AI_MAX_BODY_BYTES: ${AI_MAX_BODY_BYTES:-4194304}
     volumes:
       - ai_models_prod:/app/models
       - ai_cache_prod:/app/cache
@@ -96,11 +101,16 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
           cpus: '2'
           memory: 4G
-        reservations:
-          cpus: '1'
-          memory: 2G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   # Backend API
   backend:

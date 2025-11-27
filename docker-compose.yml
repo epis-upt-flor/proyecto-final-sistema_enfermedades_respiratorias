@@ -70,6 +70,11 @@ services:
       MODEL_PATH: /app/models
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Configuración de rate limiting
+      AI_RATE_LIMIT_ENABLED: ${AI_RATE_LIMIT_ENABLED:-1}
+      AI_RATE_LIMIT_CAPACITY: ${AI_RATE_LIMIT_CAPACITY:-200}
+      AI_RATE_LIMIT_REFILL_PER_SEC: ${AI_RATE_LIMIT_REFILL_PER_SEC:-10.0}
+      AI_MAX_BODY_BYTES: ${AI_MAX_BODY_BYTES:-2097152}
     volumes:
       - ./ai-services:/app
       - ai_models:/app/models
@@ -93,7 +98,15 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4 --timeout-keep-alive 120 --limit-concurrency 500 --backlog 1024
 
   # Backend API
   backend:

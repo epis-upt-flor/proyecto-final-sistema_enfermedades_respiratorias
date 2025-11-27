@@ -72,10 +72,25 @@ router.get('/dashboard', async (req, res) => {
 
     const overviewPromise = Promise.all([
       SymptomReport.countDocuments().exec(),
-      SymptomReport.countDocuments({ createdAt: { $gte: sevenDaysAgo, $lte: now } }).exec(),
-      SymptomReport.countDocuments({ overallSeverity: 'high' }).exec(),
+      SymptomReport.countDocuments({ 
+        $or: [
+          { reportedAt: { $gte: sevenDaysAgo, $lte: now } },
+          { createdAt: { $gte: sevenDaysAgo, $lte: now } }
+        ]
+      }).exec(),
+      SymptomReport.countDocuments({ 
+        $or: [
+          { status: 'urgent' },
+          { overallSeverity: 'high' }
+        ]
+      }).exec(),
       ChatConversation.countDocuments().exec(),
-      ChatConversation.countDocuments({ createdAt: { $gte: sevenDaysAgo, $lte: now } }).exec(),
+      ChatConversation.countDocuments({ 
+        $or: [
+          { startedAt: { $gte: sevenDaysAgo, $lte: now } },
+          { createdAt: { $gte: sevenDaysAgo, $lte: now } }
+        ]
+      }).exec(),
     ]);
 
     const severityDistributionPromise = SymptomReport.aggregate([
@@ -122,9 +137,9 @@ router.get('/dashboard', async (req, res) => {
     ]);
 
     const recentActivityPromise = SymptomReport.find()
-      .sort({ createdAt: -1 })
+      .sort({ reportedAt: -1, createdAt: -1 })
       .limit(10)
-      .select(['location', 'symptoms', 'overallSeverity', 'category', 'createdAt'])
+      .select(['location', 'symptoms', 'overallSeverity', 'category', 'reportedAt', 'createdAt'])
       .lean();
 
     const [
@@ -184,7 +199,7 @@ router.get('/dashboard', async (req, res) => {
         symptoms: (report.symptoms || []).slice(0, 4),
         severityLevel: report.overallSeverity ?? 'low',
         category: report.category ?? 'respiratory',
-        reportedAt: report.createdAt,
+        reportedAt: report.reportedAt || report.createdAt,
       })),
       lastUpdated: now,
       dataSource: 'database',
