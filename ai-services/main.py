@@ -138,6 +138,14 @@ try:
 except ImportError as e:
     logger.warning("ml_retraining_routes_not_available", error=str(e))
 
+# Register core domains support routes
+try:
+    from api.routes.core_domains_support import router as core_domains_router
+    app.include_router(core_domains_router, tags=["Core Domains Support"])
+    logger.info("core_domains_support_routes_registered")
+except ImportError as e:
+    logger.warning("core_domains_support_routes_not_available", error=str(e))
+
 # Configure CORS - Allow all origins for development
 app.add_middleware(
     CORSMiddleware,
