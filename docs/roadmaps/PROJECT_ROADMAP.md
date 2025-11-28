@@ -31,7 +31,7 @@
 | **2. Dominios Core** | ✅ 100 % | ✅ CRUD UI básicas | ✅ Historias/citas básicas | ✅ Historias/Citas/Prescripciones/Alertas | ✅ Soporte indirecto | ✅ | ✅ Secciones en README | ✅ Modelos colecciones core |
 | **3. Analytics/ML Inicial** | ✅ 100 % | ✅ Dashboard + métricas ML | ✅ Tendencias/anomalías en Home | ✅ Servicios analytics + jobs | ✅ Modelos iniciales + endpoints | ✅ Jobs recurrentes ML | ✅ Docs modelos completas | ✅ Índices analytics optimizados |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | ✅ | ✅ Sección seguridad base | ✅ Config conexión segura |
-| **5. Testing y Calidad** | ⏳ ~95 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ⏳ SAST/DAST/Mutation pendientes | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy | ⏳ Tests específicos BD |
+| **5. Testing y Calidad** | ⏳ ~96 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ⏳ SAST/DAST/Mutation pendientes | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ⏳ Tests específicos BD |
 | **6. Optimización & Performance** | ⏳ ~90 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ⏳ Optimización avanzada pendiente | ⏳ OpenTelemetry/Chaos pendientes | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
 | **7. Funcionalidades Core** | ⏳ ~90 % | ✅ Alertas, citas, prescripciones, reportes | ⏳ Compartir reportes y AR pendientes | ⏳ Referidos/Consentimientos pendientes | ⏳ Orquestación avanzada | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
 | **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ⏳ Telemedicina completa pendiente | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
@@ -321,17 +321,17 @@
   - ✅ **Archivo creado:**
     - `mobile/__tests__/offline/offline-sync-integration.test.ts`
 
-#### **5.6 Testing de Carga y Estrés Avanzado** ❌
+#### **5.6 Testing de Carga y Estrés Avanzado** ✅
 
 **Backend:**
-- Tests de carga con K6 o Artillery
-- Tests de estrés para endpoints críticos
-- **Archivos a crear:**
+- ✅ Tests de carga con K6
+- ✅ Tests de estrés para endpoints críticos
+- ✅ **Archivos creados:**
   - `backend/tests/load/k6-load-tests.js`
   - `backend/tests/stress/stress-scenarios.ts`
 
 **Documentación:**
-- `docs/testing/LOAD_TESTING_GUIDE.md`
+- ✅ `docs/testing/LOAD_TESTING_GUIDE.md`
 
 #### **5.7 Testing de Seguridad Continuo (SAST/DAST)** ❌
 
