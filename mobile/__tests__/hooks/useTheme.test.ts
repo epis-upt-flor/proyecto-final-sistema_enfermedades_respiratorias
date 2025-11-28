@@ -3,14 +3,14 @@
  */
 
 import { renderHook, act } from '@testing-library/react-native';
-import { useTheme } from '../../src/hooks/useTheme';
-import { useAppStore } from '../../src/store/useAppStore';
+import { useMobile } from '../../medical-app/hooks/use-mobile';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
 jest.mock('react-native', () => ({
   useColorScheme: jest.fn(() => 'light'),
 }));
 
-jest.mock('../../src/store/useAppStore', () => ({
+jest.mock('../../medical-app/store/useAppStore', () => ({
   useAppStore: jest.fn(),
 }));
 

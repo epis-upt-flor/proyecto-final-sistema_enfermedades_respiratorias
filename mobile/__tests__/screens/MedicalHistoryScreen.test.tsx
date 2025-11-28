@@ -4,12 +4,12 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import MedicalHistoryScreen from '../../src/screens/MedicalHistoryScreen';
-import { useAppStore } from '../../src/store/useAppStore';
+// Nota: MedicalHistoryScreen puede estar en components/tabs/index.tsx o components/views/
+import { useAppStore } from '../../medical-app/store/useAppStore';
 import { useNavigation } from '@react-navigation/native';
 
 // Mock dependencies
-jest.mock('../../src/store/useAppStore');
+jest.mock('../../medical-app/store/useAppStore');
 jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(),
 }));

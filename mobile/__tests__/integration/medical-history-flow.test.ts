@@ -3,14 +3,14 @@
  * Verifica crear, editar, sincronizar y buscar historial
  */
 
-import { useAppStore } from '../../src/store/useAppStore';
-import { localStorageService } from '../../src/services/localStorage';
-import { apiService } from '../../src/services/api';
-import { analyticsService } from '../../src/services/analyticsService';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { medicalHistoryService } from '../../medical-app/lib/api/services/medicalHistoryService';
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
 import NetInfo from '@react-native-community/netinfo';
 
 // Mock dependencies
-jest.mock('../../src/services/analyticsService');
+jest.mock('../../medical-app/lib/api/services/dashboardService');
 jest.mock('@react-native-community/netinfo', () => ({
   __esModule: true,
   default: {

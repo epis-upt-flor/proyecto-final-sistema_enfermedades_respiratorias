@@ -3,13 +3,13 @@
  * Verifica la comunicación real con el backend y el flujo completo
  */
 
-import { apiService } from '../../src/services/api';
-import { aiService } from '../../src/services/aiService';
-import { localStorageService } from '../../src/services/localStorage';
+import { authService } from '../../medical-app/lib/api/services/authService';
+import { symptomAnalyzerService } from '../../medical-app/lib/api/services/symptomAnalyzerService';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 
 // Nota: Estos tests requieren que el backend esté corriendo
 // Se pueden ejecutar en CI/CD o localmente con backend activo
-const BACKEND_URL = process.env.API_BASE_URL || 'http://localhost:3001/api/v1';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 describe('Backend Integration Tests', () => {
   // Estos tests se pueden saltar si no hay backend disponible

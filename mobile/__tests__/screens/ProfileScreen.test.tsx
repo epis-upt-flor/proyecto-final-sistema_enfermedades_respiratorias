@@ -5,15 +5,14 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import ProfileScreen from '../../src/screens/ProfileScreen';
-import { useAppStore } from '../../src/store/useAppStore';
-import { useTheme } from '../../src/hooks/useTheme';
-import { useTranslation } from '../../src/services/i18nService';
+// Nota: ProfileScreen puede estar en components/views/ o components/tabs/
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { useMobile } from '../../medical-app/hooks/use-mobile';
 
 // Mock dependencies
-jest.mock('../../src/store/useAppStore');
-jest.mock('../../src/hooks/useTheme');
-jest.mock('../../src/services/i18nService');
+jest.mock('../../medical-app/store/useAppStore');
+jest.mock('../../medical-app/hooks/use-mobile');
+// Nota: i18nService puede estar en lib/translations.ts
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),

@@ -7,18 +7,24 @@ module.exports = {
     '**/*.(test|spec).(ts|tsx|js)',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-navigation|react-native-paper|react-native-vector-icons|@react-native-async-storage|@react-native-community)/)',
+    'node_modules/(?!(react-native|@react-native|@react-navigation|react-native-paper|react-native-vector-icons|@react-native-async-storage|@react-native-community|next)/)',
   ],
   collectCoverageFrom: [
-    'src/store/useAppStore.ts',
-    'src/components/ChatBot/medicalChatbotUtils.ts',
-    'src/components/AI/AIAnalysisScreen.tsx',
+    'medical-app/store/useAppStore.ts',
+    'medical-app/components/tabs/chatbot.tsx',
+    'medical-app/components/tabs/symptom-analyzer.tsx',
+    'medical-app/lib/**/*.ts',
+    'medical-app/hooks/**/*.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json', 'cobertura'],
   modulePathIgnorePatterns: ['<rootDir>/RespiCare-Mobile'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/(.*)$': '<rootDir>/medical-app/$1',
+    '^@/lib/(.*)$': '<rootDir>/medical-app/lib/$1',
+    '^@/components/(.*)$': '<rootDir>/medical-app/components/$1',
+    '^@/hooks/(.*)$': '<rootDir>/medical-app/hooks/$1',
+    '^@/store/(.*)$': '<rootDir>/medical-app/store/$1',
   },
   coverageThreshold: {
     global: {

@@ -2,7 +2,8 @@
  * Tests for i18nService
  */
 
-import { i18nService, useTranslation } from '../../src/services/i18nService';
+// Nota: i18nService puede estar en lib/translations.ts
+import { translations } from '../../medical-app/lib/translations';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

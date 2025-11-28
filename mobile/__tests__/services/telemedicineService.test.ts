@@ -2,7 +2,8 @@
  * Tests for TelemedicineService
  */
 
-import { telemedicineService } from '../../src/services/telemedicineService';
+import { appointmentService } from '../../medical-app/lib/api/services/appointmentService';
+// Nota: telemedicineService puede estar integrado en appointmentService
 
 // Mock Jitsi Meet
 jest.mock('react-native-jitsi-meet', () => ({

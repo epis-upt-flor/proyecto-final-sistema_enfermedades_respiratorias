@@ -4,12 +4,19 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
-import AIAnalysisScreen from '../../src/components/AI/AIAnalysisScreen';
-import { useAppStore } from '../../src/store/useAppStore';
+import { render, fireEvent, waitFor, act } from '@testing-library/react';
+import SymptomAnalyzer from '../../medical-app/components/tabs/symptom-analyzer';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
 // Mocks
-jest.mock('../../src/store/useAppStore');
+jest.mock('../../medical-app/store/useAppStore');
+jest.mock('../../medical-app/lib/api/services/symptomAnalyzerService');
+jest.mock('sonner', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 const mockStore = {
   offlineData: {
@@ -18,11 +25,21 @@ const mockStore = {
   },
 };
 
-describe('AIAnalysisScreen', () => {
+const mockTranslation = {
+  symptomAnalyzer: {
+    title: 'Analizador de Síntomas',
+    addSymptom: 'Agregar síntoma',
+  },
+} as any;
+
+describe('SymptomAnalyzer', () => {
   beforeEach(() => {
-  jest.useFakeTimers();
-  (useAppStore as jest.Mock).mockReturnValue(mockStore);
-});
+    jest.useFakeTimers();
+    (useAppStore as jest.Mock).mockReturnValue({
+      user: { _id: 'user-1' },
+      medicalHistories: [],
+    });
+  });
 
 afterEach(() => {
   act(() => {

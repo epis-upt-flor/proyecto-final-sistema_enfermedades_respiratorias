@@ -2,7 +2,7 @@
  * Tests for BatteryOptimizationService
  */
 
-import { batteryOptimizationService } from '../../src/services/batteryOptimizationService';
+import { batteryOptimizationService } from '../../medical-app/services/batteryOptimizationService';
 import { Platform } from 'react-native';
 
 // Mock react-native

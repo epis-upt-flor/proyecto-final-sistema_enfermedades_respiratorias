@@ -1,26 +1,29 @@
 import { act } from '@testing-library/react-native';
-import { useAppStore } from '../../src/store/useAppStore';
-import { apiService } from '../../src/services/api';
-import { localStorageService } from '../../src/services/localStorage';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { authService } from '../../medical-app/lib/api/services/authService';
+import { alertService } from '../../medical-app/lib/api/services/alertService';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 
-jest.mock('../../src/services/api', () => ({
-  apiService: {
+jest.mock('../../medical-app/lib/api/services/authService', () => ({
+  authService: {
     login: jest.fn(),
-    setCurrentUser: jest.fn(),
-    clearCurrentUser: jest.fn(),
-    getAlerts: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    logout: jest.fn(),
+    register: jest.fn(),
   },
 }));
 
-jest.mock('../../src/services/localStorage', () => ({
-  localStorageService: {
-    saveMedicalHistory: jest.fn().mockResolvedValue(undefined),
-    getMedicalHistories: jest.fn().mockResolvedValue([]),
-    deleteMedicalHistory: jest.fn().mockResolvedValue(undefined),
-    saveSymptomAnalysis: jest.fn().mockResolvedValue(undefined),
-    syncPendingData: jest.fn().mockResolvedValue(undefined),
-    syncFromServer: jest.fn().mockResolvedValue(undefined),
-    getLastSyncTime: jest.fn().mockResolvedValue(new Date().toISOString()),
+jest.mock('../../medical-app/lib/api/services/alertService', () => ({
+  alertService: {
+    list: jest.fn().mockResolvedValue([]),
+    acknowledge: jest.fn(),
+  },
+}));
+
+jest.mock('../../medical-app/lib/services/offlineQueue', () => ({
+  offlineQueue: {
+    enqueue: jest.fn(),
+    getPendingCount: jest.fn().mockReturnValue(0),
+    getStats: jest.fn().mockReturnValue({ pending: 0, completed: 0, failed: 0 }),
   },
 }));
 
@@ -81,43 +84,34 @@ describe('useAppStore - acciones críticas', () => {
 });
 
 import { act } from '@testing-library/react-native';
-import { useAppStore } from '../../src/store/useAppStore';
-import { SyncStatus } from '../../src/types';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
-jest.mock('../../src/services/localStorage', () => ({
-  localStorageService: {
-    saveMedicalHistory: jest.fn().mockResolvedValue(undefined),
-    getMedicalHistories: jest.fn().mockResolvedValue([]),
-    deleteMedicalHistory: jest.fn().mockResolvedValue(undefined),
-    saveSymptomAnalysis: jest.fn().mockResolvedValue(undefined),
-    getSymptomAnalyses: jest.fn().mockResolvedValue([]),
-    syncPendingData: jest.fn().mockResolvedValue(undefined),
-    syncFromServer: jest.fn().mockResolvedValue(undefined),
-    getLastSyncTime: jest.fn().mockResolvedValue('2025-11-10T10:00:00.000Z'),
+jest.mock('../../medical-app/lib/services/offlineQueue', () => ({
+  offlineQueue: {
+    enqueue: jest.fn(),
+    getPendingCount: jest.fn().mockReturnValue(0),
+    getStats: jest.fn().mockReturnValue({ pending: 0, completed: 0, failed: 0 }),
+    clearAll: jest.fn(),
   },
 }));
 
-jest.mock('../../src/services/api', () => ({
-  apiService: {
+jest.mock('../../medical-app/lib/api/services/authService', () => ({
+  authService: {
     login: jest.fn(),
     logout: jest.fn().mockResolvedValue(undefined),
     register: jest.fn(),
-    setCurrentUser: jest.fn().mockResolvedValue(undefined),
-    clearCurrentUser: jest.fn().mockResolvedValue(undefined),
-    getAlerts: jest.fn(),
-    acknowledgeAlert: jest.fn(),
   },
 }));
 
-jest.mock('../../src/services/aiService', () => ({
-  aiService: {
-    analyzeSymptoms: jest.fn(),
+jest.mock('../../medical-app/lib/api/services/symptomAnalyzerService', () => ({
+  symptomAnalyzerService: {
+    analyze: jest.fn(),
   },
 }));
 
-const { localStorageService } = require('../../src/services/localStorage');
-const { apiService } = require('../../src/services/api');
-const { aiService } = require('../../src/services/aiService');
+const { offlineQueue } = require('../../medical-app/lib/services/offlineQueue');
+const { authService } = require('../../medical-app/lib/api/services/authService');
+const { symptomAnalyzerService } = require('../../medical-app/lib/api/services/symptomAnalyzerService');
 
 const resetStoreState = () => {
   useAppStore.setState(() => ({

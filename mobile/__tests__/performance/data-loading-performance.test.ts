@@ -3,15 +3,15 @@
  * Verifica performance de carga de datos desde API y localStorage
  */
 
-import { localStorageService } from '../../src/services/localStorage';
-import { apiService } from '../../src/services/api';
-import { useAppStore } from '../../src/store/useAppStore';
+import { localStorageService } from '../../medical-app/services/localStorage';
+import { apiService } from '../../medical-app/services/api';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
 // Mock dependencies
-jest.mock('../../src/services/api', () => ({
-  apiService: {
-    get: jest.fn(),
-    post: jest.fn(),
+jest.mock('../../medical-app/lib/api/services/authService', () => ({
+  authService: {
+    login: jest.fn(),
+    logout: jest.fn(),
   },
 }));
 

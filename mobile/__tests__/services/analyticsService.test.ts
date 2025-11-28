@@ -2,7 +2,7 @@
  * Tests for AnalyticsService
  */
 
-import { analyticsService } from '../../src/services/analyticsService';
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

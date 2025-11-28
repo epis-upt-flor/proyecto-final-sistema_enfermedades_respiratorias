@@ -4,7 +4,8 @@
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import LazyImage from '../../src/components/common/LazyImage';
+// Nota: LazyImage puede estar en lib/utils/lazyLoad.tsx o components/ui/
+// import { LazyImage } from '../../medical-app/lib/utils/lazyLoad';
 
 describe('LazyImage', () => {
   const defaultProps = {

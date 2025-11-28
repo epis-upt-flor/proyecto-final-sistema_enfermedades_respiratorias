@@ -3,15 +3,14 @@
  * Verifica el flujo completo desde login hasta logout
  */
 
-import { apiService } from '../../src/services/api';
-import { useAppStore } from '../../src/store/useAppStore';
-import { localStorageService } from '../../src/services/localStorage';
-import { analyticsService } from '../../src/services/analyticsService';
-import { errorTrackingService } from '../../src/services/errorTrackingService';
+import { authService } from '../../medical-app/lib/api/services/authService';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
 
 // Mock dependencies
-jest.mock('../../src/services/analyticsService');
-jest.mock('../../src/services/errorTrackingService');
+jest.mock('../../medical-app/lib/api/services/dashboardService');
+// Nota: errorTrackingService puede no existir en medical-app
 
 describe('Auth Flow Integration Tests', () => {
   beforeEach(async () => {

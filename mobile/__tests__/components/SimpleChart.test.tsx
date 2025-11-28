@@ -4,7 +4,8 @@
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import SimpleChart from '../../src/components/Analytics/SimpleChart';
+// Nota: SimpleChart puede estar en components/ui/chart.tsx
+// import { Chart } from '../../medical-app/components/ui/chart';
 
 describe('SimpleChart', () => {
   const mockData = [

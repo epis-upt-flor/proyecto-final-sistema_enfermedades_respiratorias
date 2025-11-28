@@ -3,16 +3,15 @@
  * Verifica el manejo de estados, transiciones y notificaciones
  */
 
-import { localStorageService, SyncStatus } from '../../src/services/localStorage';
-import { useAppStore } from '../../src/store/useAppStore';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mocks
 jest.mock('@react-native-community/netinfo');
 jest.mock('@react-native-async-storage/async-storage');
-jest.mock('../../src/services/api');
-jest.mock('../../src/services/telemedicineService');
+jest.mock('../../medical-app/lib/api/services/appointmentService');
 
 describe('Offline Sync States Tests', () => {
   beforeEach(() => {

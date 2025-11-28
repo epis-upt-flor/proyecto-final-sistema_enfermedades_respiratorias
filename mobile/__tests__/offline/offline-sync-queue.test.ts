@@ -3,13 +3,13 @@
  * Verifica el manejo de colas, reintentos y estados de sincronización
  */
 
-import { localStorageService, SyncQueueItem } from '../../src/services/localStorage';
-import { apiService } from '../../src/services/api';
+import { offlineQueue, type OfflineOperation } from '../../medical-app/lib/services/offlineQueue';
+import { medicalHistoryService } from '../../medical-app/lib/api/services/medicalHistoryService';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mocks
-jest.mock('../../src/services/api');
+jest.mock('../../medical-app/lib/api/services/medicalHistoryService');
 jest.mock('@react-native-community/netinfo');
 jest.mock('@react-native-async-storage/async-storage');
 

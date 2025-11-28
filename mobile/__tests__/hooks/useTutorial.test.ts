@@ -3,7 +3,8 @@
  */
 
 import { renderHook, act } from '@testing-library/react-native';
-import { useTutorial } from '../../src/hooks/useTutorial';
+// Nota: useTutorial puede no existir en medical-app, verificar si es necesario
+// import { useTutorial } from '../../medical-app/hooks/useTutorial';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

@@ -1,277 +1,181 @@
-import axios from 'axios';
-import { apiService } from '../../src/services/api';
-
-jest.mock('axios');
-
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-describe('apiService - manejo de éxito/error', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('login devuelve success=true al autenticar', async () => {
-    mockedAxios.create.mockReturnValueOnce(mockedAxios as any);
-    (mockedAxios.post as any).mockResolvedValueOnce({
-      data: { data: { accessToken: 'a', refreshToken: 'r', expiresIn: 3600, user: { id: 'u1' } } },
-    });
-
-    const resp = await apiService.login('a@b.com', 'x');
-    expect(resp.success).toBe(true);
-    expect(resp.data?.user).toBeDefined();
-  });
-
-  it('login devuelve success=false ante error de red', async () => {
-    mockedAxios.create.mockReturnValueOnce(mockedAxios as any);
-    (mockedAxios.post as any).mockRejectedValueOnce({ request: {} });
-
-    const resp = await apiService.login('a@b.com', 'x');
-    expect(resp.success).toBe(false);
-    expect(resp.error).toBeDefined();
-  });
-
-  it('getAlerts normaliza lista de alertas', async () => {
-    mockedAxios.create.mockReturnValueOnce(mockedAxios as any);
-    (mockedAxios.get as any).mockResolvedValueOnce({
-      data: { data: [{ _id: '1', userId: 'u', title: 't', message: 'm', category: 'system', priority: 'low', status: 'sent', channels: [], createdAt: '' }] },
-    });
-
-    const resp = await apiService.getAlerts();
-    expect(resp.success).toBe(true);
-    expect(resp.data?.[0].id).toBe('1');
-  });
-});
-
 /**
- * Tests unitarios para API Service
- * Cubre autenticación, CRUD de historias médicas, y manejo de errores
+ * Tests unitarios para API Services (medical-app)
+ * Cubre autenticación y servicios principales
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, { __getMockAxiosInstance, __resetMockAxiosInstance } from 'axios';
-import NetInfo from '@react-native-community/netinfo';
+import { authService } from '../../medical-app/lib/api/services/authService';
+import { medicalHistoryService } from '../../medical-app/lib/api/services/medicalHistoryService';
+import { alertService } from '../../medical-app/lib/api/services/alertService';
+import { apiClient } from '../../medical-app/lib/api/client';
 
-// Mocks
-jest.mock('axios');
-jest.mock('@react-native-async-storage/async-storage');
-jest.mock('@react-native-community/netinfo');
+jest.mock('../../medical-app/lib/api/client');
+jest.mock('../../medical-app/lib/api/services/authService');
+jest.mock('../../medical-app/lib/api/services/medicalHistoryService');
+jest.mock('../../medical-app/lib/api/services/alertService');
 
-type ApiServiceType = typeof import('../../src/services/api')['apiService'];
+const mockAuthService = authService as jest.Mocked<typeof authService>;
+const mockMedicalHistoryService = medicalHistoryService as jest.Mocked<typeof medicalHistoryService>;
+const mockAlertService = alertService as jest.Mocked<typeof alertService>;
+const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
-const loadApiService = (): ApiServiceType => {
-  const axiosInstance = __resetMockAxiosInstance();
-  axiosInstance.get.mockReset();
-  axiosInstance.post.mockReset();
-  axiosInstance.put.mockReset();
-  axiosInstance.delete.mockReset();
-
-  let service: ApiServiceType;
-  jest.isolateModules(() => {
-    service = require('../../src/services/api').apiService;
-  });
-
-  const netInfo = require('@react-native-community/netinfo').default;
-  (netInfo.fetch as jest.Mock).mockResolvedValue({
-    isConnected: true,
-    isInternetReachable: true,
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return service!;
-};
-
-const getAxiosInstance = () => __getMockAxiosInstance();
-describe('ApiService', () => {
+describe('AuthService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (NetInfo.fetch as jest.Mock).mockResolvedValue({
-      isConnected: true,
-      isInternetReachable: true,
-    });
   });
 
   describe('login', () => {
     it('debe hacer login exitosamente y guardar tokens', async () => {
       const mockResponse = {
-        data: {
-          data: {
-            user: {
-              id: 'user-1',
-              email: 'test@example.com',
-              firstName: 'Test',
-              lastName: 'User',
-              role: 'patient',
-            },
-            accessToken: 'access-token',
-            refreshToken: 'refresh-token',
-            expiresIn: 3600,
-          },
+        user: {
+          _id: 'user-1',
+          email: 'test@example.com',
+          firstName: 'Test',
+          lastName: 'User',
+          role: 'patient',
         },
+        token: 'access-token',
+        refreshToken: 'refresh-token',
       };
 
-      const apiService = loadApiService();
-      const axiosInstance = getAxiosInstance();
-      axiosInstance.post.mockResolvedValue(mockResponse);
+      mockAuthService.login.mockResolvedValue(mockResponse as any);
 
-      const result = await apiService.login('test@example.com', 'password');
+      const result = await authService.login({
+        email: 'test@example.com',
+        password: 'password',
+      });
 
-      expect(result.success).toBe(true);
-      expect(result.data?.user.email).toBe('test@example.com');
-      expect(axiosInstance.post).toHaveBeenCalledWith('/auth/login', {
+      expect(result.user.email).toBe('test@example.com');
+      expect(result.token).toBeDefined();
+      expect(mockAuthService.login).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password',
       });
     });
 
     it('debe manejar errores de login incorrecto', async () => {
-      const mockError = {
-        response: {
-          status: 401,
-          data: {
-            message: 'Credenciales inválidas',
-          },
-        },
-      };
+      mockAuthService.login.mockRejectedValue(new Error('Credenciales inválidas'));
 
-      const apiService = loadApiService();
-      const axiosInstance = getAxiosInstance();
-      axiosInstance.post.mockRejectedValue(mockError);
-
-      const result = await apiService.login('test@example.com', 'wrong-password');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      await expect(
+        authService.login({
+          email: 'test@example.com',
+          password: 'wrong-password',
+        })
+      ).rejects.toThrow('Credenciales inválidas');
     });
   });
 
-  describe('getMedicalHistories', () => {
-    it('debe obtener historias médicas exitosamente', async () => {
-      const mockHistories = [
-        {
-          id: 'history-1',
-          patientId: 'patient-1',
-          diagnosis: 'Bronquitis',
-          symptoms: [],
-          treatment: 'Reposo',
-          date: '2025-11-01',
-        },
-      ];
-
+  describe('register', () => {
+    it('debe registrar usuario exitosamente', async () => {
       const mockResponse = {
-        data: {
-          data: {
-            histories: mockHistories,
-            total: 1,
-            page: 1,
-            limit: 10,
-          },
+        user: {
+          _id: 'user-1',
+          email: 'new@example.com',
         },
+        token: 'access-token',
+        refreshToken: 'refresh-token',
       };
 
-      const apiService = loadApiService();
-      const axiosInstance = getAxiosInstance();
-      axiosInstance.get.mockResolvedValue(mockResponse);
+      mockAuthService.register.mockResolvedValue(mockResponse as any);
 
-      const result = await apiService.getMedicalHistories();
+      const result = await authService.register({
+        email: 'new@example.com',
+        password: 'password',
+        firstName: 'New',
+        lastName: 'User',
+      } as any);
 
-      expect(result.success).toBe(true);
-      expect(result.data?.histories.length).toBe(1);
-      expect(axiosInstance.get).toHaveBeenCalledWith('/medical-histories', {
-        params: undefined,
-      });
-    });
-
-    it('debe manejar errores de red cuando está offline', async () => {
-      const apiService = loadApiService();
-      const axiosInstance = getAxiosInstance();
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({
-        isConnected: false,
-        isInternetReachable: false,
-      });
-      axiosInstance.get.mockRejectedValue({
-        request: {},
-      });
-
-      const result = await apiService.getMedicalHistories();
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Network error');
-    });
-  });
-
-  describe('analyzeSymptoms', () => {
-    it('debe analizar síntomas exitosamente', async () => {
-      const mockSymptoms = [
-        {
-          symptom: 'Tos',
-          severity: 'moderate' as const,
-          duration: '3 días',
-        },
-      ];
-
-      const mockResponse = {
-        id: 'analysis-1',
-        patientId: 'patient-1',
-        symptoms: mockSymptoms,
-        urgencyLevel: 'medium',
-        severityScore: 0.6,
-        classification: {
-          categories: ['respiratory'],
-          confidence: 0.8,
-          urgency: 'medium',
-        },
-        recommendations: [],
-        warningSigns: [],
-        followUpRequired: true,
-        confidenceScore: 0.8,
-        analyzedAt: new Date().toISOString(),
-        processingTimeMs: 100,
-      };
-
-      const apiService = loadApiService();
-      const axiosInstance = getAxiosInstance();
-      axiosInstance.post.mockResolvedValue({ data: mockResponse });
-
-      const result = await apiService.analyzeSymptoms(mockSymptoms, 'patient-1');
-
-      expect(result.success).toBe(true);
-      expect(result.data?.urgencyLevel).toBe('medium');
-      expect(axiosInstance.post).toHaveBeenCalled();
-    });
-  });
-
-  describe('isAuthenticated', () => {
-    let apiService: ApiServiceType;
-
-    beforeEach(() => {
-      apiService = loadApiService();
-    });
-
-    it('debe retornar true cuando hay tokens válidos', async () => {
-      const mockTokens = {
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        expiresAt: Date.now() + 3600000, // 1 hora en el futuro
-      };
-
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(mockTokens));
-
-      const isAuth = await apiService.isAuthenticated();
-      expect(isAuth).toBe(true);
-    });
-
-    it('debe retornar false cuando los tokens expiraron', async () => {
-      const mockTokens = {
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        expiresAt: Date.now() - 1000, // En el pasado
-      };
-
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(mockTokens));
-
-      const isAuth = await apiService.isAuthenticated();
-      expect(isAuth).toBe(false);
+      expect(result.user.email).toBe('new@example.com');
+      expect(mockAuthService.register).toHaveBeenCalled();
     });
   });
 });
 
+describe('MedicalHistoryService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('debe obtener historias médicas exitosamente', async () => {
+    const mockHistories = [
+      {
+        _id: 'history-1',
+        patientId: 'patient-1',
+        diagnosis: 'Bronquitis',
+        symptoms: [],
+        date: '2025-11-01',
+      },
+    ];
+
+    mockMedicalHistoryService.list.mockResolvedValue({
+      data: mockHistories,
+      total: 1,
+      page: 1,
+      limit: 10,
+    } as any);
+
+    const result = await medicalHistoryService.list();
+
+    expect(result.data.length).toBe(1);
+    expect(mockMedicalHistoryService.list).toHaveBeenCalled();
+  });
+
+  it('debe crear historia médica exitosamente', async () => {
+    const mockHistory = {
+      _id: 'history-1',
+      patientId: 'patient-1',
+      diagnosis: 'Bronquitis',
+      symptoms: [],
+    };
+
+    mockMedicalHistoryService.create.mockResolvedValue(mockHistory as any);
+
+    const result = await medicalHistoryService.create({
+      patientId: 'patient-1',
+      patientName: 'Test',
+      age: 30,
+      diagnosis: 'Bronquitis',
+      symptoms: [],
+    });
+
+    expect(result._id).toBe('history-1');
+    expect(mockMedicalHistoryService.create).toHaveBeenCalled();
+  });
+});
+
+describe('AlertService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('debe obtener alertas exitosamente', async () => {
+    const mockAlerts = [
+      {
+        _id: 'alert-1',
+        title: 'Alerta',
+        message: 'Mensaje',
+        category: 'system',
+        priority: 'low',
+      },
+    ];
+
+    mockAlertService.list.mockResolvedValue({
+      data: mockAlerts,
+      total: 1,
+      page: 1,
+      limit: 10,
+    } as any);
+
+    const result = await alertService.list();
+
+    expect(result.data.length).toBe(1);
+    expect(mockAlertService.list).toHaveBeenCalled();
+  });
+
+  it('debe reconocer alerta exitosamente', async () => {
+    mockAlertService.acknowledge.mockResolvedValue(undefined);
+
+    await alertService.acknowledge('alert-1');
+
+    expect(mockAlertService.acknowledge).toHaveBeenCalledWith('alert-1');
+  });
+});

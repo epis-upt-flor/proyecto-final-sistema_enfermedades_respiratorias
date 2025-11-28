@@ -2,7 +2,7 @@
  * Tests for HapticsService
  */
 
-import { hapticsService } from '../../src/services/hapticsService';
+import { hapticsService } from '../../medical-app/services/hapticsService';
 
 // Mock expo-haptics
 const mockHaptics = {

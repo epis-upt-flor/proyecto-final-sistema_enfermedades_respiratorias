@@ -1,14 +1,6 @@
-import {
-  isEmergencyMessage,
-  isSymptomDescription,
-  getCategoryDisplayName,
-  getTrendEmoji,
-  getTrendText,
-  getUrgencyEmoji,
-  getUrgencyText,
-  parseSymptomsFromText,
-  generateAnalysisResponse,
-} from '../../src/components/ChatBot/medicalChatbotUtils';
+// Nota: medicalChatbotUtils puede estar en components/tabs/chatbot.tsx o como utilidades
+// Por ahora, estos tests pueden necesitar adaptarse a la nueva estructura
+// import { ... } from '../../medical-app/components/tabs/chatbot';
 
 describe('medicalChatbotUtils', () => {
   it('detecta mensajes de emergencia correctamente', () => {

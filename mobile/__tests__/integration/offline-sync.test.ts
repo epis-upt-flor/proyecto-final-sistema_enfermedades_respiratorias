@@ -1,13 +1,11 @@
-import { localStorageService } from '../../src/services/localStorage';
-import { apiService } from '../../src/services/api';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { authService } from '../../medical-app/lib/api/services/authService';
 import NetInfo from '@react-native-community/netinfo';
 
-jest.mock('../../src/services/api', () => ({
-  apiService: {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
+jest.mock('../../medical-app/lib/api/services/authService', () => ({
+  authService: {
+    login: jest.fn(),
+    logout: jest.fn(),
   },
 }));
 

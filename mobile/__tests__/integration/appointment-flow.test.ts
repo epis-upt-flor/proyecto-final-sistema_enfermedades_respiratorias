@@ -3,14 +3,14 @@
  * Verifica crear, editar, cancelar y sincronizar citas
  */
 
-import { telemedicineService } from '../../src/services/telemedicineService';
-import { useAppStore } from '../../src/store/useAppStore';
-import { localStorageService } from '../../src/services/localStorage';
-import { analyticsService } from '../../src/services/analyticsService';
+import { appointmentService } from '../../medical-app/lib/api/services/appointmentService';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
 import NetInfo from '@react-native-community/netinfo';
 
 // Mock dependencies
-jest.mock('../../src/services/analyticsService');
+jest.mock('../../medical-app/lib/api/services/dashboardService');
 jest.mock('@react-native-community/netinfo', () => ({
   __esModule: true,
   default: {

@@ -2,7 +2,7 @@
  * Tests for ErrorTrackingService
  */
 
-import { errorTrackingService } from '../../src/services/errorTrackingService';
+import { errorTrackingService } from '../../medical-app/services/errorTrackingService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

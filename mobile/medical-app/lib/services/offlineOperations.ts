@@ -8,6 +8,9 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import type { CreateMedicalHistoryRequest } from '@/lib/api/services/medicalHistoryService'
 import type { CreateAppointmentRequest } from '@/lib/api/services/appointmentService'
 import type { MedicalHistory, Appointment } from '@/lib/types'
+import { medicalHistoryService } from '@/lib/api/services/medicalHistoryService'
+import { appointmentService } from '@/lib/api/services/appointmentService'
+import { alertService } from '@/lib/api/services/alertService'
 
 /**
  * Crear historia médica (con soporte offline)

@@ -13,7 +13,7 @@ import {
   spin,
   rotateInterpolation,
   successAnimation,
-} from '../../src/utils/animations';
+} from '../../medical-app/utils/animations';
 
 describe('Animation Utilities', () => {
   describe('fadeIn', () => {

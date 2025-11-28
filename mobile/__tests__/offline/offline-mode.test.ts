@@ -3,14 +3,14 @@
  * Verifica funcionalidad cuando no hay conexión a internet
  */
 
-import { localStorageService } from '../../src/services/localStorage';
-import { aiService } from '../../src/services/aiService';
-import { apiService } from '../../src/services/api';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { symptomAnalyzerService } from '../../medical-app/lib/api/services/symptomAnalyzerService';
+import { authService } from '../../medical-app/lib/api/services/authService';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mocks
-jest.mock('../../src/services/api');
+jest.mock('../../medical-app/lib/api/services/authService');
 jest.mock('@react-native-community/netinfo');
 jest.mock('@react-native-async-storage/async-storage');
 

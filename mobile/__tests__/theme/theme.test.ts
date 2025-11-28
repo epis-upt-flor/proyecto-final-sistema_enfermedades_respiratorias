@@ -2,8 +2,8 @@
  * Tests for Theme
  */
 
-import { theme } from '../../src/theme/theme';
-import { darkTheme } from '../../src/theme/darkTheme';
+import { theme } from '../../medical-app/theme/theme';
+import { darkTheme } from '../../medical-app/theme/darkTheme';
 
 describe('Theme', () => {
   describe('light theme', () => {

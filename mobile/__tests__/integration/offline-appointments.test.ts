@@ -1,4 +1,4 @@
-import { localStorageService } from '../../src/services/localStorage';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 import NetInfo from '@react-native-community/netinfo';
 
 jest.mock('@react-native-community/netinfo', () => ({
@@ -9,15 +9,15 @@ jest.mock('@react-native-community/netinfo', () => ({
   },
 }));
 
-jest.mock('../../src/services/telemedicineService', () => ({
-  telemedicineService: {
-    createAppointment: jest.fn(),
-    rescheduleAppointment: jest.fn(),
-    cancelAppointment: jest.fn(),
+jest.mock('../../medical-app/lib/api/services/appointmentService', () => ({
+  appointmentService: {
+    create: jest.fn(),
+    reschedule: jest.fn(),
+    cancel: jest.fn(),
   },
 }));
 
-import { telemedicineService } from '../../src/services/telemedicineService';
+import { appointmentService } from '../../medical-app/lib/api/services/appointmentService';
 
 describe('Offline-first - appointments queue', () => {
   beforeEach(async () => {

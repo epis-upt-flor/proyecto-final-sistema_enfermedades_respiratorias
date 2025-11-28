@@ -5,8 +5,8 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { useAppStore } from '../../src/store/useAppStore';
-import { localStorageService } from '../../src/services/localStorage';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 
 // Mock navigation
 const mockNavigate = jest.fn();

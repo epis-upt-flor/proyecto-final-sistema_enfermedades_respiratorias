@@ -4,7 +4,8 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
-import TutorialOverlay from '../../src/components/Tutorial/TutorialOverlay';
+// Nota: TutorialOverlay puede no existir en medical-app o estar en otra ubicación
+// Verificar si existe en components/ui/ o si se necesita implementar
 
 describe('TutorialOverlay', () => {
   const mockSteps = [

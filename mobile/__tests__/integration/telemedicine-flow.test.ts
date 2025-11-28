@@ -3,13 +3,13 @@
  * Verifica iniciar llamada, finalizar y sincronización
  */
 
-import { telemedicineService } from '../../src/services/telemedicineService';
-import { useAppStore } from '../../src/store/useAppStore';
-import { analyticsService } from '../../src/services/analyticsService';
-import { localStorageService } from '../../src/services/localStorage';
+import { appointmentService } from '../../medical-app/lib/api/services/appointmentService';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 
 // Mock dependencies
-jest.mock('../../src/services/analyticsService');
+jest.mock('../../medical-app/lib/api/services/dashboardService');
 jest.mock('react-native-jitsi-meet', () => ({
   launchJitsiMeetView: jest.fn(),
   endCall: jest.fn(),

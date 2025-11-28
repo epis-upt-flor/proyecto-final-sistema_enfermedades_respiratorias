@@ -3,13 +3,13 @@
  * Verifica los diferentes estados y transiciones del sistema de sincronización
  */
 
-import { useAppStore } from '../../src/store/useAppStore';
-import { localStorageService } from '../../src/services/localStorage';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 import NetInfo from '@react-native-community/netinfo';
 
 // Mocks
-jest.mock('../../src/services/localStorage');
-jest.mock('../../src/services/api');
+jest.mock('../../medical-app/lib/services/offlineQueue');
+jest.mock('../../medical-app/lib/api/services/authService');
 jest.mock('@react-native-community/netinfo');
 
 describe('Offline Sync States Tests', () => {

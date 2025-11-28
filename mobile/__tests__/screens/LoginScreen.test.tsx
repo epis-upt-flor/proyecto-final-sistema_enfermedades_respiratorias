@@ -3,17 +3,17 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
-import LoginScreen from '../../src/screens/LoginScreen';
-import { useAppStore } from '../../src/store/useAppStore';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { LoginView } from '../../medical-app/components/views/login-view';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
 // Mock dependencies
-jest.mock('../../src/store/useAppStore');
-jest.mock('../../src/utils/animations', () => ({
-  fadeIn: jest.fn(() => ({ start: jest.fn() })),
-  shake: jest.fn(() => ({ start: jest.fn() })),
-  successAnimation: jest.fn(() => ({ start: jest.fn() })),
+jest.mock('../../medical-app/store/useAppStore');
+jest.mock('sonner', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
 }));
 
 const mockSetUser = jest.fn();

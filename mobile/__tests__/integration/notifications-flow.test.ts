@@ -3,13 +3,13 @@
  * Verifica recibir, leer, eliminar y sincronización
  */
 
-import { useAppStore } from '../../src/store/useAppStore';
-import { NotificationService } from '../../src/components/Notifications/NotificationService';
-import { analyticsService } from '../../src/services/analyticsService';
-import { localStorageService } from '../../src/services/localStorage';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+// Nota: NotificationService puede no existir en medical-app
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
 
 // Mock dependencies
-jest.mock('../../src/services/analyticsService');
+jest.mock('../../medical-app/lib/api/services/dashboardService');
 jest.mock('react-native-push-notification', () => ({
   configure: jest.fn(),
   localNotification: jest.fn(),

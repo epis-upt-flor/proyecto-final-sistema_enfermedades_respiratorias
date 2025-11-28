@@ -4,7 +4,7 @@
  */
 
 import { Animated, Easing } from 'react-native';
-import { fadeIn, fadeOut, slideUp, scale, bounce, shake } from '../../src/utils/animations';
+import { fadeIn, fadeOut, slideUp, scale, bounce, shake } from '../../medical-app/utils/animations';
 
 // Performance thresholds
 const ANIMATION_FRAME_THRESHOLD_MS = 16; // 60 FPS = 16ms por frame

@@ -6,12 +6,12 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import { FlatList } from 'react-native';
-import MedicalHistoryScreen from '../../src/screens/MedicalHistoryScreen';
-import AppointmentsScreen from '../../src/screens/AppointmentsScreen';
-import { useAppStore } from '../../src/store/useAppStore';
+import MedicalHistoryScreen from '../../medical-app/screens/MedicalHistoryScreen';
+import AppointmentsScreen from '../../medical-app/screens/AppointmentsScreen';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
 // Mock dependencies
-jest.mock('../../src/store/useAppStore');
+jest.mock('../../medical-app/store/useAppStore');
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),

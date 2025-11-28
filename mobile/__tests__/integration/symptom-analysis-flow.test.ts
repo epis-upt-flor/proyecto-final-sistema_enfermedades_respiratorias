@@ -3,15 +3,15 @@
  * Verifica el flujo desde captura hasta resultados
  */
 
-import { useAppStore } from '../../src/store/useAppStore';
-import { aiService } from '../../src/services/aiService';
-import { localStorageService } from '../../src/services/localStorage';
-import { analyticsService } from '../../src/services/analyticsService';
-import { voiceRecognitionService } from '../../src/services/voiceRecognitionService';
+import { useAppStore } from '../../medical-app/store/useAppStore';
+import { symptomAnalyzerService } from '../../medical-app/lib/api/services/symptomAnalyzerService';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { dashboardService } from '../../medical-app/lib/api/services/dashboardService';
+// Nota: voiceRecognitionService puede no existir en medical-app
 
 // Mock dependencies
-jest.mock('../../src/services/analyticsService');
-jest.mock('../../src/services/voiceRecognitionService');
+jest.mock('../../medical-app/lib/api/services/dashboardService');
+// Nota: voiceRecognitionService puede no existir en medical-app
 
 describe('Symptom Analysis Flow Integration Tests', () => {
   beforeEach(async () => {

@@ -6,15 +6,15 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import { InteractionManager } from 'react-native';
-import HomeScreen from '../../src/screens/HomeScreen';
-import MedicalHistoryScreen from '../../src/screens/MedicalHistoryScreen';
-import AppointmentsScreen from '../../src/screens/AppointmentsScreen';
-import ProfileScreen from '../../src/screens/ProfileScreen';
-import LoginScreen from '../../src/screens/LoginScreen';
-import { useAppStore } from '../../src/store/useAppStore';
+import HomeScreen from '../../medical-app/screens/HomeScreen';
+import MedicalHistoryScreen from '../../medical-app/screens/MedicalHistoryScreen';
+import AppointmentsScreen from '../../medical-app/screens/AppointmentsScreen';
+import ProfileScreen from '../../medical-app/screens/ProfileScreen';
+import LoginScreen from '../../medical-app/screens/LoginScreen';
+import { useAppStore } from '../../medical-app/store/useAppStore';
 
 // Mock dependencies
-jest.mock('../../src/store/useAppStore');
+jest.mock('../../medical-app/store/useAppStore');
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),

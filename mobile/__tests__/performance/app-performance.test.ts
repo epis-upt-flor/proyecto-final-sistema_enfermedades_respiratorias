@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import MedicalHistoryScreen from '../../src/screens/MedicalHistoryScreen';
-import AppointmentsScreen from '../../src/screens/AppointmentsScreen';
+import MedicalHistoryScreen from '../../medical-app/screens/MedicalHistoryScreen';
+import AppointmentsScreen from '../../medical-app/screens/AppointmentsScreen';
 
 // Nota: este test no mide tiempos reales de dispositivo,
 // pero actúa como smoke test de rendimiento/renderizado para listas grandes.

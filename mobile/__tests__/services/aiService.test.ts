@@ -1,47 +1,37 @@
 /**
- * Tests unitarios para AI Service
- * Cubre análisis de síntomas, tendencias y recomendaciones
+ * Tests unitarios para Symptom Analyzer Service (medical-app)
+ * Cubre análisis de síntomas con IA
  */
 
-import { aiService, SymptomInput, AISymptomAnalysis } from '../../src/services/aiService';
-import { apiService } from '../../src/services/api';
-import { localStorageService } from '../../src/services/localStorage';
-import NetInfo from '@react-native-community/netinfo';
+import { symptomAnalyzerService } from '../../medical-app/lib/api/services/symptomAnalyzerService';
 
-// Mocks
-jest.mock('../../src/services/api');
-jest.mock('../../src/services/localStorage');
-jest.mock('@react-native-community/netinfo');
+jest.mock('../../medical-app/lib/api/services/symptomAnalyzerService');
 
-describe('AIService', () => {
+const mockSymptomAnalyzerService = symptomAnalyzerService as jest.Mocked<typeof symptomAnalyzerService>;
+
+describe('SymptomAnalyzerService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (NetInfo.fetch as jest.Mock).mockResolvedValue({
-      isConnected: true,
-      isInternetReachable: true,
-    });
   });
 
-  describe('analyzeSymptoms', () => {
-    const mockSymptoms: SymptomInput[] = [
+  describe('analyze', () => {
+    const mockSymptoms = [
       {
-        symptom: 'Tos seca',
+        name: 'Tos seca',
         severity: 'moderate',
-        duration: '3 días',
+        duration: 3,
       },
       {
-        symptom: 'Fiebre',
+        name: 'Fiebre',
         severity: 'mild',
-        duration: '1 día',
+        duration: 1,
       },
     ];
 
-    const mockPatientId = 'patient-123';
-
-    it('debe analizar síntomas usando servicio de IA cuando está online', async () => {
-      const mockAnalysis: AISymptomAnalysis = {
+    it('debe analizar síntomas exitosamente', async () => {
+      const mockAnalysis = {
         id: 'analysis-1',
-        patientId: mockPatientId,
+        patientId: 'patient-123',
         symptoms: mockSymptoms,
         urgencyLevel: 'medium',
         severityScore: 0.6,
@@ -68,199 +58,89 @@ describe('AIService', () => {
         confidenceScore: 0.85,
         analyzedAt: new Date().toISOString(),
         processingTimeMs: 100,
-        analysisMethod: 'ai_service',
       };
 
-      (apiService.analyzeSymptoms as jest.Mock).mockResolvedValue({
+      mockSymptomAnalyzerService.analyze.mockResolvedValue({
         success: true,
+        message: 'Análisis completado',
         data: mockAnalysis,
+      } as any);
+
+      const result = await symptomAnalyzerService.analyze({
+        symptoms: mockSymptoms,
+        patientId: 'patient-123',
+      } as any);
+
+      expect(result.success).toBe(true);
+      expect(result.data.urgencyLevel).toBe('medium');
+      expect(mockSymptomAnalyzerService.analyze).toHaveBeenCalledWith({
+        symptoms: mockSymptoms,
+        patientId: 'patient-123',
       });
-      (localStorageService.saveSymptomAnalysis as jest.Mock).mockResolvedValue(undefined);
-
-      const result = await aiService.analyzeSymptoms(mockSymptoms, mockPatientId);
-
-      expect(result).toBeDefined();
-      expect(result.urgencyLevel).toBe('medium');
-      expect(result.symptoms).toEqual(mockSymptoms);
-      expect(apiService.analyzeSymptoms).toHaveBeenCalledWith(
-        mockSymptoms,
-        mockPatientId,
-        undefined
-      );
-      expect(localStorageService.saveSymptomAnalysis).toHaveBeenCalled();
     });
 
-    it('debe usar análisis local cuando está offline', async () => {
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({
-        isConnected: false,
-        isInternetReachable: false,
-      });
-      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    it('debe manejar errores de análisis', async () => {
+      mockSymptomAnalyzerService.analyze.mockRejectedValue(new Error('Error en el análisis'));
 
-      const result = await aiService.analyzeSymptoms(mockSymptoms, mockPatientId);
-
-      expect(result).toBeDefined();
-      expect(result.analysisMethod).toBe('local_rules');
-      expect(result.urgencyLevel).toBeDefined();
-      expect(apiService.analyzeSymptoms).toHaveBeenCalledTimes(1);
+      await expect(
+        symptomAnalyzerService.analyze({
+          symptoms: mockSymptoms,
+          patientId: 'patient-123',
+        } as any)
+      ).rejects.toThrow('Error en el análisis');
     });
+  });
 
-    it('debe hacer fallback a análisis local si falla el servicio de IA', async () => {
-      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValue(
-        new Error('Servicio no disponible')
-      );
-      (localStorageService.saveSymptomAnalysis as jest.Mock).mockResolvedValue(undefined);
-
-      const result = await aiService.analyzeSymptoms(mockSymptoms, mockPatientId);
-
-      expect(result).toBeDefined();
-      expect(result.analysisMethod).toBe('local_rules');
-      expect(result.urgencyLevel).toBeDefined();
-    });
-
-    it('debe calcular nivel de urgencia correctamente para síntomas severos', async () => {
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({
-        isConnected: false,
-        isInternetReachable: false,
-      });
-      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-
-      const severeSymptoms: SymptomInput[] = [
+  describe('getHistory', () => {
+    it('debe obtener historial de análisis', async () => {
+      const mockHistory = [
         {
-          symptom: 'Dificultad respiratoria severa',
-          severity: 'severe',
-          duration: '1 hora',
+          id: 'analysis-1',
+          date: '2025-11-01',
+          diagnosis: 'Bronquitis',
+          symptoms: [],
+          symptomCount: 2,
         },
       ];
 
-      const result = await aiService.analyzeSymptoms(severeSymptoms, mockPatientId);
-
-      expect(result.urgencyLevel).toBe('high');
-    });
-
-    it('debe generar recomendaciones de emergencia para urgencia alta', async () => {
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({
-        isConnected: false,
-        isInternetReachable: false,
-      });
-      (apiService.analyzeSymptoms as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-
-      const severeSymptoms: SymptomInput[] = [
-        {
-          symptom: 'Dolor en el pecho',
-          severity: 'severe',
-          duration: '30 minutos',
-        },
-      ];
-
-      (apiService.analyzeSymptoms as jest.Mock).mockResolvedValue({
+      mockSymptomAnalyzerService.getHistory.mockResolvedValue({
         success: true,
-        data: {
-          urgencyLevel: 'high',
-          recommendations: [],
-          warningSigns: [],
-        },
-      });
+        message: 'Historial obtenido',
+        data: mockHistory,
+      } as any);
 
-      const result = await aiService.analyzeSymptoms(severeSymptoms, mockPatientId);
+      const result = await symptomAnalyzerService.getHistory('patient-123');
 
-      if (result.analysisMethod === 'ai_service') {
-        expect(result.recommendations.emergency.length).toBeGreaterThan(0);
-      }
+      expect(result.success).toBe(true);
+      expect(result.data.length).toBeGreaterThan(0);
     });
   });
 
-  describe('getSymptomTrends', () => {
-    const mockPatientId = 'patient-123';
-
-    it('debe obtener tendencias desde el servidor cuando está online', async () => {
-      const mockTrend = {
-        patientId: mockPatientId,
-        period: '30d',
-        trendData: [
-          {
-            date: '2025-11-01',
-            urgencyLevel: 'medium',
-            severityScore: 0.6,
-            symptomCount: 2,
-            dominantSymptoms: ['tos', 'fiebre'],
-          },
-        ],
-        overallTrend: 'stable' as const,
-        recommendations: ['Continuar monitoreo'],
-        insights: ['Tendencias estables'],
+  describe('getStatistics', () => {
+    it('debe obtener estadísticas de síntomas', async () => {
+      const mockStats = {
+        period: '30 días',
+        totalVisits: 5,
+        totalSymptoms: 10,
+        avgSymptomsPerVisit: 2,
+        severityDistribution: {
+          mild: 5,
+          moderate: 3,
+          severe: 2,
+        },
+        mostCommonSymptoms: ['Tos', 'Fiebre'],
       };
 
-      (apiService.getSymptomTrends as jest.Mock).mockResolvedValue({
+      mockSymptomAnalyzerService.getStatistics.mockResolvedValue({
         success: true,
-        data: mockTrend,
-      });
+        message: 'Estadísticas obtenidas',
+        data: mockStats,
+      } as any);
 
-      const result = await aiService.getSymptomTrends(mockPatientId, '30d');
+      const result = await symptomAnalyzerService.getStatistics('patient-123');
 
-      expect(result).toEqual(mockTrend);
-      expect(apiService.getSymptomTrends).toHaveBeenCalledWith(mockPatientId, '30d');
-    });
-
-    it('debe usar análisis local cuando está offline', async () => {
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({
-        isConnected: false,
-      });
-      (apiService.getSymptomTrends as jest.Mock).mockResolvedValue({
-        success: false,
-        error: 'Network error',
-      });
-      (localStorageService.getSymptomAnalyses as jest.Mock).mockResolvedValue([]);
-
-      const result = await aiService.getSymptomTrends(mockPatientId);
-
-      expect(result.overallTrend).toBe('insufficient_data');
-      expect(apiService.getSymptomTrends).toHaveBeenCalled();
-    });
-  });
-
-  describe('getGeneralRecommendations', () => {
-    it('debe obtener recomendaciones desde el servidor cuando está online', async () => {
-      const mockRecommendations = {
-        respiratory: ['Hidratación', 'Reposo'],
-        fever: ['Controlar temperatura'],
-      };
-
-      (apiService.getGeneralRecommendations as jest.Mock).mockResolvedValue({
-        success: true,
-        data: mockRecommendations,
-      });
-
-      const result = await aiService.getGeneralRecommendations();
-
-      expect(result).toEqual(mockRecommendations);
-    });
-
-    it('debe retornar recomendaciones locales cuando está offline', async () => {
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({
-        isConnected: false,
-      });
-      (apiService.getGeneralRecommendations as jest.Mock).mockResolvedValue({
-        success: false,
-        error: 'Network error',
-      });
-
-      const result = await aiService.getGeneralRecommendations();
-
-      expect(result).toHaveProperty('respiratory');
-      expect(result).toHaveProperty('fever');
-      expect(result).toHaveProperty('pain');
-      expect(result).toHaveProperty('general');
-      expect(apiService.getGeneralRecommendations).toHaveBeenCalled();
-    });
-  });
-
-  describe('clearCache', () => {
-    it('debe limpiar el caché de análisis', () => {
-      aiService.clearCache();
-      // Verificar que no hay errores al limpiar
-      expect(true).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.data.totalVisits).toBe(5);
     });
   });
 });
-

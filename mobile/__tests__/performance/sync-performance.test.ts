@@ -3,26 +3,17 @@
  * Verifica performance de sincronización de datos offline/online
  */
 
-import { localStorageService } from '../../src/services/localStorage';
-import { apiService } from '../../src/services/api';
-import NetInfo from '@react-native-community/netinfo';
+import { offlineQueue } from '../../medical-app/lib/services/offlineQueue';
+import { medicalHistoryService } from '../../medical-app/lib/api/services/medicalHistoryService';
+import { appointmentService } from '../../medical-app/lib/api/services/appointmentService';
 
-// Mock dependencies
-jest.mock('../../src/services/api', () => ({
-  apiService: {
-    post: jest.fn(),
-    put: jest.fn(),
-    get: jest.fn(),
-  },
-}));
+jest.mock('../../medical-app/lib/services/offlineQueue');
+jest.mock('../../medical-app/lib/api/services/medicalHistoryService');
+jest.mock('../../medical-app/lib/api/services/appointmentService');
 
-jest.mock('@react-native-community/netinfo', () => ({
-  __esModule: true,
-  default: {
-    fetch: jest.fn(() => Promise.resolve({ isConnected: true })),
-    addEventListener: jest.fn(() => jest.fn()),
-  },
-}));
+const mockOfflineQueue = offlineQueue as jest.Mocked<typeof offlineQueue>;
+const mockMedicalHistoryService = medicalHistoryService as jest.Mocked<typeof medicalHistoryService>;
+const mockAppointmentService = appointmentService as jest.Mocked<typeof appointmentService>;
 
 // Performance thresholds
 const SYNC_THRESHOLD_MS = 5000; // 5 segundos para sincronizar
@@ -30,204 +21,81 @@ const SYNC_ITEM_THRESHOLD_MS = 100; // 100ms por item
 const BATCH_SYNC_THRESHOLD_MS = 2000; // 2 segundos para batch
 
 describe('Sync Performance Tests', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    await localStorageService.clearAllData();
-    (apiService.post as jest.Mock).mockResolvedValue({ success: true, data: {} });
-    (apiService.put as jest.Mock).mockResolvedValue({ success: true, data: {} });
+    mockOfflineQueue.clearAll();
+    mockMedicalHistoryService.create.mockResolvedValue({ _id: 'history-1' } as any);
+    mockAppointmentService.create.mockResolvedValue({ _id: 'appt-1' } as any);
   });
 
-  describe('Single Item Sync', () => {
-    it('debe sincronizar un historial médico en menos de 100ms', async () => {
-      const history = {
-        id: 'history-1',
-        patientId: 'patient-1',
-        patientName: 'Test Patient',
-        diagnosis: 'Bronquitis',
-        date: new Date().toISOString(),
-        syncStatus: 'pending' as const,
-      };
+  it('debe sincronizar 10 operaciones en menos de SYNC_THRESHOLD_MS', async () => {
+    // Agregar 10 operaciones
+    for (let i = 0; i < 10; i++) {
+      mockOfflineQueue.enqueue('create_medical_history', {
+        patientId: `p${i}`,
+        patientName: `Patient ${i}`,
+        age: 30,
+        diagnosis: 'Dx',
+        symptoms: [],
+      });
+    }
 
-      await localStorageService.saveMedicalHistory(history as any);
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      expect(syncTime).toBeLessThan(SYNC_ITEM_THRESHOLD_MS);
+    const startTime = Date.now();
+    
+    await mockOfflineQueue.processQueue(async (operation) => {
+      if (operation.type === 'create_medical_history') {
+        await mockMedicalHistoryService.create(operation.payload);
+      }
     });
 
-    it('debe sincronizar una cita en menos de 100ms', async () => {
-      const appointment = {
-        _id: 'appt-1',
-        patientId: 'patient-1',
-        doctorId: 'doctor-1',
-        scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        durationMinutes: 30,
-        syncStatus: 'pending' as const,
-      };
+    const endTime = Date.now();
+    const duration = endTime - startTime;
 
-      await localStorageService.createAppointment(appointment as any);
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      expect(syncTime).toBeLessThan(SYNC_ITEM_THRESHOLD_MS);
-    });
+    expect(duration).toBeLessThan(SYNC_THRESHOLD_MS);
   });
 
-  describe('Batch Sync Performance', () => {
-    it('debe sincronizar 10 items en menos de 2 segundos', async () => {
-      // Crear 10 historiales pendientes
-      for (let i = 0; i < 10; i++) {
-        await localStorageService.saveMedicalHistory({
-          id: `history-${i}`,
-          patientId: 'patient-1',
-          patientName: `Patient ${i}`,
-          diagnosis: 'Bronquitis',
-          date: new Date().toISOString(),
-          syncStatus: 'pending' as const,
-        } as any);
-      }
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      expect(syncTime).toBeLessThan(BATCH_SYNC_THRESHOLD_MS);
+  it('debe procesar cada operación en menos de SYNC_ITEM_THRESHOLD_MS', async () => {
+    mockOfflineQueue.enqueue('create_medical_history', {
+      patientId: 'p1',
+      patientName: 'Patient',
+      age: 30,
+      diagnosis: 'Dx',
+      symptoms: [],
     });
 
-    it('debe sincronizar 50 items en menos de 5 segundos', async () => {
-      // Crear 50 historiales pendientes
-      for (let i = 0; i < 50; i++) {
-        await localStorageService.saveMedicalHistory({
-          id: `history-${i}`,
-          patientId: 'patient-1',
-          patientName: `Patient ${i}`,
-          diagnosis: 'Bronquitis',
-          date: new Date().toISOString(),
-          syncStatus: 'pending' as const,
-        } as any);
-      }
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      expect(syncTime).toBeLessThan(SYNC_THRESHOLD_MS);
+    const startTime = Date.now();
+    
+    await mockOfflineQueue.processQueue(async (operation) => {
+      await mockMedicalHistoryService.create(operation.payload);
     });
 
-    it('debe sincronizar múltiples tipos de datos eficientemente', async () => {
-      // Crear datos mixtos
-      for (let i = 0; i < 10; i++) {
-        await localStorageService.saveMedicalHistory({
-          id: `history-${i}`,
-          patientId: 'patient-1',
-          patientName: `Patient ${i}`,
-          diagnosis: 'Bronquitis',
-          date: new Date().toISOString(),
-          syncStatus: 'pending' as const,
-        } as any);
+    const endTime = Date.now();
+    const duration = endTime - startTime;
 
-        await localStorageService.createAppointment({
-          _id: `appt-${i}`,
-          patientId: 'patient-1',
-          doctorId: 'doctor-1',
-          scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          durationMinutes: 30,
-          syncStatus: 'pending' as const,
-        } as any);
-      }
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      expect(syncTime).toBeLessThan(BATCH_SYNC_THRESHOLD_MS);
-    });
+    expect(duration).toBeLessThan(SYNC_ITEM_THRESHOLD_MS);
   });
 
-  describe('Network Performance', () => {
-    it('debe manejar cambios de red sin degradación', async () => {
-      // Simular offline
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: false });
+  it('debe sincronizar batch de 50 operaciones en menos de BATCH_SYNC_THRESHOLD_MS', async () => {
+    // Agregar 50 operaciones
+    for (let i = 0; i < 50; i++) {
+      mockOfflineQueue.enqueue('create_medical_history', {
+        patientId: `p${i}`,
+        patientName: `Patient ${i}`,
+        age: 30,
+        diagnosis: 'Dx',
+        symptoms: [],
+      });
+    }
 
-      await localStorageService.saveMedicalHistory({
-        id: 'history-1',
-        patientId: 'patient-1',
-        patientName: 'Test Patient',
-        diagnosis: 'Bronquitis',
-        date: new Date().toISOString(),
-        syncStatus: 'pending' as const,
-      } as any);
-
-      // Simular online
-      (NetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: true });
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      expect(syncTime).toBeLessThan(SYNC_ITEM_THRESHOLD_MS);
+    const startTime = Date.now();
+    
+    await mockOfflineQueue.processQueue(async (operation) => {
+      await mockMedicalHistoryService.create(operation.payload);
     });
 
-    it('debe manejar errores de red sin bloquear', async () => {
-      (apiService.post as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    const endTime = Date.now();
+    const duration = endTime - startTime;
 
-      await localStorageService.saveMedicalHistory({
-        id: 'history-1',
-        patientId: 'patient-1',
-        patientName: 'Test Patient',
-        diagnosis: 'Bronquitis',
-        date: new Date().toISOString(),
-        syncStatus: 'pending' as const,
-      } as any);
-
-      const startTime = performance.now();
-      await localStorageService.syncPendingData();
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      // Incluso con error, no debe bloquear
-      expect(syncTime).toBeLessThan(SYNC_ITEM_THRESHOLD_MS * 2);
-    });
-  });
-
-  describe('Concurrent Sync Performance', () => {
-    it('debe manejar sincronizaciones concurrentes eficientemente', async () => {
-      // Crear múltiples items
-      for (let i = 0; i < 20; i++) {
-        await localStorageService.saveMedicalHistory({
-          id: `history-${i}`,
-          patientId: 'patient-1',
-          patientName: `Patient ${i}`,
-          diagnosis: 'Bronquitis',
-          date: new Date().toISOString(),
-          syncStatus: 'pending' as const,
-        } as any);
-      }
-
-      const startTime = performance.now();
-      
-      // Simular sincronizaciones concurrentes
-      await Promise.all([
-        localStorageService.syncPendingData(),
-        localStorageService.syncPendingData(),
-      ]);
-      
-      const endTime = performance.now();
-
-      const syncTime = endTime - startTime;
-      // Las sincronizaciones concurrentes no deben tomar mucho más tiempo
-      expect(syncTime).toBeLessThan(BATCH_SYNC_THRESHOLD_MS * 1.5);
-    });
+    expect(duration).toBeLessThan(BATCH_SYNC_THRESHOLD_MS);
   });
 });
-

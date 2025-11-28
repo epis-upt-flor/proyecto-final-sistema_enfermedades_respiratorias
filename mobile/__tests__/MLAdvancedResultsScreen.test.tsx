@@ -5,8 +5,8 @@
 
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
-import MLAdvancedResultsScreen from '../src/screens/MLAdvancedResultsScreen';
-import { useAppStore } from '../src/store/useAppStore';
+// Nota: MLAdvancedResultsScreen puede estar en components/tabs/ o components/views/
+import { useAppStore } from '../medical-app/store/useAppStore';
 
 // Mock navigation
 const mockNavigation = {
@@ -24,12 +24,12 @@ const mockRoute = {
 };
 
 // Mock store
-jest.mock('../src/store/useAppStore', () => ({
+jest.mock('../medical-app/store/useAppStore', () => ({
   useAppStore: jest.fn(),
 }));
 
 // Mock API calls
-jest.mock('../src/services/api', () => ({
+jest.mock('../medical-app/lib/api/services/authService', () => ({
   get: jest.fn(),
   post: jest.fn(),
 }));
@@ -105,7 +105,7 @@ describe('MLAdvancedResultsScreen', () => {
     });
 
     it('should load data when switching to Model Comparison tab', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       get.mockResolvedValue({
         data: {
           success: true,
@@ -136,7 +136,7 @@ describe('MLAdvancedResultsScreen', () => {
 
   describe('Data Loading', () => {
     it('should load analysis data when analysisId is provided', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockShapData = {
         values: [0.1, 0.2, 0.3],
         base_value: 0.5,
@@ -168,7 +168,7 @@ describe('MLAdvancedResultsScreen', () => {
     });
 
     it('should load experiment data when experimentId is provided', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockExperiments = [
         {
           experimentId: 'exp-1',
@@ -201,7 +201,7 @@ describe('MLAdvancedResultsScreen', () => {
     });
 
     it('should load RL recommendations when sessionId is provided', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockRecommendations = [
         {
           action: 'send_reminder',
@@ -238,7 +238,7 @@ describe('MLAdvancedResultsScreen', () => {
 
   describe('SHAP Visualizations', () => {
     it('should display SHAP visualization when data is loaded', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockShapData = {
         values: [0.1, 0.2, 0.3],
         base_value: 0.5,
@@ -270,7 +270,7 @@ describe('MLAdvancedResultsScreen', () => {
 
   describe('Model Comparison', () => {
     it('should display model comparison data table', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockComparison = {
         models: [
           {
@@ -316,7 +316,7 @@ describe('MLAdvancedResultsScreen', () => {
 
   describe('RL Recommendations', () => {
     it('should display RL recommendations cards', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockRecommendations = [
         {
           action: 'send_reminder',
@@ -358,7 +358,7 @@ describe('MLAdvancedResultsScreen', () => {
 
   describe('Experiment History', () => {
     it('should display experiment history list', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       const mockExperiments = [
         {
           experimentId: 'exp-1',
@@ -403,7 +403,7 @@ describe('MLAdvancedResultsScreen', () => {
 
   describe('Error Handling', () => {
     it('should handle API errors gracefully', async () => {
-      const { get } = require('../src/services/api');
+      const { authService } = require('../medical-app/lib/api/services/authService');
       get.mockRejectedValue(new Error('Network error'));
 
       render(
