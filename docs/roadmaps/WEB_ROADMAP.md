@@ -53,12 +53,14 @@ Plataforma para gestión clínica, analítica avanzada y administración multi-r
 - ✅ Chatbot médico (integración con AI Services)
 - ✅ Visualización de resultados ML con SHAP (gráficos y explicabilidad)
 - ✅ Dashboard ejecutivo (KPIs, tendencias, brotes)
-- ⏳ Accesibilidad base (a11y checks) y soporte i18n (ES/EN)
+- ✅ Accesibilidad base (a11y checks) y soporte i18n (ES/EN/PT/FR/QU)
 
 ## Fase 3: UX/UI
-- ⏳ Rediseño de componentes (Design System liviano)
-- ⏳ Theming (light/dark)
-- ⏳ Animaciones/transiciones clave
+- ✅ Rediseño de componentes (Design System completo implementado)
+- ✅ Theming (light/dark) con ThemeProvider y ThemeToggle
+- ✅ Animaciones/transiciones clave
+- ✅ Accesibilidad WCAG 2.1 AA implementada
+- ✅ Internacionalización (i18n) completa (ES, EN, PT, FR, QU)
 
 ## Fase 4: Integraciones
 - ⏳ HL7/FHIR viewers para interoperabilidad
@@ -70,7 +72,7 @@ Plataforma para gestión clínica, analítica avanzada y administración multi-r
 
 ## Hitos
 - [x] Web v1 (Chatbot + Dashboard básico + Login)
-- [ ] Web v2 (SHAP + Executive Dashboard completo + i18n + a11y)
+- [x] Web v2 (SHAP + Executive Dashboard completo + i18n + a11y + Theming)
 - [ ] Web v3 (Integraciones HL7/FHIR, performance optimizada)
 
 

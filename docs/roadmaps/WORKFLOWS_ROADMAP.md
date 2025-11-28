@@ -30,16 +30,19 @@
 - ✅ AI Services: artefactos de comparación de modelos y tendencias (TXT/MD/CSV)
 
 ## Fase 3: CD/Staging
-- ⏳ Deploy automático a staging (backend/web/ai-services)
-- ⏳ Smoke tests post-deploy y rollback
+- ✅ Deploy automático a staging (backend/web/ai-services)
+- ✅ Smoke tests post-deploy y rollback
+- ✅ Workflow implementado: `.github/workflows/deploy-staging.yml`
 
 ## Fase 4: Producción
-- ⏳ Deploy progresivo/blue-green
-- ⏳ Gate de aprobación con evidencia (tests/cobertura/seguridad)
+- ✅ Deploy progresivo/blue-green
+- ✅ Gate de aprobación con evidencia (tests/cobertura/seguridad)
+- ✅ Workflow implementado: `.github/workflows/deploy-production.yml`
+- ⏳ Despliegue real en producción (requiere configuración de secretos, certificados, etc.)
 
 ## Integraciones
 - ✅ Codecov (coverage report AI Services)
-- ⏳ Sentry (error tracking en todos los servicios)
+- ✅ Sentry (error tracking integrado en Backend y AI Services)
 - ⏳ Dependabot/Audit en pipelines
 
 

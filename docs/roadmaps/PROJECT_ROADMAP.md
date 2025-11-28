@@ -1575,13 +1575,15 @@ Archivos/Endpoints creados (stubs listos):
 ### Fase 12: DevOps & Deployment 🚀
 
 **12.1 Estado**: ✅ ~85 %  
-- ✅ Pipelines de despliegue a staging/producción con rollback automatizado.  
+- ✅ Pipelines de despliegue a staging/producción con rollback automatizado (workflows `.github/workflows/deploy-staging.yml` y `deploy-production.yml`).  
 - ✅ Blue-green deployment para producción.  
 - ✅ Terraform básico para infraestructura (namespaces, configmaps, secrets, network policies).  
 - ✅ Auto-scaling mejorado (HPA con CPU, memoria y políticas de escalado).  
 - ✅ Runbooks de operaciones completos.  
 - ✅ Monitoreo y observabilidad completo (Prometheus, Grafana, AlertManager, ELK stack - manifiestos K8s creados).
 - ✅ Sentry integrado en Backend y AI Services.  
+- ⏳ Despliegue real en producción (requiere configuración operacional de secretos, certificados, etc.).  
+- ⏳ Load balancing (pendiente configuración específica de ingress/load balancer).  
 
 **Archivos creados/mejorados**:  
 - CI/CD: `.github/workflows/deploy-staging.yml` (deployment a staging con smoke tests y rollback), `.github/workflows/deploy-production.yml` (blue-green deployment con rollback automático).  
