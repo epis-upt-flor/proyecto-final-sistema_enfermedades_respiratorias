@@ -29,6 +29,7 @@ import consentRoutes from './routes/consentRoutes';
 import mlOrchestrationRoutes from './routes/mlOrchestrationRoutes';
 import fhirRoutes from './routes/fhirRoutes';
 import integrationRoutes from './routes/integrationRoutes';
+import labRoutes from './routes/labRoutes';
 import emergencyRoutes from './routes/emergencyRoutes';
 import smsWebhookRoutes from './routes/smsWebhookRoutes';
 import smsRoutes from './routes/smsRoutes';
@@ -49,6 +50,7 @@ import { startAlertJobs, stopAlertJobs } from './jobs/alertJobs';
 import { startAppointmentJobs, stopAppointmentJobs } from './jobs/appointmentJobs';
 import { startReportJobs, stopReportJobs } from './jobs/reportJobs';
 import { startMlMetricsJobs, stopMlMetricsJobs } from './jobs/mlMetricsJobs';
+import { startLabImportJobs, stopLabImportJobs } from './jobs/labImportJobs';
 import { metricsMiddleware, metricsHandler } from './metrics/metrics';
 import { percentileMetricsMiddleware } from './metrics/percentileMetrics';
 import { initMongoDBMonitoring } from './monitoring/mongodbMonitoring';
@@ -221,6 +223,7 @@ class App {
     this.app.use('/api/v1/ml', mlOrchestrationRoutes);
     this.app.use('/api/v1/fhir', fhirRoutes);
     this.app.use('/api/v1/integrations', integrationRoutes);
+    this.app.use('/api/v1/lab', labRoutes);
     this.app.use('/api/v1/emergencies', emergencyRoutes);
     this.app.use('/api/v1/sms/webhooks', smsWebhookRoutes);
     this.app.use('/api/v1/sms', smsRoutes);
@@ -312,6 +315,7 @@ class App {
     startAppointmentJobs();
     startReportJobs();
     startMlMetricsJobs();
+    startLabImportJobs();
   }
 
   public listen(): void {
@@ -348,6 +352,7 @@ process.on('SIGTERM', () => {
   stopAppointmentJobs();
   stopReportJobs();
   stopMlMetricsJobs();
+  stopLabImportJobs();
   Promise.all([shutdownTelemetry(), disconnectRedis()]).finally(() => process.exit(0));
 });
 
@@ -357,6 +362,7 @@ process.on('SIGINT', () => {
   stopAppointmentJobs();
   stopReportJobs();
   stopMlMetricsJobs();
+  stopLabImportJobs();
   Promise.all([shutdownTelemetry(), disconnectRedis()]).finally(() => process.exit(0));
 });
 

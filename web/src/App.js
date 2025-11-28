@@ -9,6 +9,8 @@ const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const HeatMapPage = lazy(() => import('./pages/HeatMapPage'));
+const FhirPage = lazy(() => import('./pages/FhirPage'));
+const Hl7Page = lazy(() => import('./pages/Hl7Page'));
 
 const AppFallback = () => (
   <div className="app-loading">
@@ -35,6 +37,8 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/heatmap" element={<HeatMapPage />} />
+                <Route path="/fhir" element={<FhirPage />} />
+                <Route path="/hl7" element={<Hl7Page />} />
               </Routes>
             </main>
           </div>

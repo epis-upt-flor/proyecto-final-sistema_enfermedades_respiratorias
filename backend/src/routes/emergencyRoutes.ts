@@ -14,6 +14,11 @@ import {
   cancelEmergency,
   getActiveEmergencies,
   detectEmergency,
+  getAmbulanceInfo,
+  getEmergencyMedicalInfo,
+  getEmergencyMedicalSummary,
+  getHospitalNotifications,
+  transferToHospital,
 } from '../controllers/emergencyController';
 
 const router = Router();
@@ -103,6 +108,44 @@ router.post(
   detectEmergencyValidation,
   validate,
   detectEmergency
+);
+
+// Obtener información de ambulancia
+router.get(
+  '/:emergencyId/ambulance',
+  authenticate,
+  getAmbulanceInfo
+);
+
+// Obtener información médica de emergencia
+router.get(
+  '/:emergencyId/medical-info',
+  authenticate,
+  getEmergencyMedicalInfo
+);
+
+// Obtener resumen médico para servicios de emergencia
+router.get(
+  '/:emergencyId/medical-summary',
+  authenticate,
+  getEmergencyMedicalSummary
+);
+
+// Obtener información de hospitales notificados
+router.get(
+  '/:emergencyId/hospitals',
+  authenticate,
+  getHospitalNotifications
+);
+
+// Transferir información del paciente a un hospital
+router.post(
+  '/:emergencyId/transfer-to-hospital',
+  authenticate,
+  body('hospitalId').isString().notEmpty().withMessage('hospitalId es requerido'),
+  body('patientId').isString().notEmpty().withMessage('patientId es requerido'),
+  validate,
+  transferToHospital
 );
 
 export default router;

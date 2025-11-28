@@ -8,6 +8,9 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { AuthenticatedRequest } from '../types';
 import { emergencyService, EmergencyRequest } from '../services/emergencyService';
+import { ambulanceService } from '../services/ambulanceService';
+import { emergencyMedicalInfoService } from '../services/emergencyMedicalInfoService';
+import { hospitalCommunicationService } from '../services/hospitalCommunicationService';
 import { logger } from '../utils/logger';
 
 /**
@@ -205,6 +208,199 @@ export const detectEmergency = asyncHandler(
         emergency,
       },
     });
+  }
+);
+
+/**
+ * GET /api/v1/emergencies/:emergencyId/ambulance
+ * Obtener información de ambulancia despachada
+ */
+export const getAmbulanceInfo = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emergencyId } = req.params;
+
+    if (!emergencyId) {
+      throw new AppError('emergencyId es requerido', 400);
+    }
+
+    // Buscar ambulancias activas para esta emergencia
+    const ambulances = ambulanceService.getActiveAmbulances(emergencyId);
+
+    if (ambulances.length === 0) {
+      res.status(200).json({
+        success: true,
+        message: 'No hay ambulancias despachadas para esta emergencia',
+        data: { ambulances: [] },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ambulances,
+        count: ambulances.length,
+      },
+    });
+  }
+);
+
+/**
+ * GET /api/v1/emergencies/:emergencyId/medical-info
+ * Obtener información médica de emergencia del paciente
+ */
+export const getEmergencyMedicalInfo = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emergencyId } = req.params;
+    const { patientId } = req.query;
+
+    if (!patientId && !emergencyId) {
+      throw new AppError('patientId o emergencyId es requerido', 400);
+    }
+
+    const targetPatientId = (patientId as string) || emergencyId;
+
+    try {
+      const medicalInfo = await emergencyMedicalInfoService.getEmergencyMedicalInfo(targetPatientId);
+
+      res.status(200).json({
+        success: true,
+        data: medicalInfo,
+      });
+    } catch (error: any) {
+      logger.error(`Error al obtener información médica: ${error.message}`, {
+        patientId: targetPatientId,
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+);
+
+/**
+ * GET /api/v1/emergencies/:emergencyId/medical-summary
+ * Obtener resumen médico para servicios de emergencia
+ */
+export const getEmergencyMedicalSummary = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emergencyId } = req.params;
+
+    // Obtener información de la emergencia
+    const emergency = await emergencyService.getEmergencyStatus(emergencyId);
+
+    if (!emergency) {
+      throw new AppError('Emergencia no encontrada', 404);
+    }
+
+    const patientId = emergency.metadata?.patientId as string;
+    if (!patientId) {
+      throw new AppError('No se pudo identificar al paciente de la emergencia', 400);
+    }
+
+    // Reconstruir EmergencyRequest desde la emergencia
+    const emergencyRequest: EmergencyRequest = {
+      userId: emergency.metadata?.userId as string || '',
+      patientId,
+      emergencyType: emergency.metadata?.emergencyType as EmergencyRequest['emergencyType'] || 'medical',
+      severity: emergency.metadata?.severity as EmergencyRequest['severity'] || 'medium',
+      description: emergency.metadata?.description as string || '',
+      location: emergency.metadata?.location as EmergencyRequest['location'],
+      symptoms: emergency.metadata?.symptoms as string[],
+      vitalSigns: emergency.metadata?.vitalSigns as EmergencyRequest['vitalSigns'],
+    };
+
+    try {
+      const summary = await emergencyMedicalInfoService.generateEmergencySummary(emergencyRequest);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          summary,
+          emergencyId,
+          patientId,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`Error al generar resumen médico: ${error.message}`, {
+        emergencyId,
+        patientId,
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+);
+
+/**
+ * GET /api/v1/emergencies/:emergencyId/hospitals
+ * Obtener información de hospitales notificados
+ */
+export const getHospitalNotifications = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emergencyId } = req.params;
+
+    if (!emergencyId) {
+      throw new AppError('emergencyId es requerido', 400);
+    }
+
+    const notifications = hospitalCommunicationService.getHospitalNotifications(emergencyId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        notifications,
+        count: notifications.length,
+      },
+    });
+  }
+);
+
+/**
+ * POST /api/v1/emergencies/:emergencyId/transfer-to-hospital
+ * Transferir información del paciente a un hospital específico
+ */
+export const transferToHospital = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emergencyId } = req.params;
+    const { hospitalId, patientId } = req.body;
+
+    if (!hospitalId) {
+      throw new AppError('hospitalId es requerido', 400);
+    }
+
+    if (!patientId) {
+      throw new AppError('patientId es requerido', 400);
+    }
+
+    try {
+      const success = await hospitalCommunicationService.transferPatientInfo(
+        hospitalId,
+        patientId,
+        emergencyId
+      );
+
+      if (!success) {
+        throw new AppError('No se pudo transferir la información al hospital', 500);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Información del paciente transferida exitosamente al hospital',
+        data: {
+          hospitalId,
+          patientId,
+          emergencyId,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`Error al transferir información al hospital: ${error.message}`, {
+        hospitalId,
+        patientId,
+        emergencyId,
+        error: error.message,
+      });
+      throw error;
+    }
   }
 );
 

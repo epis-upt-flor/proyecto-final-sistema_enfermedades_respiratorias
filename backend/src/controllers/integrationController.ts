@@ -243,3 +243,91 @@ export const getDrugDosage = asyncHandler(
   },
 );
 
+/**
+ * GET /api/v1/integrations/drugs/generics
+ * Buscar medicamentos genéricos por nombre de marca
+ */
+export const searchGenericDrugs = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { brandName } = req.query;
+
+    if (!brandName || typeof brandName !== 'string') {
+      throw new AppError('brandName es requerido', 400);
+    }
+
+    try {
+      const genericDrugs = await drugIntegrationService.searchGenericDrugs(brandName);
+
+      logger.info(`Búsqueda de genéricos realizada`, {
+        userId: req.user?._id,
+        brandName,
+        count: genericDrugs.length,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: genericDrugs,
+        meta: {
+          brandName,
+          genericCount: genericDrugs.length,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`Error al buscar genéricos: ${error.message}`, {
+        userId: req.user?._id,
+        brandName,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+);
+
+/**
+ * POST /api/v1/integrations/drugs/contraindications
+ * Verificar contraindicaciones para un medicamento
+ */
+export const checkContraindications = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { drugName, patientContext } = req.body;
+
+    if (!drugName || typeof drugName !== 'string') {
+      throw new AppError('drugName es requerido', 400);
+    }
+
+    if (!patientContext || typeof patientContext !== 'object') {
+      throw new AppError('patientContext es requerido', 400);
+    }
+
+    try {
+      const result = await drugIntegrationService.checkContraindications(drugName, patientContext);
+
+      logger.info(`Contraindicaciones verificadas`, {
+        userId: req.user?._id,
+        drugName,
+        contraindicated: result.contraindicated,
+        alertsCount: result.alerts.length,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        meta: {
+          drugName,
+          contraindicated: result.contraindicated,
+          alertsCount: result.alerts.length,
+          errorAlerts: result.alerts.filter((a) => a.severity === 'error').length,
+          warningAlerts: result.alerts.filter((a) => a.severity === 'warning').length,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`Error al verificar contraindicaciones: ${error.message}`, {
+        userId: req.user?._id,
+        drugName,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+);
+

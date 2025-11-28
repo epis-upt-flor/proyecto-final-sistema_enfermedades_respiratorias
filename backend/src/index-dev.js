@@ -279,6 +279,10 @@ const authRoutesDev = require('./routes/authRoutesDev');
 app.use('/api/v1/auth', authRoutesDev);
 app.use('/api/auth', authRoutesDev); // Legacy support
 
+// FHIR Routes - IMPORTANTE: Debe ir ANTES de otras rutas con parámetros
+const fhirRoutesDev = require('./routes/fhirRoutesDev');
+app.use('/api/v1/fhir', fhirRoutesDev);
+
 // Dashboard Routes - Simple implementation for development
 // IMPORTANTE: Estas rutas deben estar ANTES de las rutas de analytics para evitar conflictos
 app.get('/api/v1/dashboard/patient', async (req, res) => {

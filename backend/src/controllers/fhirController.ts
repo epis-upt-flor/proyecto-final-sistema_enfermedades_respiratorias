@@ -3,6 +3,8 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { fhirService, FhirResource, FhirBundle } from '../services/fhirService';
 import { mapHl7ToFhirObservation, parseHl7Message, parseHl7Xml } from '../utils/hl7Parser';
+import { hospitalSyncService } from '../services/hospitalSyncService';
+import { validateFhirResource, validateFhirResources } from '../services/fhirValidator';
 import { logger } from '../utils/logger';
 import { AuthenticatedRequest } from '../types';
 import { requirePermission } from '../middleware/rbac';
@@ -363,6 +365,214 @@ export const getCapabilities = asyncHandler(
     res.status(200).json({
       success: true,
       data: basicCapabilities,
+    });
+  },
+);
+
+/**
+ * POST /api/v1/fhir/validate
+ * Validar un recurso FHIR según estándares médicos
+ */
+export const validateFhirResourceEndpoint = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const resource = req.body as FhirResource;
+
+    if (!resource || !resource.resourceType) {
+      throw new AppError('Recurso FHIR válido es requerido en el body', 400);
+    }
+
+    const validationResult = validateFhirResource(resource);
+
+    logger.info(`Validación FHIR realizada: ${resource.resourceType}`, {
+      userId: req.user?._id,
+      resourceType: resource.resourceType,
+      valid: validationResult.valid,
+      errors: validationResult.errors.length,
+      warnings: validationResult.warnings.length,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: validationResult,
+    });
+  },
+);
+
+/**
+ * POST /api/v1/fhir/validate/batch
+ * Validar múltiples recursos FHIR
+ */
+export const validateFhirResourcesBatch = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const resources = req.body as FhirResource[];
+
+    if (!Array.isArray(resources) || resources.length === 0) {
+      throw new AppError('Array de recursos FHIR es requerido en el body', 400);
+    }
+
+    const validationResult = validateFhirResources(resources);
+
+    logger.info(`Validación FHIR batch realizada`, {
+      userId: req.user?._id,
+      count: resources.length,
+      valid: validationResult.valid,
+      errors: validationResult.errors.length,
+      warnings: validationResult.warnings.length,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: validationResult,
+    });
+  },
+);
+
+/**
+ * POST /api/v1/fhir/sync/from/:hospitalName
+ * Sincronizar historial clínico desde sistema hospitalario externo
+ */
+export const syncFromHospital = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { hospitalName } = req.params;
+    const { patientId, resourceTypes } = req.body;
+
+    if (!patientId) {
+      throw new AppError('patientId es requerido', 400);
+    }
+
+    try {
+      const result = await hospitalSyncService.syncFromExternal(
+        hospitalName,
+        patientId,
+        resourceTypes,
+      );
+
+      logger.info(`Sincronización desde hospital completada`, {
+        userId: req.user?._id,
+        hospitalName,
+        patientId,
+        imported: result.imported,
+        errors: result.errors.length,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Sincronización desde ${hospitalName} completada`,
+        data: result,
+      });
+    } catch (error: any) {
+      logger.error(`Error en sincronización desde hospital: ${error.message}`, {
+        userId: req.user?._id,
+        hospitalName,
+        patientId,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+);
+
+/**
+ * POST /api/v1/fhir/sync/to/:hospitalName
+ * Sincronizar historial clínico hacia sistema hospitalario externo
+ */
+export const syncToHospital = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { hospitalName } = req.params;
+    const { patientId, resources } = req.body;
+
+    if (!patientId) {
+      throw new AppError('patientId es requerido', 400);
+    }
+
+    if (!Array.isArray(resources) || resources.length === 0) {
+      throw new AppError('resources debe ser un array no vacío', 400);
+    }
+
+    try {
+      const result = await hospitalSyncService.syncToExternal(hospitalName, patientId, resources);
+
+      logger.info(`Sincronización hacia hospital completada`, {
+        userId: req.user?._id,
+        hospitalName,
+        patientId,
+        exported: result.exported,
+        errors: result.errors.length,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Sincronización hacia ${hospitalName} completada`,
+        data: result,
+      });
+    } catch (error: any) {
+      logger.error(`Error en sincronización hacia hospital: ${error.message}`, {
+        userId: req.user?._id,
+        hospitalName,
+        patientId,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+);
+
+/**
+ * POST /api/v1/fhir/sync/bidirectional/:hospitalName
+ * Sincronización bidireccional con sistema hospitalario externo
+ */
+export const syncBidirectional = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { hospitalName } = req.params;
+    const { patientId, resourceTypes } = req.body;
+
+    if (!patientId) {
+      throw new AppError('patientId es requerido', 400);
+    }
+
+    try {
+      const result = await hospitalSyncService.syncBidirectional(
+        hospitalName,
+        patientId,
+        resourceTypes,
+      );
+
+      logger.info(`Sincronización bidireccional completada`, {
+        userId: req.user?._id,
+        hospitalName,
+        patientId,
+        imported: result.from.imported,
+        exported: result.to.exported,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Sincronización bidireccional con ${hospitalName} completada`,
+        data: result,
+      });
+    } catch (error: any) {
+      logger.error(`Error en sincronización bidireccional: ${error.message}`, {
+        userId: req.user?._id,
+        hospitalName,
+        patientId,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+);
+
+/**
+ * GET /api/v1/fhir/sync/hospitals
+ * Obtener lista de sistemas hospitalarios registrados
+ */
+export const getRegisteredHospitals = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const hospitals = hospitalSyncService.getRegisteredHospitals();
+
+    res.status(200).json({
+      success: true,
+      data: hospitals,
     });
   },
 );

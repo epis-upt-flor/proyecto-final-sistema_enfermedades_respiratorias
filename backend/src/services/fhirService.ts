@@ -1,4 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
+import { OAuth2Service, OAuth2Config } from './oauth2Service';
+import { logger } from '../utils/logger';
 
 export interface FhirResource {
   resourceType: string;
@@ -16,6 +18,8 @@ export interface FhirServiceOptions {
   baseUrl?: string;
   authToken?: string;
   tenantId?: string;
+  oauth2Config?: OAuth2Config;
+  useOAuth2?: boolean;
 }
 
 /**
@@ -25,6 +29,7 @@ export interface FhirServiceOptions {
 export class FhirService {
   private readonly client: AxiosInstance;
   private readonly tenantId?: string;
+  private oauth2Service?: OAuth2Service;
 
   constructor(options: FhirServiceOptions = {}) {
     const baseURL =
@@ -32,18 +37,61 @@ export class FhirService {
       process.env.FHIR_BASE_URL ??
       'https://fhir.example.com/fhir';
 
-    const authToken = options.authToken ?? process.env.FHIR_AUTH_TOKEN;
+    const useOAuth2 = options.useOAuth2 ?? process.env.FHIR_USE_OAUTH2 === 'true';
 
-    this.client = axios.create({
-      baseURL,
-      headers: {
-        'Content-Type': 'application/fhir+json',
-        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      },
-      timeout: 10000,
-    });
+    // Si se usa OAuth2, configurar servicio OAuth2
+    if (useOAuth2 && options.oauth2Config) {
+      this.oauth2Service = new OAuth2Service(options.oauth2Config);
+      // El cliente se inicializará de forma asíncrona
+      this.client = axios.create({
+        baseURL,
+        headers: {
+          'Content-Type': 'application/fhir+json',
+        },
+        timeout: 30000,
+      });
+
+      // Inicializar cliente autenticado de forma asíncrona
+      this.initializeOAuth2Client(baseURL).catch((error) => {
+        logger.error(`Error al inicializar cliente OAuth2: ${error.message}`);
+      });
+    } else {
+      // Cliente con token estático
+      const authToken = options.authToken ?? process.env.FHIR_AUTH_TOKEN;
+
+      this.client = axios.create({
+        baseURL,
+        headers: {
+          'Content-Type': 'application/fhir+json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        timeout: 10000,
+      });
+    }
 
     this.tenantId = options.tenantId ?? process.env.FHIR_TENANT_ID;
+  }
+
+  /**
+   * Inicializar cliente HTTP con OAuth2
+   */
+  private async initializeOAuth2Client(baseURL: string): Promise<void> {
+    if (!this.oauth2Service) {
+      return;
+    }
+
+    try {
+      const authenticatedClient = await this.oauth2Service.createAuthenticatedClient(baseURL);
+      // Reemplazar interceptor del cliente para usar OAuth2
+      this.client.interceptors.request.use(async (config) => {
+        const token = await this.oauth2Service!.getAccessToken();
+        config.headers.Authorization = `Bearer ${token}`;
+        return config;
+      });
+      logger.info('Cliente FHIR con OAuth2 inicializado');
+    } catch (error: any) {
+      logger.error(`Error al inicializar cliente OAuth2: ${error.message}`);
+    }
   }
 
   /**

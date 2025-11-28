@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FhirResourceViewer from '../components/FhirResourceViewer';
 import './FhirPage.css';
 
@@ -25,14 +25,7 @@ const FhirPage = () => {
     'AllergyIntolerance',
   ];
 
-  useEffect(() => {
-    // Cargar recursos al cambiar tipo
-    if (resourceType) {
-      handleSearch();
-    }
-  }, [resourceType]);
-
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -73,7 +66,15 @@ const FhirPage = () => {
       setResources([]);
     } finally {
       setLoading(false);
-  };
+    }
+  }, [resourceType, searchParams]);
+
+  useEffect(() => {
+    // Cargar recursos al cambiar tipo
+    if (resourceType) {
+      handleSearch();
+    }
+  }, [resourceType, handleSearch]);
 
   const handleResourceClick = (resource) => {
     setSelectedResource(resource);

@@ -88,6 +88,23 @@ export class LaboratoryIntegrationService {
         await this.saveAsFhirObservations(results);
       }
 
+      // Guardar resultados en base de datos usando labService
+      try {
+        const { labService } = await import('./labService');
+        for (const result of results) {
+          try {
+            await labService.saveResult(result);
+          } catch (error: any) {
+            logger.warn(`Error al guardar resultado: ${error.message}`, {
+              patientId,
+              testCode: result.testCode,
+            });
+          }
+        }
+      } catch (error: any) {
+        logger.warn(`Error al importar labService: ${error.message}`);
+      }
+
       // Generar alertas si está habilitado
       if (this.config.enableAlerts) {
         await this.checkForAlerts(results);
@@ -139,6 +156,14 @@ export class LaboratoryIntegrationService {
 
       // Guardar como FHIR Observation
       await fhirService.createResource(observation);
+
+      // Guardar en base de datos usando labService
+      try {
+        const { labService } = await import('./labService');
+        await labService.saveResult(result);
+      } catch (error: any) {
+        logger.warn(`Error al guardar resultado desde HL7: ${error.message}`);
+      }
 
       // Generar alerta si es necesario
       if (this.config.enableAlerts && this.shouldAlert(result)) {
@@ -340,13 +365,69 @@ export class LaboratoryIntegrationService {
    * Determinar status según valor y referencia
    */
   private determineStatus(result: LaboratoryResult): 'normal' | 'abnormal' | 'critical' {
-    // Implementación simplificada - en producción usar lógica médica real
-    if (result.referenceRange) {
-      // Parsear referenceRange y comparar
-      // Por ahora, asumir normal
+    if (!result.referenceRange) {
       return 'normal';
     }
+
+    // Parsear rango de referencia
+    const range = this.parseReferenceRange(result.referenceRange);
+    if (!range) {
+      return 'normal';
+    }
+
+    const numValue = typeof result.value === 'number' ? result.value : parseFloat(String(result.value));
+    if (isNaN(numValue)) {
+      return 'normal';
+    }
+
+    // Comparar con rango de referencia
+    if (range.low !== undefined && numValue < range.low) {
+      // Si está muy por debajo, es crítico
+      return numValue < range.low * 0.5 ? 'critical' : 'abnormal';
+    }
+
+    if (range.high !== undefined && numValue > range.high) {
+      // Si está muy por encima, es crítico
+      return numValue > range.high * 1.5 ? 'critical' : 'abnormal';
+    }
+
     return 'normal';
+  }
+
+  /**
+   * Parsear rango de referencia desde string
+   */
+  private parseReferenceRange(range: string): { low?: number; high?: number; text?: string } | null {
+    if (!range) return null;
+
+    // Intentar parsear formato común: "10-20 mg/dL" o "10.0 - 20.0"
+    const match = range.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/);
+    if (match) {
+      return {
+        low: parseFloat(match[1]),
+        high: parseFloat(match[2]),
+        text: range,
+      };
+    }
+
+    // Intentar parsear formato: "< 20" o "> 10"
+    const lessThanMatch = range.match(/<\s*(\d+\.?\d*)/);
+    if (lessThanMatch) {
+      return {
+        high: parseFloat(lessThanMatch[1]),
+        text: range,
+      };
+    }
+
+    const greaterThanMatch = range.match(/>\s*(\d+\.?\d*)/);
+    if (greaterThanMatch) {
+      return {
+        low: parseFloat(greaterThanMatch[1]),
+        text: range,
+      };
+    }
+
+    return { text: range };
   }
 
   private determineStatusFromFhir(obs: any): 'normal' | 'abnormal' | 'critical' {
@@ -418,6 +499,56 @@ export class LaboratoryIntegrationService {
         patientId: result.patientId,
         error: error.message,
       });
+    }
+  }
+
+  /**
+   * Importar resultados automáticamente (para jobs programados)
+   */
+  async importResultsAutomatically(patientIds?: string[]): Promise<{
+    total: number;
+    success: number;
+    errors: number;
+  }> {
+    const stats = {
+      total: 0,
+      success: 0,
+      errors: 0,
+    };
+
+    try {
+      // Si no se proporcionan patientIds, obtener todos los pacientes activos
+      // En producción, esto debería venir de una consulta a la base de datos
+      const patientsToSync = patientIds || [];
+
+      if (patientsToSync.length === 0) {
+        logger.warn('No hay pacientes para sincronizar');
+        return stats;
+      }
+
+      for (const patientId of patientsToSync) {
+        try {
+          stats.total++;
+          await this.importResults(patientId);
+          stats.success++;
+        } catch (error: any) {
+          stats.errors++;
+          logger.error(`Error al importar resultados para paciente ${patientId}: ${error.message}`);
+        }
+      }
+
+      logger.info(`Importación automática completada`, {
+        total: stats.total,
+        success: stats.success,
+        errors: stats.errors,
+      });
+
+      return stats;
+    } catch (error: any) {
+      logger.error(`Error en importación automática: ${error.message}`, {
+        error: error.message,
+      });
+      throw error;
     }
   }
 }

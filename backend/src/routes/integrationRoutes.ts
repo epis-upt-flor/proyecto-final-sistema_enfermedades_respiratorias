@@ -6,6 +6,8 @@ import {
   searchDrug,
   checkDrugInteractions,
   getDrugDosage,
+  searchGenericDrugs,
+  checkContraindications,
 } from '../controllers/integrationController';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/rbac';
@@ -59,6 +61,20 @@ router.get(
   authenticate,
   requirePermission('fhir:read'),
   getDrugDosage,
+);
+
+router.get(
+  '/drugs/generics',
+  authenticate,
+  requirePermission('fhir:read'),
+  searchGenericDrugs,
+);
+
+router.post(
+  '/drugs/contraindications',
+  authenticate,
+  requirePermission('fhir:read'),
+  checkContraindications,
 );
 
 export default router;

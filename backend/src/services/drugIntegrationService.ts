@@ -178,10 +178,27 @@ export class DrugIntegrationService {
 
       const props = drugInfoResponse.data.properties;
 
+      // Obtener ingredientes activos (ingredientes)
+      let activeIngredients: string[] = [];
+      try {
+        const ingredientsResponse = await this.rxNormClient.get(`/rxcui/${rxcui}/related.json`, {
+          params: {
+            tty: 'IN', // Ingredient
+          },
+        });
+        if (ingredientsResponse.data?.relatedGroup?.conceptGroup) {
+          activeIngredients = ingredientsResponse.data.relatedGroup.conceptGroup
+            .flatMap((group: any) => group.conceptProperties || [])
+            .map((concept: any) => concept.name);
+        }
+      } catch (error: any) {
+        logger.warn(`Error al obtener ingredientes activos: ${error.message}`);
+      }
+
       return {
         name: props.name || drugName,
         rxcui,
-        activeIngredients: props.synonym?.split(';') || [],
+        activeIngredients: activeIngredients.length > 0 ? activeIngredients : (props.synonym?.split(';') || []),
         dosageForms: [],
         indications: [],
         contraindications: [],
@@ -193,6 +210,162 @@ export class DrugIntegrationService {
         drugName,
       });
       return null;
+    }
+  }
+
+  /**
+   * Buscar medicamentos genéricos por nombre de marca
+   */
+  async searchGenericDrugs(brandName: string): Promise<DrugInfo[]> {
+    const cacheKey = `generic:${brandName.toLowerCase()}`;
+    
+    // Verificar caché
+    if (this.config.enableCaching) {
+      const cached = this.cache.get(cacheKey);
+      if (cached && cached.expires > Date.now()) {
+        return cached.data;
+      }
+    }
+
+    try {
+      const genericDrugs: DrugInfo[] = [];
+
+      // Buscar en RxNorm (mejor fuente para genéricos)
+      if (this.rxNormClient) {
+        const generics = await this.searchGenericInRxNorm(brandName);
+        genericDrugs.push(...generics);
+      }
+
+      // Buscar en FDA si RxNorm no encuentra resultados
+      if (genericDrugs.length === 0 && this.fdaClient) {
+        const fdaGenerics = await this.searchGenericInFDA(brandName);
+        genericDrugs.push(...fdaGenerics);
+      }
+
+      // Guardar en caché
+      if (genericDrugs.length > 0 && this.config.enableCaching) {
+        this.cache.set(cacheKey, {
+          data: genericDrugs,
+          expires: Date.now() + (this.config.cacheTTL || 3600000),
+        });
+      }
+
+      return genericDrugs;
+    } catch (error: any) {
+      logger.error(`Error al buscar medicamentos genéricos: ${error.message}`, {
+        brandName,
+        error: error.message,
+      });
+      throw new AppError(`Error al buscar medicamentos genéricos: ${error.message}`, 500);
+    }
+  }
+
+  /**
+   * Buscar genéricos en RxNorm
+   */
+  private async searchGenericInRxNorm(brandName: string): Promise<DrugInfo[]> {
+    if (!this.rxNormClient) {
+      return [];
+    }
+
+    try {
+      // Buscar el medicamento de marca
+      const searchResponse = await this.rxNormClient.get('/drugs.json', {
+        params: {
+          name: brandName,
+        },
+      });
+
+      if (!searchResponse.data || !searchResponse.data.drugGroup?.conceptGroup) {
+        return [];
+      }
+
+      const concepts = searchResponse.data.drugGroup.conceptGroup[0]?.conceptProperties;
+      if (!concepts || concepts.length === 0) {
+        return [];
+      }
+
+      const rxcui = concepts[0].rxcui;
+
+      // Buscar ingredientes activos (genéricos)
+      const ingredientsResponse = await this.rxNormClient.get(`/rxcui/${rxcui}/related.json`, {
+        params: {
+          tty: 'IN', // Ingredient
+        },
+      });
+
+      if (!ingredientsResponse.data?.relatedGroup?.conceptGroup) {
+        return [];
+      }
+
+      const genericDrugs: DrugInfo[] = [];
+
+      for (const group of ingredientsResponse.data.relatedGroup.conceptGroup) {
+        if (group.conceptProperties) {
+          for (const concept of group.conceptProperties) {
+            // Obtener información del genérico
+            const genericInfo = await this.searchRxNorm(concept.name);
+            if (genericInfo) {
+              genericDrugs.push(genericInfo);
+            }
+          }
+        }
+      }
+
+      return genericDrugs;
+    } catch (error: any) {
+      logger.warn(`Error al buscar genéricos en RxNorm: ${error.message}`, {
+        brandName,
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Buscar genéricos en FDA
+   */
+  private async searchGenericInFDA(brandName: string): Promise<DrugInfo[]> {
+    if (!this.fdaClient) {
+      return [];
+    }
+
+    try {
+      const response = await this.fdaClient.get('/drug/label.json', {
+        params: {
+          search: `openfda.brand_name:"${brandName}"`,
+          limit: 10,
+        },
+      });
+
+      if (!response.data || !response.data.results) {
+        return [];
+      }
+
+      const genericDrugs: DrugInfo[] = [];
+      const seenGenerics = new Set<string>();
+
+      for (const label of response.data.results) {
+        const openfda = label.openfda || {};
+        const genericNames = openfda.generic_name || [];
+
+        for (const genericName of genericNames) {
+          if (!seenGenerics.has(genericName.toLowerCase())) {
+            seenGenerics.add(genericName.toLowerCase());
+            
+            const genericInfo = await this.searchDrug(genericName);
+            if (genericInfo) {
+              genericDrugs.push(genericInfo);
+            }
+          }
+        }
+      }
+
+      return genericDrugs;
+    } catch (error: any) {
+      logger.warn(`Error al buscar genéricos en FDA: ${error.message}`, {
+        brandName,
+      });
+      return [];
     }
   }
 
@@ -413,6 +586,124 @@ export class DrugIntegrationService {
         error: error.message,
       });
       return null;
+    }
+  }
+
+  /**
+   * Verificar contraindicaciones para un paciente
+   */
+  async checkContraindications(
+    drugName: string,
+    patientContext: {
+      age?: number;
+      weight?: number;
+      conditions?: string[];
+      allergies?: string[];
+      currentMedications?: string[];
+    },
+  ): Promise<{
+    contraindicated: boolean;
+    alerts: Array<{
+      severity: 'warning' | 'error';
+      message: string;
+      reason: string;
+    }>;
+  }> {
+    try {
+      const drugInfo = await this.searchDrug(drugName);
+      if (!drugInfo) {
+        return {
+          contraindicated: false,
+          alerts: [],
+        };
+      }
+
+      const alerts: Array<{ severity: 'warning' | 'error'; message: string; reason: string }> = [];
+
+      // Verificar contraindicaciones por condiciones médicas
+      if (patientContext.conditions && drugInfo.contraindications.length > 0) {
+        for (const condition of patientContext.conditions) {
+          const conditionLower = condition.toLowerCase();
+          for (const contraindication of drugInfo.contraindications) {
+            if (contraindication.toLowerCase().includes(conditionLower) || 
+                conditionLower.includes(contraindication.toLowerCase())) {
+              alerts.push({
+                severity: 'error',
+                message: `Contraindicación: ${drugName} no debe usarse en pacientes con ${condition}`,
+                reason: `El medicamento está contraindicado para: ${contraindication}`,
+              });
+            }
+          }
+        }
+      }
+
+      // Verificar alergias
+      if (patientContext.allergies && drugInfo.activeIngredients.length > 0) {
+        for (const allergy of patientContext.allergies) {
+          const allergyLower = allergy.toLowerCase();
+          for (const ingredient of drugInfo.activeIngredients) {
+            if (ingredient.toLowerCase().includes(allergyLower) || 
+                allergyLower.includes(ingredient.toLowerCase())) {
+              alerts.push({
+                severity: 'error',
+                message: `Alergia detectada: ${drugName} contiene ${ingredient} al cual el paciente es alérgico`,
+                reason: `Alergia conocida a: ${allergy}`,
+              });
+            }
+          }
+        }
+      }
+
+      // Verificar interacciones con medicamentos actuales
+      if (patientContext.currentMedications && patientContext.currentMedications.length > 0) {
+        const allDrugs = [drugName, ...patientContext.currentMedications];
+        const interactions = await this.checkInteractions(allDrugs);
+        
+        for (const interaction of interactions) {
+          if (interaction.severity === 'contraindicated') {
+            alerts.push({
+              severity: 'error',
+              message: `Interacción contraindicada: ${interaction.drug1} y ${interaction.drug2} no deben usarse juntos`,
+              reason: interaction.description,
+            });
+          } else if (interaction.severity === 'severe') {
+            alerts.push({
+              severity: 'error',
+              message: `Interacción grave: ${interaction.drug1} y ${interaction.drug2}`,
+              reason: interaction.description,
+            });
+          } else if (interaction.severity === 'moderate') {
+            alerts.push({
+              severity: 'warning',
+              message: `Interacción moderada: ${interaction.drug1} y ${interaction.drug2}`,
+              reason: interaction.description,
+            });
+          }
+        }
+      }
+
+      // Verificar edad y peso para dosificación
+      if (patientContext.age !== undefined && patientContext.weight !== undefined) {
+        const dosage = await this.getDosage(drugName, undefined, patientContext.age, patientContext.weight);
+        if (!dosage) {
+          alerts.push({
+            severity: 'warning',
+            message: `Dosificación no disponible para pacientes de ${patientContext.age} años y ${patientContext.weight} kg`,
+            reason: 'No se encontró información de dosificación específica para este perfil de paciente',
+          });
+        }
+      }
+
+      return {
+        contraindicated: alerts.some((alert) => alert.severity === 'error'),
+        alerts,
+      };
+    } catch (error: any) {
+      logger.error(`Error al verificar contraindicaciones: ${error.message}`, {
+        drugName,
+        error: error.message,
+      });
+      throw new AppError(`Error al verificar contraindicaciones: ${error.message}`, 500);
     }
   }
 

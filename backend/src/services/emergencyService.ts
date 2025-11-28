@@ -8,6 +8,8 @@ import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
 // Importación dinámica para evitar dependencias circulares
 import { AlertPriority, AlertChannel } from '../types';
+import { ambulanceService } from './ambulanceService';
+import { hospitalCommunicationService } from './hospitalCommunicationService';
 
 export interface EmergencyLocation {
   latitude: number;
@@ -108,6 +110,32 @@ export class EmergencyService {
       // Crear alerta automática si está habilitado
       if (this.config.autoAlertEnabled) {
         await this.createEmergencyAlert(request);
+      }
+
+      // Despachar ambulancia automáticamente si está habilitado
+      if (this.config.enabled) {
+        try {
+          const ambulanceDispatch = await ambulanceService.dispatchAmbulance(request);
+          logger.info('Ambulancia despachada automáticamente', {
+            ambulanceId: ambulanceDispatch.ambulanceId,
+            emergencyId: emergencyResponse?.emergencyId,
+          });
+        } catch (error: any) {
+          logger.warn(`Error al despachar ambulancia: ${error.message}`, {
+            error: error.message,
+          });
+          // No bloquear el flujo principal si falla el despacho de ambulancia
+        }
+      }
+
+      // Notificar a hospitales sobre la emergencia
+      try {
+        await hospitalCommunicationService.notifyHospitals(request);
+      } catch (error: any) {
+        logger.warn(`Error al notificar hospitales: ${error.message}`, {
+          error: error.message,
+        });
+        // No bloquear el flujo principal si falla la notificación a hospitales
       }
 
       // Enviar a servicio de emergencias externo si está configurado

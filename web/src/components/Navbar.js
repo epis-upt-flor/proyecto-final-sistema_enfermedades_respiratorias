@@ -26,7 +26,9 @@ function Navbar() {
       { to: '/', labelKey: 'nav.home', icon: '🏠' },
       { to: '/dashboard', labelKey: 'nav.dashboard', icon: '⚙️' },
       { to: '/analytics', labelKey: 'nav.analytics', icon: '📊' },
-      { to: '/heatmap', labelKey: 'nav.map', icon: '🗺️' }
+      { to: '/heatmap', labelKey: 'nav.map', icon: '🗺️' },
+      { to: '/fhir', labelKey: 'nav.fhir', icon: '📋' },
+      { to: '/hl7', labelKey: 'nav.hl7', icon: '🔬' }
     ],
     []
   );
