@@ -35,15 +35,17 @@ function AnalyticsDashboard() {
     try {
       const response = await axios.get(`${LEGACY_API_BASE}/analytics/dashboard`);
       
-      if (response.data.success) {
-        setDashboardData(response.data.data);
+      // El endpoint devuelve los datos directamente o en response.data.data
+      if (response.data && (response.data.overview || response.data.data)) {
+        // Si viene en response.data.data, usar eso; si no, usar response.data directamente
+        setDashboardData(response.data.data || response.data);
         setLastUpdated(new Date());
       } else {
-        setError(response.data.message || 'Error al cargar datos del dashboard');
+        setError('No se encontraron datos en la base de datos');
       }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('No se pudieron cargar los datos del dashboard. Verifica que el backend esté funcionando.');
+      setError(`No se pudieron cargar los datos del dashboard: ${err.message}. Verifica que el backend esté funcionando y que haya datos en la base de datos.`);
     } finally {
       setLoading(false);
     }
@@ -51,19 +53,28 @@ function AnalyticsDashboard() {
 
   const fetchMlMetrics = useCallback(async () => {
     try {
+      console.log('Fetching ML metrics from:', `${API_BASE}/analytics/ml/monitoring`);
       const response = await axios.get(`${API_BASE}/analytics/ml/monitoring`, {
         params: { days: 7 },
       });
+
+      console.log('ML Metrics Response:', response.data);
 
       if (response.data.success) {
         setMlMetrics(response.data.data);
         setMlError(null);
       } else {
+        console.warn('ML Metrics response not successful:', response.data);
         setMlError(response.data.message || 'Error al cargar métricas ML');
       }
     } catch (err) {
       console.error('Error fetching ML monitoring metrics:', err);
-      setMlError('No se pudieron cargar las métricas ML de monitoreo.');
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setMlError(`No se pudieron cargar las métricas ML: ${err.message || 'Error de conexión'}`);
     }
   }, []);
 
@@ -71,16 +82,35 @@ function AnalyticsDashboard() {
     setMlExperimentsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE}/ml/experiments`, {
+      const url = `${API_BASE}/ml/experiments`;
+      console.log('Fetching ML experiments from:', url);
+      console.log('Token available:', !!token);
+      
+      const response = await axios.get(url, {
         params: { limit: 5 },
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
+      console.log('ML Experiments Response:', response.data);
+
       if (response.data.success) {
         setMlExperiments(response.data.data || []);
+      } else {
+        console.warn('ML Experiments response not successful:', response.data);
+        setMlExperiments([]);
       }
     } catch (err) {
       console.error('Error fetching ML experiments:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      // Si es un error 401, significa que necesita autenticación
+      if (err.response?.status === 401) {
+        console.warn('ML Experiments requiere autenticación');
+      }
+      setMlExperiments([]);
     } finally {
       setMlExperimentsLoading(false);
     }
@@ -178,11 +208,19 @@ function AnalyticsDashboard() {
     color: getCategoryColor(item._id)
   })) || [];
 
-  const topDistrictsData = dashboardData.topDistricts?.map(district => ({
-    name: district._id,
-    count: district.count,
-    avgSeverity: Math.round(district.avgSeverity * 100) / 100
-  })) || [];
+  // Procesar datos de top distritos con validación
+  const topDistrictsData = (dashboardData.topDistricts || [])
+    .filter(district => district && district._id && district.count > 0) // Filtrar distritos válidos
+    .map(district => ({
+      name: String(district._id || district.name || 'Distrito desconocido').trim(),
+      count: Number(district.count || 0),
+      avgSeverity: district.avgSeverity ? Math.round(district.avgSeverity * 100) / 100 : 0
+    }))
+    .sort((a, b) => b.count - a.count) // Ordenar por count descendente
+    .slice(0, 8); // Limitar a 8 distritos
+  
+  console.log('Top Districts Data:', topDistrictsData);
+  console.log('Dashboard Data topDistricts:', dashboardData.topDistricts);
 
   return (
     <div className="analytics-dashboard">
@@ -289,30 +327,6 @@ function AnalyticsDashboard() {
           </div>
         </div>
 
-        {/* Top Districts */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h4>🏘️ Top Distritos</h4>
-            <p>Distritos con mayor número de reportes</p>
-          </div>
-          <div className="chart-content">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={topDistrictsData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
-                <Tooltip 
-                  formatter={(value, name) => [
-                    value, 
-                    name === 'count' ? 'Reportes' : 'Severidad Promedio'
-                  ]}
-                />
-                <Bar dataKey="count" fill="#4ecdc4" name="Reportes" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
         {/* Recent Activity */}
         <div className="chart-card">
           <div className="chart-header">
@@ -343,6 +357,81 @@ function AnalyticsDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Districts - Full Width Section */}
+      <div className="top-districts-section">
+        <div className="chart-card chart-card-full">
+          <div className="chart-header">
+            <h4>🏘️ Top Distritos</h4>
+            <p>Distritos con mayor número de reportes</p>
+          </div>
+          <div className="chart-content chart-content-full">
+            {topDistrictsData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart 
+                  data={topDistrictsData} 
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    tick={{ fill: '#666', fontSize: 11 }}
+                    interval={0}
+                  />
+                  <YAxis 
+                    type="number"
+                    domain={[0, 'dataMax + 1']}
+                    tick={{ fill: '#666', fontSize: 12 }}
+                    allowDecimals={false}
+                    label={{ value: 'Número de Reportes', angle: -90, position: 'insideLeft', style: { fill: '#666', fontSize: 14 } }}
+                  />
+                  <Tooltip 
+                    formatter={(value, name) => {
+                      if (name === 'count') {
+                        return [`${value} reportes`, 'Reportes'];
+                      }
+                      return [value, 'Severidad Promedio'];
+                    }}
+                    labelFormatter={(label) => `Distrito: ${label}`}
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      padding: '8px'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="count" 
+                    fill="#2196f3" 
+                    name="Reportes"
+                    radius={[6, 6, 0, 0]}
+                    isAnimationActive={true}
+                    stroke="#1976d2"
+                    strokeWidth={2}
+                  >
+                    {topDistrictsData.map((entry, index) => {
+                      // Colores alternados para mejor visibilidad
+                      const colors = ['#2196f3', '#1976d2', '#1565c0', '#0d47a1'];
+                      const color = colors[index % colors.length];
+                      return <Cell key={`cell-${index}`} fill={color} stroke={color} strokeWidth={2} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="no-chart-data">
+                <p>No hay datos de distritos disponibles</p>
+                <p style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                  Verifica que haya reportes con información de distrito en la base de datos.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

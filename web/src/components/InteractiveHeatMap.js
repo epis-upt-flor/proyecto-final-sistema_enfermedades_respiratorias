@@ -24,16 +24,7 @@ const DISTRICT_COORDINATES = {
   'Boca del Río': [-18.1, -70.3]
 };
 
-const HISTORICAL_DATA = {
-  'Centro de Tacna': { p75: 25, p95: 45, avg4weeks: 15, lastYear: 20 },
-  'Alto de la Alianza': { p75: 20, p95: 35, avg4weeks: 12, lastYear: 18 },
-  'Gregorio Albarracín': { p75: 18, p95: 30, avg4weeks: 10, lastYear: 15 },
-  'Ciudad Nueva': { p75: 15, p95: 25, avg4weeks: 8, lastYear: 12 },
-  'Pocollay': { p75: 12, p95: 20, avg4weeks: 6, lastYear: 10 },
-  'Calana': { p75: 10, p95: 18, avg4weeks: 5, lastYear: 8 },
-  'Pachia': { p75: 8, p95: 15, avg4weeks: 4, lastYear: 6 },
-  'Boca del Río': { p75: 6, p95: 12, avg4weeks: 3, lastYear: 5 }
-};
+// Los datos históricos ahora vienen del backend, no se usan datos hardcoded
 
 const ALERT_COLORS = {
   emergency: '#ef4444',
@@ -130,14 +121,53 @@ function InteractiveHeatMap() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSeverity, setSelectedSeverity] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState('week'); // 'day', 'week', 'month', 'year'
   const mapCenter = useMemo(() => [-18.0066, -70.2463], []);
   const mapZoom = 11;
 
-  const calculateEpidemiologicalAlert = useCallback((district, currentCases) => {
-    const historical = HISTORICAL_DATA[district];
-    if (!historical) return 'normal';
+  // Calcular fechas según el período seleccionado
+  const getDateRange = useCallback((period) => {
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999); // Fin del día actual
+    
+    const startDate = new Date();
+    
+    switch (period) {
+      case 'day':
+        startDate.setHours(0, 0, 0, 0); // Inicio del día actual
+        break;
+      case 'week':
+        startDate.setDate(startDate.getDate() - 7);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'month':
+        startDate.setMonth(startDate.getMonth() - 1);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'year':
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      default:
+        startDate.setDate(startDate.getDate() - 7);
+        startDate.setHours(0, 0, 0, 0);
+    }
+    
+    return {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    };
+  }, []);
 
-    const { p75, p95, avg4weeks, lastYear } = historical;
+  const calculateEpidemiologicalAlert = useCallback((district, currentCases, historicalData) => {
+    // Si no hay datos históricos del backend, usar umbrales simples basados en casos actuales
+    if (!historicalData) {
+      if (currentCases >= 50) return 'emergency';
+      if (currentCases >= 30) return 'alert';
+      return 'normal';
+    }
+
+    const { p75, p95, avg4weeks, lastYear } = historicalData;
 
     if (currentCases >= p95) return 'emergency';
     if (currentCases >= p75) return 'alert';
@@ -168,32 +198,43 @@ function InteractiveHeatMap() {
     }
     setError(null);
     try {
+      const dateRange = getDateRange(selectedPeriod);
+      console.log('📅 Fetching heatmap data for period:', selectedPeriod, dateRange);
+      
       const response = await axios.get(
         `${LEGACY_API_BASE}/symptom-reports/heatmap`,
         {
           params: {
-            // Get data from last 7 days by default for real-time updates
-            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate
           }
         }
       );
+      
+      console.log('📊 Heatmap response:', response.data.data?.length || 0, 'districts');
 
       if (response.data.success) {
         const transformedData = response.data.data.map((item) => {
+          // Los datos históricos vienen del backend si están disponibles
+          const historicalData = item.historicalData || null;
+          const currentCases = item.count || item.totalCases || 0;
+          
           const epidemiologicalAlert = calculateEpidemiologicalAlert(
             item.district,
-            item.count || item.totalCases || 0
+            currentCases,
+            historicalData
           );
+          
           return {
             district: item.district,
-            count: item.count || item.totalCases || 0,
+            count: currentCases,
             severity: item.riskLevel || item.severity,
             epidemiologicalAlert,
             lat: item.coordinates?.latitude || DISTRICT_COORDINATES[item.district]?.[0] || -18.0066,
             lng: item.coordinates?.longitude || DISTRICT_COORDINATES[item.district]?.[1] || -70.2463,
             symptoms: Array.isArray(item.symptoms) ? item.symptoms : (item.symptoms || ['Síntomas respiratorios']),
             lastReport: item.lastReport || new Date().toISOString(),
-            historicalData: HISTORICAL_DATA[item.district] || null
+            historicalData
           };
         });
 
@@ -213,9 +254,9 @@ function InteractiveHeatMap() {
       setLoading(false);
       setIsUpdating(false);
     }
-  }, [calculateEpidemiologicalAlert]);
+  }, [calculateEpidemiologicalAlert, selectedPeriod, getDateRange]);
 
-  // Initial load
+  // Initial load and when period changes
   useEffect(() => {
     fetchHeatmapData();
   }, [fetchHeatmapData]);
@@ -345,6 +386,21 @@ function InteractiveHeatMap() {
       </div>
 
       <div className="heatmap-controls">
+        <div className="period-selector">
+          <label htmlFor="period-select">📅 Período de tiempo:</label>
+          <select
+            id="period-select"
+            className="period-select"
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+          >
+            <option value="day">Hoy</option>
+            <option value="week">Última Semana</option>
+            <option value="month">Último Mes</option>
+            <option value="year">Último Año</option>
+          </select>
+        </div>
+
         <div className="severity-filters">
           <label>Filtrar por nivel de alerta epidemiológica:</label>
           <div className="filter-buttons">

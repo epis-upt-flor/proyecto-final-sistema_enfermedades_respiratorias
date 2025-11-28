@@ -158,6 +158,13 @@ const symptomReportSchema = new mongoose.Schema({
   isAnonymous: {
     type: Boolean,
     default: true
+  },
+  
+  // Date when the symptom was actually reported (can be different from createdAt)
+  reportedAt: {
+    type: Date,
+    default: Date.now,
+    index: true
   }
 }, {
   timestamps: true, // Adds createdAt and updatedAt
@@ -228,11 +235,27 @@ symptomReportSchema.statics.getByDistrict = function(district, options = {}) {
 symptomReportSchema.statics.getAggregatedByDistrict = async function(options = {}) {
   const matchStage = {};
   
-  if (options.startDate) {
-    matchStage.createdAt = { $gte: new Date(options.startDate) };
-  }
-  if (options.endDate) {
-    matchStage.createdAt = { ...matchStage.createdAt, $lte: new Date(options.endDate) };
+  // Build date filter - use createdAt (primary field) or reportedAt if it exists
+  if (options.startDate || options.endDate) {
+    const dateConditions = {};
+    if (options.startDate) {
+      dateConditions.$gte = new Date(options.startDate);
+    }
+    if (options.endDate) {
+      dateConditions.$lte = new Date(options.endDate);
+    }
+    
+    // Use $or to match either reportedAt or createdAt within the date range
+    // This handles documents that might have either field
+    matchStage.$or = [
+      { reportedAt: dateConditions },
+      { 
+        $and: [
+          { $or: [{ reportedAt: { $exists: false } }, { reportedAt: null }] },
+          { createdAt: dateConditions }
+        ]
+      }
+    ];
   }
   
   const pipeline = [

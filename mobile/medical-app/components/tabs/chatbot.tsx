@@ -16,6 +16,7 @@ import { chatService } from "@/lib/api/services/chatService"
 import { useAppStore } from "@/store/useAppStore"
 import { toast } from "sonner"
 import type { ChatMessage } from "@/lib/api/services/chatService"
+import { API_CONFIG, getAuthToken } from "@/lib/api/config"
 
 interface ChatViewProps {
   t: Translation
@@ -24,10 +25,66 @@ interface ChatViewProps {
 export function ChatView({ t }: ChatViewProps) {
   const user = useAppStore((state) => state.user)
   const isEmergencyMode = useAppStore((state) => state.isEmergencyMode)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  // Clave para localStorage basada en el usuario
+  const getStorageKey = () => {
+    const userId = user?._id || 'anonymous'
+    return `chatbot_messages_${userId}`
+  }
+  
+  const getSessionStorageKey = () => {
+    const userId = user?._id || 'anonymous'
+    return `chatbot_session_${userId}`
+  }
+  
+  // Cargar mensajes y sesión desde localStorage al inicializar
+  const loadPersistedData = () => {
+    if (typeof window === 'undefined') return { messages: [], sessionId: null }
+    
+    try {
+      const storedMessages = localStorage.getItem(getStorageKey())
+      const storedSession = localStorage.getItem(getSessionStorageKey())
+      
+      return {
+        messages: storedMessages ? JSON.parse(storedMessages) : [],
+        sessionId: storedSession || null
+      }
+    } catch (error) {
+      console.error('Error loading persisted chat data:', error)
+      return { messages: [], sessionId: null }
+    }
+  }
+  
+  // Guardar mensajes en localStorage
+  const saveMessages = (newMessages: ChatMessage[]) => {
+    if (typeof window === 'undefined') return
+    
+    try {
+      localStorage.setItem(getStorageKey(), JSON.stringify(newMessages))
+    } catch (error) {
+      console.error('Error saving messages to localStorage:', error)
+    }
+  }
+  
+  // Guardar sessionId en localStorage
+  const saveSessionId = (id: string | null) => {
+    if (typeof window === 'undefined') return
+    
+    try {
+      if (id) {
+        localStorage.setItem(getSessionStorageKey(), id)
+      } else {
+        localStorage.removeItem(getSessionStorageKey())
+      }
+    } catch (error) {
+      console.error('Error saving sessionId to localStorage:', error)
+    }
+  }
+  
+  const persistedData = loadPersistedData()
+  const [messages, setMessages] = useState<ChatMessage[]>(persistedData.messages)
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(persistedData.sessionId)
   const [isInitializing, setIsInitializing] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -60,45 +117,80 @@ export function ChatView({ t }: ChatViewProps) {
       try {
         setIsInitializing(true)
         
+        // Cargar datos persistidos primero
+        const persisted = loadPersistedData()
+        
+        // Si ya hay mensajes guardados, mostrarlos inmediatamente
+        if (persisted.messages && persisted.messages.length > 0) {
+          setMessages(persisted.messages)
+          if (persisted.sessionId) {
+            setSessionId(persisted.sessionId)
+          }
+        }
+        
         // Log de diagnóstico
         console.log('Inicializando chat con:', {
           userId,
           isEmergencyMode,
+          hasPersistedSession: !!persisted.sessionId,
+          hasPersistedMessages: persisted.messages.length > 0,
           apiURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
         })
         
-        const result = await chatService.createConversation({
-          userId: userId,
-          userInfo: {
-            name: user?.name || 'Usuario de Emergencia',
-            email: user?.email || 'emergency@respicare.com',
-            role: user?.role || 'patient',
-            isEmergency: isEmergencyMode
-          },
-          location: {
-            city: 'Tacna',
-            country: 'Perú'
-          },
-          metadata: {
-            isEmergencyMode: isEmergencyMode
-          }
-        })
-        setSessionId(result.sessionId)
+        // Si ya hay un sessionId guardado, intentar usarlo
+        let newSessionId = persisted.sessionId
         
-        // Cargar mensajes existentes si hay
-        const conversation = await chatService.getConversation(result.sessionId)
-        if (conversation.messages && conversation.messages.length > 0) {
-          setMessages(conversation.messages)
-        } else {
-          // Mensaje de bienvenida inicial
-          const welcomeMessage: ChatMessage = {
-            role: 'assistant',
-            content: isEmergencyMode 
-              ? "Hola, estás en modo de emergencia. ¿Cómo puedo ayudarte con tu situación médica urgente? Describe tus síntomas y te proporcionaré orientación inmediata."
-              : t.chat.welcome,
-            timestamp: new Date().toISOString()
+        if (!newSessionId) {
+          // Crear nueva conversación solo si no hay sessionId guardado
+          const result = await chatService.createConversation({
+            userId: userId,
+            userInfo: {
+              name: user?.name || 'Usuario de Emergencia',
+              email: user?.email || 'emergency@respicare.com',
+              role: user?.role || 'patient',
+              isEmergency: isEmergencyMode
+            },
+            location: {
+              city: 'Tacna',
+              country: 'Perú'
+            },
+            metadata: {
+              isEmergencyMode: isEmergencyMode
+            }
+          })
+          newSessionId = result.sessionId
+          setSessionId(newSessionId)
+          saveSessionId(newSessionId)
+        }
+        
+        // Intentar cargar mensajes del servidor para sincronizar
+        try {
+          const conversation = await chatService.getConversation(newSessionId)
+          if (conversation.messages && conversation.messages.length > 0) {
+            // Si el servidor tiene más mensajes, usar esos (sincronización)
+            setMessages(conversation.messages)
+            saveMessages(conversation.messages)
+          } else if (persisted.messages && persisted.messages.length > 0) {
+            // Si no hay mensajes en el servidor pero hay locales, mantener los locales
+            setMessages(persisted.messages)
+          } else {
+            // Solo crear mensaje de bienvenida si no hay mensajes en ningún lado
+            const welcomeMessage: ChatMessage = {
+              role: 'assistant',
+              content: isEmergencyMode 
+                ? "Hola, estás en modo de emergencia. ¿Cómo puedo ayudarte con tu situación médica urgente? Describe tus síntomas y te proporcionaré orientación inmediata."
+                : t.chat.welcome,
+              timestamp: new Date().toISOString()
+            }
+            setMessages([welcomeMessage])
+            saveMessages([welcomeMessage])
           }
-          setMessages([welcomeMessage])
+        } catch (syncError) {
+          // Si falla la sincronización, mantener los mensajes locales
+          console.warn('No se pudo sincronizar con el servidor, usando mensajes locales:', syncError)
+          if (persisted.messages && persisted.messages.length > 0) {
+            setMessages(persisted.messages)
+          }
         }
       } catch (error: unknown) {
         // Log detallado del error para diagnóstico
@@ -132,8 +224,31 @@ export function ChatView({ t }: ChatViewProps) {
     }
 
     initializeChat()
-  }, [user, isEmergencyMode])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, isEmergencyMode])
 
+  // Guardar mensajes en localStorage cuando cambian
+  useEffect(() => {
+    if (messages.length > 0 && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(getStorageKey(), JSON.stringify(messages))
+      } catch (error) {
+        console.error('Error saving messages to localStorage:', error)
+      }
+    }
+  }, [messages, user?._id])
+  
+  // Guardar sessionId cuando cambia
+  useEffect(() => {
+    if (sessionId && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(getSessionStorageKey(), sessionId)
+      } catch (error) {
+        console.error('Error saving sessionId to localStorage:', error)
+      }
+    }
+  }, [sessionId, user?._id])
+  
   // Scroll al final cuando hay nuevos mensajes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -302,36 +417,104 @@ export function ChatView({ t }: ChatViewProps) {
     try {
       setIsLoading(true)
       
+      // Usar la configuración de API correcta
+      const apiURL = `${API_CONFIG.baseURL}/api/v1/chat/transcribe`
+      
+      // Obtener token de autenticación usando la función correcta
+      const token = getAuthToken() || localStorage.getItem('token') || ''
+      
+      if (!token) {
+        throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.')
+      }
+      
       // Crear FormData para enviar el audio
       const formData = new FormData()
       formData.append('audio', audioBlob, 'voice-message.webm')
       formData.append('type', 'transcribe')
       
+      console.log('[Chatbot] Enviando audio para transcripción:', { 
+        apiURL, 
+        hasToken: !!token,
+        audioSize: audioBlob.size 
+      })
+      
       // Enviar al backend para transcripción
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/chat/transcribe`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-          },
-          body: formData
-        }
-      )
+      const response = await fetch(apiURL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // No incluir Content-Type para FormData, el navegador lo hace automáticamente
+        },
+        body: formData
+      })
+
+      console.log('[Chatbot] Respuesta de transcripción:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        ok: response.ok,
+        contentType: response.headers.get('content-type')
+      })
 
       if (!response.ok) {
-        throw new Error('Error en la transcripción')
+        // Intentar obtener el mensaje de error del servidor
+        let errorMessage = 'Error en la transcripción'
+        let errorDetails: any = null
+        
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            errorDetails = await response.json()
+            errorMessage = errorDetails.message || errorDetails.error || errorDetails.detail || errorMessage
+          } else {
+            const textError = await response.text()
+            errorMessage = textError || `Error ${response.status}: ${response.statusText || 'Error en la transcripción'}`
+          }
+          console.error('[Chatbot] Error del servidor:', { 
+            status: response.status,
+            error: errorDetails || errorMessage 
+          })
+        } catch (e) {
+          // Si no se puede parsear el error, usar el status
+          errorMessage = `Error ${response.status}: ${response.statusText || 'Error en la transcripción'}`
+          console.error('[Chatbot] No se pudo parsear el error:', e)
+        }
+        
+        // Mensajes de error más específicos según el código de estado
+        if (response.status === 401) {
+          errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.'
+        } else if (response.status === 413) {
+          errorMessage = 'El archivo de audio es demasiado grande. Intenta con una grabación más corta.'
+        } else if (response.status === 415) {
+          errorMessage = 'Formato de audio no soportado. Intenta nuevamente.'
+        } else if (response.status === 500) {
+          errorMessage = 'Error en el servidor. Por favor, intenta más tarde.'
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
-      const transcribedText = data.text || data.transcription || 'No se pudo transcribir el audio'
+      console.log('[Chatbot] Datos de transcripción recibidos:', data)
+      
+      const transcribedText = data.text || data.transcription || data.data?.text || data.data?.transcription || ''
+
+      if (!transcribedText || transcribedText.trim() === '') {
+        throw new Error('No se pudo obtener el texto transcrito. El servidor no devolvió ningún texto.')
+      }
 
       // Enviar el texto transcrito como mensaje
       await handleSendMessage(transcribedText)
       toast.success('Mensaje transcrito y enviado')
     } catch (error) {
-      console.error('Error transcribing audio:', error)
-      toast.error('Error al transcribir el audio. Intenta escribiendo el mensaje.')
+      console.error('[Chatbot] Error transcribing audio:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error al transcribir el audio'
+      
+      // Mostrar mensaje de error más amigable
+      if (errorMessage.length > 80) {
+        toast.error('Error al transcribir el audio. Intenta escribiendo el mensaje.')
+      } else {
+        toast.error(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -346,29 +529,84 @@ export function ChatView({ t }: ChatViewProps) {
     try {
       setIsLoading(true)
       
+      // Usar la configuración de API correcta
+      const apiURL = `${API_CONFIG.baseURL}/api/v1/chat/analyze-cough`
+      
+      // Obtener token de autenticación
+      const token = getAuthToken() || localStorage.getItem('token') || ''
+      
+      if (!token) {
+        throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.')
+      }
+      
       // Crear FormData para enviar el audio
       const formData = new FormData()
       formData.append('audio', audioBlob, 'cough-audio.webm')
       formData.append('type', 'cough_analysis')
       formData.append('sessionId', sessionId)
       
+      console.log('[Chatbot] Enviando audio para análisis de tos:', { 
+        apiURL, 
+        hasToken: !!token,
+        sessionId,
+        audioSize: audioBlob.size 
+      })
+      
       // Enviar al backend para análisis de tos
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/chat/analyze-cough`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-          },
-          body: formData
-        }
-      )
+      const response = await fetch(apiURL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // No incluir Content-Type para FormData
+        },
+        body: formData
+      })
+
+      console.log('[Chatbot] Respuesta de análisis de tos:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        ok: response.ok 
+      })
 
       if (!response.ok) {
-        throw new Error('Error en el análisis de tos')
+        // Intentar obtener el mensaje de error del servidor
+        let errorMessage = 'Error en el análisis de tos'
+        let errorDetails: any = null
+        
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            errorDetails = await response.json()
+            errorMessage = errorDetails.message || errorDetails.error || errorDetails.detail || errorMessage
+          } else {
+            const textError = await response.text()
+            errorMessage = textError || `Error ${response.status}: ${response.statusText || 'Error en el análisis de tos'}`
+          }
+          console.error('[Chatbot] Error del servidor:', { 
+            status: response.status,
+            error: errorDetails || errorMessage 
+          })
+        } catch (e) {
+          errorMessage = `Error ${response.status}: ${response.statusText || 'Error en el análisis de tos'}`
+          console.error('[Chatbot] No se pudo parsear el error:', e)
+        }
+        
+        // Mensajes de error más específicos
+        if (response.status === 401) {
+          errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.'
+        } else if (response.status === 413) {
+          errorMessage = 'El archivo de audio es demasiado grande. Intenta con una grabación más corta.'
+        } else if (response.status === 415) {
+          errorMessage = 'Formato de audio no soportado. Intenta nuevamente.'
+        } else if (response.status === 500) {
+          errorMessage = 'Error en el servidor. Por favor, intenta más tarde.'
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
+      console.log('[Chatbot] Datos de análisis de tos recibidos:', data)
       
       // Agregar mensaje del usuario
       const userMessage: ChatMessage = {
@@ -380,7 +618,7 @@ export function ChatView({ t }: ChatViewProps) {
       setMessages((prev) => [...prev, userMessage])
       
       // Agregar respuesta del asistente con el análisis
-      const analysisResult = data.analysis || data.result || 'Análisis completado'
+      const analysisResult = data.analysis || data.result || data.data?.analysis || data.data?.result || 'Análisis completado'
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: typeof analysisResult === 'string' 
@@ -394,7 +632,14 @@ export function ChatView({ t }: ChatViewProps) {
       toast.success('Análisis de tos completado')
     } catch (error) {
       console.error('Error analyzing cough:', error)
-      toast.error('Error al analizar la tos. Intenta de nuevo.')
+      const errorMessage = error instanceof Error ? error.message : 'Error al analizar la tos'
+      
+      // Mostrar mensaje de error más amigable
+      if (errorMessage.length > 80) {
+        toast.error('Error al analizar la tos. Intenta de nuevo.')
+      } else {
+        toast.error(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -465,28 +710,88 @@ export function ChatView({ t }: ChatViewProps) {
         reader.readAsDataURL(selectedImage)
       })
 
+      // Usar la configuración de API correcta
+      const apiURL = `${API_CONFIG.baseURL}/api/v1/chat/analyze-image`
+      
+      // Obtener token de autenticación
+      const token = getAuthToken() || localStorage.getItem('token') || ''
+      
+      if (!token) {
+        throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.')
+      }
+      
+      const requestBody = {
+        image: base64Image,
+        image_type: imageType,
+        sessionId: sessionId
+      }
+      
+      console.log('[Chatbot] Enviando imagen para análisis:', { 
+        apiURL, 
+        hasToken: !!token,
+        sessionId,
+        imageType,
+        imageSize: base64Image.length 
+      })
+      
       // Enviar al backend para análisis
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/chat/analyze-image`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            image: base64Image,
-            image_type: imageType,
-            sessionId: sessionId
-          })
-        }
-      )
+      const response = await fetch(apiURL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      console.log('[Chatbot] Respuesta de análisis de imagen:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        ok: response.ok,
+        contentType: response.headers.get('content-type')
+      })
 
       if (!response.ok) {
-        throw new Error('Error en el análisis de imagen')
+        // Intentar obtener el mensaje de error del servidor
+        let errorMessage = 'Error en el análisis de imagen'
+        let errorDetails: any = null
+        
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            errorDetails = await response.json()
+            errorMessage = errorDetails.message || errorDetails.error || errorDetails.detail || errorMessage
+          } else {
+            const textError = await response.text()
+            errorMessage = textError || `Error ${response.status}: ${response.statusText || 'Error en el análisis de imagen'}`
+          }
+          console.error('[Chatbot] Error del servidor:', { 
+            status: response.status,
+            error: errorDetails || errorMessage 
+          })
+        } catch (e) {
+          errorMessage = `Error ${response.status}: ${response.statusText || 'Error en el análisis de imagen'}`
+          console.error('[Chatbot] No se pudo parsear el error:', e)
+        }
+        
+        // Mensajes de error más específicos según el código de estado
+        if (response.status === 401) {
+          errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.'
+        } else if (response.status === 400) {
+          errorMessage = errorMessage || 'Formato de imagen inválido o datos incorrectos.'
+        } else if (response.status === 413) {
+          errorMessage = 'La imagen es demasiado grande. Intenta con una imagen más pequeña.'
+        } else if (response.status === 415) {
+          errorMessage = 'Formato de imagen no soportado. Usa JPG, PNG o WEBP.'
+        } else if (response.status === 500) {
+          errorMessage = 'Error en el servidor. Por favor, intenta más tarde.'
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
+      console.log('[Chatbot] Datos de análisis de imagen recibidos:', data)
       
       // Agregar mensaje del usuario
       const userMessage: ChatMessage = {
@@ -497,22 +802,111 @@ export function ChatView({ t }: ChatViewProps) {
       }
       setMessages((prev) => [...prev, userMessage])
       
-      // Agregar respuesta del asistente con el análisis
-      const analysisResult = data.analysis || data.result || 'Análisis completado'
+      // Construir respuesta detallada del análisis
+      let analysisContent = ''
+      
+      // Si hay análisis completo estructurado
+      if (data.fullAnalysis) {
+        const full = data.fullAnalysis
+        analysisContent = `📊 **Análisis de ${getImageTypeLabel(imageType)}**\n\n`
+        
+        // Predicción principal
+        if (full.top_prediction || data.topPrediction) {
+          const prediction = full.top_prediction || data.topPrediction
+          const confidence = full.confidence || data.confidence || 0
+          analysisContent += `🔍 **Predicción Principal:** ${prediction}\n`
+          analysisContent += `📈 **Confianza:** ${(confidence * 100).toFixed(1)}%\n\n`
+        }
+        
+        // Top 3 predicciones si están disponibles
+        if (full.labels && full.scores && full.labels.length > 0) {
+          analysisContent += `**Top Predicciones:**\n`
+          full.labels.slice(0, 3).forEach((label: string, index: number) => {
+            const score = full.scores[index] || 0
+            analysisContent += `${index + 1}. ${label}: ${(score * 100).toFixed(1)}%\n`
+          })
+          analysisContent += `\n`
+        }
+        
+        // Análisis detallado
+        if (full.analysis) {
+          analysisContent += `**Análisis Detallado:**\n${full.analysis}\n\n`
+        }
+        
+        // Recomendaciones
+        if (full.recommendations && full.recommendations.length > 0) {
+          analysisContent += `**Recomendaciones:**\n`
+          full.recommendations.forEach((rec: string, index: number) => {
+            analysisContent += `• ${rec}\n`
+          })
+          analysisContent += `\n`
+        }
+        
+        // Si hay datos adicionales
+        if (data.message) {
+          analysisContent += `ℹ️ ${data.message}\n`
+        }
+      } 
+      // Si solo hay análisis simple
+      else if (data.analysis || data.result) {
+        const simpleAnalysis = data.analysis || data.result
+        
+        analysisContent = `📊 **Análisis de ${getImageTypeLabel(imageType)}**\n\n`
+        analysisContent += `${simpleAnalysis}\n\n`
+        
+        // Agregar información de confianza si está disponible
+        if (data.confidence !== undefined) {
+          analysisContent += `📈 **Confianza del análisis:** ${(data.confidence * 100).toFixed(1)}%\n\n`
+        }
+        
+        // Agregar predicción principal si está disponible
+        if (data.topPrediction) {
+          analysisContent += `🔍 **Predicción:** ${data.topPrediction}\n\n`
+        }
+        
+        // Agregar recomendaciones si están disponibles
+        if (data.recommendations && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+          analysisContent += `**Recomendaciones:**\n`
+          data.recommendations.forEach((rec: string) => {
+            analysisContent += `• ${rec}\n`
+          })
+        }
+      }
+      // Fallback
+      else {
+        analysisContent = `📊 **Análisis de ${getImageTypeLabel(imageType)}**\n\n`
+        analysisContent += `La imagen ha sido procesada exitosamente. `
+        analysisContent += `Recomendamos consultar con un profesional médico para una evaluación más detallada.`
+      }
+      
+      // Agregar nota de advertencia médica
+      analysisContent += `\n\n⚠️ **Importante:** Este análisis es una herramienta de apoyo. Siempre consulta con un profesional médico para un diagnóstico definitivo.`
+      
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: typeof analysisResult === 'string' 
-          ? analysisResult 
-          : `Análisis de imagen completado:\n${JSON.stringify(analysisResult, null, 2)}`,
+        content: analysisContent,
         timestamp: new Date().toISOString(),
-        metadata: { type: 'image_analysis', data: data }
+        metadata: { 
+          type: 'image_analysis', 
+          data: data,
+          fullAnalysis: data.fullAnalysis,
+          confidence: data.confidence,
+          topPrediction: data.topPrediction
+        }
       }
       setMessages((prev) => [...prev, assistantMessage])
       
       toast.success('Análisis de imagen completado')
     } catch (error) {
-      console.error('Error analyzing image:', error)
-      toast.error('Error al analizar la imagen. Intenta de nuevo.')
+      console.error('[Chatbot] Error analyzing image:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error al analizar la imagen'
+      
+      // Mostrar mensaje de error más amigable
+      if (errorMessage.length > 80) {
+        toast.error('Error al analizar la imagen. Intenta de nuevo.')
+      } else {
+        toast.error(errorMessage)
+      }
     } finally {
       setIsAnalyzingImage(false)
       setSelectedImage(null)
@@ -608,7 +1002,80 @@ export function ChatView({ t }: ChatViewProps) {
                   : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white border-slate-100 dark:border-slate-700 rounded-bl-none'
               }`}
             >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                {message.metadata?.type === 'image_analysis' && message.metadata?.fullAnalysis ? (
+                  <div className="space-y-3">
+                    {/* Título del análisis */}
+                    <div className="font-semibold text-base mb-2">
+                      📊 Análisis de {getImageTypeLabel(message.metadata.imageType)}
+                    </div>
+                    
+                    {/* Predicción principal */}
+                    {message.metadata.topPrediction && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                          🔍 Predicción Principal
+                        </div>
+                        <div className="text-blue-700 dark:text-blue-300">
+                          {message.metadata.topPrediction}
+                        </div>
+                        {message.metadata.confidence !== undefined && (
+                          <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            Confianza: {(message.metadata.confidence * 100).toFixed(1)}%
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Top predicciones si están disponibles */}
+                    {message.metadata.fullAnalysis?.labels && message.metadata.fullAnalysis.labels.length > 0 && (
+                      <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg">
+                        <div className="font-medium mb-2">Top Predicciones:</div>
+                        {message.metadata.fullAnalysis.labels.slice(0, 3).map((label: string, idx: number) => {
+                          const score = message.metadata.fullAnalysis.scores?.[idx] || 0
+                          return (
+                            <div key={idx} className="flex justify-between items-center py-1">
+                              <span>{idx + 1}. {label}</span>
+                              <span className="text-xs font-medium">{(score * 100).toFixed(1)}%</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Análisis detallado */}
+                    {message.metadata.fullAnalysis?.analysis && (
+                      <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                        <div className="font-medium mb-2">Análisis Detallado:</div>
+                        <div>{message.metadata.fullAnalysis.analysis}</div>
+                      </div>
+                    )}
+                    
+                    {/* Recomendaciones */}
+                    {message.metadata.fullAnalysis?.recommendations && message.metadata.fullAnalysis.recommendations.length > 0 && (
+                      <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="font-medium text-green-900 dark:text-green-100 mb-2">
+                          💡 Recomendaciones:
+                        </div>
+                        <ul className="list-disc list-inside space-y-1 text-green-800 dark:text-green-200">
+                          {message.metadata.fullAnalysis.recommendations.map((rec: string, idx: number) => (
+                            <li key={idx} className="text-sm">{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {/* Advertencia médica */}
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <div className="text-xs text-yellow-800 dark:text-yellow-200">
+                        ⚠️ <strong>Importante:</strong> Este análisis es una herramienta de apoyo. Siempre consulta con un profesional médico para un diagnóstico definitivo.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p>{message.content}</p>
+                )}
+              </div>
               {message.timestamp && (
                 <p className={`text-xs mt-2 ${
                   message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'

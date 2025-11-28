@@ -12,18 +12,20 @@ function AnalyticsDashboardSimple() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching dashboard data...');
-      const response = await axios.get(`${LEGACY_API_BASE}/analytics/mock-dashboard`);
+      console.log('Fetching dashboard data from database...');
+      // Usar el endpoint real que consume datos de MongoDB
+      const response = await axios.get(`${LEGACY_API_BASE}/analytics/dashboard`);
       console.log('Dashboard response:', response.data);
       
-      if (response.data.success) {
-        setDashboardData(response.data.data);
+      if (response.data && response.data.overview) {
+        // El endpoint devuelve los datos directamente, no en un wrapper success
+        setDashboardData(response.data);
       } else {
-        setError(response.data.message || 'Error al cargar datos del dashboard');
+        setError('No se encontraron datos en la base de datos');
       }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('No se pudieron cargar los datos del dashboard. Verifica que el backend esté funcionando.');
+      setError(`No se pudieron cargar los datos del dashboard: ${err.message}. Verifica que el backend esté funcionando y que haya datos en la base de datos.`);
     } finally {
       setLoading(false);
     }

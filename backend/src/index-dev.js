@@ -670,8 +670,9 @@ const simpleAnalyticsRoutes = require('./routes/simpleAnalyticsRoutes');
 app.use('/api/analytics', simpleAnalyticsRoutes);
 
 // Mock Analytics Routes (for demonstration)
-const mockAnalyticsRoutes = require('./routes/mockAnalyticsRoutes');
-app.use('/api/analytics', mockAnalyticsRoutes);
+// Rutas mock deshabilitadas - ahora se usan solo datos reales de MongoDB
+// const mockAnalyticsRoutes = require('./routes/mockAnalyticsRoutes');
+// app.use('/api/analytics', mockAnalyticsRoutes);
 
 // ML Analytics Routes (for SHAP and ML monitoring)
 const mlAnalyticsRoutes = require('./routes/mlAnalyticsRoutes');
@@ -735,255 +736,293 @@ app.get('/api/v1/alerts/monitoring', (req, res) => {
 // Automatic Reports Routes - Rutas temporales para desarrollo
 // ---------------------------------------------------------------------------
 
-// GET /api/v1/reports/automatic - Listar reportes automáticos
-app.get('/api/v1/reports/automatic', (req, res) => {
+// GET /api/v1/reports/automatic - Listar reportes automáticos desde MongoDB
+app.get('/api/v1/reports/automatic', async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    if (!isMongoConnected) {
+      console.warn('⚠️ MongoDB no está conectado para obtener reportes automáticos');
+      // Devolver respuesta exitosa con array vacío en lugar de error
+      return res.json({
+        success: true,
+        data: {
+          reports: [],
+          total: 0
+        }
+      });
+    }
+
     const { type } = req.query;
     
-    // Datos mock de reportes con la estructura esperada por el frontend
-    const mockReports = [
-      {
-        _id: 'report-001',
-        reportType: 'daily',
-        status: 'completed',
-        generatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    // Obtener modelo AutomaticReport
+    let AutomaticReport;
+    try {
+      AutomaticReport = mongoose.model('AutomaticReport');
+    } catch (e) {
+      // Si no existe, crear el schema inline
+      const AutomaticReportSchema = new mongoose.Schema({
+        reportType: { type: String, enum: ['daily', 'weekly', 'monthly'], required: true, index: true },
         period: {
-          startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          endDate: new Date().toISOString()
+          startDate: { type: Date, required: true },
+          endDate: { type: Date, required: true },
         },
-        metrics: {
-          totalMedicalHistories: 45,
-          totalAlerts: 12,
-          totalPatients: 38,
-          totalDoctors: 8,
-          totalAdmins: 2,
-          criticalAlerts: 3,
-          totalAppointments: 25,
-          completedAppointments: 20,
-          aiAnalyses: 45,
-          averageAIConfidence: 0.87
-        },
-        growthMetrics: {
-          patientsGrowth: 5.2,
-          historiesGrowth: 8.1,
-          alertsGrowth: -2.3
-        },
-        anomalies: [
-          {
-            metric: 'Alertas críticas',
-            value: 3,
-            severity: 'high',
-            description: 'Aumento inusual de alertas críticas en las últimas 24 horas',
-            expectedRange: { min: 0, max: 1 }
-          }
-        ],
-        topDiagnoses: [
-          { diagnosis: 'Asma', count: 12 },
-          { diagnosis: 'COVID-19', count: 8 },
-          { diagnosis: 'Bronquitis', count: 6 }
-        ],
-        exportFormats: ['pdf', 'csv'],
-        exportedAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        _id: 'report-002',
-        reportType: 'weekly',
-        status: 'completed',
-        generatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        period: {
-          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          endDate: new Date().toISOString()
-        },
-        metrics: {
-          totalMedicalHistories: 312,
-          totalAlerts: 89,
-          totalPatients: 245,
-          totalDoctors: 12,
-          totalAdmins: 3,
-          criticalAlerts: 15,
-          totalAppointments: 156,
-          completedAppointments: 142,
-          aiAnalyses: 312,
-          averageAIConfidence: 0.85
-        },
-        growthMetrics: {
-          patientsGrowth: 12.5,
-          historiesGrowth: 15.3,
-          alertsGrowth: 8.7
-        },
-        anomalies: [
-          {
-            metric: 'Crecimiento de pacientes',
-            value: 12.5,
-            severity: 'medium',
-            description: 'Crecimiento significativo en el número de pacientes',
-            expectedRange: { min: 0, max: 10 }
-          },
-          {
-            metric: 'Alertas críticas',
-            value: 15,
-            severity: 'high',
-            description: 'Aumento considerable de alertas críticas',
-            expectedRange: { min: 0, max: 8 }
-          }
-        ],
-        topDiagnoses: [
-          { diagnosis: 'Asma', count: 85 },
-          { diagnosis: 'COVID-19', count: 62 },
-          { diagnosis: 'Bronquitis', count: 48 },
-          { diagnosis: 'Gripe', count: 35 }
-        ],
-        exportFormats: ['pdf', 'csv', 'json'],
-        exportedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        _id: 'report-003',
-        reportType: 'monthly',
-        status: 'generating',
-        generatedAt: null,
-        period: {
-          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          endDate: new Date().toISOString()
-        },
-        metrics: {
-          totalMedicalHistories: 0,
-          totalAlerts: 0,
-          totalPatients: 0,
-          totalDoctors: 0,
-          totalAdmins: 0,
-          criticalAlerts: 0,
-          totalAppointments: 0,
-          completedAppointments: 0,
-          aiAnalyses: 0,
-          averageAIConfidence: 0
-        },
-        growthMetrics: {
-          patientsGrowth: 0,
-          historiesGrowth: 0,
-          alertsGrowth: 0
-        },
-        anomalies: [],
-        exportFormats: []
-      }
-    ];
+        status: { type: String, enum: ['pending', 'generating', 'completed', 'failed', 'exported'], default: 'pending', index: true },
+        metrics: { type: mongoose.Schema.Types.Mixed, default: {} },
+        anomalies: [{ type: mongoose.Schema.Types.Mixed }],
+        filePath: { type: String },
+        exportedAt: { type: Date },
+        exportFormat: { type: String, enum: ['pdf', 'csv', 'json'] },
+        generatedBy: { type: String },
+        generatedAt: { type: Date, default: Date.now },
+      }, { timestamps: true, collection: 'automaticreports' });
+      AutomaticReport = mongoose.model('AutomaticReport', AutomaticReportSchema);
+    }
 
-    // Filtrar por tipo si se especifica
-    let filteredReports = mockReports;
+    // Construir query
+    const query = {};
     if (type && type !== 'all') {
-      filteredReports = mockReports.filter(r => r.reportType === type);
+      query.reportType = type;
+    }
+
+    // Obtener reportes de la base de datos
+    let reports = [];
+    try {
+      reports = await AutomaticReport.find(query)
+        .sort({ 'period.startDate': -1 })
+        .limit(50)
+        .lean();
+    } catch (queryError) {
+      console.error('❌ Error ejecutando query de reportes:', queryError);
+      // Si falla la query, devolver array vacío en lugar de error
+      reports = [];
+    }
+
+    // Mapear reportes de forma segura
+    const mappedReports = reports.map(report => {
+      try {
+        return {
+          _id: report._id ? report._id.toString() : null,
+          reportType: report.reportType || 'unknown',
+          status: report.status || 'pending',
+          generatedAt: report.generatedAt ? (report.generatedAt.toISOString ? report.generatedAt.toISOString() : new Date(report.generatedAt).toISOString()) : null,
+          period: {
+            startDate: report.period?.startDate 
+              ? (report.period.startDate.toISOString ? report.period.startDate.toISOString() : new Date(report.period.startDate).toISOString())
+              : new Date().toISOString(),
+            endDate: report.period?.endDate 
+              ? (report.period.endDate.toISOString ? report.period.endDate.toISOString() : new Date(report.period.endDate).toISOString())
+              : new Date().toISOString()
+          },
+          metrics: report.metrics || {},
+          anomalies: report.anomalies || [],
+          topDiagnoses: report.metrics?.topDiagnoses || [],
+          exportFormats: report.exportFormat ? [report.exportFormat] : [],
+          exportedAt: report.exportedAt ? (report.exportedAt.toISOString ? report.exportedAt.toISOString() : new Date(report.exportedAt).toISOString()) : null
+        };
+      } catch (mapError) {
+        console.warn('⚠️ Error mapeando reporte:', mapError, report);
+        return null;
+      }
+    }).filter(report => report !== null);
+
+    res.json({
+      success: true,
+      data: {
+        reports: mappedReports,
+        total: mappedReports.length
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching automatic reports:', error);
+    console.error('Stack trace:', error.stack);
+    // Devolver respuesta exitosa con array vacío en lugar de error para no romper el frontend
+    res.json({
+      success: true,
+      data: {
+        reports: [],
+        total: 0
+      },
+      warning: `Error al obtener reportes: ${error.message}`
+    });
+  }
+});
+
+// GET /api/v1/reports/automatic/stats - Estadísticas de reportes desde MongoDB
+app.get('/api/v1/reports/automatic/stats', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    if (!isMongoConnected) {
+      console.warn('⚠️ MongoDB no está conectado para obtener estadísticas de reportes');
+      // Devolver estadísticas vacías en lugar de error
+      return res.json({
+        success: true,
+        data: {
+          total: 0,
+          byType: { daily: 0, weekly: 0, monthly: 0 },
+          byStatus: { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 },
+          lastGenerated: null,
+          nextScheduled: null
+        }
+      });
+    }
+
+    // Obtener modelo AutomaticReport
+    let AutomaticReport;
+    try {
+      AutomaticReport = mongoose.model('AutomaticReport');
+    } catch (e) {
+      const AutomaticReportSchema = new mongoose.Schema({
+        reportType: { type: String, enum: ['daily', 'weekly', 'monthly'], required: true, index: true },
+        status: { type: String, enum: ['pending', 'generating', 'completed', 'failed', 'exported'], default: 'pending', index: true },
+        generatedAt: { type: Date, default: Date.now },
+      }, { timestamps: true, collection: 'automaticreports' });
+      AutomaticReport = mongoose.model('AutomaticReport', AutomaticReportSchema);
+    }
+
+    // Obtener estadísticas desde MongoDB
+    let total = 0;
+    let byType = [];
+    let byStatus = [];
+    let lastGenerated = null;
+
+    try {
+      [total, byType, byStatus, lastGenerated] = await Promise.all([
+        AutomaticReport.countDocuments().catch(() => 0),
+        AutomaticReport.aggregate([
+          { $group: { _id: '$reportType', count: { $sum: 1 } } }
+        ]).catch(() => []),
+        AutomaticReport.aggregate([
+          { $group: { _id: '$status', count: { $sum: 1 } } }
+        ]).catch(() => []),
+        AutomaticReport.findOne().sort({ generatedAt: -1 }).select('generatedAt').lean().catch(() => null)
+      ]);
+    } catch (queryError) {
+      console.error('❌ Error ejecutando query de estadísticas:', queryError);
+      // Continuar con valores por defecto
+    }
+
+    const byTypeObj = { daily: 0, weekly: 0, monthly: 0 };
+    if (Array.isArray(byType)) {
+      byType.forEach(item => {
+        if (item && item._id && item._id in byTypeObj) {
+          byTypeObj[item._id] = item.count || 0;
+        }
+      });
+    }
+
+    const byStatusObj = { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 };
+    if (Array.isArray(byStatus)) {
+      byStatus.forEach(item => {
+        if (item && item._id && item._id in byStatusObj) {
+          byStatusObj[item._id] = item.count || 0;
+        }
+      });
     }
 
     res.json({
       success: true,
       data: {
-        reports: filteredReports,
-        total: filteredReports.length
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching automatic reports',
-      error: error.message
-    });
-  }
-});
-
-// GET /api/v1/reports/automatic/stats - Estadísticas de reportes
-app.get('/api/v1/reports/automatic/stats', (req, res) => {
-  try {
-    res.json({
-      success: true,
-      data: {
-        total: 12,
-        byType: {
-          daily: 8,
-          weekly: 3,
-          monthly: 1
-        },
-        byStatus: {
-          completed: 10,
-          pending: 1,
-          generating: 1,
-          failed: 0
-        },
-        lastGenerated: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        total: total || 0,
+        byType: byTypeObj,
+        byStatus: byStatusObj,
+        lastGenerated: lastGenerated?.generatedAt 
+          ? (lastGenerated.generatedAt.toISOString ? lastGenerated.generatedAt.toISOString() : new Date(lastGenerated.generatedAt).toISOString())
+          : null,
         nextScheduled: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString()
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching report statistics',
-      error: error.message
+    console.error('❌ Error fetching report statistics:', error);
+    console.error('Stack trace:', error.stack);
+    // Devolver estadísticas vacías en lugar de error
+    res.json({
+      success: true,
+      data: {
+        total: 0,
+        byType: { daily: 0, weekly: 0, monthly: 0 },
+        byStatus: { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 },
+        lastGenerated: null,
+        nextScheduled: null
+      },
+      warning: `Error al obtener estadísticas: ${error.message}`
     });
   }
 });
 
-// GET /api/v1/reports/automatic/:reportId - Obtener detalles de un reporte
-app.get('/api/v1/reports/automatic/:reportId', (req, res) => {
+// GET /api/v1/reports/automatic/:reportId - Obtener detalles de un reporte desde MongoDB
+app.get('/api/v1/reports/automatic/:reportId', async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    if (!isMongoConnected) {
+      return res.status(503).json({
+        success: false,
+        message: 'MongoDB no está conectado. No se pueden obtener detalles del reporte.',
+        error: 'Database connection unavailable'
+      });
+    }
+
     const { reportId } = req.params;
     
-    // Datos mock de un reporte detallado con la estructura esperada por el frontend
-    const mockReport = {
-      _id: reportId,
-      reportType: 'daily',
-      status: 'completed',
-      generatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      period: {
-        startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date().toISOString()
-      },
-      metrics: {
-        totalMedicalHistories: 45,
-        totalAlerts: 12,
-        totalPatients: 38,
-        totalDoctors: 8,
-        totalAdmins: 2,
-        criticalAlerts: 3,
-        totalAppointments: 25,
-        completedAppointments: 20,
-        aiAnalyses: 45,
-        averageAIConfidence: 0.87,
-        topDiagnoses: [
-          { diagnosis: 'Asma', count: 12 },
-          { diagnosis: 'COVID-19', count: 8 },
-          { diagnosis: 'Bronquitis', count: 6 },
-          { diagnosis: 'Gripe', count: 5 },
-          { diagnosis: 'Neumonía', count: 4 }
-        ]
-      },
-      growthMetrics: {
-        patientsGrowth: 5.2,
-        historiesGrowth: 8.1,
-        alertsGrowth: -2.3
-      },
-      anomalies: [
-        {
-          metric: 'Alertas críticas',
-          value: 3,
-          severity: 'high',
-          description: 'Aumento inusual de alertas críticas en las últimas 24 horas',
-          expectedRange: { min: 0, max: 1 }
+    // Obtener modelo AutomaticReport
+    let AutomaticReport;
+    try {
+      AutomaticReport = mongoose.model('AutomaticReport');
+    } catch (e) {
+      const AutomaticReportSchema = new mongoose.Schema({
+        reportType: { type: String, enum: ['daily', 'weekly', 'monthly'], required: true },
+        period: {
+          startDate: { type: Date, required: true },
+          endDate: { type: Date, required: true },
         },
-        {
-          metric: 'Crecimiento de historias',
-          value: 8.1,
-          severity: 'medium',
-          description: 'Crecimiento significativo en el número de historias médicas',
-          expectedRange: { min: 0, max: 5 }
-        }
-      ],
-      exportFormats: ['pdf', 'csv'],
-      exportedAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString()
-    };
+        status: { type: String, enum: ['pending', 'generating', 'completed', 'failed', 'exported'] },
+        metrics: { type: mongoose.Schema.Types.Mixed, default: {} },
+        anomalies: [{ type: mongoose.Schema.Types.Mixed }],
+        filePath: { type: String },
+        exportedAt: { type: Date },
+        exportFormat: { type: String, enum: ['pdf', 'csv', 'json'] },
+        generatedBy: { type: String },
+        generatedAt: { type: Date, default: Date.now },
+      }, { timestamps: true });
+      AutomaticReport = mongoose.model('AutomaticReport', AutomaticReportSchema);
+    }
+
+    // Buscar reporte en la base de datos
+    const report = await AutomaticReport.findById(reportId).lean();
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reporte no encontrado',
+        error: 'Report not found'
+      });
+    }
 
     res.json({
       success: true,
-      data: mockReport
+      data: {
+        _id: report._id.toString(),
+        reportType: report.reportType,
+        status: report.status,
+        generatedAt: report.generatedAt ? report.generatedAt.toISOString() : null,
+        period: {
+          startDate: report.period.startDate.toISOString(),
+          endDate: report.period.endDate.toISOString()
+        },
+        metrics: report.metrics || {},
+        anomalies: report.anomalies || [],
+        topDiagnoses: report.metrics?.topDiagnoses || [],
+        exportFormats: report.exportFormat ? [report.exportFormat] : [],
+        exportedAt: report.exportedAt ? report.exportedAt.toISOString() : null
+      }
     });
   } catch (error) {
+    console.error('Error fetching report details:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching report details',
@@ -1540,13 +1579,156 @@ app.get(monitoringRoutes, async (req, res) => {
     if (req.query.days) {
       params.days = Number(req.query.days);
     }
-    const data = await fetchFromAiService('/ml/monitoring/metrics', { params });
+    
+    // Intentar obtener métricas del servicio AI
+    try {
+      const data = await fetchFromAiService('/ml/monitoring/metrics', { params });
+      res.json({ success: true, data });
+      return;
+    } catch (aiError) {
+      console.warn('⚠️ AI service not available, calculating metrics from MongoDB experiments');
+    }
+    
+    // Fallback: Calcular métricas desde experimentos ML en MongoDB
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+    
+    if (!isMongoConnected) {
+      return res.status(503).json({
+        success: false,
+        message: 'MongoDB no está conectado. No se pueden calcular métricas.',
+        error: 'Database connection unavailable'
+      });
+    }
+    
+    // Obtener modelo MLExperiment
+    let MLExperiment;
+    try {
+      MLExperiment = mongoose.model('MLExperiment');
+    } catch (e) {
+      const MLExperimentSchema = new mongoose.Schema({
+        experimentId: { type: String, index: true },
+        experimentType: { type: String, index: true },
+        modelName: { type: String, index: true },
+        status: { type: String, index: true },
+        inputs: { type: mongoose.Schema.Types.Mixed },
+        outputs: { type: mongoose.Schema.Types.Mixed },
+        performance: { type: mongoose.Schema.Types.Mixed }
+      }, { timestamps: true, collection: 'mlexperiments' });
+      MLExperiment = mongoose.model('MLExperiment', MLExperimentSchema);
+    }
+    
+    const days = params.days || 7;
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    
+    // Obtener experimentos completados de los últimos N días
+    const experiments = await MLExperiment.find({
+      status: 'completed',
+      createdAt: { $gte: startDate }
+    }).lean();
+    
+    // Calcular métricas
+    let totalPredictions = 0;
+    let totalConfidence = 0;
+    let lowConfidenceCount = 0;
+    const confidenceValues = [];
+    const qualityBreakdown = { high: 0, medium: 0, low: 0 };
+    
+    experiments.forEach(exp => {
+      if (exp.outputs && exp.outputs.prediction) {
+        totalPredictions++;
+        const confidence = exp.outputs.prediction.confidence || 0;
+        confidenceValues.push(confidence);
+        totalConfidence += confidence;
+        
+        if (confidence < 0.6) {
+          lowConfidenceCount++;
+          qualityBreakdown.low++;
+        } else if (confidence < 0.8) {
+          qualityBreakdown.medium++;
+        } else {
+          qualityBreakdown.high++;
+        }
+      }
+    });
+    
+    const avgConfidence = totalPredictions > 0 ? totalConfidence / totalPredictions : 0;
+    const lowConfidencePercentage = totalPredictions > 0 ? (lowConfidenceCount / totalPredictions) * 100 : 0;
+    
+    const data = {
+      summary: {
+        total_predictions: totalPredictions,
+        avg_confidence: avgConfidence,
+        low_confidence_predictions: lowConfidenceCount,
+        low_confidence_percentage: lowConfidencePercentage
+      },
+      quality_metrics: {
+        high_confidence_rate: totalPredictions > 0 ? (qualityBreakdown.high / totalPredictions) * 100 : 0,
+        medium_confidence_rate: totalPredictions > 0 ? (qualityBreakdown.medium / totalPredictions) * 100 : 0,
+        low_confidence_rate: totalPredictions > 0 ? (qualityBreakdown.low / totalPredictions) * 100 : 0
+      },
+      daily_predictions: Array.from({ length: days }, (_, i) => {
+        const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+        const dayExperiments = experiments.filter(exp => {
+          const expDate = new Date(exp.createdAt);
+          return expDate.toDateString() === date.toDateString();
+        });
+        const dayPredictions = dayExperiments.filter(exp => exp.outputs && exp.outputs.prediction).length;
+        const dayConfidences = dayExperiments
+          .filter(exp => exp.outputs && exp.outputs.prediction)
+          .map(exp => exp.outputs.prediction.confidence || 0);
+        const dayAvgConfidence = dayConfidences.length > 0 
+          ? dayConfidences.reduce((a, b) => a + b, 0) / dayConfidences.length 
+          : 0;
+        
+        return {
+          date: date.toISOString().split('T')[0],
+          count: dayPredictions,
+          avg_confidence: dayAvgConfidence
+        };
+      }),
+      model_performance: [
+        { model_name: 'XGBoost', predictions: 0, avg_confidence: 0, accuracy: 0 },
+        { model_name: 'Random Forest', predictions: 0, avg_confidence: 0, accuracy: 0 },
+        { model_name: 'Neural Network', predictions: 0, avg_confidence: 0, accuracy: 0 }
+      ]
+    };
+    
+    // Calcular métricas por modelo
+    const modelStats = {};
+    experiments.forEach(exp => {
+      if (exp.outputs && exp.outputs.prediction && exp.modelName) {
+        if (!modelStats[exp.modelName]) {
+          modelStats[exp.modelName] = { predictions: 0, confidences: [], accuracies: [] };
+        }
+        modelStats[exp.modelName].predictions++;
+        modelStats[exp.modelName].confidences.push(exp.outputs.prediction.confidence || 0);
+        if (exp.outputs.metrics && exp.outputs.metrics.accuracy) {
+          modelStats[exp.modelName].accuracies.push(exp.outputs.metrics.accuracy);
+        }
+      }
+    });
+    
+    data.model_performance = data.model_performance.map(model => {
+      const stats = modelStats[model.model_name] || { predictions: 0, confidences: [], accuracies: [] };
+      return {
+        model_name: model.model_name,
+        predictions: stats.predictions,
+        avg_confidence: stats.confidences.length > 0 
+          ? stats.confidences.reduce((a, b) => a + b, 0) / stats.confidences.length 
+          : 0,
+        accuracy: stats.accuracies.length > 0 
+          ? stats.accuracies.reduce((a, b) => a + b, 0) / stats.accuracies.length 
+          : 0
+      };
+    });
+    
     res.json({ success: true, data });
   } catch (error) {
-    const status = error?.response?.status || 502;
-    res.status(status).json({
+    console.error('❌ Error getting ML monitoring metrics:', error);
+    res.status(500).json({
       success: false,
-      message: error?.response?.data?.detail || error.message || 'Error al obtener métricas de monitoreo',
+      message: error.message || 'Error al obtener métricas de monitoreo',
     });
   }
 });
@@ -1584,6 +1766,115 @@ app.get(fairnessRoutes, async (req, res) => {
     res.status(status).json({
       success: false,
       message: error?.response?.data?.detail || error.message || 'Error al obtener métricas de equidad',
+    });
+  }
+});
+
+// GET /api/v1/ml/experiments - Obtener experimentos ML desde MongoDB
+app.get('/api/v1/ml/experiments', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    if (!isMongoConnected) {
+      return res.status(503).json({
+        success: false,
+        message: 'MongoDB no está conectado. No se pueden obtener experimentos ML.',
+        error: 'Database connection unavailable'
+      });
+    }
+
+    const { limit = 5, experimentType, status, modelName } = req.query;
+    console.log('🔍 Fetching ML experiments with params:', { limit, experimentType, status, modelName });
+
+    // Obtener modelo MLExperiment
+    let MLExperiment;
+    try {
+      MLExperiment = mongoose.model('MLExperiment');
+      console.log('✅ Using existing MLExperiment model');
+    } catch (e) {
+      // Si no existe, crear el schema inline con el nombre de colección explícito
+      console.log('⚠️ MLExperiment model not found, creating inline schema');
+      const MLExperimentSchema = new mongoose.Schema({
+        experimentId: { type: String, index: true },
+        experimentType: { 
+          type: String, 
+          enum: ['rl_session', 'fl_round', 'automl_pipeline', 'prediction', 'training', 'evaluation'],
+          index: true
+        },
+        modelName: { type: String, index: true },
+        modelVersion: String,
+        status: {
+          type: String,
+          enum: ['pending', 'running', 'completed', 'failed', 'cancelled'],
+          default: 'pending',
+          index: true
+        },
+        metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+        inputs: { type: mongoose.Schema.Types.Mixed, default: {} },
+        outputs: { type: mongoose.Schema.Types.Mixed, default: {} },
+        logs: { type: [mongoose.Schema.Types.Mixed], default: [] },
+        errors: { type: [mongoose.Schema.Types.Mixed], default: [] },
+        performance: {
+          startTime: { type: Date, default: Date.now },
+          endTime: Date,
+          durationMs: Number,
+          cpuUsage: Number,
+          memoryUsage: Number,
+          gpuUsage: Number
+        },
+        results: { type: mongoose.Schema.Types.Mixed }
+      }, { 
+        timestamps: true,
+        collection: 'mlexperiments' // Nombre explícito de la colección
+      });
+      MLExperiment = mongoose.model('MLExperiment', MLExperimentSchema);
+    }
+
+    // Construir filtro
+    const filter = {};
+    if (experimentType) filter.experimentType = experimentType;
+    if (status) filter.status = status;
+    if (modelName) filter.modelName = new RegExp(modelName, 'i');
+
+    console.log('🔍 Filter:', filter);
+
+    // Primero verificar cuántos documentos hay en total
+    const totalCount = await MLExperiment.countDocuments(filter);
+    console.log(`📊 Total ML experiments in database: ${totalCount}`);
+
+    // Buscar experimentos
+    const experiments = await MLExperiment.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .lean();
+
+    console.log(`✅ Found ${experiments.length} ML experiments after filtering`);
+    if (experiments.length > 0) {
+      console.log('📋 First experiment sample:', {
+        _id: experiments[0]._id,
+        experimentId: experiments[0].experimentId,
+        experimentType: experiments[0].experimentType,
+        modelName: experiments[0].modelName,
+        status: experiments[0].status,
+        createdAt: experiments[0].createdAt
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Experimentos ML obtenidos correctamente',
+      data: experiments,
+      total: totalCount
+    });
+  } catch (error) {
+    console.error('❌ Error fetching ML experiments:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener experimentos ML',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

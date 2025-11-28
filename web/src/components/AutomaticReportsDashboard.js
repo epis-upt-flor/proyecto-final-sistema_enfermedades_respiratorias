@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import './AutomaticReportsDashboard.css';
+import { API_BASE } from '../utils/apiBase';
 
 const REPORT_TYPES = {
   daily: 'Diario',
@@ -49,28 +50,82 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
   const fetchReports = async () => {
     try {
       setError(null);
+      setLoading(true);
       const params = filterType !== 'all' ? { type: filterType } : {};
-      const response = await axios.get('/api/v1/reports/automatic', { params });
-      setReports(response.data.data.reports || []);
+      const response = await axios.get(`${API_BASE}/reports/automatic`, { params });
+      
+      // Manejar diferentes formatos de respuesta
+      if (response.data.success !== false) {
+        const reportsData = response.data.data?.reports || response.data.reports || [];
+        setReports(Array.isArray(reportsData) ? reportsData : []);
+        
+        // Mostrar advertencia si existe
+        if (response.data.warning) {
+          console.warn('⚠️ Advertencia del servidor:', response.data.warning);
+        }
+      } else {
+        // Si success es false, mostrar el mensaje pero no romper la UI
+        setReports([]);
+        setError(response.data.message || 'No se pudieron cargar los reportes automáticos.');
+      }
       setLoading(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error cargando reportes');
+      console.error('Error fetching reports:', err);
+      
+      // Si el error es de conexión, mostrar mensaje específico
+      if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
+        setError('No se puede conectar al servidor. Verifica que el backend esté funcionando.');
+      } else if (err.response?.status === 503) {
+        setError('El servicio no está disponible temporalmente. Intenta más tarde.');
+      } else {
+        setError(err.response?.data?.message || 'Error cargando reportes automáticos. Verifica que el backend esté funcionando.');
+      }
+      
+      // Establecer array vacío para no romper la UI
+      setReports([]);
       setLoading(false);
     }
   };
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('/api/v1/reports/automatic/stats');
-      setStats(response.data.data);
+      const response = await axios.get(`${API_BASE}/reports/automatic/stats`);
+      
+      // Manejar diferentes formatos de respuesta
+      if (response.data.success !== false) {
+        const statsData = response.data.data || response.data;
+        setStats({
+          total: statsData.total || 0,
+          byType: statsData.byType || { daily: 0, weekly: 0, monthly: 0 },
+          byStatus: statsData.byStatus || { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 }
+        });
+        
+        // Mostrar advertencia si existe
+        if (response.data.warning) {
+          console.warn('⚠️ Advertencia del servidor (stats):', response.data.warning);
+        }
+      } else {
+        // Si success es false, establecer estadísticas vacías
+        setStats({
+          total: 0,
+          byType: { daily: 0, weekly: 0, monthly: 0 },
+          byStatus: { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 }
+        });
+      }
     } catch (err) {
       console.error('Error cargando estadísticas:', err);
+      // Establecer estadísticas vacías en caso de error
+      setStats({
+        total: 0,
+        byType: { daily: 0, weekly: 0, monthly: 0 },
+        byStatus: { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 }
+      });
     }
   };
 
   const fetchReportDetails = async (reportId) => {
     try {
-      const response = await axios.get(`/api/v1/reports/automatic/${reportId}`);
+      const response = await axios.get(`${API_BASE}/reports/automatic/${reportId}`);
       setSelectedReport(response.data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Error cargando detalles del reporte');
@@ -80,7 +135,7 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
   const generateReport = async (reportType) => {
     try {
       setGenerating(true);
-      await axios.post('/api/v1/reports/automatic/generate', {
+      await axios.post(`${API_BASE}/reports/automatic/generate`, {
         reportType,
         includeAnomalies: true,
         autoExport: true,
@@ -98,7 +153,7 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
   const exportReport = async (reportId, format = 'pdf') => {
     try {
       const response = await axios.post(
-        `/api/v1/reports/automatic/${reportId}/export`,
+        `${API_BASE}/reports/automatic/${reportId}/export`,
         { format },
         { responseType: 'blob' }
       );
@@ -164,29 +219,47 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message">
+          <span className="error-icon">⚠️</span>
+          {error}
+        </div>
+      )}
+
+      {!error && !loading && reports.length === 0 && (
+        <div className="info-message" style={{ 
+          padding: '20px', 
+          textAlign: 'center', 
+          backgroundColor: '#e3f2fd', 
+          borderRadius: '8px', 
+          marginBottom: '20px',
+          color: '#1976d2'
+        }}>
+          ℹ️ No hay reportes automáticos disponibles. Usa los botones de arriba para generar reportes diarios, semanales o mensuales.
+        </div>
+      )}
 
       {stats && (
         <div className="stats-overview">
           <div className="stat-card">
             <h3>Total Reportes</h3>
-            <p className="stat-value">{stats.total}</p>
+            <p className="stat-value">{stats.total || 0}</p>
           </div>
           <div className="stat-card">
             <h3>Diarios</h3>
-            <p className="stat-value">{stats.byType.daily}</p>
+            <p className="stat-value">{stats.byType?.daily || 0}</p>
           </div>
           <div className="stat-card">
             <h3>Semanales</h3>
-            <p className="stat-value">{stats.byType.weekly}</p>
+            <p className="stat-value">{stats.byType?.weekly || 0}</p>
           </div>
           <div className="stat-card">
             <h3>Mensuales</h3>
-            <p className="stat-value">{stats.byType.monthly}</p>
+            <p className="stat-value">{stats.byType?.monthly || 0}</p>
           </div>
           <div className="stat-card">
             <h3>Completados</h3>
-            <p className="stat-value">{stats.byStatus.completed}</p>
+            <p className="stat-value">{stats.byStatus?.completed || 0}</p>
           </div>
         </div>
       )}
@@ -219,12 +292,22 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
       </div>
 
       <div className="reports-grid">
-        {reports.map((report) => (
-          <div
-            key={report._id}
-            className="report-card"
-            onClick={() => fetchReportDetails(report._id)}
-          >
+        {reports.length === 0 && !loading && !error ? (
+          <div className="empty-state" style={{ 
+            gridColumn: '1 / -1', 
+            textAlign: 'center', 
+            padding: '40px',
+            color: '#666'
+          }}>
+            <p>No hay reportes para mostrar. Genera un reporte usando los botones de arriba.</p>
+          </div>
+        ) : (
+          reports.map((report) => (
+            <div
+              key={report._id}
+              className="report-card"
+              onClick={() => fetchReportDetails(report._id)}
+            >
             <div className="report-header">
               <h3>{REPORT_TYPES[report.reportType]}</h3>
               <span
@@ -282,7 +365,8 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
               </button>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </div>
 
       {selectedReport && (

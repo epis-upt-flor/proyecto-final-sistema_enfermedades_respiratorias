@@ -37,28 +37,18 @@ function HeatMap() {
         }));
         
         setReportData(transformedData);
+      } else {
+        setError('No se encontraron datos en la base de datos');
+        setReportData([]);
       }
     } catch (err) {
       console.error('Error fetching heatmap data:', err);
-      setError('Usando datos de ejemplo (backend no conectado)');
-      // Keep mock data if fetch fails
-      setMockData();
+      setError(`Error al cargar datos del mapa de calor: ${err.message}. Verifica que el backend esté funcionando y que haya datos en la base de datos.`);
+      // No usar datos mockeados - solo mostrar error
+      setReportData([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    setReportData([
-      { id: 1, location: 'Centro de Tacna', lat: -18.0056, lng: -70.2444, cases: 45, severity: 'high' },
-      { id: 2, location: 'Gregorio Albarracín', lat: -18.0300, lng: -70.2500, cases: 32, severity: 'medium' },
-      { id: 3, location: 'Ciudad Nueva', lat: -18.0120, lng: -70.2300, cases: 28, severity: 'medium' },
-      { id: 4, location: 'Pocollay', lat: -17.9950, lng: -70.2100, cases: 15, severity: 'low' },
-      { id: 5, location: 'Alto de la Alianza', lat: -17.9700, lng: -70.2400, cases: 38, severity: 'high' },
-      { id: 6, location: 'Calana', lat: -17.9600, lng: -70.1950, cases: 12, severity: 'low' },
-      { id: 7, location: 'Pachia', lat: -17.9200, lng: -70.1850, cases: 8, severity: 'low' },
-      { id: 8, location: 'Boca del Río', lat: -18.0400, lng: -70.2800, cases: 25, severity: 'medium' }
-    ]);
   };
 
   const getSeverityColor = (severity) => {

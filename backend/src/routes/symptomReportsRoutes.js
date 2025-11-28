@@ -109,11 +109,21 @@ router.get('/heatmap', async (req, res) => {
     if (Model) {
       const { startDate, endDate } = req.query;
       
+      // Log the date range for debugging
+      console.log('📅 Heatmap request - Date range:', { 
+        startDate, 
+        endDate,
+        startDateParsed: startDate ? new Date(startDate).toISOString() : null,
+        endDateParsed: endDate ? new Date(endDate).toISOString() : null
+      });
+      
       // Get data from SymptomReport
       const symptomReportData = await Model.getAggregatedByDistrict({
         startDate,
         endDate
       });
+      
+      console.log('📊 Heatmap response - Districts found:', symptomReportData.length);
       
       // Get data from MedicalHistory (real cases)
       let medicalHistoryData = [];

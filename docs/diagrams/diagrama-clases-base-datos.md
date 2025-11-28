@@ -398,35 +398,29 @@ classDiagram
     ExportService ..> MedicalHistory : "exports"
 ```
 
-## 2. Diagrama de Base de Datos (ERD)
+## 2. Diagrama de Base de Datos (ERD) - Completo
 
 ```mermaid
 erDiagram
-    USERS ||--o{ MEDICAL_HISTORY : "creates/owns"
-    USERS ||--o{ APPOINTMENTS : "schedules"
-    USERS ||--o{ ALERTS : "receives"
-    USERS ||--o{ PRESCRIPTIONS : "prescribed_to"
-    USERS ||--o{ CHAT_CONVERSATIONS : "participates"
-    USERS ||--o{ SYMPTOM_REPORTS : "submits"
-    USERS ||--o{ WEARABLE_DATA : "generates"
-    USERS ||--o{ AUDIT_LOGS : "generates"
-    USERS ||--o{ CONSENT_LOGS : "consents"
-    USERS ||--o{ ML_EXPERIMENTS : "participates"
+    USERS ||--o{ MEDICAL_HISTORY : "doctor crea para paciente"
+    USERS ||--o{ APPOINTMENTS : "paciente/doctor programa"
+    USERS ||--o{ ALERTS : "usuario recibe"
+    USERS ||--o{ PRESCRIPTIONS : "doctor prescribe a paciente"
+    USERS ||--o{ CHAT_CONVERSATIONS : "usuario participa"
+    USERS ||--o{ SYMPTOM_REPORTS : "paciente reporta (opcional)"
+    USERS ||--o{ WEARABLE_DATA : "paciente genera datos"
+    USERS ||--o{ AUDIT_LOGS : "usuario genera logs"
+    USERS ||--o{ CONSENT_LOGS : "usuario consiente"
+    USERS ||--o{ AUTOMATIC_REPORTS : "admin genera reportes"
 
-    MEDICAL_HISTORY ||--|| AI_ANALYSES : "has"
-    MEDICAL_HISTORY ||--o{ SYMPTOMS : "contains"
-    MEDICAL_HISTORY ||--o{ APPOINTMENTS : "related_to"
+    MEDICAL_HISTORY ||--o| AI_ANALYSES : "tiene análisis IA"
+    MEDICAL_HISTORY }o--o{ APPOINTMENTS : "puede estar relacionada"
+    APPOINTMENTS ||--o{ PRESCRIPTIONS : "puede resultar en prescripción"
 
-    AI_ANALYSES ||--o{ POSSIBLE_DIAGNOSES : "contains"
-
-    APPOINTMENTS ||--o{ PRESCRIPTIONS : "may_result_in"
-
-    PRESCRIPTIONS ||--o{ PRESCRIPTION_MEDICATIONS : "contains"
-    PRESCRIPTIONS ||--o{ DRUG_INTERACTIONS : "has"
-
-    CHAT_CONVERSATIONS ||--o{ MESSAGES : "contains"
-
-    AUTOMATIC_REPORTS ||--o{ ANOMALIES : "contains"
+    AUTOMATIC_REPORTS ..> MEDICAL_HISTORY : "agrega datos"
+    AUTOMATIC_REPORTS ..> ALERTS : "agrega datos"
+    AUTOMATIC_REPORTS ..> APPOINTMENTS : "agrega datos"
+    AUTOMATIC_REPORTS ..> SYMPTOM_REPORTS : "agrega datos"
 
     USERS {
         ObjectId _id PK

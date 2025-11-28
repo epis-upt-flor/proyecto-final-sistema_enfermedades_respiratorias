@@ -169,18 +169,31 @@ Después de iniciar los servicios, ejecuta el script completo de seed para pobla
 ```bash
 # Desde la raíz del proyecto
 cd backend
-MONGODB_URI="mongodb://localhost:27017/respicare_dev" node src/scripts/seed-complete-demo.js
+MONGODB_URI="mongodb://localhost:27017/respicare_dev" node src/scripts/seed-complete-system.js
 ```
 
-Este script genera:
+Este script genera datos para **TODAS las 13 colecciones** del sistema:
+
+**Colecciones Core:**
 - **8 usuarios** (5 pacientes, 2 doctores, 1 admin)
-- **900 reportes de síntomas** para dashboards web
-- **9-15 historias médicas** (1-3 por paciente, enlazadas)
-- **~600 registros de wearables** (sincronizados con pacientes, últimos 30 días)
-- **50 conversaciones de chat** con análisis de síntomas
-- **40 citas médicas** (pasadas y futuras)
-- **30 alertas** de diferentes categorías
-- **9 análisis de IA** enlazados a historias médicas
+- **9 historias médicas** (1-3 por paciente, enlazadas a pacientes y doctores)
+- **40 citas médicas** (pasadas y futuras, enlazadas)
+- **25 prescripciones** (con medicamentos e interacciones, enlazadas) ⭐ **NUEVO**
+- **30 alertas** (diferentes categorías y prioridades, enlazadas)
+
+**Colecciones de Análisis:**
+- **900 reportes de síntomas** (para dashboards web, distribuidos en 8 distritos de Tacna)
+- **9 análisis de IA** (enlazados a historias médicas)
+- **50 conversaciones de chat** (con análisis de síntomas y mensajes)
+
+**Colecciones de Datos:**
+- **540 registros de wearables** (sincronizados con pacientes, últimos 30 días, 3-5 mediciones diarias)
+- **30 reportes automáticos** (diarios, semanales, mensuales con métricas y anomalías) ⭐ **NUEVO**
+
+**Colecciones de ML y Auditoría:**
+- **20 experimentos ML** (diferentes tipos: RL, FL, AutoML, predicción, entrenamiento) ⭐ **NUEVO**
+- **200 logs de auditoría** (últimos 7 días, todas las rutas del sistema) ⭐ **NUEVO**
+- **8 logs de consentimiento** (GDPR/HIPAA, uno por usuario) ⭐ **NUEVO**
 
 **Credenciales de acceso demo:**
 - Pacientes: `paciente@demo.com`, `juan.perez@demo.com`, etc. / `demo1234`
@@ -188,7 +201,8 @@ Este script genera:
 - Admin: `admin@demo.com` / `admin1234`
 
 **Scripts disponibles:**
-- `seed-complete-demo.js` - Script completo con todos los datos (recomendado)
+- `seed-complete-system.js` ⭐ **RECOMENDADO** - Script completo con TODAS las colecciones (13 colecciones)
+- `seed-complete-demo.js` - Script básico (8 colecciones principales)
 - `seed-users.js` - Solo usuarios
 - `seed-medical-histories.js` - Solo historias médicas
 - `seed-full-demo.js` - Reportes de síntomas para dashboards
@@ -272,8 +286,12 @@ Para más detalles, consulta [QUICKSTART.md](QUICKSTART.md)
 - **[docs/backend/CLEAN_ARCHITECTURE.md](docs/backend/CLEAN_ARCHITECTURE.md)** - Arquitectura limpia implementada
 - **[docs/backend/GDPR_HIPAA_POLICY.md](docs/backend/GDPR_HIPAA_POLICY.md)** - Políticas de cumplimiento GDPR/HIPAA
 - **[backend/tests/README.md](backend/tests/README.md)** - 📊 Resultados de pruebas (380+ tests, 98% cobertura)
-- **Scripts de Seed de Datos** ⭐ **NUEVO**:
-  - `seed-complete-demo.js` - Script completo para poblar base de datos con todos los datos demo (usuarios, reportes, historias, wearables, chat, citas, alertas, análisis IA)
+- **Scripts de Seed de Datos** ⭐ **ACTUALIZADO**:
+  - `seed-complete-system.js` ⭐ **RECOMENDADO** - Script completo para poblar TODAS las 13 colecciones del sistema
+    - Incluye: Users, MedicalHistory, SymptomReports, WearableData, ChatConversations, Appointments, Prescriptions, Alerts, AIAnalyses, AutomaticReports, MLExperiments, AuditLogs, ConsentLogs
+    - Datos enlazados correctamente entre todas las colecciones
+    - Listo para probar todas las funcionalidades del frontend y backend
+  - `seed-complete-demo.js` - Script básico (8 colecciones principales)
   - `seed-users.js` - Generar usuarios demo
   - `seed-medical-histories.js` - Generar historias médicas (1-3 por paciente)
   - `seed-full-demo.js` - Generar reportes de síntomas para dashboards
@@ -1325,18 +1343,27 @@ El proyecto ha sido completado exitosamente con todas las fases implementadas:
 ## 🆕 Novedades en v2.1.0
 
 ### ⭐ Script Completo de Seed de Datos
-- **Script Unificado**: `seed-complete-demo.js` para poblar toda la base de datos
-- **Datos Completos**: Genera usuarios, reportes de síntomas, historias médicas, datos de wearables, conversaciones de chat, citas médicas, alertas y análisis de IA
-- **Enlaces Correctos**: Todas las relaciones entre colecciones están correctamente enlazadas
+- **Script Unificado**: `seed-complete-system.js` para poblar TODAS las 13 colecciones de la base de datos
+- **Datos Completos**: Genera datos para todas las colecciones del sistema:
+  - **Core**: Users, MedicalHistory, Appointments, Prescriptions, Alerts
+  - **Análisis**: SymptomReports, AIAnalyses, ChatConversations
+  - **Datos**: WearableData, AutomaticReports
+  - **ML y Auditoría**: MLExperiments, AuditLogs, ConsentLogs
+- **Enlaces Correctos**: Todas las relaciones entre colecciones están correctamente enlazadas según el diagrama de base de datos
 - **Datos Realistas**: 
   - 900 reportes de síntomas distribuidos en 8 distritos de Tacna
   - 1-3 historias médicas por paciente con síntomas y diagnósticos
-  - ~600 registros de wearables con datos de últimos 30 días (3-5 mediciones diarias)
+  - ~540 registros de wearables con datos de últimos 30 días (3-5 mediciones diarias)
   - 50 conversaciones de chat con análisis de síntomas
   - 40 citas médicas (pasadas y futuras)
+  - 25 prescripciones con medicamentos e interacciones
   - 30 alertas de diferentes categorías
+  - 30 reportes automáticos (diarios, semanales, mensuales)
+  - 20 experimentos ML de diferentes tipos
+  - 200 logs de auditoría de los últimos 7 días
+  - 8 logs de consentimiento (GDPR/HIPAA)
   - Análisis de IA enlazados a cada historia médica
-- **Listo para Testing**: Todos los dashboards y funcionalidades pueden probarse inmediatamente
+- **Listo para Testing**: Todos los dashboards, funcionalidades del frontend y endpoints del backend pueden probarse inmediatamente
 
 ### ⭐ Análisis Multimodal Completo
 - **Imágenes Médicas**: 8 tipos soportados (radiografías, TC, espirometría, oximetría, expectoración, erupción cutánea, cianosis, otras) con análisis automático desde la app móvil usando ResNet50
@@ -1387,13 +1414,16 @@ El proyecto ha sido completado exitosamente con todas las fases implementadas:
 - **Accesibilidad**: Mejoras en accesibilidad para usuarios con discapacidades
 
 ### 🗄️ Base de Datos y Datos Demo
-- **Script Completo de Seed**: `backend/src/scripts/seed-complete-demo.js` para poblar toda la base de datos
-- **Datos Enlazados**: Todas las relaciones entre colecciones correctamente configuradas
+- **Script Completo de Seed**: `backend/src/scripts/seed-complete-system.js` para poblar TODAS las 13 colecciones
+- **Diagrama de Base de Datos**: `docs/diagrams/database-diagram.puml` - Diagrama completo ERD con todas las relaciones
+- **Datos Enlazados**: Todas las relaciones entre colecciones correctamente configuradas según el diagrama
 - **Datos para Testing**: 
-  - Dashboards web completamente funcionales con datos reales
-  - Historias médicas enlazadas a usuarios para mobile
-  - Datos de wearables sincronizados con pacientes
-  - Conversaciones de chat con análisis de síntomas
-  - Citas médicas, alertas y análisis de IA completos
-- **Base de Datos**: `respicare_dev` con todas las colecciones pobladas
+  - **Dashboards web**: Completamente funcionales con datos reales (900 reportes, 30 reportes automáticos)
+  - **Mobile**: Historias médicas enlazadas a usuarios, datos de wearables sincronizados
+  - **Chat**: 50 conversaciones con análisis de síntomas y mensajes
+  - **Citas y Prescripciones**: 40 citas y 25 prescripciones con medicamentos e interacciones
+  - **Alertas**: 30 alertas de diferentes categorías y prioridades
+  - **ML**: 20 experimentos ML para análisis y monitoreo
+  - **Auditoría**: 200 logs de auditoría y 8 logs de consentimiento (GDPR/HIPAA)
+- **Base de Datos**: `respicare_dev` con todas las 13 colecciones pobladas
 - **Credenciales Demo**: Usuarios de prueba listos para usar (pacientes, doctores, admin)

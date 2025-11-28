@@ -140,13 +140,27 @@ services:
     ports:
       - "3000:3000"
     environment:
-      REACT_APP_BACKEND_URL: http://backend:3001
-      REACT_APP_API_URL: http://backend:3001/api
-      REACT_APP_AI_URL: http://ai-services:8000
-      CHOKIDAR_USEPOLLING: true
+      # URLs del backend y servicios (usar localhost para que el navegador pueda acceder)
+      REACT_APP_BACKEND_URL: http://localhost:3001
+      REACT_APP_API_URL: http://localhost:3001/api
+      REACT_APP_AI_URL: http://localhost:8000
+      # Configuración para hot-reload en Docker
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      FAST_REFRESH: "true"
+      # Variables de Node
+      NODE_ENV: development
+      # Configuración de React Scripts
+      BROWSER: none
+      HOST: 0.0.0.0
     volumes:
-      - ./web:/app
-      - /app/node_modules
+      # Montar código fuente para hot-reload
+      - ./web/src:/app/src
+      - ./web/public:/app/public
+      - ./web/package.json:/app/package.json
+      - ./web/package-lock.json:/app/package-lock.json
+      # Usar volumen nombrado para node_modules para evitar conflictos
+      - web_node_modules:/app/node_modules
     depends_on:
       backend:
         condition: service_started
@@ -154,6 +168,12 @@ services:
       - respicare-dev-network
     stdin_open: true
     tty: true
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # MongoDB Admin Interface
   mongo-express:
@@ -165,9 +185,19 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USERNAME:-admin}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-password123}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/
+      # Conectar a MongoDB con autenticación y especificar base de datos por defecto
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/?authSource=admin
+      # Base de datos por defecto a mostrar
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      # Permitir ver todas las bases de datos
+      ME_CONFIG_SITE_BASEURL: /
+      ME_CONFIG_SITE_COOKIESECRET: ${ME_COOKIE_SECRET:-respicare-cookie-secret-change-in-production}
       ME_CONFIG_BASICAUTH_USERNAME: ${ME_USERNAME:-admin}
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASSWORD:-admin123}
+      # Configuración adicional para desarrollo
+      ME_CONFIG_OPTIONS_EDITORTHEME: default
+      ME_CONFIG_OPTIONS_READONLY: false
     depends_on:
       - mongodb
     networks:
@@ -199,6 +229,8 @@ volumes:
   ai_logs_dev:
     driver: local
   backend_logs_dev:
+    driver: local
+  web_node_modules:
     driver: local
 
 networks:

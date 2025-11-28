@@ -136,6 +136,39 @@
   margin-bottom: 32px;
 }
 
+.top-districts-section {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.chart-card-full {
+  width: 100%;
+}
+
+.chart-content-full {
+  min-height: 400px;
+  padding: 20px 40px 40px 40px;
+  background: #ffffff;
+}
+
+.chart-content-full svg {
+  overflow: visible;
+}
+
+.chart-content-full .recharts-bar-rectangle {
+  fill-opacity: 1 !important;
+  stroke: #1976d2 !important;
+  stroke-width: 2px !important;
+}
+
+.chart-content-full .recharts-bar {
+  fill-opacity: 1 !important;
+}
+
+.chart-content-full .recharts-x-axis {
+  overflow: visible;
+}
+
 .chart-card {
   background: white;
   border-radius: 12px;
@@ -166,6 +199,20 @@
 
 .chart-content {
   padding: 20px 24px 24px;
+  min-height: 300px;
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.chart-content .no-chart-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+  color: #5385f3;
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
 .activity-list {

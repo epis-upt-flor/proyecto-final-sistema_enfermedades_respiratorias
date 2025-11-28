@@ -3,19 +3,25 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Instalar dependencias
+# Instalar dependencias del sistema necesarias
+RUN apk add --no-cache git
+
+# Copiar archivos de dependencias primero (para mejor cacheo)
 COPY package*.json ./
-RUN npm install
+
+# Instalar dependencias (sin --production para incluir devDependencies)
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
 # Copiar código fuente
 COPY . .
 
-# Crear usuario no-root
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-RUN chown -R nodejs:nodejs /app
-USER nodejs
-
+# Exponer puerto
 EXPOSE 3000
 
+# Configurar variables de entorno para React
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+ENV FAST_REFRESH=true
+
+# Comando para iniciar el servidor de desarrollo
 CMD ["npm", "start"]
