@@ -20,6 +20,7 @@
     "test:stress": "jest tests/stress",
     "test:load": "k6 run tests/load/k6-load-tests.js",
     "test:security": "jest tests/security",
+    "test:database": "jest tests/database",
     "test:mutation": "stryker run",
     "test:mutation:dry": "stryker run --dry-run",
     "test:mutation:incremental": "stryker run --incremental",

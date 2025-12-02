@@ -11,6 +11,7 @@ Esta carpeta contiene toda la documentación relacionada con testing, cobertura 
 - **[COVERAGE_STATUS.md](COVERAGE_STATUS.md)** - Estado de cobertura por componente
 - **[MUTATION_TESTING.md](MUTATION_TESTING.md)** - Guía de mutation testing (Stryker/MutPy)
 - **[LOAD_TESTING_GUIDE.md](LOAD_TESTING_GUIDE.md)** - Guía de testing de carga y estrés
+- **[MONGODB_DATABASE_TESTS.md](MONGODB_DATABASE_TESTS.md)** - Tests específicos de MongoDB (esquemas, índices, transacciones, agregaciones, integridad, performance)
 
 ### Reportes de Tests
 - **[E2E_TESTS_COMPLETE.md](E2E_TESTS_COMPLETE.md)** - Tests end-to-end completados
