@@ -7,6 +7,7 @@ Esta carpeta contiene documentación relacionada con seguridad, políticas y pru
 ### Guías de Seguridad
 - **[SECURITY_DEVELOPER_GUIDE.md](SECURITY_DEVELOPER_GUIDE.md)** - Guía de seguridad para desarrolladores
 - **[WAF_DDOS_TESTING.md](WAF_DDOS_TESTING.md)** - Pruebas WAF/DDoS y hallazgos
+- **[SAST_DAST_SETUP.md](SAST_DAST_SETUP.md)** - Configuración de escaneos SAST/DAST
 
 ## 🔗 Documentación Relacionada
 

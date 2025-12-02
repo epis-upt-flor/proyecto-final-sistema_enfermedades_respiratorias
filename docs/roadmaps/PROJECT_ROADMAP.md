@@ -31,7 +31,7 @@
 | **2. Dominios Core** | ✅ 100 % | ✅ CRUD UI básicas | ✅ Historias/citas básicas | ✅ Historias/Citas/Prescripciones/Alertas | ✅ Soporte indirecto | ✅ | ✅ Secciones en README | ✅ Modelos colecciones core |
 | **3. Analytics/ML Inicial** | ✅ 100 % | ✅ Dashboard + métricas ML | ✅ Tendencias/anomalías en Home | ✅ Servicios analytics + jobs | ✅ Modelos iniciales + endpoints | ✅ Jobs recurrentes ML | ✅ Docs modelos completas | ✅ Índices analytics optimizados |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | ✅ | ✅ Sección seguridad base | ✅ Config conexión segura |
-| **5. Testing y Calidad** | ⏳ ~96 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ⏳ SAST/DAST/Mutation pendientes | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ⏳ Tests específicos BD |
+| **5. Testing y Calidad** | ⏳ ~97 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ✅ SAST/DAST completos, ⏳ Mutation pendiente | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ⏳ Tests específicos BD |
 | **6. Optimización & Performance** | ⏳ ~90 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ⏳ Optimización avanzada pendiente | ⏳ OpenTelemetry/Chaos pendientes | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
 | **7. Funcionalidades Core** | ⏳ ~90 % | ✅ Alertas, citas, prescripciones, reportes | ⏳ Compartir reportes y AR pendientes | ⏳ Referidos/Consentimientos pendientes | ⏳ Orquestación avanzada | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
 | **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ⏳ Telemedicina completa pendiente | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
@@ -241,7 +241,7 @@
 
 ---
 
-### **Fase 5: Testing y Calidad** ⏳ ~95%
+### **Fase 5: Testing y Calidad** ⏳ ~96%
 
 **Estado**: ⏳ En progreso
 
@@ -333,17 +333,17 @@
 **Documentación:**
 - ✅ `docs/testing/LOAD_TESTING_GUIDE.md`
 
-#### **5.7 Testing de Seguridad Continuo (SAST/DAST)** ❌
+#### **5.7 Testing de Seguridad Continuo (SAST/DAST)** ✅
 
 **Infraestructura:**
-- Integración SAST (Snyk, SonarQube)
-- Integración DAST (OWASP ZAP)
-- **Archivos a crear:**
+- ✅ Integración SAST (Snyk, SonarQube)
+- ✅ Integración DAST (OWASP ZAP)
+- ✅ **Archivos creados:**
   - `.github/workflows/sast-scan.yml`
   - `.github/workflows/dast-scan.yml`
 
 **Documentación:**
-- `docs/security/SAST_DAST_SETUP.md`
+- ✅ `docs/security/SAST_DAST_SETUP.md`
 
 #### **5.8 Mutation Testing** ❌
 
