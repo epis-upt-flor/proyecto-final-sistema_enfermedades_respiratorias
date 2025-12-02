@@ -190,7 +190,8 @@ backend/
 │   │   ├── AutomaticReport.ts
 │   │   ├── Alert.ts
 │   │   ├── Appointment.ts
-│   │   └── Referral.ts
+│   │   ├── Referral.ts
+│   │   └── InformedConsent.ts
 │   ├── middleware/         # Middleware personalizado
 │   │   ├── auth.ts
 │   │   ├── errorHandler.ts
@@ -205,7 +206,8 @@ backend/
 │   │   ├── automaticReportRoutes.ts
 │   │   ├── alertRoutes.ts
 │   │   ├── appointmentsRoutes.ts
-│   │   └── referralRoutes.ts
+│   │   ├── referralRoutes.ts
+│   │   └── informedConsentRoutes.ts
 │   ├── services/           # Servicios de negocio
 │   │   ├── aiIntegration.ts
 │   │   ├── fileUploadService.ts
@@ -216,7 +218,8 @@ backend/
 │   │   ├── metricAlertService.ts
 │   │   ├── alertService.ts
 │   │   ├── appointmentService.ts
-│   │   └── referralService.ts
+│   │   ├── referralService.ts
+│   │   └── consentService.ts
 │   ├── jobs/               # Jobs programados
 │   │   ├── alertJobs.ts
 │   │   ├── appointmentJobs.ts
@@ -614,6 +617,90 @@ curl -X POST http://localhost:3001/api/v1/referrals/REFERRAL_ID/accept \
 
 # Obtener estadísticas
 curl -X GET http://localhost:3001/api/v1/referrals/stats/summary \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### **Consentimientos Informados (`/api/v1/informed-consents`)** ⭐ **NUEVO**
+```http
+POST   /                             # Crear consentimiento informado (doctor/admin)
+GET    /                             # Listar consentimientos (filtros por paciente, doctor, estado, tipo)
+GET    /:consentId                   # Obtener detalle de consentimiento
+PATCH  /:consentId                   # Actualizar consentimiento (doctor/admin)
+POST   /:consentId/present           # Presentar consentimiento al paciente (doctor/admin)
+POST   /:consentId/sign              # Agregar firma electrónica (paciente/doctor/witness/guardian)
+POST   /:consentId/revoke            # Revocar consentimiento
+GET    /:consentId/verify-signature  # Verificar firma electrónica
+GET    /:consentId/pdf               # Generar PDF del consentimiento firmado
+GET    /stats/summary                # Estadísticas de consentimientos (doctor/admin)
+GET    /pending/list                 # Listar consentimientos pendientes de firma
+GET    /expired/list                 # Listar consentimientos expirados
+```
+
+**Tipos de Consentimiento:**
+- `procedure` - Procedimiento
+- `treatment` - Tratamiento
+- `surgery` - Cirugía
+- `research` - Investigación
+- `data_sharing` - Compartir Datos
+- `photography` - Fotografía
+- `video_recording` - Grabación de Video
+- `other` - Otro
+
+**Estados:**
+- `draft` - Borrador
+- `pending_signature` - Pendiente de Firma
+- `signed` - Firmado
+- `revoked` - Revocado
+- `expired` - Expirado
+
+**Métodos de Firma:**
+- `digital` - Firma Digital (certificado)
+- `biometric` - Firma Biométrica
+- `click_to_sign` - Click para Firmar
+- `typed` - Firma Mecanografiada
+
+**Ejemplo de uso:**
+```bash
+# Crear consentimiento informado
+curl -X POST http://localhost:3001/api/v1/informed-consents \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patientId": "patient123",
+    "patientName": "Juan Pérez",
+    "doctorId": "doctor456",
+    "doctorName": "Dr. García",
+    "consentType": "procedure",
+    "title": "Consentimiento para Procedimiento de Endoscopia",
+    "description": "El paciente consiente en someterse al procedimiento de endoscopia...",
+    "risks": ["Sangrado menor", "Infección"],
+    "benefits": ["Diagnóstico preciso", "Tratamiento temprano"],
+    "alternatives": ["Radiografía", "Tomografía"]
+  }'
+
+# Presentar consentimiento al paciente
+curl -X POST http://localhost:3001/api/v1/informed-consents/CONSENT_ID/present \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Firmar consentimiento
+curl -X POST http://localhost:3001/api/v1/informed-consents/CONSENT_ID/sign \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "signerId": "patient123",
+    "signerName": "Juan Pérez",
+    "signerRole": "patient",
+    "signatureData": "data:image/png;base64,iVBORw0KG...",
+    "signatureMethod": "click_to_sign"
+  }'
+
+# Generar PDF del consentimiento firmado
+curl -X GET http://localhost:3001/api/v1/informed-consents/CONSENT_ID/pdf \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  --output consentimiento.pdf
+
+# Obtener estadísticas
+curl -X GET http://localhost:3001/api/v1/informed-consents/stats/summary \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

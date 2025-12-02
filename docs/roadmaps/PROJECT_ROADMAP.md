@@ -621,31 +621,31 @@
 **Documentación:**
 - ✅ `backend/README.md` (sección referidos agregada con endpoints, tipos, estados, prioridades y ejemplos)
 
-#### **7.7 Sistema de Consentimientos Informados** ❌
+#### **7.7 Sistema de Consentimientos Informados** ✅
 
 **Backend:**
-- Gestión de consentimientos digitales
-- Firma electrónica de consentimientos
-- **Archivos a crear:**
-  - `backend/src/models/InformedConsent.ts`
-  - `backend/src/services/consentService.ts`
-  - `backend/src/routes/consentRoutes.ts`
+- ✅ Gestión de consentimientos digitales
+- ✅ Firma electrónica de consentimientos
+- ✅ **Archivos creados:**
+  - `backend/src/models/InformedConsent.ts` (modelo completo con estados, tipos, firmas electrónicas y métodos)
+  - `backend/src/services/consentService.ts` (servicio completo con CRUD, presentar, firmar, revocar, verificar, generar PDF)
+  - `backend/src/routes/informedConsentRoutes.ts` (rutas REST completas con validación y autorización)
 
 **Web:**
-- UI para gestión de consentimientos
-- **Archivos a crear:**
-  - `web/src/components/ConsentManagement.js`
+- ✅ UI para gestión de consentimientos
+- ✅ **Archivos creados:**
+  - `web/src/components/ConsentManagement.js` (componente completo con creación, listado, filtros, estadísticas, firma electrónica con canvas y acciones)
 
 **Mobile:**
-- UI para consentimientos
-- **Archivos a crear:**
-  - `mobile/src/screens/ConsentScreen.tsx`
+- ✅ UI para consentimientos
+- ✅ **Archivos creados:**
+  - `mobile/medical-app/components/views/ConsentScreen.tsx` (pantalla completa con listado, filtros, detalle, firma electrónica táctil y acciones)
 
 **MongoDB:**
-- Colección `informedconsents`
+- ✅ Colección `informedconsents` (creada automáticamente con el modelo)
 
 **Documentación:**
-- `backend/README.md` (sección consentimientos)
+- ✅ `backend/README.md` (sección consentimientos informados agregada con endpoints, tipos, estados, métodos de firma y ejemplos)
 
 ---
 
