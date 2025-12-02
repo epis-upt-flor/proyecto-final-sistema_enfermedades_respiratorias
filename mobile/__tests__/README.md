@@ -1,6 +1,6 @@
 # 📱 Tests Mobile - RespiCare Tacna
 
-Este directorio contiene todos los tests para la aplicación móvil React Native.
+Este directorio contiene todos los tests para la aplicación móvil RespiCare (Next.js/Capacitor).
 
 ## 📋 Estructura de Tests
 
@@ -172,9 +172,12 @@ Verificar que el backend esté corriendo en `http://localhost:3001` o ajustar `A
 - **[README Principal del Proyecto](../../README.md)** - Documentación general del proyecto
 
 ### Documentación de Testing
-- **[TESTING_STRATEGY.md](../../TESTING_STRATEGY.md)** - Estrategia general de testing
+- **[TESTING_STRATEGY.md](../../docs/testing/TESTING_STRATEGY.md)** - Estrategia general de testing
 - **[backend/tests/README.md](../../backend/tests/README.md)** - Tests del backend
 - **[web/tests/README.md](../../web/tests/README.md)** - Tests del frontend web
+
+### Documentación de Optimización
+- **[PERFORMANCE_OPTIMIZATION.md](../docs/PERFORMANCE_OPTIMIZATION.md)** - Guía completa de optimización de performance mobile
 
 ### Recursos Externos
 - [Guía de Testing React Native](https://reactnative.dev/docs/testing-overview)
