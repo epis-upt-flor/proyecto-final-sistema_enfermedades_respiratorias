@@ -55,7 +55,17 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-const DEFAULT_MONGO_URI = 'mongodb://admin:change_this_password@mongodb:27017/respicare_dev?authSource=admin';
+// Configuración de MongoDB
+// Si MONGODB_URI no está definida, intenta detectar el entorno
+let DEFAULT_MONGO_URI;
+if (process.env.DOCKER_ENV === 'true' || process.env.NODE_ENV === 'production') {
+  // En Docker o producción, usa el hostname del contenedor
+  DEFAULT_MONGO_URI = 'mongodb://admin:change_this_password@mongodb:27017/respicare_dev?authSource=admin';
+} else {
+  // En desarrollo local, usa localhost
+  DEFAULT_MONGO_URI = 'mongodb://localhost:27017/respicare_dev';
+}
+
 const MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
 
 mongoose.set('strictQuery', false);

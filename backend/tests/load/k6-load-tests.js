@@ -60,6 +60,19 @@ const testUsers = [
   { email: 'test3@example.com', password: 'Test123456!' },
 ];
 
+// Función para verificar conectividad del backend
+function checkBackendHealth() {
+  const healthUrl = `${BASE_URL}/health`;
+  try {
+    const healthResponse = http.get(healthUrl, { timeout: '5s' });
+    return healthResponse.status === 200;
+  } catch (error) {
+    console.error(`[ERROR] No se puede conectar al backend en ${BASE_URL}`);
+    console.error(`[ERROR] Asegúrate de que el backend esté corriendo: npm run dev`);
+    return false;
+  }
+}
+
 // Función para obtener token de autenticación
 function getAuthToken(user) {
   const loginUrl = `${BASE_URL}${API_VERSION}/auth/login`;
@@ -72,25 +85,50 @@ function getAuthToken(user) {
     headers: {
       'Content-Type': 'application/json',
     },
+    timeout: '10s',
   };
 
   const loginResponse = http.post(loginUrl, loginPayload, loginParams);
-  const loginSuccess = check(loginResponse, {
-    'login status is 200': (r) => r.status === 200,
-    'login has token': (r) => {
-      const body = JSON.parse(r.body);
-      return body.success === true && body.data && body.data.token;
-    },
-  });
-
-  if (!loginSuccess) {
+  
+  // Verificar si hay error de conexión
+  if (loginResponse.status === 0) {
+    console.error(`[ERROR] No se pudo conectar a ${loginUrl}`);
+    console.error(`[ERROR] Verifica que el backend esté corriendo en ${BASE_URL}`);
     errorRate.add(1);
     return null;
   }
 
-  const body = JSON.parse(loginResponse.body);
-  loginDuration.add(loginResponse.timings.duration);
-  return body.data.token;
+  const loginSuccess = check(loginResponse, {
+    'login status is 200': (r) => r.status === 200,
+    'login has token': (r) => {
+      try {
+        const body = JSON.parse(r.body);
+        return body.success === true && body.data && body.data.token;
+      } catch (e) {
+        return false;
+      }
+    },
+  });
+
+  if (!loginSuccess) {
+    // Log del error para debugging
+    if (loginResponse.status !== 200) {
+      console.error(`[ERROR] Login falló con status ${loginResponse.status}`);
+      console.error(`[ERROR] Response: ${loginResponse.body.substring(0, 200)}`);
+    }
+    errorRate.add(1);
+    return null;
+  }
+
+  try {
+    const body = JSON.parse(loginResponse.body);
+    loginDuration.add(loginResponse.timings.duration);
+    return body.data.token;
+  } catch (e) {
+    console.error(`[ERROR] Error parseando respuesta de login: ${e.message}`);
+    errorRate.add(1);
+    return null;
+  }
 }
 
 // Función para registrar un nuevo usuario
@@ -293,6 +331,16 @@ function getAlerts(token) {
 export default function () {
   requestCounter.add(1);
 
+  // Verificar conectividad al inicio (solo una vez por VU)
+  if (__VU === 1 && __ITER === 0) {
+    const isHealthy = checkBackendHealth();
+    if (!isHealthy) {
+      console.error(`[ERROR] Backend no disponible en ${BASE_URL}`);
+      console.error(`[ERROR] Por favor, inicia el backend con: npm run dev`);
+      return;
+    }
+  }
+
   // Seleccionar usuario aleatorio
   const user = testUsers[Math.floor(Math.random() * testUsers.length)];
 
@@ -305,6 +353,7 @@ export default function () {
   }
 
   if (!token) {
+    // Si no hay token, no continuar con las demás peticiones
     sleep(1);
     return;
   }
@@ -348,6 +397,23 @@ export default function () {
 export function setup() {
   console.log('Iniciando tests de carga...');
   console.log(`Base URL: ${BASE_URL}`);
+  
+  // Verificar conectividad antes de empezar
+  const healthUrl = `${BASE_URL}/health`;
+  try {
+    const healthResponse = http.get(healthUrl, { timeout: '5s' });
+    if (healthResponse.status === 200) {
+      console.log(`✓ Backend está disponible en ${BASE_URL}`);
+    } else {
+      console.error(`✗ Backend responde con status ${healthResponse.status}`);
+      console.error(`Por favor, verifica que el backend esté corriendo correctamente.`);
+    }
+  } catch (error) {
+    console.error(`✗ No se puede conectar al backend en ${BASE_URL}`);
+    console.error(`Por favor, inicia el backend con: npm run dev`);
+    console.error(`Error: ${error.message}`);
+  }
+  
   return { baseUrl: BASE_URL };
 }
 

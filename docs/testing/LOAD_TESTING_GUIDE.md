@@ -86,6 +86,19 @@ npm install
 
 ## Tests de Carga con K6
 
+### ⚠️ IMPORTANTE: Antes de Ejecutar
+
+**El backend DEBE estar corriendo antes de ejecutar los tests de carga.**
+
+```bash
+# Iniciar el backend
+cd backend
+npm run dev
+
+# En otra terminal, verificar que esté activo
+curl http://localhost:3001/health
+```
+
 ### Ubicación
 
 Los tests de carga están en: `backend/tests/load/k6-load-tests.js`
@@ -94,6 +107,14 @@ Los tests de carga están en: `backend/tests/load/k6-load-tests.js`
 
 ```bash
 cd backend
+
+# Asegúrate de que el backend esté corriendo primero
+npm run dev
+
+# En otra terminal, ejecuta los tests
+npm run test:load
+
+# O directamente con k6
 k6 run tests/load/k6-load-tests.js
 ```
 
@@ -359,6 +380,46 @@ Ajusta los tests para reflejar patrones de uso reales:
 
 ## Troubleshooting
 
+### Problema: Puerto 3001 ya está en uso (EADDRINUSE)
+
+**Síntomas**:
+```
+Error: listen EADDRINUSE: address already in use :::3001
+```
+
+**Causa**: Otra instancia del backend (o otro proceso) está usando el puerto 3001.
+
+**Solución**:
+
+1. **Usar el script automático** (Windows):
+   ```bash
+   npm run kill-port
+   ```
+
+2. **O manualmente** (Windows):
+   ```powershell
+   # Encontrar el proceso
+   netstat -ano | findstr :3001
+   
+   # Detener el proceso (reemplaza PID con el número encontrado)
+   taskkill /F /PID <PID>
+   ```
+
+3. **O manualmente** (Linux/macOS):
+   ```bash
+   # Encontrar y detener el proceso
+   lsof -ti:3001 | xargs kill -9
+   ```
+
+4. **O cambiar el puerto**:
+   ```bash
+   # En Windows PowerShell
+   $env:PORT=3002; npm run dev
+   
+   # En Linux/macOS
+   PORT=3002 npm run dev
+   ```
+
 ### Problema: K6 no se encuentra
 
 **Solución**: Verifica la instalación:
@@ -369,14 +430,43 @@ k6 version
 
 Si no está instalado, sigue las instrucciones de [Instalación de K6](#instalación-de-herramientas).
 
-### Problema: Tests fallan con errores de conexión
+### Problema: Tests fallan con errores de conexión (100% de errores)
 
-**Solución**: Verifica que el backend esté corriendo:
+**Síntomas**: 
+- `http_req_failed: 100.00%`
+- `checks: 0.00%`
+- Todos los checks fallan
 
-```bash
-# Verificar que el backend esté activo
-curl http://localhost:3001/health
-```
+**Causa**: El backend no está corriendo o no es accesible.
+
+**Solución**: 
+1. **Verifica que el backend esté corriendo**:
+   ```bash
+   # Iniciar el backend
+   cd backend
+   npm run dev
+   ```
+
+2. **Verifica conectividad**:
+   ```bash
+   # Verificar que el backend esté activo
+   curl http://localhost:3001/health
+   # Debe devolver: {"status":"ok"} o similar
+   ```
+
+3. **Verifica el puerto**: Por defecto es `3001`. Si usas otro puerto:
+   ```bash
+   k6 run --env BASE_URL=http://localhost:TU_PUERTO tests/load/k6-load-tests.js
+   ```
+
+4. **Verifica que MongoDB y Redis estén corriendo** (si son requeridos):
+   ```bash
+   # MongoDB
+   docker ps | grep mongo
+   
+   # Redis
+   docker ps | grep redis
+   ```
 
 ### Problema: Rate limiting (429 errors)
 
