@@ -32,7 +32,7 @@
 | **3. Analytics/ML Inicial** | ✅ 100 % | ✅ Dashboard + métricas ML | ✅ Tendencias/anomalías en Home | ✅ Servicios analytics + jobs | ✅ Modelos iniciales + endpoints | ✅ Jobs recurrentes ML | ✅ Docs modelos completas | ✅ Índices analytics optimizados |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | ✅ | ✅ Sección seguridad base | ✅ Config conexión segura |
 | **5. Testing y Calidad** | ✅ 100 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ✅ SAST/DAST/Mutation completos | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ✅ Tests específicos BD |
-| **6. Optimización & Performance** | ⏳ ~95 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ✅ Optimización mobile completa + análisis bundle + métricas dispositivos | ⏳ OpenTelemetry/Chaos pendientes | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
+| **6. Optimización & Performance** | ⏳ ~97 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ✅ Optimización mobile completa + análisis bundle + métricas dispositivos | ✅ OpenTelemetry completo (tracing + métricas negocio) | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
 | **7. Funcionalidades Core** | ⏳ ~90 % | ✅ Alertas, citas, prescripciones, reportes | ⏳ Compartir reportes y AR pendientes | ⏳ Referidos/Consentimientos pendientes | ⏳ Orquestación avanzada | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
 | **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ⏳ Telemedicina completa pendiente | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
 | **9. Analytics & BI** | ⏳ ~95 % | ⏳ Gráficos avanzados pendientes | ✅ Visualizaciones mobile (gráficos pacientes/médicos) | ✅ Servicios analytics y reportes automáticos | ✅ Modelos analytics + fairness | ✅ Conector BI (Power BI/Tableau) | ✅ Docs Analytics/BI + Dashboards Guide | ✅ Índices para métricas |
@@ -466,25 +466,25 @@
     - `mobile/medical-app/next.config.mjs` (configuración avanzada de bundler)
     - `mobile/docs/PERFORMANCE_OPTIMIZATION.md` (documentación actualizada)
 
-#### **6.6 Observabilidad Avanzada (OpenTelemetry)** ❌
+#### **6.6 Observabilidad Avanzada (OpenTelemetry)** ✅
 
 **Backend:**
-- Tracing distribuido completo con OTEL
-- Métricas de negocio personalizadas
-- **Archivos a crear:**
-  - `backend/src/observability/otel-config.ts`
+- ✅ Tracing distribuido completo con OTEL
+- ✅ Métricas de negocio personalizadas
+- ✅ **Archivos creados:**
+  - `backend/src/observability/otel-config.ts` (configuración avanzada con tracing, métricas y spans personalizados)
 
 **AI-Services:**
-- Integración OpenTelemetry
-- **Archivos a crear:**
-  - `ai-services/observability/otel_setup.py`
+- ✅ Integración OpenTelemetry
+- ✅ **Archivos creados:**
+  - `ai-services/observability/otel_setup.py` (configuración completa con decoradores y métricas de negocio)
 
 **Infraestructura:**
-- `infrastructure/k8s/jaeger-deployment.yaml`
-- `infrastructure/k8s/otel-collector.yaml`
+- ✅ `infrastructure/k8s/jaeger-deployment.yaml` (deployment mejorado con ingress y health checks)
+- ✅ `infrastructure/k8s/otel-collector.yaml` (collector configurado con procesadores y múltiples exportadores)
 
 **Documentación:**
-- `docs/observability/OPENTELEMETRY_GUIDE.md`
+- ✅ `docs/observability/OPENTELEMETRY_GUIDE.md` (guía completa de configuración, uso y troubleshooting)
 
 #### **6.7 Chaos Engineering** ❌
 
