@@ -11,4 +11,5 @@ export { dashboardService } from './dashboardService'
 export { wearableService } from './wearableService'
 export { chatService } from './chatService'
 export { fileUploadService } from './fileUploadService'
+export { reportService } from './reportService'
 
