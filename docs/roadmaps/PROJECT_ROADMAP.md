@@ -32,7 +32,7 @@
 | **3. Analytics/ML Inicial** | ✅ 100 % | ✅ Dashboard + métricas ML | ✅ Tendencias/anomalías en Home | ✅ Servicios analytics + jobs | ✅ Modelos iniciales + endpoints | ✅ Jobs recurrentes ML | ✅ Docs modelos completas | ✅ Índices analytics optimizados |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | ✅ | ✅ Sección seguridad base | ✅ Config conexión segura |
 | **5. Testing y Calidad** | ✅ 100 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ✅ SAST/DAST/Mutation completos | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ✅ Tests específicos BD |
-| **6. Optimización & Performance** | ⏳ ~97 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ✅ Optimización mobile completa + análisis bundle + métricas dispositivos | ✅ OpenTelemetry completo (tracing + métricas negocio) | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
+| **6. Optimización & Performance** | ✅ 100 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ✅ Optimización mobile completa + análisis bundle + métricas dispositivos | ✅ OpenTelemetry completo (tracing + métricas negocio) | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
 | **7. Funcionalidades Core** | ⏳ ~90 % | ✅ Alertas, citas, prescripciones, reportes | ⏳ Compartir reportes y AR pendientes | ⏳ Referidos/Consentimientos pendientes | ⏳ Orquestación avanzada | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
 | **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ⏳ Telemedicina completa pendiente | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
 | **9. Analytics & BI** | ⏳ ~95 % | ⏳ Gráficos avanzados pendientes | ✅ Visualizaciones mobile (gráficos pacientes/médicos) | ✅ Servicios analytics y reportes automáticos | ✅ Modelos analytics + fairness | ✅ Conector BI (Power BI/Tableau) | ✅ Docs Analytics/BI + Dashboards Guide | ✅ Índices para métricas |
@@ -486,16 +486,16 @@
 **Documentación:**
 - ✅ `docs/observability/OPENTELEMETRY_GUIDE.md` (guía completa de configuración, uso y troubleshooting)
 
-#### **6.7 Chaos Engineering** ❌
+#### **6.7 Chaos Engineering** ✅
 
 **Infraestructura:**
-- Experimentos de Chaos Engineering con Chaos Mesh
-- Pruebas de resiliencia
-- **Archivos a crear:**
-  - `infrastructure/chaos/chaos-experiments.yaml`
+- ✅ Experimentos de Chaos Engineering con Chaos Mesh
+- ✅ Pruebas de resiliencia
+- ✅ **Archivos creados:**
+  - `infrastructure/chaos/chaos-experiments.yaml` (10+ experimentos: Pod, Network, Stress, DNS, Time, IO, HTTP, Kernel, combinados y resiliencia)
 
 **Documentación:**
-- `docs/operations/CHAOS_ENGINEERING.md`
+- ✅ `docs/operations/CHAOS_ENGINEERING.md` (guía completa con instalación, experimentos, monitoreo, mejores prácticas y escenarios de prueba)
 
 ---
 
