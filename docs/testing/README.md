@@ -9,6 +9,8 @@ Esta carpeta contiene toda la documentación relacionada con testing, cobertura 
 - **[TESTING_SETUP_GUIDE.md](TESTING_SETUP_GUIDE.md)** - Guía de configuración de testing
 - **[TESTING_STATUS.md](TESTING_STATUS.md)** - Estado actualizado de testing (consolidado)
 - **[COVERAGE_STATUS.md](COVERAGE_STATUS.md)** - Estado de cobertura por componente
+- **[MUTATION_TESTING.md](MUTATION_TESTING.md)** - Guía de mutation testing (Stryker/MutPy)
+- **[LOAD_TESTING_GUIDE.md](LOAD_TESTING_GUIDE.md)** - Guía de testing de carga y estrés
 
 ### Reportes de Tests
 - **[E2E_TESTS_COMPLETE.md](E2E_TESTS_COMPLETE.md)** - Tests end-to-end completados

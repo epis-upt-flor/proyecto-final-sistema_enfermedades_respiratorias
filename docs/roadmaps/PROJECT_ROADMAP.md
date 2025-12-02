@@ -31,7 +31,7 @@
 | **2. Dominios Core** | ✅ 100 % | ✅ CRUD UI básicas | ✅ Historias/citas básicas | ✅ Historias/Citas/Prescripciones/Alertas | ✅ Soporte indirecto | ✅ | ✅ Secciones en README | ✅ Modelos colecciones core |
 | **3. Analytics/ML Inicial** | ✅ 100 % | ✅ Dashboard + métricas ML | ✅ Tendencias/anomalías en Home | ✅ Servicios analytics + jobs | ✅ Modelos iniciales + endpoints | ✅ Jobs recurrentes ML | ✅ Docs modelos completas | ✅ Índices analytics optimizados |
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | ✅ | ✅ Sección seguridad base | ✅ Config conexión segura |
-| **5. Testing y Calidad** | ⏳ ~97 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ✅ SAST/DAST completos, ⏳ Mutation pendiente | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ⏳ Tests específicos BD |
+| **5. Testing y Calidad** | ⏳ ~98 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ✅ SAST/DAST/Mutation completos | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ⏳ Tests específicos BD |
 | **6. Optimización & Performance** | ⏳ ~90 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ⏳ Optimización avanzada pendiente | ⏳ OpenTelemetry/Chaos pendientes | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
 | **7. Funcionalidades Core** | ⏳ ~90 % | ✅ Alertas, citas, prescripciones, reportes | ⏳ Compartir reportes y AR pendientes | ⏳ Referidos/Consentimientos pendientes | ⏳ Orquestación avanzada | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
 | **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ⏳ Telemedicina completa pendiente | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
@@ -241,7 +241,7 @@
 
 ---
 
-### **Fase 5: Testing y Calidad** ⏳ ~96%
+### **Fase 5: Testing y Calidad** ⏳ ~98%
 
 **Estado**: ⏳ En progreso
 
@@ -345,20 +345,22 @@
 **Documentación:**
 - ✅ `docs/security/SAST_DAST_SETUP.md`
 
-#### **5.8 Mutation Testing** ❌
+#### **5.8 Mutation Testing** ✅
 
 **Backend:**
-- Tests de mutación para verificar calidad de tests
-- **Archivos a crear:**
+- ✅ Tests de mutación para verificar calidad de tests
+- ✅ **Archivos creados:**
   - `backend/tests/mutation/stryker.config.js`
+- ✅ Scripts npm agregados: `test:mutation`, `test:mutation:dry`, `test:mutation:incremental`
+- ✅ Dependencias agregadas: `@stryker-mutator/core`, `@stryker-mutator/jest-runner`, `@stryker-mutator/typescript-checker`
 
 **AI-Services:**
-- Tests de mutación para Python
-- **Archivos a crear:**
+- ✅ Tests de mutación para Python
+- ✅ **Archivos creados:**
   - `ai-services/tests/mutation/mutpy.config.py`
 
 **Documentación:**
-- `docs/testing/MUTATION_TESTING.md`
+- ✅ `docs/testing/MUTATION_TESTING.md`
 
 ---
 
