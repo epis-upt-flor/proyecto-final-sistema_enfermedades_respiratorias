@@ -189,7 +189,8 @@ backend/
 │   │   ├── AIAnalysis.ts
 │   │   ├── AutomaticReport.ts
 │   │   ├── Alert.ts
-│   │   └── Appointment.ts
+│   │   ├── Appointment.ts
+│   │   └── Referral.ts
 │   ├── middleware/         # Middleware personalizado
 │   │   ├── auth.ts
 │   │   ├── errorHandler.ts
@@ -203,7 +204,8 @@ backend/
 │   │   ├── exportRoutes.ts
 │   │   ├── automaticReportRoutes.ts
 │   │   ├── alertRoutes.ts
-│   │   └── appointmentsRoutes.ts
+│   │   ├── appointmentsRoutes.ts
+│   │   └── referralRoutes.ts
 │   ├── services/           # Servicios de negocio
 │   │   ├── aiIntegration.ts
 │   │   ├── fileUploadService.ts
@@ -213,7 +215,8 @@ backend/
 │   │   ├── automaticReportService.ts
 │   │   ├── metricAlertService.ts
 │   │   ├── alertService.ts
-│   │   └── appointmentService.ts
+│   │   ├── appointmentService.ts
+│   │   └── referralService.ts
 │   ├── jobs/               # Jobs programados
 │   │   ├── alertJobs.ts
 │   │   ├── appointmentJobs.ts
@@ -544,6 +547,74 @@ PUT    /:appointmentId               # Actualizar detalles (doctor/admin)
 PATCH  /:appointmentId/cancel        # Cancelar cita (doctor/admin)
 PATCH  /:appointmentId/reschedule    # Reprogramar cita (doctor/admin)
 PATCH  /:appointmentId/complete      # Marcar cita como completada (doctor/admin)
+```
+
+### **Referidos (`/api/v1/referrals`)** ⭐ **NUEVO**
+```http
+POST   /                             # Crear referido (doctor/admin)
+GET    /                             # Listar referidos (filtros por paciente, doctor, estado, tipo, prioridad)
+GET    /:referralId                  # Obtener detalle de referido
+PATCH  /:referralId                  # Actualizar referido (doctor/admin)
+POST   /:referralId/accept           # Aceptar referido (doctor/admin)
+POST   /:referralId/reject           # Rechazar referido (doctor/admin)
+POST   /:referralId/complete         # Completar referido (doctor/admin)
+POST   /:referralId/cancel           # Cancelar referido (doctor/admin)
+GET    /stats/summary                # Estadísticas de referidos (doctor/admin)
+GET    /pending/list                 # Listar referidos pendientes
+GET    /overdue/list                 # Listar referidos vencidos
+```
+
+**Tipos de Referido:**
+- `consultation` - Consulta
+- `specialist` - Especialista
+- `diagnostic` - Diagnóstico
+- `treatment` - Tratamiento
+- `follow_up` - Seguimiento
+- `emergency` - Emergencia
+
+**Estados:**
+- `pending` - Pendiente
+- `accepted` - Aceptado
+- `rejected` - Rechazado
+- `in_progress` - En Progreso
+- `completed` - Completado
+- `cancelled` - Cancelado
+
+**Prioridades:**
+- `low` - Baja
+- `medium` - Media
+- `high` - Alta
+- `urgent` - Urgente
+
+**Ejemplo de uso:**
+```bash
+# Crear referido
+curl -X POST http://localhost:3001/api/v1/referrals \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patientId": "patient123",
+    "patientName": "Juan Pérez",
+    "referringDoctorId": "doctor456",
+    "referringDoctorName": "Dr. García",
+    "referredToSpecialty": "Cardiología",
+    "referralType": "specialist",
+    "priority": "high",
+    "reason": "Paciente requiere evaluación cardiológica por síntomas de arritmia"
+  }'
+
+# Aceptar referido
+curl -X POST http://localhost:3001/api/v1/referrals/REFERRAL_ID/accept \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "referredToDoctorId": "doctor789",
+    "notes": "Aceptado para evaluación"
+  }'
+
+# Obtener estadísticas
+curl -X GET http://localhost:3001/api/v1/referrals/stats/summary \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### **Reportes Automáticos (`/api/v1/reports/automatic`)** (Nuevo)

@@ -595,31 +595,31 @@
     - `mobile/medical-app/components/views/ARTrainingScreen.tsx` (pantalla completa de entrenamiento AR con 5 ejercicios predefinidos)
     - `mobile/medical-app/lib/services/arService.ts` (servicio AR completo con WebXR, cámara, visualizaciones y métricas)
 
-#### **7.6 Sistema de Referidos (Referrals)** ❌
+#### **7.6 Sistema de Referidos (Referrals)** ✅
 
 **Backend:**
-- Gestión de referidos entre especialistas
-- Tracking de referidos
-- **Archivos a crear:**
-  - `backend/src/models/Referral.ts`
-  - `backend/src/services/referralService.ts`
-  - `backend/src/routes/referralRoutes.ts`
+- ✅ Gestión de referidos entre especialistas
+- ✅ Tracking de referidos
+- ✅ **Archivos creados:**
+  - `backend/src/models/Referral.ts` (modelo completo con estados, prioridades, tipos y métodos)
+  - `backend/src/services/referralService.ts` (servicio completo con CRUD, aceptar/rechazar/completar, estadísticas)
+  - `backend/src/routes/referralRoutes.ts` (rutas REST completas con validación y autorización)
 
 **Web:**
-- UI para crear y gestionar referidos
-- **Archivos a crear:**
-  - `web/src/components/ReferralManagement.js`
+- ✅ UI para crear y gestionar referidos
+- ✅ **Archivos creados:**
+  - `web/src/components/ReferralManagement.js` (componente completo con creación, listado, filtros, estadísticas y acciones)
 
 **Mobile:**
-- UI para referidos
-- **Archivos a crear:**
-  - `mobile/src/screens/ReferralScreen.tsx`
+- ✅ UI para referidos
+- ✅ **Archivos creados:**
+  - `mobile/medical-app/components/views/ReferralScreen.tsx` (pantalla completa con listado, filtros, detalle y acciones)
 
 **MongoDB:**
-- Colección `referrals`
+- ✅ Colección `referrals` (creada automáticamente con el modelo)
 
 **Documentación:**
-- `backend/README.md` (sección referidos)
+- ✅ `backend/README.md` (sección referidos agregada con endpoints, tipos, estados, prioridades y ejemplos)
 
 #### **7.7 Sistema de Consentimientos Informados** ❌
 

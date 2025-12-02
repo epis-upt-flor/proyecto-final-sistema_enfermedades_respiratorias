@@ -33,6 +33,7 @@ import labRoutes from './routes/labRoutes';
 import emergencyRoutes from './routes/emergencyRoutes';
 import smsWebhookRoutes from './routes/smsWebhookRoutes';
 import smsRoutes from './routes/smsRoutes';
+import referralRoutes from './routes/referralRoutes';
 
 // Importar middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -227,6 +228,7 @@ class App {
     this.app.use('/api/v1/emergencies', emergencyRoutes);
     this.app.use('/api/v1/sms/webhooks', smsWebhookRoutes);
     this.app.use('/api/v1/sms', smsRoutes);
+    this.app.use('/api/v1/referrals', referralRoutes);
 
     // Root endpoint
     this.app.get('/', (_req, res) => {
