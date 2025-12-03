@@ -33,8 +33,8 @@
 | **4. Seguridad Base** | ✅ 100 % | ✅ Auth flows | ✅ Auth + secure storage | ✅ JWT + middlewares | ✅ Config básica | ✅ | ✅ Sección seguridad base | ✅ Config conexión segura |
 | **5. Testing y Calidad** | ✅ 100 % | ✅ Suites + CI | ✅ Tests completos (offline/sync/integration/e2e) | ✅ SAST/DAST/Mutation completos | ✅ Tests modelos y pipelines | ✅ Workflows CI completos | ✅ Testing strategy + Load/Stress | ✅ Tests específicos BD |
 | **6. Optimización & Performance** | ✅ 100 % | ✅ Code splitting, PWA, imágenes, lazy loading doc | ✅ Optimización mobile completa + análisis bundle + métricas dispositivos | ✅ OpenTelemetry completo (tracing + métricas negocio) | ✅ Cache, batch, benchmarks | ✅ Bench jobs (AI), dashboards p95/p99 | ✅ Performance Playbook | ✅ Monitoreo slow queries e índices |
-| **7. Funcionalidades Core** | ⏳ ~90 % | ✅ Alertas, citas, prescripciones, reportes | ⏳ Compartir reportes y AR pendientes | ⏳ Referidos/Consentimientos pendientes | ⏳ Orquestación avanzada | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
-| **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ⏳ Telemedicina completa pendiente | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
+| **7. Funcionalidades Core** | ✅ 100 % | ✅ Alertas, citas, prescripciones, reportes | ✅ Compartir reportes y AR completados | ✅ Referidos/Consentimientos completados | ✅ Orquestación ML (Fase 15) | ✅ | ✅ Secciones por dominio | ✅ Esquema completo clínico |
+| **8. Integraciones Externas** | ✅ 100 % | ✅ UIs HL7/FHIR | ✅ Telemedicina completa (Jitsi/Zoom, sala espera, compartir pantalla, grabación) | ✅ FHIR/HL7 endpoints + sync + OAuth2/mTLS | ✅ Contratos ML | ✅ Secrets K8s | ✅ Docs completas | ❌ |
 | **9. Analytics & BI** | ⏳ ~95 % | ⏳ Gráficos avanzados pendientes | ✅ Visualizaciones mobile (gráficos pacientes/médicos) | ✅ Servicios analytics y reportes automáticos | ✅ Modelos analytics + fairness | ✅ Conector BI (Power BI/Tableau) | ✅ Docs Analytics/BI + Dashboards Guide | ✅ Índices para métricas |
 | **10. Seguridad Avanzada** | ✅ 100 % | ✅ Hardening UI (CSP, sanitización, iframes) | ✅ UX legal/consentimiento completo | ✅ Cifrado, audit logs, RBAC granular, WAF, DSR | ✅ Headers/rate limits, flags seguridad | ✅ Ingress TLS, WAF, backups, OTEL/Jaeger | ✅ GDPR/HIPAA + Guía Seguridad Devs | ✅ Cifrado campos y backups |
 | **11. UX/UI** | ✅ 100 % | ✅ Rediseño, design system, temas light/dark, a11y WCAG 2.1 AA, Chatbot mejorado (SHAP, voz, historial) | ✅ Tutorial interactivo, microinteracciones, animaciones | ✅ DTOs y mensajes de error localizables | ✅ Errores amigables con sugerencias | ❌ | ✅ Guías UX/UI Web/Mobile | ❌ |
@@ -76,9 +76,10 @@
 - `web/package.json`
 
 **Mobile:**
-- `mobile/src/navigation/AppNavigator.tsx`
-- `mobile/src/store/useAppStore.ts`
-- `mobile/src/services/api.ts`
+- `mobile/medical-app/components/medical-app.tsx` (navegación principal)
+- `mobile/medical-app/components/layout/bottom-nav.tsx` (navegación inferior)
+- `mobile/medical-app/store/useAppStore.ts`
+- `mobile/medical-app/lib/api/client.ts` (cliente API)
 
 **Infraestructura:**
 - `infrastructure/scripts/setup-infra.sh`
@@ -114,7 +115,8 @@
 - Componentes CRUD básicos para historias
 
 **Mobile:**
-- `mobile/src/screens/MedicalHistoryScreen.tsx`
+- `mobile/medical-app/components/views/medical-history-detail.tsx`
+- `mobile/medical-app/components/forms/medical-history-form.tsx`
 
 **MongoDB:**
 - Colección `medicalhistories` con índices
@@ -131,8 +133,9 @@
 - `backend/src/jobs/appointmentJobs.ts`
 
 **Mobile:**
-- `mobile/src/screens/AppointmentsScreen.tsx`
-- `mobile/src/screens/AppointmentDetailScreen.tsx`
+- `mobile/medical-app/components/tabs/appointments.tsx` (lista de citas)
+- `mobile/medical-app/components/tabs/appointments-view.tsx` (vista de citas)
+- `mobile/medical-app/components/views/appointment-detail.tsx` (detalle de cita)
 
 **MongoDB:**
 - Colección `appointments`
@@ -197,7 +200,7 @@
 - `web/src/components/AnalyticsDashboard.js`
 
 **Mobile:**
-- `mobile/src/screens/HomeScreen.tsx` (visualización de tendencias)
+- `mobile/medical-app/components/tabs/index.tsx` (DashboardView con visualización de tendencias)
 
 **MongoDB:**
 - Índices optimizados para analytics en `MedicalHistory` y `AIAnalysis`
@@ -225,8 +228,8 @@
 - Flujos de autenticación implementados
 
 **Mobile:**
-- `mobile/src/services/authService.ts`
-- Secure storage configurado
+- `mobile/medical-app/lib/api/services/authService.ts`
+- `mobile/medical-app/lib/api/config.ts` (secure storage configurado)
 
 **MongoDB:**
 - Configuración de conexión segura
@@ -441,7 +444,7 @@
   - `mobile/medical-app/lib/utils/lazyLoad.tsx` (LazyImage component)
   - `mobile/medical-app/lib/utils/imageCache.ts` (sistema de cache de imágenes)
   - `mobile/medical-app/components/providers/performance-provider.tsx` (optimizaciones globales)
-  - `mobile/src/services/batteryOptimizationService.ts` (optimización de batería)
+  - `mobile/medical-app/lib/utils/battery-monitor.ts` (monitor de batería avanzado)
   - `mobile/medical-app/components/tabs/appointments.tsx` (listas optimizadas)
   - `mobile/medical-app/components/tabs/index.tsx` (listas optimizadas)
 - ✅ **Tests:**
@@ -499,9 +502,9 @@
 
 ---
 
-### **Fase 7: Funcionalidades Core** ⏳ ~90%
+### **Fase 7: Funcionalidades Core** ✅ 100%
 
-**Estado**: ⏳ En progreso
+**Estado**: ✅ Completado
 
 #### **7.1 Sistema de Alertas y Notificaciones** ✅
 
@@ -533,7 +536,9 @@
 - `web/src/components/AppointmentCalendar.js`
 
 **Mobile:**
-- `mobile/app/(tabs)/appointments.tsx`
+- `mobile/medical-app/components/tabs/appointments.tsx`
+- `mobile/medical-app/components/tabs/appointments-view.tsx`
+- `mobile/medical-app/components/views/appointment-detail.tsx`
 
 **MongoDB:**
 - Colección `appointments`
@@ -649,9 +654,9 @@
 
 ---
 
-### **Fase 8: Integración con Sistemas Externos** ⏳ ~95%
+### **Fase 8: Integración con Sistemas Externos** ✅ 100%
 
-**Estado**: ⏳ En progreso
+**Estado**: ✅ Completado
 
 #### **8.1 Integración con Sistemas de Salud** ✅
 
@@ -717,17 +722,17 @@
 **Documentación:**
 - `docs/EXTERNAL_INTEGRATIONS_GUIDE.md`
 
-#### **8.5 Pendientes - Integraciones Mobile** ⏳
+#### **8.5 Pendientes - Integraciones Mobile** ✅
 
 **Mobile:**
-- ⏳ **Telemedicina Completa** (Prioridad: MEDIA)
-  - Integración completa con proveedor de video (Jitsi, Zoom, etc.)
-  - Sala de espera virtual
-  - Compartir pantalla
-  - Grabación de sesiones (opcional)
-  - **Archivos a modificar:**
-    - `mobile/src/screens/AppointmentDetailScreen.tsx`
-    - `mobile/src/services/telemedicineService.ts` (actualmente stub)
+- ✅ **Telemedicina Completa** (COMPLETADO)
+  - ✅ Integración completa con proveedor de video (Jitsi, Zoom, custom)
+  - ✅ Sala de espera virtual con gestión de participantes
+  - ✅ Compartir pantalla (iniciar/detener)
+  - ✅ Grabación de sesiones (iniciar/pausar/reanudar/detener)
+  - ✅ **Archivos creados/actualizados:**
+    - `mobile/medical-app/components/views/appointment-detail.tsx` (actualizado con integración completa de telemedicina)
+    - `mobile/medical-app/lib/services/telemedicineService.ts` (servicio completo con integración Jitsi/Zoom, sala de espera, compartir pantalla y grabación)
 
 ---
 

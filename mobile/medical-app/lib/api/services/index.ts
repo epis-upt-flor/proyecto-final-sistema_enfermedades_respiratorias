@@ -12,4 +12,5 @@ export { wearableService } from './wearableService'
 export { chatService } from './chatService'
 export { fileUploadService } from './fileUploadService'
 export { reportService } from './reportService'
+export { telemedicineService } from '../../services/telemedicineService'
 

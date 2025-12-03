@@ -144,15 +144,74 @@ export function AppointmentDetail({
     }
   }
 
-  const handleStartTelemedicine = () => {
-    if (!appointment?.location?.meetingLink) {
-      toast.error("No hay enlace de reunión disponible")
-      return
+  const handleStartTelemedicine = async () => {
+    if (!appointment) return
+
+    try {
+      // Importar servicio de telemedicina
+      const { telemedicineService } = await import('@/lib/services/telemedicineService')
+      const { useAppStore } = await import('@/store/useAppStore')
+      const store = useAppStore.getState()
+      const currentUser = store.user
+
+      if (!currentUser) {
+        toast.error("No se pudo identificar al usuario")
+        return
+      }
+
+      // Si ya hay un enlace de reunión, usarlo directamente
+      if (appointment.location?.meetingLink) {
+        window.open(appointment.location.meetingLink, '_blank', 'noopener,noreferrer')
+        toast.info("Abriendo sala de videollamada...")
+        return
+      }
+
+      // Crear nueva llamada de telemedicina
+      toast.loading("Iniciando consulta virtual...")
+      
+      const call = await telemedicineService.createCall({
+        appointmentId: appointment._id,
+        doctorId: appointment.doctorId || '',
+        patientId: currentUser._id || currentUser.id || '',
+        provider: 'jitsi',
+        waitingRoomEnabled: true,
+        screenSharingEnabled: true,
+        recordingEnabled: false, // Se puede habilitar desde la UI
+      })
+
+      if (!call) {
+        toast.error("No se pudo crear la llamada de telemedicina")
+        return
+      }
+
+      // Si la sala de espera está habilitada, entrar primero ahí
+      if (call.waitingRoomEnabled) {
+        const userRole = currentUser.role === 'doctor' ? 'doctor' : 'patient'
+        const joined = await telemedicineService.joinWaitingRoom(call.id, {
+          id: currentUser._id || currentUser.id || '',
+          name: currentUser.name || 'Usuario',
+          role: userRole,
+          isReady: false,
+        })
+
+        if (joined) {
+          toast.success("Entraste a la sala de espera")
+          // Mostrar modal de sala de espera (se implementará en el componente)
+          // Por ahora, abrir directamente la videollamada
+          await telemedicineService.joinCall(call, userRole)
+        } else {
+          toast.error("No se pudo entrar a la sala de espera")
+        }
+      } else {
+        // Ir directamente a la videollamada
+        const userRole = currentUser.role === 'doctor' ? 'doctor' : 'patient'
+        await telemedicineService.joinCall(call, userRole)
+        toast.success("Abriendo videollamada...")
+      }
+    } catch (error: any) {
+      console.error('Error starting telemedicine:', error)
+      toast.error(error?.message || "Error al iniciar la consulta virtual")
     }
-    
-    // Abrir enlace de telemedicina en nueva ventana
-    window.open(appointment.location.meetingLink, '_blank')
-    toast.info("Abriendo sala de videollamada...")
   }
 
   if (showEdit && appointment) {
@@ -399,13 +458,15 @@ export function AppointmentDetail({
       {/* Acciones */}
       {canEdit && (
         <div className="p-4 bg-white dark:bg-[#1e293b] border-t border-border/50 dark:border-slate-700 space-y-2">
-          {isVirtual && appointment.location?.meetingLink && (
+          {isVirtual && (
             <ModernButton
               onClick={handleStartTelemedicine}
               className="w-full bg-gradient-to-r from-primary to-blue-600"
             >
               <Video className="w-5 h-5 mr-2" />
-              Iniciar Consulta Virtual
+              {appointment.location?.meetingLink 
+                ? 'Iniciar Consulta Virtual' 
+                : 'Crear y Iniciar Consulta Virtual'}
             </ModernButton>
           )}
           <div className="grid grid-cols-2 gap-2">
