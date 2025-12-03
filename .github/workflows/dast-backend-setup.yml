@@ -1,0 +1,48 @@
+# Reusable workflow para iniciar backend en jobs de DAST
+name: DAST Backend Setup
+
+on:
+  workflow_call:
+    outputs:
+      backend_port:
+        description: "Puerto del backend"
+        value: ${{ jobs.setup.outputs.backend_port }}
+      backend_url:
+        description: "URL del backend"
+        value: ${{ jobs.setup.outputs.backend_url }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      backend_port: ${{ steps.config.outputs.port }}
+      backend_url: ${{ steps.config.outputs.url }}
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Set backend configuration
+        id: config
+        run: |
+          echo "port=3001" >> $GITHUB_OUTPUT
+          echo "url=http://localhost:3001" >> $GITHUB_OUTPUT
+

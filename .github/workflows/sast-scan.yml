@@ -124,6 +124,9 @@ jobs:
           if [ -f "mobile/medical-app/package.json" ]; then
             echo "project_path=mobile/medical-app" >> $GITHUB_OUTPUT
             echo "lockfile_path=mobile/medical-app/package-lock.json" >> $GITHUB_OUTPUT
+          elif [ -f "mobile/RespiCare-Mobile/package.json" ]; then
+            echo "project_path=mobile/RespiCare-Mobile" >> $GITHUB_OUTPUT
+            echo "lockfile_path=mobile/RespiCare-Mobile/package-lock.json" >> $GITHUB_OUTPUT
           elif [ -f "mobile/package.json" ]; then
             echo "project_path=mobile" >> $GITHUB_OUTPUT
             echo "lockfile_path=mobile/package-lock.json" >> $GITHUB_OUTPUT
@@ -132,16 +135,41 @@ jobs:
             exit 1
           fi
       
-      - name: Setup Node.js
+      - name: Verify lockfile and setup cache
+        id: cache-setup
+        run: |
+          lockfile_path="${{ steps.mobile-structure.outputs.lockfile_path }}"
+          if [ -f "$lockfile_path" ]; then
+            echo "use_cache=true" >> $GITHUB_OUTPUT
+            echo "✅ Lockfile found, cache will be enabled: $lockfile_path"
+          else
+            echo "use_cache=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Lockfile not found, continuing without cache: $lockfile_path"
+          fi
+      
+      - name: Setup Node.js (with cache)
+        if: steps.cache-setup.outputs.use_cache == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: ${{ steps.mobile-structure.outputs.lockfile_path }}
       
+      - name: Setup Node.js (without cache)
+        if: steps.cache-setup.outputs.use_cache != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
       - name: Install dependencies
         working-directory: ./${{ steps.mobile-structure.outputs.project_path }}
-        run: npm ci
+        run: |
+          # Generate lockfile if it doesn't exist
+          if [ ! -f "package-lock.json" ]; then
+            echo "📦 Generating package-lock.json..."
+            npm install --package-lock-only
+          fi
+          npm ci
       
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master

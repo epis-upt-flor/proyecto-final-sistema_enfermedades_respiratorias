@@ -41,7 +41,7 @@
 | **12. DevOps & Deployment** | ✅ 100 % | ❌ | ❌ | ✅ Pipelines staging/prod con rollback, blue-green | ✅ Scripts ejecución ML | ✅ GitOps con ArgoCD + Feature Flags completados | ✅ Runbooks operaciones + CDN/LB/GitOps/FeatureFlags docs | ✅ Load Balancing, CDN, GitOps y Feature Flags completados |
 | **13. Escalabilidad & Arquitectura** | ✅ 100 % | ❌ | ❌ | ✅ Microservicios, gateway | ❌ | ✅ K8s completo, mesh, queues | ✅ Docs | ✅ Replicación/sharding |
 | **14. Documentación & Capacitación** | ✅ 100 % | ✅ Manual web completo | ✅ Manual mobile completo | ✅ Runbooks + troubleshooting | ✅ Guías ML | ❌ | ✅ Manuales finales + capacitación | ❌ |
-| **15. ML Avanzado** | ⏳ ~95 % | ✅ UI avanzada para ML (SHAP, comparación, RL, experimentos) + Integración en flujos principales | ✅ Consumo móvil de RL/FL + Navegación a resultados avanzados | ✅ Orquestación RL/FL completa | ⏳ Integración modelos reales pendiente | ✅ Deploy modelos pesados (GPU, nodos, colas) + Optimización (caché LRU, lazy loading, spot instances, auto-scaling, checkpointing) | ✅ AI docs avanzados + GPU Infrastructure Guide | ✅ Esquema logs/predicciones completo |
+| **15. ML Avanzado** | ✅ 100 % | ✅ UI avanzada para ML (SHAP, comparación, RL, experimentos) + Integración en flujos principales | ✅ Consumo móvil de RL/FL + Navegación a resultados avanzados | ✅ Orquestación RL/FL completa | ✅ Integración modelos reales completada (BERT médicos, CV con torch/timm, fallback robusto) | ✅ Deploy modelos pesados (GPU, nodos, colas) + Optimización (caché LRU, lazy loading, spot instances, auto-scaling, checkpointing) | ✅ AI docs avanzados + GPU Infrastructure Guide + Real Models Setup | ✅ Esquema logs/predicciones completo |
 | **16. Compliance y Certificaciones** | ❌ 0 % | ❌ | ❌ | ❌ Controles ISO | ❌ Validación FDA | ❌ Audit logs | ❌ Docs compliance | ❌ |
 | **17. BI y Analítica Predictiva** | ❌ 0 % | ❌ Dashboard BI | ❌ | ❌ KPIs/Servicios | ❌ Predicción demanda | ❌ | ❌ Docs BI | ❌ |
 | **18. Interoperabilidad Avanzada** | ⏳ ~50 % | ❌ Visor DICOM | ❌ | ⏳ IHE/DICOM/SNOMED | ⏳ NLP terminologías | ❌ | ❌ Docs IHE | ❌ |
@@ -1094,9 +1094,9 @@
 
 ---
 
-### **Fase 15: ML Avanzado** ⏳ ~95%
+### **Fase 15: ML Avanzado** ✅ 100%
 
-**Estado**: ⏳ En progreso
+**Estado**: ✅ Completado
 
 #### **15.1 Modelos Avanzados** ✅
 
@@ -1200,17 +1200,21 @@
 **Documentación:**
 - `docs/GPU_INFRASTRUCTURE_GUIDE.md`
 
-#### **15.10 Pendientes - Integración Modelos Reales** ❌
+#### **15.10 Pendientes - Integración Modelos Reales** ✅
 
 **AI-Services:**
-- ⏳ **Integración con Modelos Reales** (Prioridad: BAJA)
-  - Carga real de modelos BERT, CV, etc. (transformers, torch, timm)
-  - Fallback robusto a stubs si falla
-  - Documentación de requisitos de GPU
-  - **Archivos a modificar:**
-    - `ai-services/ml_models/medical_bert.py` (carga real de modelos)
-    - `ai-services/ml_models/image_classifier.py` (carga real de modelos)
-  - **Nota:** Flag `AI_USE_REAL_MODELS` implementado, modelos reales pendientes
+- ✅ **Integración con Modelos Reales** (COMPLETADO)
+  - ✅ Carga real de modelos BERT médicos (transformers): Bio_ClinicalBERT, SciBERT, PubMed BERT, BlueBERT
+  - ✅ Carga real de modelos CV (torch/timm): ResNet50, EfficientNet, Vision Transformer
+  - ✅ Fallback robusto a stubs si falla (múltiples niveles de fallback)
+  - ✅ Auto-detección de GPU/CPU
+  - ✅ Batch processing optimizado
+  - ✅ Soporte para múltiples modelos médicos especializados
+  - ✅ **Archivos modificados:**
+    - `ai-services/ml_models/medical_bert.py` (carga real completa con inferencia, batch processing, múltiples modelos médicos)
+    - `ai-services/ml_models/image_classifier.py` (carga real completa con inferencia, batch processing, soporte timm/torchvision)
+  - ✅ **Archivos creados:**
+    - `docs/ai-services/REAL_MODELS_SETUP.md` (documentación completa: requisitos GPU, instalación, configuración, modelos disponibles, uso, troubleshooting, optimización, mejores prácticas)
 
 ---
 

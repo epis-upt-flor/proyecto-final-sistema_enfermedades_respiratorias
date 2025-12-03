@@ -1,8 +1,8 @@
 """
-MedicalImageClassifier - Stub de modelo de visión por computadora para imágenes médicas.
+MedicalImageClassifier - Modelo de visión por computadora para imágenes médicas.
 
-Este stub define una interfaz simple para clasificar imágenes (e.g., RX/TC).
-La integración real podría usar torchvision/timm u OpenCV con un backend de DL.
+Soporta carga real de modelos de visión con torch/timm cuando AI_USE_REAL_MODELS=1.
+Incluye fallback robusto a stubs si falla la carga o no hay GPU disponible.
 """
 from typing import List, Dict, Any, Optional, Union
 import os
@@ -12,26 +12,138 @@ from .lazy_loader import get_lazy_loader
 
 logger = structlog.get_logger()
 
+# Modelos de visión recomendados para imágenes médicas
+MEDICAL_IMAGE_MODELS = {
+    "default": "resnet50",
+    "resnet50": "resnet50",
+    "resnet101": "resnet101",
+    "densenet121": "densenet121",
+    "efficientnet_b0": "efficientnet_b0",
+    "efficientnet_b4": "efficientnet_b4",
+    "vit_base": "vit_base_patch16_224",  # Vision Transformer
+    "medical": "resnet50",  # Por defecto para imágenes médicas
+}
+
 
 class MedicalImageClassifier:
     def __init__(self, model_name: str = "resnet50", device: Optional[str] = None) -> None:
-        self.model_name = model_name
-        self.device = device or "cpu"
+        """
+        Inicializa el clasificador de imágenes médicas.
+        
+        Args:
+            model_name: Nombre del modelo. Puede ser un modelo de torchvision o timm.
+            device: Dispositivo ('cpu' o 'cuda'). Si es None, se detecta automáticamente.
+        """
+        # Resolver nombre del modelo si es un alias
+        if model_name in MEDICAL_IMAGE_MODELS:
+            self.model_name = MEDICAL_IMAGE_MODELS[model_name]
+        else:
+            self.model_name = model_name
+        
+        # Detectar dispositivo automáticamente
+        if device is None:
+            try:
+                import torch  # type: ignore
+                self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                self.device = "cpu"
+        else:
+            self.device = device
+        
         self._loaded = False
+        self._model = None
+        self._preprocess = None
+        self._use_real_model = False
 
     def _load_model_real(self) -> bool:
-        """Carga real del modelo de visión"""
+        """
+        Carga real del modelo de visión usando torchvision o timm.
+        
+        Returns:
+            True si la carga fue exitosa, False en caso contrario.
+        """
         try:
             import torch  # type: ignore
-            import torchvision.models as models  # type: ignore
-            self._model = getattr(models, self.model_name, models.resnet50)(pretrained=True)  # type: ignore[attr-defined]
-            self._model.eval()
+            from torchvision import transforms  # type: ignore
+            
+            logger.info("loading_medical_image_model", model=self.model_name, device=self.device)
+            
+            # Intentar cargar con timm primero (más modelos disponibles)
+            try:
+                import timm  # type: ignore
+                if timm.is_model(self.model_name):
+                    self._model = timm.create_model(
+                        self.model_name,
+                        pretrained=True,
+                        num_classes=2  # Por defecto: normal/anomaly
+                    )
+                    logger.info("medical_image_model_loaded_timm", model=self.model_name)
+                else:
+                    raise ValueError(f"Model {self.model_name} not found in timm")
+            except (ImportError, ValueError):
+                # Fallback a torchvision
+                import torchvision.models as models  # type: ignore
+                
+                # Modelos disponibles en torchvision
+                if hasattr(models, self.model_name):
+                    model_fn = getattr(models, self.model_name)
+                    self._model = model_fn(pretrained=True)  # type: ignore[attr-defined]
+                    logger.info("medical_image_model_loaded_torchvision", model=self.model_name)
+                else:
+                    # Usar ResNet50 por defecto
+                    logger.warning(
+                        "medical_image_model_not_found",
+                        model=self.model_name,
+                        fallback="resnet50"
+                    )
+                    self._model = models.resnet50(pretrained=True)  # type: ignore[attr-defined]
+                    self.model_name = "resnet50"
+            
+            # Configurar preprocesamiento
+            self._preprocess = transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]
+                ),
+            ])
+            
+            # Mover a GPU si está disponible
             if self.device == "cuda" and torch.cuda.is_available():
                 self._model.to("cuda")
-            logger.info("medical_image_model_loaded_real", model=self.model_name, device=self.device)
+                logger.info(
+                    "medical_image_model_loaded_gpu",
+                    model=self.model_name,
+                    device=torch.cuda.get_device_name(0)
+                )
+            else:
+                self._model.to("cpu")
+                logger.info("medical_image_model_loaded_cpu", model=self.model_name)
+            
+            # Modo evaluación
+            self._model.eval()
+            
+            self._use_real_model = True
+            logger.info("medical_image_model_loaded_success", model=self.model_name, device=self.device)
             return True
+            
+        except ImportError as err:
+            logger.warning(
+                "medical_image_import_error",
+                error=str(err),
+                message="torch, torchvision o timm no están instalados. "
+                       "Instalar con: pip install torch torchvision timm"
+            )
+            return False
         except Exception as err:
-            logger.warning("medical_image_model_fallback_stub", error=str(err))
+            logger.warning(
+                "medical_image_load_error",
+                error=str(err),
+                model=self.model_name,
+                fallback="stub"
+            )
             return False
     
     def load(self) -> bool:
@@ -90,13 +202,102 @@ class MedicalImageClassifier:
         """
         Clasifica imágenes médicas.
         'images' acepta rutas a archivos o tensores/imágenes preprocesadas.
+        
+        Args:
+            images: Lista de rutas a imágenes o objetos de imagen.
+            
+        Returns:
+            Lista de diccionarios con predicciones para cada imagen.
         """
         if not self._loaded:
             self.load()
+        
+        # Usar modelo real si está disponible
+        if self._use_real_model and self._model is not None and self._preprocess is not None:
+            try:
+                import torch  # type: ignore
+                from PIL import Image  # type: ignore
+                import torch.nn.functional as F  # type: ignore
+                
+                outputs: List[Dict[str, Any]] = []
+                labels = ["normal", "anomaly"]  # Etiquetas por defecto
+                
+                # Procesar imágenes
+                for img_path in images:
+                    try:
+                        # Cargar imagen
+                        if isinstance(img_path, str):
+                            image = Image.open(img_path).convert("RGB")
+                        else:
+                            # Asumir que es un objeto PIL Image
+                            image = img_path.convert("RGB") if hasattr(img_path, "convert") else img_path
+                        
+                        # Preprocesar
+                        input_tensor = self._preprocess(image)
+                        input_batch = input_tensor.unsqueeze(0)  # Agregar dimensión de batch
+                        
+                        # Mover a dispositivo correcto
+                        if self.device == "cuda" and torch.cuda.is_available():
+                            input_batch = input_batch.to("cuda")
+                        
+                        # Inferencia (sin gradientes)
+                        with torch.no_grad():
+                            output = self._model(input_batch)
+                            
+                            # Aplicar softmax para obtener probabilidades
+                            probs = F.softmax(output, dim=-1)
+                            
+                            # Convertir a CPU para numpy
+                            probs = probs.cpu().numpy()[0]
+                        
+                        # Procesar resultados
+                        scores = probs.tolist()
+                        top_idx = int(probs.argmax())
+                        
+                        outputs.append({
+                            "image": str(img_path),
+                            "labels": labels[:len(scores)],
+                            "scores": scores,
+                            "top_label": labels[top_idx] if top_idx < len(labels) else "unknown",
+                            "confidence": float(max(scores)),
+                            "model": self.model_name,
+                            "device": self.device,
+                        })
+                        
+                    except Exception as img_err:
+                        logger.warning(
+                            "medical_image_predict_single_error",
+                            image=str(img_path),
+                            error=str(img_err),
+                            fallback="stub"
+                        )
+                        # Fallback para esta imagen
+                        outputs.append({
+                            "image": str(img_path),
+                            "labels": ["normal", "anomaly"],
+                            "scores": [0.85, 0.15],
+                            "top_label": "normal",
+                            "confidence": 0.85,
+                            "model": "stub",
+                            "device": "cpu",
+                            "error": str(img_err),
+                        })
+                
+                logger.info("medical_image_predict_real", images_count=len(images), device=self.device)
+                return outputs
+                
+            except Exception as err:
+                logger.error(
+                    "medical_image_predict_error",
+                    error=str(err),
+                    fallback="stub"
+                )
+                # Fallback a stub
+                self._use_real_model = False
+        
+        # Stub: puntuaciones simuladas (fallback)
+        logger.info("medical_image_predict_stub", images_count=len(images))
         outputs: List[Dict[str, Any]] = []
-        if getattr(self, "_model", None) is not None:
-            # Mantener salida stub aunque se use modelo real, para no añadir dependencias
-            logger.info("medical_image_predict_real_used_stub_output")
         for img in images:
             outputs.append(
                 {
@@ -104,6 +305,9 @@ class MedicalImageClassifier:
                     "labels": ["normal", "anomaly"],
                     "scores": [0.85, 0.15],
                     "top_label": "normal",
+                    "confidence": 0.85,
+                    "model": "stub",
+                    "device": "cpu",
                 }
             )
         return outputs
