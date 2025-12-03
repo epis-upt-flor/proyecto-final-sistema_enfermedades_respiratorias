@@ -70,21 +70,27 @@ jobs:
         working-directory: ./backend
         run: npm ci
       
-      - name: Build application
-        working-directory: ./backend
-        run: npm run build
-        continue-on-error: true
-      
-      - name: Start backend server
+      - name: Start backend server (development mode)
         id: start-backend
         working-directory: ./backend
         run: |
-          echo "🚀 Starting backend server..."
-          npm start > backend.log 2>&1 &
+          echo "🚀 Starting backend server in development mode..."
+          echo "Current directory: $(pwd)"
+          echo "Checking if src/index-dev.js exists:"
+          ls -la src/index-dev.js || echo "⚠️ index-dev.js not found!"
+          echo "Killing any existing node processes (just in case):"
+          pkill -f "node.*index" || echo "No existing processes found"
+          echo "Running backend with: node src/index-dev.js"
+          node src/index-dev.js > backend.log 2>&1 &
           echo $! > backend.pid
           echo "Backend PID: $(cat backend.pid)"
+          sleep 3
+          echo "Checking backend process:"
+          ps aux | grep "[n]ode src/index-dev.js" || echo "⚠️ Process not found!"
+          echo "Last 30 lines of backend.log:"
+          tail -30 backend.log || echo "⚠️ Log file not created yet"
         env:
-          NODE_ENV: test
+          NODE_ENV: development
           PORT: ${{ env.BACKEND_PORT }}
           MONGODB_URI: mongodb://localhost:27017/respicare-test
           REDIS_URL: redis://localhost:6379
@@ -97,6 +103,7 @@ jobs:
           PUSH_PROVIDER: none
           AI_SERVICE_URL: http://localhost:8000
           LOG_LEVEL: info
+          HOST: localhost
       
       - name: Wait for backend to be ready
         run: |
@@ -108,7 +115,19 @@ jobs:
               echo "❌ Backend failed to start within $timeout seconds"
               echo "📋 Backend logs:"
               if [ -f backend/backend.log ]; then
+                echo "=== Full backend.log ==="
                 cat backend/backend.log
+                echo "=== End of backend.log ==="
+              else
+                echo "⚠️ backend.log file not found!"
+              fi
+              echo "📋 Checking for running processes:"
+              ps aux | grep node || echo "No node processes found"
+              echo "📋 Checking backend.pid:"
+              if [ -f backend/backend.pid ]; then
+                cat backend/backend.pid
+              else
+                echo "⚠️ backend.pid not found!"
               fi
               exit 1
             fi
@@ -166,11 +185,64 @@ jobs:
             echo "needs_backend=true" >> $GITHUB_OUTPUT
           fi
       
-      - name: Setup and start backend
+      - name: Setup Node.js
         if: steps.target.outputs.needs_backend == 'true'
-        uses: ./.github/actions/setup-backend
+        uses: actions/setup-node@v4
         with:
-          backend_port: ${{ env.BACKEND_PORT }}
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install backend dependencies
+        if: steps.target.outputs.needs_backend == 'true'
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Start backend server (development mode)
+        if: steps.target.outputs.needs_backend == 'true'
+        working-directory: ./backend
+        run: |
+          echo "🚀 Starting backend server in development mode..."
+          npm run dev > backend.log 2>&1 &
+          echo $! > backend.pid
+          echo "Backend PID: $(cat backend.pid)"
+          sleep 5
+        env:
+          NODE_ENV: development
+          PORT: ${{ env.BACKEND_PORT }}
+          MONGODB_URI: mongodb://localhost:27017/respicare-test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-for-dast-scan-change-in-production
+          JWT_REFRESH_SECRET: test-jwt-refresh-secret-for-dast-scan-change-in-production
+          SMTP_HOST: smtp.example.com
+          SMTP_PORT: '587'
+          SMTP_USER: test@example.com
+          SMTP_PASS: test-password
+          PUSH_PROVIDER: none
+          AI_SERVICE_URL: http://localhost:8000
+          LOG_LEVEL: info
+          HOST: localhost
+      
+      - name: Wait for backend to be ready
+        if: steps.target.outputs.needs_backend == 'true'
+        run: |
+          echo "⏳ Waiting for backend to be ready..."
+          timeout=60
+          elapsed=0
+          while ! curl -f http://localhost:${{ env.BACKEND_PORT }}/api/v1/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              echo "❌ Backend failed to start within $timeout seconds"
+              echo "📋 Backend logs:"
+              if [ -f backend/backend.log ]; then
+                tail -100 backend/backend.log
+              fi
+              exit 1
+            fi
+            echo "⏳ Waiting for backend to start... ($elapsed/$timeout seconds)"
+            sleep 2
+            elapsed=$((elapsed+2))
+          done
+          echo "✅ Backend is ready!"
       
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.10.0

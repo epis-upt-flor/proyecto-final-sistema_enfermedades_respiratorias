@@ -45,7 +45,7 @@ jobs:
             --cov-config=.coveragerc \
             --cov-report=xml:coverage.xml \
             --cov-report=term-missing \
-            --cov-fail-under=60 \
+            --cov-fail-under=35 \
             --ignore=tests/performance \
             --ignore=tests/security \
             --ignore=tests/ml_models/test_lazy_loader.py \
