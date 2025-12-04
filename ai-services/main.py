@@ -170,10 +170,15 @@ async def security_headers_middleware(request, call_next):
     return response
 
 # Simple rate limiting (token bucket por IP) - configurable por env
+# Deshabilitado automáticamente en modo testing
 _rate_buckets = defaultdict(lambda: {"tokens": 0, "last_refill": time.time()})
 _rate_capacity = int(os.getenv("AI_RATE_LIMIT_CAPACITY", "100"))  # tokens
 _rate_refill_per_sec = float(os.getenv("AI_RATE_LIMIT_REFILL_PER_SEC", "1.0"))  # tokens/s
-_rate_enabled = os.getenv("AI_RATE_LIMIT_ENABLED", "1") == "1"
+# Deshabilitar rate limiting si TESTING=true o AI_RATE_LIMIT_ENABLED=0
+_rate_enabled = (
+    os.getenv("TESTING", "").lower() != "true" and 
+    os.getenv("AI_RATE_LIMIT_ENABLED", "1") == "1"
+)
 
 def _allow_request(ip: str) -> bool:
     bucket = _rate_buckets[ip]

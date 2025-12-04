@@ -12,11 +12,12 @@ import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock
 from typing import AsyncGenerator, Generator
 
-# Set test environment variables
+# Set test environment variables (MUST be set before any imports)
 os.environ["TESTING"] = "true"
 os.environ["LOG_LEVEL"] = "DEBUG"
 os.environ["CACHE_ENABLED"] = "false"
 os.environ["CIRCUIT_BREAKER_ENABLED"] = "false"
+os.environ["AI_RATE_LIMIT_ENABLED"] = "0"  # Deshabilitar rate limiting en tests
 
 
 # Lightweight module stubs for heavy optional dependencies
@@ -33,13 +34,21 @@ if "shap" not in sys.modules:
 if "openai" not in sys.modules:
     import types
     openai_mock = types.ModuleType("openai")
+    
+    # Mock OpenAI client classes
+    openai_mock.OpenAI = MagicMock
+    openai_mock.AsyncOpenAI = MagicMock
+    
+    # Mock ChatCompletion
     openai_mock.ChatCompletion = MagicMock()
     openai_mock.AsyncConfiguration = MagicMock()
+    
     # Add common OpenAI exceptions
     openai_mock.RateLimitError = type("RateLimitError", (Exception,), {})
     openai_mock.APIError = type("APIError", (Exception,), {})
     openai_mock.APIConnectionError = type("APIConnectionError", (Exception,), {})
     openai_mock.APITimeoutError = type("APITimeoutError", (Exception,), {})
+    
     # Create a proper spec for the module
     try:
         from importlib.util import spec_from_loader, module_from_spec
@@ -50,6 +59,49 @@ if "openai" not in sys.modules:
         # Fallback if ModuleSpec is not available
         pass
     sys.modules["openai"] = openai_mock
+
+# Mock whisper module
+if "whisper" not in sys.modules:
+    whisper_mock = MagicMock(name="whisper_mock")
+    whisper_mock.load_model.return_value = MagicMock()
+    sys.modules["whisper"] = whisper_mock
+
+# Mock librosa and soundfile for audio processing
+if "librosa" not in sys.modules:
+    librosa_mock = MagicMock(name="librosa_mock")
+    librosa_mock.load.return_value = (None, 22050)
+    librosa_mock.feature = MagicMock()
+    librosa_mock.feature.mfcc.return_value = MagicMock()
+    sys.modules["librosa"] = librosa_mock
+
+if "soundfile" not in sys.modules:
+    soundfile_mock = MagicMock(name="soundfile_mock")
+    sys.modules["soundfile"] = soundfile_mock
+
+# Mock SHAPDiseaseExplainer
+if "shap_explainer" not in sys.modules:
+    import types
+    shap_explainer_mock = types.ModuleType("shap_explainer")
+    
+    # Create a proper mock class for SHAPDiseaseExplainer
+    class SHAPDiseaseExplainerMock:
+        def __init__(self, model_path=None):
+            self.model = None
+            self.explainer = None
+            
+        def load_model(self, model_path):
+            pass
+            
+        def explain_prediction(self, symptoms, patient_age=35, top_k=10):
+            return {
+                "disease": "resfriado",
+                "confidence": 0.8,
+                "top_features": [],
+                "urgency_level": "low"
+            }
+    
+    shap_explainer_mock.SHAPDiseaseExplainer = SHAPDiseaseExplainerMock
+    sys.modules["shap_explainer"] = shap_explainer_mock
 
 
 from fastapi.testclient import TestClient

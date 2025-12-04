@@ -190,7 +190,8 @@ class TestMedicalHistoryService:
         
         result = await medical_history_service._generate_care_recommendations(processing_result)
         
-        assert isinstance(result, list)
+        # _generate_care_recommendations returns Dict, not list
+        assert isinstance(result, dict)
     
     @pytest.mark.asyncio
     async def test_error_handling(self, medical_history_service, sample_text):

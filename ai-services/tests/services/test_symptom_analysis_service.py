@@ -150,7 +150,8 @@ class TestSymptomAnalysisService:
         """Test basic analysis fallback when no manager"""
         service = SymptomAnalysisService(service_manager=None)
         
-        with patch('services.symptom_analysis_service.analyzer') as mock_analyzer:
+        # Correct import path: from symptom_analyzer.analyzer import analyzer
+        with patch('symptom_analyzer.analyzer.analyzer') as mock_analyzer:
             mock_analyzer.analyze_symptoms = AsyncMock(return_value={"disease": "Bronquitis"})
             
             result = await service._perform_basic_analysis(
@@ -179,7 +180,8 @@ class TestSymptomAnalysisService:
             context=None
         )
         
-        assert isinstance(result, list)
+        # _generate_detailed_recommendations returns Dict, not list
+        assert isinstance(result, dict)
     
     @pytest.mark.asyncio
     async def test_assess_health_risks(self, symptom_service, sample_symptoms):

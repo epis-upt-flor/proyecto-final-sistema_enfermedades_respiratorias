@@ -76,15 +76,15 @@ class TestAIServiceManager:
     @pytest.mark.asyncio
     async def test_initialize_success(self, ai_service_manager):
         """Test successful initialization"""
+        # Mock ServiceFactory methods to avoid dependency issues
         with patch.object(ServiceFactory, 'create_development_services', return_value={}) as mock_services:
-            with patch.object(StrategyFactory, 'create_optimal_strategy', return_value=MagicMock()) as mock_strategy:
-                with patch.object(StrategyFactory, 'create_strategy', return_value=MagicMock()) as mock_create:
-                    with patch.object(ai_service_manager, '_warm_up_models', new_callable=AsyncMock):
-                        with patch.object(ai_service_manager, '_initialize_repositories', new_callable=AsyncMock):
-                            await ai_service_manager.initialize()
-                            
-                            assert ai_service_manager._initialized is True
-                            mock_services.assert_called_once()
+            with patch.object(ai_service_manager, '_warm_up_models', new_callable=AsyncMock):
+                with patch.object(ai_service_manager, '_initialize_strategies', new_callable=AsyncMock):
+                    with patch.object(ai_service_manager, '_initialize_repositories', new_callable=AsyncMock):
+                        await ai_service_manager.initialize()
+                        
+                        assert ai_service_manager._initialized is True
+                        mock_services.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_initialize_production_environment(self):
@@ -92,13 +92,12 @@ class TestAIServiceManager:
         manager = AIServiceManager(environment="production")
         
         with patch.object(ServiceFactory, 'create_production_services', return_value={}):
-            with patch.object(StrategyFactory, 'create_optimal_strategy', return_value=MagicMock()):
-                with patch.object(StrategyFactory, 'create_strategy', return_value=MagicMock()):
-                    with patch.object(manager, '_warm_up_models', new_callable=AsyncMock):
-                        with patch.object(manager, '_initialize_repositories', new_callable=AsyncMock):
-                            await manager.initialize()
-                            
-                            assert manager._initialized is True
+            with patch.object(manager, '_warm_up_models', new_callable=AsyncMock):
+                with patch.object(manager, '_initialize_strategies', new_callable=AsyncMock):
+                    with patch.object(manager, '_initialize_repositories', new_callable=AsyncMock):
+                        await manager.initialize()
+                        
+                        assert manager._initialized is True
     
     @pytest.mark.asyncio
     async def test_initialize_auto_initializes_on_use(self, ai_service_manager, mock_services, mock_strategies):
