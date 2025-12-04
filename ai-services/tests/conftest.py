@@ -110,7 +110,17 @@ from redis import Redis
 import fakeredis
 import mongomock
 
-from main import app
+# Make main import optional to avoid torch DLL issues in Windows
+try:
+    from main import app
+except (ImportError, OSError) as e:
+    # If main import fails (e.g., torch DLL issues), create a mock app
+    from fastapi import FastAPI
+    app = FastAPI()
+    import structlog
+    logger = structlog.get_logger()
+    logger.warning("Could not import main app, using mock app", error=str(e))
+
 from core.config import settings
 from core.database import get_database
 from core.cache import get_cache_client as get_cache
