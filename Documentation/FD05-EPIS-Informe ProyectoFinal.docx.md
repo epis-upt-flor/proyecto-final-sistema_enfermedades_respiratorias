@@ -38,7 +38,8 @@ Integrantes:
 5. Desarrollo de la Solución							9  
    1. Análisis de Factibilidad (técnico, económica, operativa, social, legal, ambiental)  
    2. Tecnología de Desarrollo  
-   3. Metodología de implementación
+   3. Metodología de implementación  
+   4. Ejecución de la revisión de código base
 6. Cronograma									11  
 7. Presupuesto									12  
 8. Conclusiones									13
@@ -474,6 +475,42 @@ El ciclo TDD (Red-Green-Refactor) se aplicó consistentemente, resultando en:
 - **Code Review**: Revisión de código antes de merge
 - **Documentación**: READMEs completos, guías técnicas, manuales de usuario
 
+## **5.4. Ejecución de la revisión de código base**
+
+En el marco del curso de Construcción de Software I se formalizó el procedimiento de **revisión de código base**, orientando el trabajo hacia buenas prácticas y estándares de construcción de software. El objetivo es asegurar que los cambios críticos cumplan criterios de legibilidad, seguridad, mantenibilidad y trazabilidad antes de integrarse al repositorio principal.
+
+### **5.4.1. Procedimiento**
+
+Se ejecutó una revisión sistemática del código considerando buenas prácticas y estándares de construcción de software, siguiendo el siguiente checklist operativo:
+
+| Paso | Actividad | Criterio de cumplimiento |
+|------|-----------|--------------------------|
+| 1 | **Seleccionar un módulo crítico del proyecto** | Priorizar componentes con alto impacto en seguridad, datos clínicos o continuidad del servicio |
+| 2 | **Aplicar linters y análisis estático** | Ejecutar herramientas automatizadas sobre el módulo y corregir o justificar hallazgos |
+| 3 | **Realizar un Pull Request con revisión por pares** | Todos los cambios integrados vía rama y PR, con al menos un revisor distinto al autor |
+| 4 | **Documentar el feedback (comunicación efectiva — AG-I04)** | Dejar comentarios concretos en el PR, resumen de decisiones y seguimiento de observaciones |
+
+**Módulo crítico seleccionado para la revisión profunda**: el subsistema **AI Services** (`ai-services`), implementado con **Python/FastAPI**. Este módulo concentra la lógica de predicción asistida, procesamiento de lenguaje natural, orquestación de modelos y exposición de APIs consumidas por backend, web y móvil; un defecto aquí tiene mayor riesgo para la interpretación clínica de soporte y para la confidencialidad de los datos procesados. Como contraste de capa de aplicación, también se revisó de forma periódica el **backend principal** (Node.js/TypeScript), por concentrar autenticación, reglas de negocio y persistencia.
+
+### **5.4.2. Linters y análisis estático aplicados**
+
+De acuerdo con la guía del proyecto (`docs/code-analysis/STATIC_CODE_ANALYSIS.md` y documentación relacionada), se utilizó un conjunto coherente de herramientas por stack:
+
+- **Backend (Node.js/TypeScript)**: ESLint con reglas de complejidad y TypeScript estricto; verificación de tipos y auditoría de dependencias.
+- **AI Services (Python)**: Pylint y Flake8 para estilo y calidad; **Bandit** para patrones inseguros; pruebas con **pytest** y seguimiento de cobertura donde aplica.
+- **Frontend Web (React)**: ESLint orientado a React y buenas prácticas de componentes.
+- **Mobile (React Native/Expo)**: ESLint/TypeScript con foco en consistencia y reducción de deuda técnica.
+
+Los resultados agregados documentados en el repositorio sitúan la **calificación global de calidad de código en torno a A (9.1/10)**, con hallazgos mayoritariamente de severidad baja o media (estilo, longitud de línea, advertencias de tipos), y corrección iterativa en sprints posteriores.
+
+### **5.4.3. Pull Request y revisión por pares**
+
+El flujo adoptado replica prácticas estándar de la industria: rama de trabajo (`feature/` o `fix/`), commits atómicos cuando es posible, **Pull Request** descriptivo (contexto, riesgos, pruebas ejecutadas) y **revisión por pares** antes del merge a la rama principal. En entorno académico, el rol de “par” lo asumió el docente, un compañero de equipo o un integrante senior según disponibilidad, manteniendo el principio de que quien aprueba no es quien implementó el cambio de forma aislada.
+
+### **5.4.4. Documentación del feedback (AG-I04)**
+
+La retroalimentación se documentó de forma **explícita y rastreable**: comentarios en línea sobre fragmentos concretos de código, lista de cambios solicitados vs. resueltos, y un breve cierre en el cuerpo del PR (qué se acordó y qué quedó como mejora futura). Este registro permite demostrar **comunicación efectiva** entre autor y revisor: solicitudes claras, tono profesional, priorización (bloqueante vs. sugerido) y trazabilidad para auditorías académicas o técnicas.
+
 ---
 
 # **6. CRONOGRAMA**
@@ -585,7 +622,7 @@ El proyecto se desarrolló durante un período de aproximadamente **6 meses**, o
 
 4. **Metodología Ágil Exitosa**: La aplicación de metodología SCRUM permitió entregas incrementales de valor, adaptabilidad a cambios y mejora continua durante todo el desarrollo.
 
-5. **Calidad del Software**: Se logró una cobertura de tests superior al 98% en el backend, garantizando alta calidad y confiabilidad del código desarrollado.
+5. **Calidad del Software**: Se logró una cobertura de tests superior al 98% en el backend, garantizando alta calidad y confiabilidad del código desarrollado. Complementariamente, la **revisión de código base** (módulo crítico AI Services, linters y análisis estático, PR con revisión por pares y documentación del feedback según AG-I04) fortaleció el cumplimiento de estándares de construcción.
 
 6. **Documentación Completa**: El proyecto cuenta con documentación exhaustiva que incluye manuales de usuario, guías técnicas, roadmaps y documentación de API, facilitando el mantenimiento y evolución del sistema.
 
