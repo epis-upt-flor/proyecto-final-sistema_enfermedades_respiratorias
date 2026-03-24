@@ -33,15 +33,11 @@ function Navbar() {
     []
   );
 
-  const links = useMemo(
-    () =>
-      NAV_LINKS.map(link => ({
-        ...link,
-        label: t(link.labelKey),
-        isActive: location.pathname === link.to
-      })),
-    [location.pathname, language, NAV_LINKS]
-  );
+  const links = NAV_LINKS.map(link => ({
+    ...link,
+    label: t(link.labelKey),
+    isActive: location.pathname === link.to
+  }));
 
   return (
     <nav className="navbar" role="navigation" aria-label="Main navigation">

@@ -19,6 +19,27 @@ os.environ["CACHE_ENABLED"] = "false"
 os.environ["CIRCUIT_BREAKER_ENABLED"] = "false"
 os.environ["AI_RATE_LIMIT_ENABLED"] = "0"  # Deshabilitar rate limiting en tests
 
+# Mock torch BEFORE any imports to avoid DLL issues in Windows
+# This must be done at the very beginning, before any module that might import torch
+if 'torch' not in sys.modules:
+    try:
+        import torch
+    except (ImportError, OSError):
+        # Create mock torch if import fails and add to sys.modules
+        torch_mock = MagicMock()
+        torch_mock.tensor = MagicMock(return_value=MagicMock())
+        torch_mock.cuda = MagicMock()
+        torch_mock.cuda.is_available = MagicMock(return_value=False)
+        torch_mock.no_grad = MagicMock()
+        torch_mock.__version__ = "1.0.0"
+        torch_mock.optim = MagicMock()
+        torch_mock.nn = MagicMock()
+        sys.modules['torch'] = torch_mock
+        # Also mock common torch submodules
+        sys.modules['torch.cuda'] = torch_mock.cuda
+        sys.modules['torch.optim'] = torch_mock.optim
+        sys.modules['torch.nn'] = torch_mock.nn
+
 
 # Lightweight module stubs for heavy optional dependencies
 if "shap" not in sys.modules:

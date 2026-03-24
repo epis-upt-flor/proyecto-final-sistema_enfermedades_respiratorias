@@ -123,9 +123,12 @@ def test_prediction_monitor_fallback_modes(monkeypatch, tmp_path):
     assert Path(exported).exists()
     monkeypatch.setattr(monitor_module, "HAS_PANDAS", True, raising=False)
 
-    # Conjunto vacío produce mensaje de error en get_metrics.
+    # Conjunto vacío produce estructura vacía en get_metrics (no error key).
     empty_monitor = monitor_module.PredictionMonitor(storage_path=str(tmp_path / "empty"))
-    assert empty_monitor.get_metrics(days=1)["error"].startswith("No predictions found")
+    empty_metrics = empty_monitor.get_metrics(days=1)
+    # get_metrics devuelve estructura vacía, no un diccionario con "error"
+    assert empty_metrics["summary"]["total_predictions"] == 0
+    assert empty_metrics["summary"]["avg_confidence"] == 0.0
     assert empty_monitor.detect_anomalies(window_size=5) == []
 
 

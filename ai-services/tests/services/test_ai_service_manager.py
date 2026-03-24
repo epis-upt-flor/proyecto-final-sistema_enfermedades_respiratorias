@@ -305,6 +305,326 @@ class TestAIServiceManager:
     
     @pytest.mark.asyncio
     async def test_analyze_symptoms_batch_empty(self, ai_service_manager):
+        """Test batch symptom analysis with empty list"""
+        ai_service_manager._initialized = True
+        
+        results = await ai_service_manager.analyze_symptoms_batch([])
+        
+        assert results == []
+    
+    @pytest.mark.asyncio
+    async def test_analyze_symptoms_batch_with_errors(self, ai_service_manager, mock_strategies):
+        """Test batch symptom analysis with some errors"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = {}
+        ai_service_manager.strategies = mock_strategies
+        
+        # Make one strategy fail
+        mock_strategies['primary'].analyze_symptoms.side_effect = [
+            {"disease": "Bronquitis"},
+            Exception("Analysis error")
+        ]
+        
+        batch_requests = [
+            {"symptoms": [{"symptom": "tos"}], "patient_id": "P001"},
+            {"symptoms": [{"symptom": "fiebre"}], "patient_id": "P002"}
+        ]
+        
+        results = await ai_service_manager.analyze_symptoms_batch(batch_requests)
+        
+        assert len(results) == 2
+        # One should have error
+        assert any("error" in result for result in results)
+    
+    @pytest.mark.asyncio
+    async def test_analyze_symptoms_batch_concurrent_limit(self, ai_service_manager, mock_strategies):
+        """Test batch processing respects concurrent limit"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = {}
+        ai_service_manager.strategies = mock_strategies
+        
+        # Create many requests
+        batch_requests = [
+            {"symptoms": [{"symptom": f"symptom_{i}"}], "patient_id": f"P{i:03d}"}
+            for i in range(10)
+        ]
+        
+        results = await ai_service_manager.analyze_symptoms_batch(batch_requests)
+        
+        assert len(results) == 10
+        # All should complete (semaphore limits concurrency)
+    
+    @pytest.mark.asyncio
+    async def test_process_medical_history_success(
+        self, ai_service_manager, mock_services, mock_strategies, mock_repositories
+    ):
+        """Test successful medical history processing"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = mock_services
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        mock_services['analysis_context'].set_strategy = MagicMock()
+        mock_services['analysis_context'].process_medical_text = AsyncMock(return_value={
+            "symptoms": ["tos", "fiebre"],
+            "entities": []
+        })
+        
+        result = await ai_service_manager.process_medical_history(
+            text="Paciente con tos y fiebre",
+            patient_id="P001",
+            context={"language": "es"}
+        )
+        
+        assert result is not None
+        assert "symptoms" in result or "entities" in result
+        mock_services['analysis_context'].process_medical_text.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_process_medical_history_creates_record(
+        self, ai_service_manager, mock_services, mock_strategies, mock_repositories
+    ):
+        """Test that medical history record is created"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = mock_services
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        mock_services['analysis_context'].set_strategy = MagicMock()
+        mock_services['analysis_context'].process_medical_text = AsyncMock(return_value={
+            "symptoms": [],
+            "entities": []
+        })
+        
+        await ai_service_manager.process_medical_history(
+            text="Test text",
+            patient_id="P001"
+        )
+        
+        mock_repositories['medical_history'].create_medical_history.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_process_medical_history_batch(
+        self, ai_service_manager, mock_strategies, mock_repositories
+    ):
+        """Test batch medical history processing"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = {}
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        batch_requests = [
+            {"text": "Text 1", "patient_id": "P001"},
+            {"text": "Text 2", "patient_id": "P002"}
+        ]
+        
+        results = await ai_service_manager.process_medical_history_batch(batch_requests)
+        
+        assert len(results) == 2
+        assert all("patient_id" in result for result in results)
+    
+    @pytest.mark.asyncio
+    async def test_select_strategy_with_preference(self, ai_service_manager, mock_strategies):
+        """Test strategy selection with preference"""
+        ai_service_manager.strategies = mock_strategies
+        
+        strategy = ai_service_manager._select_strategy("rule_based")
+        
+        assert strategy == mock_strategies['rule_based']
+    
+    @pytest.mark.asyncio
+    async def test_select_strategy_default(self, ai_service_manager, mock_strategies):
+        """Test strategy selection defaults to primary"""
+        ai_service_manager.strategies = mock_strategies
+        
+        strategy = ai_service_manager._select_strategy(None)
+        
+        assert strategy == mock_strategies['primary']
+    
+    @pytest.mark.asyncio
+    async def test_select_strategy_fallback(self, ai_service_manager):
+        """Test strategy selection falls back to rule_based"""
+        ai_service_manager.strategies = {'rule_based': MagicMock()}
+        
+        strategy = ai_service_manager._select_strategy(None)
+        
+        assert strategy == ai_service_manager.strategies['rule_based']
+    
+    @pytest.mark.asyncio
+    async def test_store_ai_result_success(self, ai_service_manager, mock_repositories):
+        """Test storing AI result"""
+        ai_service_manager.repositories = mock_repositories
+        
+        result_data = {"disease": "Bronquitis", "confidence": 0.85}
+        metadata = {"source": "test"}
+        
+        await ai_service_manager._store_ai_result(
+            "symptom_analysis",
+            "P001",
+            result_data,
+            metadata
+        )
+        
+        mock_repositories['ai_results'].create_ai_result.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_store_ai_result_error_handling(self, ai_service_manager):
+        """Test storing AI result with error"""
+        mock_repo = AsyncMock()
+        mock_repo.create_ai_result = AsyncMock(side_effect=Exception("DB error"))
+        ai_service_manager.repositories = {'ai_results': mock_repo}
+        
+        # Should not raise exception, just log error
+        await ai_service_manager._store_ai_result(
+            "symptom_analysis",
+            "P001",
+            {"data": "test"}
+        )
+    
+    @pytest.mark.asyncio
+    async def test_get_service_health_all_healthy(
+        self, ai_service_manager, mock_services, mock_strategies, mock_repositories
+    ):
+        """Test health check with all services healthy"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = mock_services
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        health = await ai_service_manager.get_service_health()
+        
+        assert health["overall_status"] in ["healthy", "degraded"]
+        assert health["initialized"] is True
+        assert "services" in health
+        assert "strategies" in health
+        assert "repositories" in health
+    
+    @pytest.mark.asyncio
+    async def test_get_service_health_with_unhealthy_service(
+        self, ai_service_manager, mock_strategies, mock_repositories
+    ):
+        """Test health check with unhealthy service"""
+        ai_service_manager._initialized = True
+        # Create a service that raises error
+        mock_service = MagicMock()
+        mock_service.__class__.__name__ = "TestService"
+        type(mock_service).__name__ = property(lambda self: "TestService")
+        ai_service_manager.services = {'test_service': mock_service}
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        health = await ai_service_manager.get_service_health()
+        
+        # Should still return health status
+        assert "overall_status" in health
+    
+    @pytest.mark.asyncio
+    async def test_get_service_health_with_unhealthy_strategy(
+        self, ai_service_manager, mock_services, mock_repositories
+    ):
+        """Test health check with unhealthy strategy"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = mock_services
+        # Create strategy that raises error
+        mock_strategy = MagicMock()
+        mock_strategy.get_strategy_name.side_effect = Exception("Strategy error")
+        ai_service_manager.strategies = {'test_strategy': mock_strategy}
+        ai_service_manager.repositories = mock_repositories
+        
+        health = await ai_service_manager.get_service_health()
+        
+        assert "strategies" in health
+        assert health["strategies"]["test_strategy"]["status"] == "unhealthy"
+    
+    @pytest.mark.asyncio
+    async def test_get_service_health_with_unhealthy_repository(
+        self, ai_service_manager, mock_services, mock_strategies
+    ):
+        """Test health check with unhealthy repository"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = mock_services
+        ai_service_manager.strategies = mock_strategies
+        # Create repository that raises error
+        mock_repo = AsyncMock()
+        mock_repo.count = AsyncMock(side_effect=Exception("Repo error"))
+        ai_service_manager.repositories = {'test_repo': mock_repo}
+        
+        health = await ai_service_manager.get_service_health()
+        
+        assert "repositories" in health
+        assert health["repositories"]["test_repo"]["status"] == "unhealthy"
+    
+    @pytest.mark.asyncio
+    async def test_get_service_metrics_success(
+        self, ai_service_manager, mock_services, mock_strategies, mock_repositories
+    ):
+        """Test getting service metrics"""
+        ai_service_manager.services = mock_services
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        # Mock repository methods
+        mock_repositories['ai_results'].get_performance_metrics = AsyncMock(return_value={"count": 100})
+        mock_repositories['medical_history'].get_statistics = AsyncMock(return_value={"total": 50})
+        mock_repositories['patients'].get_patient_statistics = AsyncMock(return_value={"active": 25})
+        
+        with patch('services.ai_service_manager.StrategyFactory.get_available_strategies', return_value={"rule_based": True}):
+            metrics = await ai_service_manager.get_service_metrics()
+            
+            assert "timestamp" in metrics
+            assert "environment" in metrics
+            assert "services_count" in metrics
+            assert "strategies_count" in metrics
+            assert "repositories_count" in metrics
+            assert "strategy_availability" in metrics
+    
+    @pytest.mark.asyncio
+    async def test_get_service_metrics_with_errors(
+        self, ai_service_manager, mock_services, mock_strategies, mock_repositories
+    ):
+        """Test getting service metrics with repository errors"""
+        ai_service_manager.services = mock_services
+        ai_service_manager.strategies = mock_strategies
+        ai_service_manager.repositories = mock_repositories
+        
+        # Make repository methods fail
+        mock_repositories['ai_results'].get_performance_metrics = AsyncMock(side_effect=Exception("Error"))
+        mock_repositories['medical_history'].get_statistics = AsyncMock(side_effect=Exception("Error"))
+        mock_repositories['patients'].get_patient_statistics = AsyncMock(side_effect=Exception("Error"))
+        
+        with patch('services.ai_service_manager.StrategyFactory.get_available_strategies', return_value={}):
+            metrics = await ai_service_manager.get_service_metrics()
+            
+            # Should still return metrics even with errors
+            assert "timestamp" in metrics
+    
+    @pytest.mark.asyncio
+    async def test_shutdown(self, ai_service_manager, mock_services):
+        """Test graceful shutdown"""
+        ai_service_manager._initialized = True
+        ai_service_manager.services = mock_services
+        
+        await ai_service_manager.shutdown()
+        
+        assert ai_service_manager._initialized is False
+    
+    @pytest.mark.asyncio
+    async def test_shutdown_error_handling(self, ai_service_manager):
+        """Test shutdown error handling"""
+        ai_service_manager._initialized = True
+        
+        # Should not raise exception even if there are errors
+        await ai_service_manager.shutdown()
+        
+        assert ai_service_manager._initialized is False
+        
+        results = await ai_service_manager.analyze_symptoms_batch(batch_requests)
+        
+        assert len(results) == 2
+        assert all("patient_id" in result for result in results)
+    
+    @pytest.mark.asyncio
+    async def test_analyze_symptoms_batch_empty(self, ai_service_manager):
         """Test batch analysis with empty list"""
         ai_service_manager._initialized = True
         

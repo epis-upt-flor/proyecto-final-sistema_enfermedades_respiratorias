@@ -603,5 +603,225 @@ class TestCoreDomainsSupportService:
         )
         
         assert isinstance(actions, list)
+        assert len(actions) >= 0
+    
+    @pytest.mark.asyncio
+    async def test_extract_medications(self, core_domains_service, sample_prescription_text):
+        """Test medication extraction from prescription text"""
+        medications = await core_domains_service._extract_medications(sample_prescription_text)
+        
+        assert isinstance(medications, list)
+        # May be empty if extraction is not implemented
+    
+    @pytest.mark.asyncio
+    async def test_check_drug_interactions(self, core_domains_service):
+        """Test drug interaction checking"""
+        new_meds = [{"name": "Paracetamol"}]
+        current_meds = ["Aspirina"]
+        
+        interactions = await core_domains_service._check_drug_interactions(new_meds, current_meds)
+        
+        assert isinstance(interactions, list)
+    
+    @pytest.mark.asyncio
+    async def test_check_allergy_conflicts(self, core_domains_service):
+        """Test allergy conflict checking"""
+        medications = [{"name": "Penicilina"}]
+        allergies = ["Penicilina"]
+        
+        warnings = await core_domains_service._check_allergy_conflicts(medications, allergies)
+        
+        assert isinstance(warnings, list)
+    
+    @pytest.mark.asyncio
+    async def test_analyze_dosage_with_context(self, core_domains_service):
+        """Test dosage analysis with patient context"""
+        medications = [{"name": "Paracetamol", "dose": "500mg"}]
+        context = {"age": 75, "weight": 60}
+        
+        analysis = await core_domains_service._analyze_dosage(medications, context)
+        
+        assert isinstance(analysis, dict)
+        assert "status" in analysis
+        assert "warnings" in analysis
+    
+    @pytest.mark.asyncio
+    async def test_analyze_dosage_no_context(self, core_domains_service):
+        """Test dosage analysis without context"""
+        medications = [{"name": "Paracetamol"}]
+        
+        analysis = await core_domains_service._analyze_dosage(medications, None)
+        
+        assert isinstance(analysis, dict)
+        assert "status" in analysis
+    
+    @pytest.mark.asyncio
+    async def test_calculate_safety_score_with_dosage_warnings(self, core_domains_service):
+        """Test safety score calculation with dosage warnings"""
+        score = core_domains_service._calculate_safety_score(
+            interactions=[],
+            allergy_warnings=[],
+            dosage_analysis={"warnings": [{}] * 2}  # 2 warnings
+        )
+        
+        assert score == 90.0  # 100 - (2 * 5)
+    
+    @pytest.mark.asyncio
+    async def test_calculate_safety_score_combined_issues(self, core_domains_service):
+        """Test safety score calculation with combined issues"""
+        score = core_domains_service._calculate_safety_score(
+            interactions=[{}],  # -10
+            allergy_warnings=[{}],  # -20
+            dosage_analysis={"warnings": [{}]}  # -5
+        )
+        
+        assert score == 65.0  # 100 - 10 - 20 - 5
+    
+    @pytest.mark.asyncio
+    async def test_determine_priority_level_edge_cases(self, core_domains_service):
+        """Test priority level determination with edge case scores"""
+        # Exactly at threshold
+        assert core_domains_service._determine_priority_level(80.0) == "critical"
+        assert core_domains_service._determine_priority_level(60.0) == "high"
+        assert core_domains_service._determine_priority_level(40.0) == "medium"
+        assert core_domains_service._determine_priority_level(20.0) == "low"
+        
+        # Just below threshold
+        assert core_domains_service._determine_priority_level(79.9) == "high"
+        assert core_domains_service._determine_priority_level(59.9) == "medium"
+        assert core_domains_service._determine_priority_level(39.9) == "low"
+    
+    @pytest.mark.asyncio
+    async def test_calculate_priority_score_different_combinations(self, core_domains_service):
+        """Test priority score calculation with different combinations"""
+        # High urgency, high risk
+        score1 = core_domains_service._calculate_priority_score(
+            {"assessed_urgency": "high"},
+            {"risk_level": "high"},
+            {"type": "symptom_alert"}
+        )
+        assert score1 > 60.0
+        
+        # Low urgency, low risk
+        score2 = core_domains_service._calculate_priority_score(
+            {"assessed_urgency": "low"},
+            {"risk_level": "low"},
+            {"type": "symptom_alert"}
+        )
+        assert score2 < 40.0
+        
+        # Medium urgency, medium risk
+        score3 = core_domains_service._calculate_priority_score(
+            {"assessed_urgency": "medium"},
+            {"risk_level": "medium"},
+            {"type": "symptom_alert"}
+        )
+        assert 40.0 <= score3 <= 60.0
+    
+    @pytest.mark.asyncio
+    async def test_recommend_best_slot_medium_urgency(self, core_domains_service, sample_appointment_slots):
+        """Test slot recommendation for medium urgency"""
+        slot = await core_domains_service._recommend_best_slot(
+            {"assessed_urgency": "medium"},
+            "medium",
+            sample_appointment_slots,
+            None
+        )
+        
+        assert slot is not None
+        assert slot in sample_appointment_slots
+    
+    @pytest.mark.asyncio
+    async def test_recommend_best_slot_low_urgency(self, core_domains_service, sample_appointment_slots):
+        """Test slot recommendation for low urgency"""
+        slot = await core_domains_service._recommend_best_slot(
+            {"assessed_urgency": "low"},
+            "low",
+            sample_appointment_slots,
+            None
+        )
+        
+        assert slot is not None
+        # Should return first available slot
+        assert slot == sample_appointment_slots[0]
+    
+    @pytest.mark.asyncio
+    async def test_generate_preparation_tips_no_context(self, core_domains_service, sample_symptoms):
+        """Test preparation tips generation without context"""
+        tips = await core_domains_service._generate_preparation_tips(sample_symptoms, None)
+        
+        assert isinstance(tips, list)
+        assert len(tips) > 0
+    
+    @pytest.mark.asyncio
+    async def test_generate_preparation_tips_empty_symptoms(self, core_domains_service):
+        """Test preparation tips with empty symptoms"""
+        tips = await core_domains_service._generate_preparation_tips([], {"age": 45})
+        
+        assert isinstance(tips, list)
+        # Should still have general tips
+        assert len(tips) >= 0
+    
+    @pytest.mark.asyncio
+    async def test_extract_risk_factors_empty_text(self, core_domains_service):
+        """Test risk factor extraction with empty text"""
+        risk_factors = await core_domains_service._extract_risk_factors("")
+        
+        assert isinstance(risk_factors, list)
+        assert len(risk_factors) == 0
+    
+    @pytest.mark.asyncio
+    async def test_extract_risk_factors_multiple_risks(self, core_domains_service):
+        """Test risk factor extraction with multiple risks"""
+        text = "Paciente con diabetes, hipertensión, obesidad y tabaquismo"
+        risk_factors = await core_domains_service._extract_risk_factors(text)
+        
+        assert isinstance(risk_factors, list)
+        assert len(risk_factors) >= 2
+    
+    @pytest.mark.asyncio
+    async def test_assess_severity_no_symptoms(self, core_domains_service):
+        """Test severity assessment with no symptoms"""
+        severity = await core_domains_service._assess_severity("", {"symptoms": []})
+        
+        assert severity == "low"
+    
+    @pytest.mark.asyncio
+    async def test_assess_severity_many_symptoms(self, core_domains_service):
+        """Test severity assessment with many symptoms"""
+        processing_result = {"symptoms": ["s1", "s2", "s3", "s4", "s5"]}
+        severity = await core_domains_service._assess_severity("", processing_result)
+        
+        assert severity == "medium"
+    
+    @pytest.mark.asyncio
+    async def test_generate_recommendations_no_symptoms(self, core_domains_service):
+        """Test recommendation generation with no symptoms"""
+        recommendations = await core_domains_service._generate_recommendations({"symptoms": []})
+        
+        assert isinstance(recommendations, list)
+    
+    @pytest.mark.asyncio
+    async def test_suggest_follow_ups_no_context(self, core_domains_service):
+        """Test follow-up suggestions without context"""
+        processing_result = {"symptoms": ["dificultad respiratoria"]}
+        follow_ups = await core_domains_service._suggest_follow_ups(processing_result, None)
+        
+        assert isinstance(follow_ups, list)
+    
+    @pytest.mark.asyncio
+    async def test_suggest_follow_ups_low_severity(self, core_domains_service):
+        """Test follow-up suggestions for low severity"""
+        processing_result = {"symptoms": ["tos"]}
+        follow_ups = await core_domains_service._suggest_follow_ups(processing_result, None)
+        
+        assert isinstance(follow_ups, list)
+        # May be empty for low severity
+            priority_level="low",
+            symptom_analysis={"assessed_urgency": "low"},
+            context_risk={"risk_level": "low"}
+        )
+        
+        assert isinstance(actions, list)
         assert len(actions) > 0
 

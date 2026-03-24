@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import './AutomaticReportsDashboard.css';
@@ -34,20 +34,7 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
   const [stats, setStats] = useState(null);
   const [generating, setGenerating] = useState(false);
 
-  useEffect(() => {
-    fetchReports();
-    fetchStats();
-
-    if (autoRefresh) {
-      const interval = setInterval(() => {
-        fetchReports();
-        fetchStats();
-      }, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [filterType, autoRefresh, refreshInterval]);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setError(null);
       setLoading(true);
@@ -85,9 +72,9 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
       setReports([]);
       setLoading(false);
     }
-  };
+  }, [filterType]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE}/reports/automatic/stats`);
       
@@ -121,7 +108,20 @@ function AutomaticReportsDashboard({ refreshInterval = 30000, autoRefresh = true
         byStatus: { completed: 0, pending: 0, generating: 0, failed: 0, exported: 0 }
       });
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+    fetchStats();
+
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        fetchReports();
+        fetchStats();
+      }, refreshInterval);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, refreshInterval, fetchReports, fetchStats]);
 
   const fetchReportDetails = async (reportId) => {
     try {

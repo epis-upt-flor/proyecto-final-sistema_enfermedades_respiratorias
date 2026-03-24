@@ -113,4 +113,104 @@ class TestDatabase:
         with patch('core.database.client', None):
             # No debe lanzar excepción
             await close_database()
+    
+    @pytest.mark.asyncio
+    async def test_init_database_sets_global_variables(self, mock_motor_client):
+        """Test que init_database establece las variables globales"""
+        with patch('core.database.motor.motor_asyncio.AsyncIOMotorClient', return_value=mock_motor_client), \
+             patch('core.database.settings') as mock_settings, \
+             patch('core.database.create_indexes', new_callable=AsyncMock):
+            mock_settings.DATABASE_URL = "mongodb://localhost:27017/test"
+            
+            await init_database()
+            
+            from core.database import client, database
+            assert client == mock_motor_client
+            assert database == mock_motor_client.respicare
+    
+    @pytest.mark.asyncio
+    async def test_create_indexes_all_collections(self):
+        """Test que create_indexes crea índices en todas las colecciones"""
+        mock_database = MagicMock()
+        mock_medical = AsyncMock()
+        mock_symptoms = AsyncMock()
+        mock_ai_results = AsyncMock()
+        
+        mock_database.medical_histories = mock_medical
+        mock_database.symptoms = mock_symptoms
+        mock_database.ai_results = mock_ai_results
+        
+        with patch('core.database.database', mock_database):
+            await create_indexes()
+            
+            # Verificar índices en medical_histories
+            assert mock_medical.create_index.call_count == 3
+            mock_medical.create_index.assert_any_call("patient_id")
+            mock_medical.create_index.assert_any_call("date")
+            mock_medical.create_index.assert_any_call("diagnosis")
+            
+            # Verificar índices en symptoms
+            assert mock_symptoms.create_index.call_count == 3
+            mock_symptoms.create_index.assert_any_call("patient_id")
+            mock_symptoms.create_index.assert_any_call("timestamp")
+            mock_symptoms.create_index.assert_any_call("severity")
+            
+            # Verificar índices en ai_results
+            assert mock_ai_results.create_index.call_count == 3
+            mock_ai_results.create_index.assert_any_call("patient_id")
+            mock_ai_results.create_index.assert_any_call("type")
+            mock_ai_results.create_index.assert_any_call("created_at")
+    
+    @pytest.mark.asyncio
+    async def test_get_database_returns_correct_instance(self):
+        """Test que get_database retorna la instancia correcta"""
+        mock_database = MagicMock()
+        mock_database.name = "respicare"
+        
+        with patch('core.database.database', mock_database):
+            result = await get_database()
+            
+            assert result == mock_database
+            assert result.name == "respicare"
+    
+    @pytest.mark.asyncio
+    async def test_close_database_logs_message(self, mock_motor_client):
+        """Test que close_database registra mensaje de log"""
+        with patch('core.database.client', mock_motor_client), \
+             patch('core.database.logger') as mock_logger:
+            await close_database()
+            
+            mock_motor_client.close.assert_called_once()
+            # Verificar que se registró el mensaje
+            assert mock_logger.info.called
+    
+    @pytest.mark.asyncio
+    async def test_init_database_logs_success(self, mock_motor_client):
+        """Test que init_database registra éxito"""
+        with patch('core.database.motor.motor_asyncio.AsyncIOMotorClient', return_value=mock_motor_client), \
+             patch('core.database.settings') as mock_settings, \
+             patch('core.database.create_indexes', new_callable=AsyncMock), \
+             patch('core.database.logger') as mock_logger:
+            mock_settings.DATABASE_URL = "mongodb://localhost:27017/test"
+            
+            await init_database()
+            
+            # Verificar que se registró el mensaje de éxito
+            assert mock_logger.info.called
+    
+    @pytest.mark.asyncio
+    async def test_init_database_logs_error(self, mock_motor_client):
+        """Test que init_database registra error"""
+        mock_motor_client.admin.command = AsyncMock(side_effect=Exception("Connection failed"))
+        
+        with patch('core.database.motor.motor_asyncio.AsyncIOMotorClient', return_value=mock_motor_client), \
+             patch('core.database.settings') as mock_settings, \
+             patch('core.database.logger') as mock_logger:
+            mock_settings.DATABASE_URL = "mongodb://localhost:27017/test"
+            
+            with pytest.raises(Exception):
+                await init_database()
+            
+            # Verificar que se registró el error
+            assert mock_logger.error.called
 

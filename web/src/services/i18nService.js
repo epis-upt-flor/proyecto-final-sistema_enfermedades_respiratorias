@@ -35,6 +35,8 @@ const translations = {
       yes: 'Sí',
       no: 'No',
       confirm: 'Confirmar',
+      online: 'En línea',
+      selectLanguage: 'Seleccionar idioma',
     },
     nav: {
       home: 'Inicio',
@@ -81,10 +83,6 @@ const translations = {
       listening: 'Escuchando...',
       stopListening: 'Detener',
       keyFactors: 'Factores Clave del Diagnóstico',
-    },
-    common: {
-      online: 'En línea',
-      selectLanguage: 'Seleccionar idioma',
     },
     errors: {
       networkError: 'Error de conexión. Por favor, verifica tu internet.',
@@ -472,7 +470,7 @@ export const useTranslation = () => {
 };
 
 // Exportar por defecto
-export default {
+const i18nService = {
   t,
   setLanguage,
   getCurrentLanguage,
@@ -480,4 +478,6 @@ export default {
   SUPPORTED_LANGUAGES,
   useTranslation,
 };
+
+export default i18nService;
 
